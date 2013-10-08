@@ -18,52 +18,49 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\claydemoApp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClInclude Include="..\include\Resources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClCompile Include="..\src\DynamicMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ClayDemoApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\UserInterface.cpp">
+    <ClCompile Include="..\..\src\CBBoxInt32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Sculptor.cpp">
+    <ClCompile Include="..\..\src\CCubeMapProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\LeapListener.cpp">
+    <ClCompile Include="..\..\src\CImageSurface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\SmoothSurface.cpp">
+    <ClCompile Include="..\..\src\CreatePrimitives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\DrawDynamicMeshGL.cpp">
+    <ClCompile Include="..\..\src\DrawDynamicMeshGL.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\LeapInteraction.cpp">
+    <ClCompile Include="..\..\src\DynamicMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\CreatePrimitives.cpp">
+    <ClCompile Include="..\..\src\DynamicMeshSelfIntersect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\DynamicMeshSelfIntersect.cpp">
+    <ClCompile Include="..\..\src\Environment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Environment.cpp">
+    <ClCompile Include="..\..\src\LeapInteraction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\CBBoxInt32.cpp">
+    <ClCompile Include="..\..\src\LeapListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\CCubeMapProcessor.cpp">
+    <ClCompile Include="..\..\src\Sculptor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\CImageSurface.cpp">
+    <ClCompile Include="..\..\src\SmoothSurface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\UserInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ThreeForm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,46 +68,55 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\DynamicMesh.h">
+    <ClInclude Include="..\..\include\CBBoxInt32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\UserInterface.h">
+    <ClInclude Include="..\..\include\CCubeMapProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Sculptor.h">
+    <ClInclude Include="..\..\include\CImageSurface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\LeapListener.h">
+    <ClInclude Include="..\..\include\CreatePrimitives.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\SmoothSurface.h">
+    <ClInclude Include="..\..\include\DynamicMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\LeapInteraction.h">
+    <ClInclude Include="..\..\include\Environment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Utilities.h">
+    <ClInclude Include="..\..\include\LeapInteraction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\CreatePrimitives.h">
+    <ClInclude Include="..\..\include\LeapListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Environment.h">
+    <ClInclude Include="..\..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\CBBoxInt32.h">
+    <ClInclude Include="..\..\include\Sculptor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\CCubeMapProcessor.h">
+    <ClInclude Include="..\..\include\SmoothSurface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\CImageSurface.h">
+    <ClInclude Include="..\..\include\Types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\VectorMacros.h">
+    <ClInclude Include="..\..\include\UserInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Types.h">
+    <ClInclude Include="..\..\include\Utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\VectorMacros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ThreeForm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\DataTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -120,53 +126,21 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\resources\metaball-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\material-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\material-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\metaball-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\screen-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\screen-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\blur_horizontal-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\blur_horizontal-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\blur_vertical-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\blur_vertical-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\light_clamp-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\light_clamp-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\blur-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\blur-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\sky-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\resources\sky-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
+    <None Include="..\..\resources\blur-frag.glsl" />
+    <None Include="..\..\resources\blur-vert.glsl" />
+    <None Include="..\..\resources\blur_horizontal-frag.glsl" />
+    <None Include="..\..\resources\blur_horizontal-vert.glsl" />
+    <None Include="..\..\resources\blur_vertical-frag.glsl" />
+    <None Include="..\..\resources\blur_vertical-vert.glsl" />
+    <None Include="..\..\resources\light_clamp-frag.glsl" />
+    <None Include="..\..\resources\light_clamp-vert.glsl" />
+    <None Include="..\..\resources\material-frag.glsl" />
+    <None Include="..\..\resources\material-vert.glsl" />
+    <None Include="..\..\resources\metaball-frag.glsl" />
+    <None Include="..\..\resources\metaball-vert.glsl" />
+    <None Include="..\..\resources\screen-frag.glsl" />
+    <None Include="..\..\resources\screen-vert.glsl" />
+    <None Include="..\..\resources\sky-frag.glsl" />
+    <None Include="..\..\resources\sky-vert.glsl" />
   </ItemGroup>
 </Project>

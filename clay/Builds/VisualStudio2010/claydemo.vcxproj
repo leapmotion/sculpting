@@ -48,7 +48,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\include;$(LIBRARIES_PATH)\glew-1.9.0-mt\include;$(LIBRARIES_PATH)\FreeImage\dist</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\include;$(LIBRARIES_PATH)\glew-1.9.0-mt\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -78,7 +78,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\include;$(LIBRARIES_PATH)\glew-1.9.0-mt\include;$(LIBRARIES_PATH)\FreeImage\dist</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\include;$(LIBRARIES_PATH)\glew-1.9.0-mt\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -120,7 +120,6 @@
     <ClCompile Include="..\..\src\CBBoxInt32.cpp" />
     <ClCompile Include="..\..\src\CCubeMapProcessor.cpp" />
     <ClCompile Include="..\..\src\CImageSurface.cpp" />
-    <ClCompile Include="..\..\src\ClayDemoApp.cpp" />
     <ClCompile Include="..\..\src\CreatePrimitives.cpp" />
     <ClCompile Include="..\..\src\DrawDynamicMeshGL.cpp" />
     <ClCompile Include="..\..\src\DynamicMesh.cpp" />
@@ -130,6 +129,7 @@
     <ClCompile Include="..\..\src\LeapListener.cpp" />
     <ClCompile Include="..\..\src\Sculptor.cpp" />
     <ClCompile Include="..\..\src\SmoothSurface.cpp" />
+    <ClCompile Include="..\..\src\ThreeForm.cpp" />
     <ClCompile Include="..\..\src\UserInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -137,6 +137,7 @@
     <ClInclude Include="..\..\include\CCubeMapProcessor.h" />
     <ClInclude Include="..\..\include\CImageSurface.h" />
     <ClInclude Include="..\..\include\CreatePrimitives.h" />
+    <ClInclude Include="..\..\include\DataTypes.h" />
     <ClInclude Include="..\..\include\DynamicMesh.h" />
     <ClInclude Include="..\..\include\Environment.h" />
     <ClInclude Include="..\..\include\LeapInteraction.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="..\..\include\Resources.h" />
     <ClInclude Include="..\..\include\Sculptor.h" />
     <ClInclude Include="..\..\include\SmoothSurface.h" />
+    <ClInclude Include="..\..\include\ThreeForm.h" />
     <ClInclude Include="..\..\include\Types.h" />
     <ClInclude Include="..\..\include\UserInterface.h" />
     <ClInclude Include="..\..\include\Utilities.h" />
