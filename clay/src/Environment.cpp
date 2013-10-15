@@ -374,7 +374,7 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
 
 Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure, float contrast)
 {
-	static const std::string ASSETS_PATH = "../assets/";
+	static const std::string ASSETS_PATH = "../../assets/";
 	EnvironmentInfo info;
 	info._name = name;
 	preparePaths(ASSETS_PATH + name + "/noon/", info._noon_images);

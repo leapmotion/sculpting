@@ -5,7 +5,7 @@
 #include "cinder/Vector.h"
 #include "LeapListener.h"
 #include "UserInterface.h"
-#include "Sculptor.h"
+#include "Sculpt.h"
 #include "Utilities.h"
 #include <cinder/app/App.h>
 
@@ -14,7 +14,7 @@ class LeapInteraction
 
 public:
 
-	LeapInteraction(Sculptor* _Sculptor, UserInterface* _Ui);
+	LeapInteraction(Sculpt* _Sculptor, UserInterface* _Ui);
 	void processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress);
 
 	float getDPhi() const { return _dphi; }
@@ -30,7 +30,7 @@ private:
 	Leap::Frame _cur_frame;
 	Leap::Frame _last_frame;
 
-	Sculptor* _sculptor;
+	Sculpt* _sculpt;
 	UserInterface* _ui;
 	std::vector<Vec4f> _tips;
 	Matrix44f _model_view_inv;

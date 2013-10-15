@@ -1,3 +1,6 @@
+attribute vec4 vertex;
+attribute vec3 normal;
+
 uniform mat4 transform;
 uniform mat4 transformit;
 
@@ -6,9 +9,8 @@ varying vec3 worldNormal;
 
 void main()
 {
-	vec4 wpos       = transform * gl_Vertex;
-	vec3 wnrm       = (transformit * vec4(gl_Normal,0.0)).xyz;
+	vec4 wpos       = transform * vertex;
 	worldPosition   = wpos.xyz;
-	worldNormal     = wnrm;
+	worldNormal     = (transformit * vec4(normal,0.0)).xyz;
 	gl_Position			= gl_ModelViewProjectionMatrix * wpos;
 }

@@ -5,8 +5,8 @@
 
 using namespace ci;
 
-LeapInteraction::LeapInteraction(Sculptor* _Sculptor, UserInterface* _Ui)
-	: _sculptor(_Sculptor)
+LeapInteraction::LeapInteraction(Sculpt* _Sculpt, UserInterface* _Ui)
+	: _sculpt(_Sculpt)
 	, _ui(_Ui)
 	, _desired_brush_radius(0.4f)
 	, _dphi(0.0f)
@@ -16,7 +16,7 @@ LeapInteraction::LeapInteraction(Sculptor* _Sculptor, UserInterface* _Ui)
 
 void LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress)
 {
-	_sculptor->clearBrushes();
+	_sculpt->clearBrushes();
 	_tips.clear();
 	_model_view_inv = _Model.inverted();
 	_model_view = _Model;
@@ -55,9 +55,14 @@ void LeapInteraction::interact()
 		const float weight = Utilities::SmootherStep(math<float>::clamp(pointables[i].timeVisible()/AGE_WARMUP_TIME));
 		Leap::Vector tip_pos = pointables[i].tipPosition();
 		Leap::Vector tip_dir = pointables[i].direction();
+    Leap::Vector tip_vel = pointables[i].tipVelocity();
 		Vec3f pos = LEAP_SCALE*Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
 		Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
-		_sculptor->addBrush(_model_view_inv.transformPoint(pos), -_model_view_inv.transformVec(dir), _desired_brush_radius, ui_mult*_desired_brush_strength, weight);
+    Vec3f vel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
+		Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
+		Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
+    Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
+		_sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, ui_mult*_desired_brush_strength, weight);
 
 		Vec3f transPos = _projection.transformPoint(pos);
 		Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));

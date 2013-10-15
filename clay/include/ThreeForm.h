@@ -9,16 +9,14 @@
 #include "cinder/gl/Fbo.h"
 #include "Resources.h"
 #include "Environment.h"
-#include "DynamicMesh.h"
-#include "CreatePrimitives.h"
-#include "SmoothSurface.h"
-#include "Sculptor.h"
 #include "UserInterface.h"
 #include "LeapListener.h"
 #include "Leap.h"
 #include "LeapInteraction.h"
 #include "Utilities.h"
 #include "cinder/Thread.h"
+#include "Mesh.h"
+#include "Sculpt.h"
 
 using namespace ci;
 using namespace ci::gl;
@@ -59,6 +57,8 @@ public:
 	void createBloom();
 	void draw();
 
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 private:
 
 	// *** camera stuff ***
@@ -76,12 +76,12 @@ private:
 	Environment* _environment;
 	GlslProg _sky_shader;
 	GlslProg _material_shader;
-	DynamicMesh* _mesh;
 	GlslProg _blur_shader;
 	Fbo _color_fbo;
 	Fbo _depth_fbo;
 	Fbo _blur_fbo;
 	boost::thread _loading_thread;
+  double _last_update_time;
 
 	// *** Leap stuff ***
 	LeapListener _listener;
@@ -96,25 +96,16 @@ private:
 	Color _surface_color;
 	Color _brush_color;
 	bool _draw_edges;
-	bool _draw_normals;
-	float _minimum_edge_length;
-	float _maximum_edge_length;
 	float _reflection_bias;
 	float _refraction_bias;
 	float _refraction_index;
 	bool _use_ao;
 	bool _only_ao;
-	bool _draw_smooth_surface;
 
-	Sculptor* _sculptor;
 	UserInterface* _ui;
 	GlslProg _metaball_shader;
 	bool _draw_ui;
 
-#ifdef USE_SMOOTH_SURFACE
-	SmoothSurface* _surface;
-#endif
-    
 	Fbo _screen_fbo;
 	Fbo _light_clamp_fbo;
 	Fbo _horizontal_blur_fbo;
@@ -137,6 +128,13 @@ private:
 	Vec3f _transform_rotation;
 	float _transform_scaling;
 	float _rotation_speed;
+
+	// new mesh
+	Mesh* mesh_;
+	Sculpt sculpt_;
+	bool symmetry_;
+	float sumDisplacement_;
+	bool sculptStart_;
 };
 
 #endif

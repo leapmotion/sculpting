@@ -1,4 +1,5 @@
 #include "ThreeForm.h"
+#include "Files.h"
 
 #define FREEIMAGE_LIB
 #include "FreeImage.h"
@@ -15,8 +16,6 @@ const float MAX_FOV = 90.0f;
 //*********************************************************
 ClayDemoApp::ClayDemoApp()
 	: _environment(0)
-	, _mesh(0)
-	, _sculptor(0)
 	, _theta(100.f)
 	, _phi(0.f)
 	, _draw_ui(true)
@@ -26,16 +25,19 @@ ClayDemoApp::ClayDemoApp()
 	, _exposure(0.0f)
 	, _use_ao(false)
 	, _only_ao(false)
-	, _draw_smooth_surface(false)
 	, _contrast(1.2f)
+	, mesh_(0)
+	, symmetry_(false)
+  , _last_update_time(0.0)
 {
 }
 
 ClayDemoApp::~ClayDemoApp()
 {
 	delete _environment;
-	delete _mesh;
-	delete _sculptor;
+	if (mesh_) {
+		delete mesh_;
+	}
 }
 
 void ClayDemoApp::prepareSettings( Settings *settings )
@@ -48,26 +50,48 @@ void ClayDemoApp::prepareSettings( Settings *settings )
 
 int ClayDemoApp::loadFile()
 {
-	if( !_mesh ) return -1;
-
 	// *** open mesh file ***
 	std::vector<std::string> file_extensions;
 	file_extensions.push_back("obj");
-	fs::path path = getOpenFilePath( "", file_extensions );
-
-	console() << "Loading OBJ file: " << path << "\n";
+	file_extensions.push_back("stl");
+	file_extensions.push_back("3ds");
+	fs::path path = getOpenFilePath("", file_extensions);
 	
 	int err = -1;
-	if( !path.empty() )
-	{
-		err = _mesh->loadOBJFile(path.string());
-	}
+	if (!path.empty()) {
+		const std::string ext = path.extension().string();
+		if (!ext.empty()) {
+      //reset flags... not necessary
+      Mesh::stateMask_= 1;
+      Vertex::tagMask_ = 1;
+      Vertex::sculptMask_ = 1;
+      Triangle::tagMask_ = 1;
 
-	if( err==0 ) // no error
-	{
-		if( !_mesh->getHalfedges().empty() )
-		{
-			_surface->createFromDynamicMesh(*_mesh);
+			Files files;
+			Mesh* mesh = 0;
+			if (ext == ".OBJ" || ext == ".obj") {
+				mesh = files.loadOBJ(path.string());
+			} else if (ext == ".STL" || ext == ".stl") {
+				mesh = files.loadSTL(path.string());
+			} else if (ext == ".3DS" || ext == ".3ds") {
+				mesh = files.load3DS(path.string());
+			}
+			if (mesh_) {
+				delete mesh_;
+			}
+			mesh_ = mesh;
+			mesh_->startPushState();
+			sculpt_.setMesh(mesh_);
+			err = 1;
+#if 0
+			camera_.setGlobalScale(length);
+			camera_.zoom(-0.4f);
+			if (QPushButton *colorButton = window_->getColorButton())
+				colorButton->setPalette(QPalette(QColor(mesh_->getColor())));
+			if (QButtonGroup *shaderButtonGroup = window_->getShaderButtonGroup())
+				shaderButtonGroup->button(mesh_->getShader())->setChecked(true);
+			updateMeshInformation();
+#endif
 		}
 	}
 
@@ -76,48 +100,45 @@ int ClayDemoApp::loadFile()
 
 int ClayDemoApp::saveFile()
 {
-	if( !_mesh ) return -1;
-
-	// *** save mesh file ***
-	std::vector<std::string> file_extensions;
-	file_extensions.push_back("obj");
-	fs::path path = getSaveFilePath( "", file_extensions );
-	
-    console() << "Saving OBJ file: " << path << "\n";
-
-	int err = -1;
-	if( !path.empty() ) 
-	{
-		err = _mesh->saveOBJFile(path.string());
+	if (!mesh_) {
+		return -1;
 	}
 
+	Files files;
+	std::vector<std::string> file_extensions;
+	file_extensions.push_back("stl");
+	fs::path path = getSaveFilePath("", file_extensions);
+
+	int err = -1;
+	if (!path.empty()) {
+		files.saveSTL(mesh_, path.string());
+		err = 1;
+	}
 	return err; // error
 }
 
-void ClayDemoApp::setBrushMode(const std::string& str)
-{
-	if (!_sculptor)
-	{
-		return;
-	}
+void ClayDemoApp::setBrushMode(const std::string& str) {
 	if (str == "Grow")
 	{
-		_sculptor->setSculptMode(Sculptor::GROW);
+		sculpt_.setSculptMode(Sculpt::INFLATE);
 		_brush_color = Color(0.1f, 1.0f, 0.2f);
 	}
 	else if (str == "Shrink")
 	{
-		_sculptor->setSculptMode(Sculptor::SHRINK);
+		sculpt_.setSculptMode(Sculpt::DEFLATE);
 		_brush_color = Color(1.0f, 0.8f, 0.1f);
 	}
 	else if (str == "Smooth")
 	{
-		_sculptor->setSculptMode(Sculptor::SMOOTH);
+		sculpt_.setSculptMode(Sculpt::SMOOTH);
 		_brush_color = Color(0.1f, 0.4f, 1.0f);
 	}
-	else if (str == "Pinch")
+	else if (str == "Flatten")
 	{
-		_sculptor->setSculptMode(Sculptor::PINCH);
+		sculpt_.setSculptMode(Sculpt::FLATTEN);
+		_brush_color = Color(0.5f, 0.5f, 0.5f);
+	} else if (str == "Sweep") {
+		sculpt_.setSculptMode(Sculpt::SWEEP);
 		_brush_color = Color(0.5f, 0.5f, 0.5f);
 	}
 }
@@ -129,7 +150,11 @@ void ClayDemoApp::setBrushSize(const std::string& str)
 		return;
 	}
 	float size = 0.0f;
-	if (str == "Small")
+  if (str == "X-Small")
+  {
+    size = 0.04f;
+  }
+	else if (str == "Small")
 	{
 		size = 0.2f;
 	}
@@ -153,15 +178,18 @@ void ClayDemoApp::setBrushStrength(const std::string& str)
 	float strength = 0.0f;
 	if (str == "Fine")
 	{
-		strength = 0.05f;
+		strength = 0.2f;
+    sculpt_.setIntensity(0.2f);
 	}
 	else if (str == "Medium")
 	{
-		strength = 0.125f;
+		strength = 0.6f;
+    sculpt_.setIntensity(0.6f);
 	}
 	else if (str == "Strong")
 	{
-		strength = 0.25f;
+		strength = 1.0f;
+    sculpt_.setIntensity(1.0f);
 	}
 	_leap_interaction->setBrushStrength(strength);
 }
@@ -309,6 +337,13 @@ void ClayDemoApp::setup()
 	enableDepthWrite();
 	glCullFace( GL_BACK );
 	glEnable(GL_CULL_FACE);
+#if 0
+  glEnable(GL_POINT_SMOOTH);
+  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+  glEnable(GL_LINE_SMOOTH);
+  glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+  glEnable(GL_MULTISAMPLE_ARB);
+#endif
 
 	_ambient_factor = 0.00f;
 	_diffuse_factor = 1.0f;
@@ -318,9 +353,6 @@ void ClayDemoApp::setup()
 	_refraction_bias = 0;
 	_refraction_index = 0.4f;
 	_draw_edges = false;
-	_draw_normals = false;
-	_minimum_edge_length = 0.07f;
-	_maximum_edge_length = 0.15f;
 	_bloom_visible = true;
 	_bloom_size = 1.f;
 	_bloom_strength = 1.f;
@@ -347,14 +379,8 @@ void ClayDemoApp::setup()
 	_params->addSeparator();	
 	_params->addText( "text", "label=`Draw parameters:`" );
 	_params->addParam( "Draw edges", &_draw_edges, "" );
-	_params->addParam( "Draw normals", &_draw_normals, "" );
 	_params->addParam( "Draw AO", &_use_ao, "" );
 	_params->addParam( "Only AO", &_only_ao, "" );
-	_params->addParam( "Smooth Surface", &_draw_smooth_surface, "" );
-	_params->addSeparator();	
-	_params->addText( "text", "label=`Mesh parameters:`" );
-	_params->addParam( "Min length", &_minimum_edge_length, "min=0.01 max=0.2 step=0.001" );
-	_params->addParam( "Max length", &_maximum_edge_length, "min=0.05 max=1.0 step=0.001" );
 	_params->addSeparator();	
 	_params->addText( "text", "label=`HDR parameters:`" );
 	_params->addParam( "Exposure", &_exposure, "min=0.05 max=8.0 step=0.01" );
@@ -381,31 +407,7 @@ void ClayDemoApp::setup()
 		quit();	
 	}
 
-#if 0
-	_mesh = new DynamicMesh();
-//	_mesh->loadOBJFile("../assets/armadillo.obj");
-//	_mesh->loadOBJFile("../assets/bunny.obj");
-//	_mesh->loadOBJFile("../assets/sphere.obj"); 	
-	_mesh->loadOBJFile("../assets/torus.obj");
-//	_mesh->loadOBJFile("../assets/box.obj");
-
-//	_mesh->loadOBJFile( getAssetPath("bunny.obj").c_str() );
-//	_mesh->loadOBJFile( getAssetPath("sphere.obj").c_str() );
-//	_mesh->loadOBJFile( getAssetPath("torus.obj").c_str() );
-//	_mesh->loadOBJFile( getAssetPath("box.obj").c_str() );
-#else
-	_mesh = createSphere(1.0f,4);
-#endif
-_mesh->refineWholeMesh(_minimum_edge_length,_maximum_edge_length);
-
-	_surface = new SmoothSurface();
-
-#ifdef USE_SMOOTH_SURFACE
-if( !_mesh->getHalfedges().empty() ) _surface->createFromDynamicMesh(*_mesh);
-#endif
-
-	_sculptor = new Sculptor();
-	_sculptor->clearBrushes();
+	sculpt_.clearBrushes();
 
 	_ui = new UserInterface();
 
@@ -429,6 +431,7 @@ if( !_mesh->getHalfedges().empty() ) _surface->createFromDynamicMesh(*_mesh);
 	_ui->addElement(UIElement("Strong", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
 
 	// Size nodes
+  _ui->addElement(UIElement("X-Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
 	_ui->addElement(UIElement("Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
 	_ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
 	_ui->addElement(UIElement("Large", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
@@ -437,7 +440,8 @@ if( !_mesh->getHalfedges().empty() ) _surface->createFromDynamicMesh(*_mesh);
 	_ui->addElement(UIElement("Grow", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 	_ui->addElement(UIElement("Shrink", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 	_ui->addElement(UIElement("Smooth", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-	_ui->addElement(UIElement("Pinch", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+	_ui->addElement(UIElement("Flatten", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+	_ui->addElement(UIElement("Sweep", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 
 	// Editing nodes
 	_ui->addElement(UIElement("Fullscreen", boost::bind(&ClayDemoApp::toggleFullscreen, this, ::_1)), "Editing");
@@ -484,13 +488,9 @@ if( !_mesh->getHalfedges().empty() ) _surface->createFromDynamicMesh(*_mesh);
 	_controller.setPolicyFlags(Leap::Controller::POLICY_BACKGROUND_FRAMES);
 	_controller.addListener(_listener);
 
-	_leap_interaction = new LeapInteraction(_sculptor, _ui);
+	_leap_interaction = new LeapInteraction(&sculpt_, _ui);
 
-	if( !_mesh->getHalfedges().empty() )
-	{
-//		_surface.createFromDynamicMesh(*_mesh);
-	}
-	setBrushMode("Grow");
+	setBrushMode("Sweep");
 	setBrushSize("Medium");
 	setBrushStrength("Medium");
 	setEnvironment("Islands");
@@ -513,7 +513,7 @@ void ClayDemoApp::resize()
 	Fbo::Format format;
 	format.setColorInternalFormat(GL_RGB32F_ARB);
 	//format.setSamples( 4 ); // uncomment this to enable 4x antialiasing
-	_screen_fbo = Fbo( width, height, format );
+	//_screen_fbo = Fbo( width, height, format );
 	console() << "FBO size: " << width << "    " << height << "\n";
 
 	// set up blur FBOs
@@ -591,6 +591,7 @@ void ClayDemoApp::keyDown( KeyEvent event )
 		case 'u': _draw_ui = !_draw_ui; break;
 		case 'l': loadFile(); break;
 		case 's': saveFile(); break;
+		case 'o': if (mesh_) { mesh_->toggleDisplayOctree(); } break;
 	}
 }
 
@@ -630,18 +631,16 @@ void ClayDemoApp::update()
 	_transform.scale(Vec3f(1.f,1.f,1.f)*_transform_scaling);
 	_transform_inv = _transform.inverted();
 
-	if( _sculptor->getNumBrushes()>0 )
-	{
-		_sculptor->applyBrushes(_mesh,_transform_inv,1.f/_transform_scaling);
+  double curTime = ci::app::getElapsedSeconds();
 
-		if( _minimum_edge_length>_maximum_edge_length*0.5f ) _minimum_edge_length = _maximum_edge_length*0.5f;
-		_mesh->refineMesh(_minimum_edge_length, _maximum_edge_length);
+	if (mesh_) {
+		if (sculpt_.getNumBrushes() > 0) {
+      Matrix4x4 transformInv(_transform_inv);
+			sculpt_.applyBrushes(transformInv, static_cast<float>(curTime - _last_update_time));
+		}
 	}
 
-	if( !_mesh->getHalfedges().empty() )
-	{
-		//		_surface.updateGeom();
-	}
+  _last_update_time = curTime;
 }
 
 void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
@@ -741,10 +740,13 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	gl::enableDepthWrite();
 	enableAlphaBlending();
 
-
 	_environment->bindCubeMap(Environment::CUBEMAP_IRRADIANCE, 0);
 	_environment->bindCubeMap(Environment::CUBEMAP_RADIANCE, 1);
 	_material_shader.bind();
+	GLint vertex = _material_shader.getAttribLocation("vertex");
+	GLint normal = _material_shader.getAttribLocation("normal");
+
+	// draw mesh
 	_material_shader.uniform( "useRefraction", true);
 	_material_shader.uniform( "campos", _Camera.getEyePoint() );
 	_material_shader.uniform( "irradiance", 0 );
@@ -758,34 +760,54 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	_material_shader.uniform( "reflectionBias", _reflection_bias );
 	_material_shader.uniform( "refractionBias", _refraction_bias );
 	_material_shader.uniform( "refractionIndex", _refraction_index );
-	_material_shader.uniform( "numLights", _sculptor->getNumBrushes() );
-	_material_shader.uniform( "lightPositions", _sculptor->brushPositions().data(), _sculptor->getNumBrushes() );
-	_material_shader.uniform( "lightWeights", _sculptor->brushWeights().data(), _sculptor->getNumBrushes() );
+	_material_shader.uniform( "numLights", sculpt_.getNumBrushes() );
+	_material_shader.uniform( "lightPositions", sculpt_.brushPositions().data(), sculpt_.getNumBrushes() );
+	_material_shader.uniform( "lightWeights", sculpt_.brushWeights().data(), sculpt_.getNumBrushes() );
 	_material_shader.uniform( "lightColor", 0.15f*_brush_color );
 	_material_shader.uniform( "lightExponent", 30.0f);
 	_material_shader.uniform( "lightRadius", 3.0f);
-	_mesh->draw();
-	if( !_mesh->getHalfedges().empty() && _draw_smooth_surface)
-	{
+	if (mesh_) {
 		glPushMatrix();
-		glScalef(2.0f, 2.0f, 2.0f);
-		_surface->displaySmoothSurface();
+		if (_draw_edges) {
+			
+		}
+		mesh_->draw(vertex, normal);
+    if (_draw_edges) {
+    	_material_shader.uniform( "reflectionFactor", 0.0f );
+	    _material_shader.uniform( "ambientFactor", 0.0f );
+	    _material_shader.uniform( "diffuseFactor", 1.0f );
+	    _material_shader.uniform( "surfaceColor", Color::black() );
+      glLineWidth(2.0f);
+      glPolygonMode(GL_FRONT, GL_LINE);
+      mesh_->draw(vertex, normal);
+			glPolygonMode(GL_FRONT, GL_FILL);
+		}
 		glPopMatrix();
 	}
+
+	// draw brushes
 	_material_shader.uniform( "transform", Matrix44f::identity() );
 	_material_shader.uniform( "transformit", Matrix44f::identity() );
 	_material_shader.uniform( "useRefraction", false);
-	_material_shader.uniform( "ambientFactor", 0.25f );
+	_material_shader.uniform( "ambientFactor", 0.15f );
 	_material_shader.uniform( "diffuseFactor", 0.15f );
 	_material_shader.uniform( "reflectionFactor", 0.2f );
 	_material_shader.uniform( "surfaceColor", _brush_color );
 	_material_shader.uniform( "reflectionBias", 0.0f );
 	_material_shader.uniform( "numLights", 0 );
-	_sculptor->drawBrushes(&_material_shader);
+	const BrushVector& brushes = sculpt_.getBrushes();
+	for (size_t i=0; i<brushes.size(); i++) {
+		_material_shader.uniform("alphaMult", brushes[i]._weight);
+		const Vector3& pos = brushes[i]._position;
+		ci::Vec3f temp(pos.x(), pos.y(), pos.z());
+		//gl::drawSphere(invScale*temp, invScale*brushes[i]._radius/2.0f, 30);
+		gl::drawSphere(temp, brushes[i]._radius/2.0f, 30);
+	}
 	_environment->unbindCubeMap(0);
 	_environment->unbindCubeMap(1);
 	_material_shader.unbind();
-
+	
+#if 0
 	glPushMatrix();
 	glMultMatrixf((float*)&_transform);
 	if( _draw_edges )
@@ -804,6 +826,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 		_mesh->drawNormals(0.2f);
 	}
 	glPopMatrix();
+#endif
 
 	if (_draw_ui) 
 	{
@@ -813,6 +836,13 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 		setViewport( getWindowBounds() );
 		Matrix33f rot = _camera.getModelViewMatrix().subMatrix33(0, 0).inverted();
 		_ui->draw(_environment, rot);
+		if (mesh_) {
+			int tris = mesh_->getNbTriangles();
+			int verts = mesh_->getNbVertices();
+	    std::stringstream ss;
+			ss << getAverageFps() << " fps, " << tris << " triangles, " << verts << " vertices";
+			ci::gl::drawString(ss.str(), Vec2f(5.0f, 5.0f), ColorA::white(), Font("Arial", 18));
+		}
 		enableDepthRead();
 		enableDepthWrite();
 	}
