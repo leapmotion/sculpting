@@ -44,8 +44,8 @@ void Sculpt::setAdaptiveParameters(float radiusSquared)
  * 5. Sculpting operator
  * 6. Update the mesh (triangle's aabb, normals of triangle/vertices, octree and the VBO's)
 */
-void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Vector3& intersectionPoint, const Vector3& velocity,
-                        float radiusSquared, const Vector3& eyeDirection, float strengthMult)
+void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Vector3& intersectionPoint, const Vector3& direction, 
+                        const Vector3& velocity, float radiusSquared, const Vector3& eyeDirection, float strengthMult)
 {
     centerPoint_ = intersectionPoint;
     sweepCenter_ = intersectionPoint;
@@ -99,6 +99,8 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Vector3& interse
     case SMOOTH : smooth(iVerts, intensity_); break;
     case FLATTEN : flatten(iVerts,radiusSquared, intensity_); break;
     case SWEEP : sweep(iVerts, radiusSquared, intensity_); break;
+    case PUSH :
+    case PULL : airbrush(iVerts, direction, radiusSquared, intensity_); break;
     default: break;
     }
 
@@ -183,8 +185,7 @@ void Sculpt::draw(const std::vector<int> &iVerts, float radiusSquared, float int
     {
         Vertex &vert=vertices[iVerts[i]];
         float dist = ((vert-centerPoint_).norm()/radius);
-        float fallOff = 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
-        vert+=vert.normal_*deformationIntensity*fallOff;
+        vert+=vert.normal_*deformationIntensity*falloff(dist);
     }
 }
 
@@ -246,8 +247,7 @@ void Sculpt::flatten(const std::vector<int> &iVerts, float radiusSquared, float 
             Vertex &v = vertices[iVerts[i]];
 						float distance = (v-areaPoint).dot(areaNorm);
             float dist = ((v-centerPoint_).norm()/radius);
-            float fallOff = 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
-            v-=areaNorm*distance*deformationIntensity*fallOff;
+            v-=areaNorm*distance*deformationIntensity*falloff(dist);
         }
     }
     else
@@ -259,8 +259,7 @@ void Sculpt::flatten(const std::vector<int> &iVerts, float radiusSquared, float 
             Vertex &v = vertices[iVerts[i]];
             float distance = (v-areaPoint).dot(areaNorm);
             float dist = ((v-centerPoint_).norm()/radius);
-            float fallOff = 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
-            v-=areaNorm*std::min(dMove,distance*deformationIntensity*fallOff);
+            v-=areaNorm*std::min(dMove,distance*deformationIntensity*falloff(dist));
         }
     }
 }
@@ -375,8 +374,7 @@ void Sculpt::sweep(const std::vector<int> &iVerts, float radiusSquared, float in
         {
             Vertex &vert = vertices[iVerts[i]];
             float dist = (vert-sweepCenter_).norm()/radius;
-            float fallOff = 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
-            vert+=sweepDir_*deformationIntensity*fallOff;
+            vert+=sweepDir_*deformationIntensity*falloff(dist);
         }
     }
     else
@@ -386,11 +384,42 @@ void Sculpt::sweep(const std::vector<int> &iVerts, float radiusSquared, float in
         {
             Vertex &vert = vertices[iVerts[i]];
             float dist = (vert-sweepCenter_).norm()/radius;
-            float fallOff = 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
-            vert+=sweepDir_*std::min(d2Move_,deformationIntensity*fallOff);
+            vert+=sweepDir_*std::min(d2Move_,deformationIntensity*falloff(dist));
         }
     }
     //smooth(iVerts, 0.25f*intensity);
+}
+
+void Sculpt::airbrush(const std::vector<int> &iVerts, const Vector3& direction, float radiusSquared, float intensity)
+{
+    VertexVector &vertices = mesh_->getVertices();
+    int nbVerts = iVerts.size();
+    float radius = sqrtf(radiusSquared);
+    float deformationIntensity = intensity*radius*0.25f;
+
+    if (sculptMode_ == PUSH) {
+      deformationIntensity *= -1;
+    }
+    if(topoMode_!=ADAPTIVE)
+    {
+#pragma omp parallel for
+        for (int i = 0; i<nbVerts; ++i)
+        {
+            Vertex &vert = vertices[iVerts[i]];
+            float dist = (vert-centerPoint_).norm()/radius;
+            vert+=direction*deformationIntensity*falloff(dist);
+        }
+    }
+    else
+    {
+#pragma omp parallel for
+        for (int i = 0; i<nbVerts; ++i)
+        {
+            Vertex &vert = vertices[iVerts[i]];
+            float dist = (vert-centerPoint_).norm()/radius;
+            vert+=direction*std::min(d2Move_,deformationIntensity*falloff(dist));
+        }
+    }
 }
 
 void Sculpt::addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength, const float weight)
@@ -429,7 +458,7 @@ void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime, bool symm
           mesh_->startPushState();
         }
         haveSculpt = true;
-        sculptMesh(vertices, _brushes[b]._transformed_position, _brushes[b]._transformed_velocity, _brushes[b]._transformed_radius_squared, Vector3::UnitZ(), _brushes[b]._strength);
+        sculptMesh(vertices, _brushes[b]._transformed_position, _brushes[b]._transformed_direction, _brushes[b]._transformed_velocity, _brushes[b]._transformed_radius_squared, Vector3::UnitZ(), _brushes[b]._strength);
       }
       reflectBrush(_brushes[b], 0);
     }
@@ -443,7 +472,7 @@ void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime, bool symm
         mesh_->startPushState();
       }
       haveSculpt = true;
-		  sculptMesh(vertices, _brushes[b]._transformed_position, _brushes[b]._transformed_velocity, _brushes[b]._transformed_radius_squared, Vector3::UnitZ(), _brushes[b]._strength);
+		  sculptMesh(vertices, _brushes[b]._transformed_position, _brushes[b]._transformed_direction, _brushes[b]._transformed_velocity, _brushes[b]._transformed_radius_squared, Vector3::UnitZ(), _brushes[b]._strength);
     }
 	}
   if (!haveSculpt && prevSculpt_) {
@@ -476,6 +505,16 @@ std::vector<float> Sculpt::brushWeights() const
 	return weights;
 }
 
+std::vector<float> Sculpt::brushRadii() const
+{
+  std::vector<float> radii;
+  for (size_t i=0; i<_brushes.size(); i++)
+  {
+    radii.push_back(_brushes[i]._radius);
+  }
+  return radii;
+}
+
 const BrushVector& Sculpt::getBrushes() const {
 	return _brushes;
 }
@@ -494,5 +533,7 @@ void Sculpt::transformBrush(const Matrix4x4& transform, float deltaTime, Brush& 
   brush._transformed_radius = brush._radius;
   brush._transformed_radius_squared = brush._transformed_radius*brush._transformed_radius;
   temp << brush._velocity, 0;
-  brush._transformed_velocity = (transform * temp).head<3>() + 100.0f*modelVel;
+  brush._transformed_velocity = (transform * temp).head<3>() + 2.0f*modelVel;
+  temp << brush._direction, 0;
+  brush._transformed_direction = (transform * temp).head<3>();
 }

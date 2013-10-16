@@ -37,6 +37,7 @@ struct Brush {
 	Vector3 _position;
 	Vector3 _transformed_position;
 	Vector3 _direction;
+  Vector3 _transformed_direction;
   Vector3 _velocity;
   Vector3 _transformed_velocity;
 };

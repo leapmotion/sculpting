@@ -14,7 +14,7 @@ class Sculpt
 {
 
 public:
-    enum SculptMode{INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP};
+    enum SculptMode{INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PULL};
     enum TopoMode{DECIMATION, SUBDIVISION, UNIFORMISATION, ADAPTIVE, STATIC};
     Sculpt();
     ~Sculpt();
@@ -30,13 +30,14 @@ public:
     bool isSweep();
 
     void sculptMesh(std::vector<int> &iVertsSelected, const Vector3 &intersectionPoint, const Vector3& velocity,
-                    float radiusSquared, const Vector3 &eyeDirection, float strengthMult);
+                    const Vector3& direction, float radiusSquared, const Vector3 &eyeDirection, float strengthMult);
     void smooth(const std::vector<int> &iVerts, float intensity);
     void smoothFlat(const std::vector<int> &iVerts, float intensity);
     void draw(const std::vector<int> &iVerts, float radiusSquared, float intensity);
     void flatten(const std::vector<int> &iVerts, float radiusSquared, float intensity);
     void smoothNoMp(const std::vector<int> &iVerts, bool flat = false);
     void sweep(const std::vector<int> &iVerts, float radiusSquared, float intensity);
+    void airbrush(const std::vector<int> &iVerts, const Vector3& direction, float radiusSquared, float intensity);
 
 	int getNumBrushes() const { return (int)_brushes.size(); }
 	void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength, const float weight);
@@ -44,6 +45,7 @@ public:
 	void applyBrushes(const Matrix4x4& transform, float deltaTime, bool symmetry);
 	std::vector<ci::Vec3f> brushPositions() const;
 	std::vector<float> brushWeights() const;
+  std::vector<float> brushRadii() const;
 	const BrushVector& getBrushes() const;
   
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -55,6 +57,11 @@ private:
     void laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts);
     void reflectBrush(Brush& brush, int axis);
     void transformBrush(const Matrix4x4& transform, float deltaTime, Brush& brush);
+
+    static inline float falloff(float dist) {
+      const float mult = 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
+      return mult*mult;
+    }
 
 private:
 

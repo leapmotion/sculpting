@@ -21,8 +21,8 @@ ClayDemoApp::ClayDemoApp()
 	, _draw_ui(true)
 	, _mouse_down(false)
 	, _fov(60.0f)
-	, _cam_dist(3.0f)
-	, _exposure(0.0f)
+	, _cam_dist(MIN_CAMERA_DIST)
+	, _exposure(1.0f)
 	, _use_ao(false)
 	, _only_ao(false)
 	, _contrast(1.2f)
@@ -83,15 +83,6 @@ int ClayDemoApp::loadFile()
 			mesh_->startPushState();
 			sculpt_.setMesh(mesh_);
 			err = 1;
-#if 0
-			camera_.setGlobalScale(length);
-			camera_.zoom(-0.4f);
-			if (QPushButton *colorButton = window_->getColorButton())
-				colorButton->setPalette(QPalette(QColor(mesh_->getColor())));
-			if (QButtonGroup *shaderButtonGroup = window_->getShaderButtonGroup())
-				shaderButtonGroup->button(mesh_->getShader())->setChecked(true);
-			updateMeshInformation();
-#endif
 		}
 	}
 
@@ -140,7 +131,13 @@ void ClayDemoApp::setBrushMode(const std::string& str) {
 	} else if (str == "Sweep") {
 		sculpt_.setSculptMode(Sculpt::SWEEP);
 		_brush_color = Color(0.5f, 0.5f, 0.5f);
-	}
+	} else if (str == "Push") {
+    sculpt_.setSculptMode(Sculpt::PUSH);
+    _brush_color = Color(0.5f, 0.5f, 0.5f);
+  } else if (str == "Pull") {
+    sculpt_.setSculptMode(Sculpt::PULL);
+    _brush_color = Color(0.5f, 0.5f, 0.5f);
+  }
 }
 
 void ClayDemoApp::setBrushSize(const std::string& str)
@@ -152,19 +149,19 @@ void ClayDemoApp::setBrushSize(const std::string& str)
 	float size = 0.0f;
   if (str == "X-Small")
   {
-    size = 4.0f;
+    size = 5.0f;
   }
 	else if (str == "Small")
 	{
-		size = 20.0f;
+		size = 15.0f;
 	}
 	else if (str == "Medium")
 	{
-		size = 35.0f;
+		size = 25.0f;
 	}
 	else if (str == "Large")
 	{
-		size = 50.0f;
+		size = 40.0f;
 	}
 	_leap_interaction->setBrushRadius(size);
 }
@@ -442,6 +439,8 @@ void ClayDemoApp::setup()
 	_ui->addElement(UIElement("Smooth", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 	_ui->addElement(UIElement("Flatten", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 	_ui->addElement(UIElement("Sweep", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  _ui->addElement(UIElement("Push", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  _ui->addElement(UIElement("Pull", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 
 	// Editing nodes
 	_ui->addElement(UIElement("Fullscreen", boost::bind(&ClayDemoApp::toggleFullscreen, this, ::_1)), "Editing");
@@ -760,16 +759,14 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	_material_shader.uniform( "refractionBias", _refraction_bias );
 	_material_shader.uniform( "refractionIndex", _refraction_index );
 	_material_shader.uniform( "numLights", sculpt_.getNumBrushes() );
-	_material_shader.uniform( "lightPositions", sculpt_.brushPositions().data(), sculpt_.getNumBrushes() );
-	_material_shader.uniform( "lightWeights", sculpt_.brushWeights().data(), sculpt_.getNumBrushes() );
+	_material_shader.uniform( "brushPositions", sculpt_.brushPositions().data(), sculpt_.getNumBrushes() );
+	_material_shader.uniform( "brushWeights", sculpt_.brushWeights().data(), sculpt_.getNumBrushes() );
+  _material_shader.uniform( "brushRadii", sculpt_.brushRadii().data(), sculpt_.getNumBrushes() );
 	_material_shader.uniform( "lightColor", 0.15f*_brush_color );
 	_material_shader.uniform( "lightExponent", 30.0f);
 	_material_shader.uniform( "lightRadius", 3.0f);
 	if (mesh_) {
 		glPushMatrix();
-		if (_draw_edges) {
-			
-		}
 		mesh_->draw(vertex, normal);
     if (_draw_edges) {
     	_material_shader.uniform( "reflectionFactor", 0.0f );
@@ -785,6 +782,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	}
 
 	// draw brushes
+#if 0
 	_material_shader.uniform( "transform", Matrix44f::identity() );
 	_material_shader.uniform( "transformit", Matrix44f::identity() );
 	_material_shader.uniform( "useRefraction", false);
@@ -799,32 +797,23 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 		_material_shader.uniform("alphaMult", brushes[i]._weight);
 		const Vector3& pos = brushes[i]._position;
 		ci::Vec3f temp(pos.x(), pos.y(), pos.z());
-		//gl::drawSphere(invScale*temp, invScale*brushes[i]._radius/2.0f, 30);
-		gl::drawSphere(temp, brushes[i]._radius/2.0f, 30);
+		gl::drawSphere(temp, brushes[i]._radius, 30);
 	}
 	_environment->unbindCubeMap(0);
 	_environment->unbindCubeMap(1);
 	_material_shader.unbind();
-	
-#if 0
-	glPushMatrix();
-	glMultMatrixf((float*)&_transform);
-	if( _draw_edges )
-	{
-		glLineWidth(1);
-		glDisable(GL_TEXTURE_2D);
-		glColor3f(0,1,0);
-		_mesh->drawEdges();
+#else
+	_environment->unbindCubeMap(0);
+	_environment->unbindCubeMap(1);
+	_material_shader.unbind();
+  const BrushVector& brushes = sculpt_.getBrushes();
+	for (size_t i=0; i<brushes.size(); i++) {
+		const Vector3& pos = brushes[i]._position;
+    ColorA color(_brush_color, 0.25f);
+    gl::color(color);
+		ci::Vec3f temp(pos.x(), pos.y(), pos.z());
+		gl::drawSphere(temp, brushes[i]._radius, 30);
 	}
-
-	if( _draw_normals )
-	{
-		glLineWidth(1);
-		glDisable(GL_TEXTURE_2D);
-		glColor3f(0,0,1);
-		_mesh->drawNormals(0.2f);
-	}
-	glPopMatrix();
 #endif
 
 	if (_draw_ui) 

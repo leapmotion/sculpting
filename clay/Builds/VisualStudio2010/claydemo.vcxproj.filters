@@ -165,21 +165,53 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\resources\blur-frag.glsl" />
-    <None Include="..\..\resources\blur-vert.glsl" />
-    <None Include="..\..\resources\blur_horizontal-frag.glsl" />
-    <None Include="..\..\resources\blur_horizontal-vert.glsl" />
-    <None Include="..\..\resources\blur_vertical-frag.glsl" />
-    <None Include="..\..\resources\blur_vertical-vert.glsl" />
-    <None Include="..\..\resources\light_clamp-frag.glsl" />
-    <None Include="..\..\resources\light_clamp-vert.glsl" />
-    <None Include="..\..\resources\material-frag.glsl" />
-    <None Include="..\..\resources\material-vert.glsl" />
-    <None Include="..\..\resources\metaball-frag.glsl" />
-    <None Include="..\..\resources\metaball-vert.glsl" />
-    <None Include="..\..\resources\screen-frag.glsl" />
-    <None Include="..\..\resources\screen-vert.glsl" />
-    <None Include="..\..\resources\sky-frag.glsl" />
-    <None Include="..\..\resources\sky-vert.glsl" />
+    <None Include="..\..\resources\blur-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\blur-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\blur_horizontal-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\blur_horizontal-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\blur_vertical-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\blur_vertical-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\light_clamp-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\light_clamp-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\material-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\material-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\metaball-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\metaball-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\screen-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\screen-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\sky-frag.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\resources\sky-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -84,7 +84,7 @@ void LeapInteraction::interact()
 		if (lengthZ > Z_NEUTRAL_RADIUS_SQ && lengthZ < BORDER_MULT*Z_NEUTRAL_RADIUS_SQ)
 		{
 			float mult = math<float>::clamp(lengthZ - Z_NEUTRAL_RADIUS_SQ);
-			cur_dzoom += ui_mult*mult*diffZ*ZOOM_SPEED;
+			cur_dzoom += 0.01f*ui_mult*mult*diffZ*ZOOM_SPEED;
 		}
 
 		// compute screen-space coordinate of this finger

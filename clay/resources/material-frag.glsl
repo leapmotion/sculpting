@@ -17,8 +17,9 @@ uniform float refractionBias;
 uniform float refractionIndex;
 
 uniform int numLights;
-uniform vec3 lightPositions[MAX_LIGHTS];
-uniform float lightWeights[MAX_LIGHTS];
+uniform vec3 brushPositions[MAX_LIGHTS];
+uniform float brushWeights[MAX_LIGHTS];
+uniform float brushRadii[MAX_LIGHTS];
 uniform vec3 lightColor;
 uniform float lightExponent;
 uniform float lightRadius;
@@ -36,17 +37,22 @@ void main()
 	vec3 ambientcolor = vec3(ambientFactor);
 	vec3 diffusecolor = textureCube(irradiance, normal).rgb * diffuseFactor;
 	vec3 reflectcolor = textureCube(radiance, reflectray, reflectionBias).rgb * reflectionFactor;
+
+  vec3 highlightColor = vec3(0);
 	
 	for (int i=0; i<numLights && i<MAX_LIGHTS; i++)
 	{
-		float lightdist = length(lightPositions[i] - worldPosition);
-		vec3 lightdir = (lightPositions[i] - worldPosition)/lightdist;
+		float lightdist = length(brushPositions[i] - worldPosition);
+		vec3 lightdir = (brushPositions[i] - worldPosition)/lightdist;
+    if (lightdist > brushRadii[i]*0.98 && lightdist < brushRadii[i]*1.02) {
+      highlightColor += lightColor;
+    }
 		float d = clamp(dot(lightdir, normal), 0.0, 1.0);
 		vec3 r = normalize(reflect(lightdir, normal));
 		float s = pow(clamp(dot(r, eyedir), 0.0, 1.0), lightExponent);
 		float falloff = clamp(1.0 - lightdist/lightRadius, 0.0, 1.0);
-		diffusecolor += lightWeights[i]*falloff*d*lightColor;
-		reflectcolor += lightWeights[i]*falloff*reflectionFactor*s*lightColor;
+		diffusecolor += brushWeights[i]*falloff*d*lightColor;
+		reflectcolor += brushWeights[i]*falloff*reflectionFactor*s*lightColor;
 	}
 
 	vec3 blend;
@@ -61,5 +67,5 @@ void main()
 		blend = mix((1.0-alpha)*reflectcolor, reflectcolor, diffuseFactor);
 	}
 
-	gl_FragColor = vec4((ambientcolor+diffusecolor)*surfaceColor + blend, alpha);
+	gl_FragColor = vec4((ambientcolor+diffusecolor)*surfaceColor + blend + highlightColor, alpha);
 }
