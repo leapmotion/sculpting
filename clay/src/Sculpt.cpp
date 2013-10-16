@@ -5,7 +5,7 @@
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), intensity_(0.5f), sculptMode_(INFLATE), topoMode_(ADAPTIVE), centerPoint_(Vector3::Zero()), culling_(false),
     detail_(1.0f), thickness_(0.5f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), sweepCenter_(Vector3::Zero()), sweepDir_(Vector3::Zero()),
-    prevTransform_(Matrix4x4::Identity()), deltaTime_(0.0f), minDetailMult_(0.05)
+    prevTransform_(Matrix4x4::Identity()), deltaTime_(0.0f), minDetailMult_(0.05), prevSculpt_(false)
 {}
 
 /** Destructor */
@@ -409,30 +409,48 @@ void Sculpt::clearBrushes()
     _brushes.clear();
 }
 
-void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime)
+void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime, bool symmetry)
 {
   deltaTime_ = deltaTime;
   std::vector<int> vertices;
+  bool haveSculpt = false;
 	// *** first calculate brush positions transformed into object space ***
 	for(size_t b=0; b<_brushes.size(); ++b)
 	{
+    if (symmetry) {
+      vertices.clear();
+      reflectBrush(_brushes[b], 0);
+      transformBrush(transform, deltaTime, _brushes[b]);
+
+      mesh_->getVerticesInsideSphere(_brushes[b]._transformed_position, _brushes[b]._transformed_radius_squared, vertices);
+      if (!vertices.empty()) {
+        if (!haveSculpt && !prevSculpt_) {
+          mesh_->startPushState();
+        }
+        haveSculpt = true;
+        sculptMesh(vertices, _brushes[b]._transformed_position, _brushes[b]._transformed_velocity, _brushes[b]._transformed_radius_squared, Vector3::UnitZ(), _brushes[b]._strength);
+      }
+      reflectBrush(_brushes[b], 0);
+    }
+
     vertices.clear();
-		Vector4 temp;
-		temp << _brushes[b]._position, 0;
-		_brushes[b]._transformed_position = (transform * temp).head<3>();
-    Vector3 modelVel = (_brushes[b]._transformed_position - (prevTransform_ * temp).head<3>())/deltaTime;
-		_brushes[b]._transformed_radius = _brushes[b]._radius;
-		_brushes[b]._transformed_radius_squared = _brushes[b]._transformed_radius*_brushes[b]._transformed_radius;
-    temp << _brushes[b]._velocity, 0;
-    _brushes[b]._transformed_velocity = (transform * temp).head<3>() + 100.0f*modelVel;
+    transformBrush(transform, deltaTime, _brushes[b]);
 
 		mesh_->getVerticesInsideSphere(_brushes[b]._transformed_position, _brushes[b]._transformed_radius_squared, vertices);
     if (!vertices.empty()) {
+      if (!haveSculpt && !prevSculpt_) {
+        mesh_->startPushState();
+      }
+      haveSculpt = true;
 		  sculptMesh(vertices, _brushes[b]._transformed_position, _brushes[b]._transformed_velocity, _brushes[b]._transformed_radius_squared, Vector3::UnitZ(), _brushes[b]._strength);
     }
 	}
+  if (!haveSculpt && prevSculpt_) {
+    mesh_->checkLeavesUpdate();
+  }
 
   prevTransform_ = transform;
+  prevSculpt_ = haveSculpt;
 }
 
 std::vector<ci::Vec3f> Sculpt::brushPositions() const
@@ -459,4 +477,21 @@ std::vector<float> Sculpt::brushWeights() const
 
 const BrushVector& Sculpt::getBrushes() const {
 	return _brushes;
+}
+
+void Sculpt::reflectBrush(Brush& brush, int axis) {
+  brush._position[axis] *= -1;
+  brush._direction[axis] *= -1;
+  brush._velocity[axis] *= -1;
+}
+
+void Sculpt::transformBrush(const Matrix4x4& transform, float deltaTime, Brush& brush) {
+  Vector4 temp;
+  temp << brush._position, 0;
+  brush._transformed_position = (transform * temp).head<3>();
+  Vector3 modelVel = (brush._transformed_position - (prevTransform_ * temp).head<3>())/deltaTime;
+  brush._transformed_radius = brush._radius;
+  brush._transformed_radius_squared = brush._transformed_radius*brush._transformed_radius;
+  temp << brush._velocity, 0;
+  brush._transformed_velocity = (transform * temp).head<3>() + 100.0f*modelVel;
 }

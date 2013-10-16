@@ -41,7 +41,7 @@ public:
 	int getNumBrushes() const { return (int)_brushes.size(); }
 	void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength, const float weight);
 	void clearBrushes();
-	void applyBrushes(const Matrix4x4& transform, float deltaTime);
+	void applyBrushes(const Matrix4x4& transform, float deltaTime, bool symmetry);
 	std::vector<ci::Vec3f> brushPositions() const;
 	std::vector<float> brushWeights() const;
 	const BrushVector& getBrushes() const;
@@ -53,6 +53,8 @@ private:
     Vector3 areaNormal(const std::vector<int> &iVerts);
     Vector3 areaCenter(const std::vector<int> &iVerts);
     void laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts);
+    void reflectBrush(Brush& brush, int axis);
+    void transformBrush(const Matrix4x4& transform, float deltaTime, Brush& brush);
 
 private:
 
@@ -73,6 +75,7 @@ private:
     float deltaTime_;
     float minDetailMult_;
     Matrix4x4 prevTransform_;
+    bool prevSculpt_;
 
 		BrushVector _brushes;
 };

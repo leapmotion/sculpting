@@ -589,9 +589,10 @@ void ClayDemoApp::keyDown( KeyEvent event )
 	{
 		case KeyEvent::KEY_ESCAPE: quit(); break;
 		case 'u': _draw_ui = !_draw_ui; break;
-		case 'l': loadFile(); break;
-		case 's': saveFile(); break;
 		case 'o': if (mesh_) { mesh_->toggleDisplayOctree(); } break;
+    case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
+    case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
+    case 's': symmetry_ = !symmetry_; break;
 	}
 }
 
@@ -634,10 +635,8 @@ void ClayDemoApp::update()
   double curTime = ci::app::getElapsedSeconds();
 
 	if (mesh_) {
-		if (sculpt_.getNumBrushes() > 0) {
-      Matrix4x4 transformInv(_transform_inv);
-			sculpt_.applyBrushes(transformInv, static_cast<float>(curTime - _last_update_time));
-		}
+    Matrix4x4 transformInv(_transform_inv);
+		sculpt_.applyBrushes(transformInv, static_cast<float>(curTime - _last_update_time), symmetry_);
 	}
 
   _last_update_time = curTime;
