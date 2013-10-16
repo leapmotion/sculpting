@@ -2,8 +2,9 @@
 #include "Octree.h"
 #include <iostream>
 
-const float Mesh::globalScale_ = 5.f;
+const float Mesh::globalScale_ = 500.f;
 int Mesh::stateMask_ = 1;
+const int undoLimit_ = 10;
 
 /** Constructor */
 Mesh::Mesh() : center_(Vector3::Zero()), scale_(1),
@@ -297,9 +298,11 @@ void Mesh::initVBO()
 	const int nbTriangles = getNbTriangles();
 	const int verticesBytes = nbVertices*3*sizeof(GLfloat)*2;
 	const int indicesBytes = nbTriangles*3*sizeof(GLuint)*2;
+
 	GLfloat* verticesArray=(GLfloat*)malloc(verticesBytes);
 	GLfloat* normalsArray=(GLfloat*)malloc(verticesBytes);
 	GLuint* indicesArray=(GLuint*)malloc(indicesBytes);
+
 #pragma omp parallel for
 	for (int i=0;i<nbVertices;++i)
 	{
@@ -319,6 +322,7 @@ void Mesh::initVBO()
 		normalsArray[i*3+1]=normal.y();
 		normalsArray[i*3+2]=normal.z();
 	}
+
 #pragma omp parallel for
 	for (int i=0;i<nbTriangles;++i)
 	{
@@ -430,11 +434,8 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 	if(nbIndicesBuffer>getNbTriangles() && nbVerticesBuffer>getNbVertices())
 	{
 		updateIndexBuffer(iTris);
-		assert(_CrtCheckMemory());
 		updateVertexBuffer(iVerts);
-		assert(_CrtCheckMemory());
 		updateNormalBuffer(iVerts);
-		assert(_CrtCheckMemory());
 	}
 	else
 	{
@@ -633,10 +634,11 @@ VertexVector& Mesh::getVerticesState() { return undoIte_->vState_; }
 void Mesh::startPushState()
 {
 	++Mesh::stateMask_;
-	if(beginIte_)
+	if(beginIte_) {
 		undo_.clear();
-	else if(undo_.size()>10)
+  } else if(undo_.size()>undoLimit_) {
 		undo_.pop_front();
+  }
 	beginIte_ = false;
 	redo_.clear();
 	if(undo_.size())
@@ -687,8 +689,9 @@ void Mesh::pushState(const std::vector<int> &iTris, const std::vector<int> &iVer
 /** Undo (also push_back the redo) */
 void Mesh::undo()
 {
-	if(!undo_.size() || beginIte_)
+	if(!undo_.size() || beginIte_) {
 		return;
+  }
 	State redo;
 	int nbTriangles = triangles_.size();
 	int nbVertices = vertices_.size();
@@ -748,14 +751,16 @@ void Mesh::undo()
 	for(int i=0;i<nbTris;++i)
 	{
 		Triangle &t = tUndoState[i];
-		if(t.id_<nbTrianglesState)
+		if(t.id_<nbTrianglesState) {
 			triangles_[t.id_] = t;
+    }
 	}
 	for(int i=0;i<nbVerts;++i)
 	{
 		Vertex &v = vUndoState[i];
-		if(v.id_<nbVerticesState)
+		if(v.id_<nbVerticesState) {
 			vertices_[v.id_] = v;
+    }
 	}
 	recomputeOctree(undoIte_->aabbState_);
 	initVBO();
@@ -766,14 +771,17 @@ void Mesh::undo()
 		--undoIte_;
 	}
 	else
+  {
 		beginIte_ = true;
+  }
 }
 
 /** Redo */
 void Mesh::redo()
 {
-	if(!redo_.size())
+	if(!redo_.size()) {
 		return;
+  }
 	std::list<State>::iterator redoIte_ = redo_.end();
 	--redoIte_;
 	int nbTrianglesState  = redoIte_->nbTrianglesState_;
@@ -796,10 +804,11 @@ void Mesh::redo()
 	}
 	recomputeOctree(redoIte_->aabbState_);
 	initVBO();
-	if(!beginIte_)
+	if(!beginIte_) {
 		++undoIte_;
-	else
+  } else {
 		beginIte_ = false;
+  }
 	redo_.pop_back();
 }
 
@@ -809,8 +818,9 @@ void Mesh::recomputeOctree(const Aabb &aabbSplit)
 	int nbTriangles = triangles_.size();
 	std::vector<int> triangles(nbTriangles);
 #pragma omp parallel for
-	for (int i=0;i<nbTriangles;++i)
+	for (int i=0;i<nbTriangles;++i) {
 		triangles[i] = i;
+  }
 	++Triangle::tagMask_;
 	delete octree_;
 	octree_ = new Octree();

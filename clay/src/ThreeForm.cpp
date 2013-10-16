@@ -6,9 +6,9 @@
 
 const float CAMERA_SPEED = 0.005f;
 
-const float MIN_CAMERA_DIST = 2.5f;
-const float MAX_CAMERA_DIST = 3.5f;
-const float SPHERE_RADIUS = 500.0f;
+const float MIN_CAMERA_DIST = 250.0f;
+const float MAX_CAMERA_DIST = 350.0f;
+const float SPHERE_RADIUS = 50000.0f;
 const float MIN_FOV = 50.0f;
 const float MAX_FOV = 90.0f;
 
@@ -152,19 +152,19 @@ void ClayDemoApp::setBrushSize(const std::string& str)
 	float size = 0.0f;
   if (str == "X-Small")
   {
-    size = 0.04f;
+    size = 4.0f;
   }
 	else if (str == "Small")
 	{
-		size = 0.2f;
+		size = 20.0f;
 	}
 	else if (str == "Medium")
 	{
-		size = 0.35f;
+		size = 35.0f;
 	}
 	else if (str == "Large")
 	{
-		size = 0.5f;
+		size = 50.0f;
 	}
 	_leap_interaction->setBrushRadius(size);
 }
@@ -544,7 +544,7 @@ void ClayDemoApp::resize()
 	campos.y = sinf(_phi)*_cam_dist;
 	campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
 	_camera.lookAt(campos,Vec3f(0,0,0),Vec3f(0,1,0));
-	_camera.setPerspective( _fov, getWindowAspectRatio(), 0.1f, 1000.f );
+	_camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
 	setMatrices( _camera );
 	_ui->setWindowSize( Vec2i(width, height) );
 	glEnable(GL_FRAMEBUFFER_SRGB);
@@ -615,7 +615,7 @@ void ClayDemoApp::update()
 	campos.y = sinf(_phi)*_cam_dist;
 	campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
 	_camera.lookAt(campos,Vec3f(0,0,0),Vec3f(0,1,0));
-	_camera.setPerspective( _fov, getWindowAspectRatio(), 0.1f, 1000.f );
+	_camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
 	_camera.getProjectionMatrix();
 	bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
 	_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress);

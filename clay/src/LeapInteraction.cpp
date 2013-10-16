@@ -44,8 +44,7 @@ void LeapInteraction::interact()
 	static const float AGE_WARMUP_TIME = 0.75;
 
 	// create brushes
-	static const float LEAP_SCALE = 0.01f;
-	static const Vec3f LEAP_OFFSET = LEAP_SCALE*Vec3f(0, 200, 150);
+	static const Vec3f LEAP_OFFSET(0, 200, 150);
 	Leap::PointableList pointables = _cur_frame.pointables();
 	const float ui_mult = 1.0f - _ui->maxActivation();
 	const int num_pointables = pointables.count();
@@ -56,7 +55,7 @@ void LeapInteraction::interact()
 		Leap::Vector tip_pos = pointables[i].tipPosition();
 		Leap::Vector tip_dir = pointables[i].direction();
     Leap::Vector tip_vel = pointables[i].tipVelocity();
-		Vec3f pos = LEAP_SCALE*Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
+		Vec3f pos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
 		Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
     Vec3f vel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
 		Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
@@ -74,7 +73,7 @@ void LeapInteraction::interact()
 		diffXY = diffXY.normalized();
 		float lengthZ = diffZ*diffZ;
 		static const float XY_NEUTRAL_RADIUS_SQ = 1.0f;
-		static const float Z_NEUTRAL_RADIUS_SQ = (100.0f*LEAP_SCALE)*(100.0f*LEAP_SCALE);
+		static const float Z_NEUTRAL_RADIUS_SQ = 100.0f * 100.0f;
 		static const float BORDER_MULT = 6.0f;
 		if (lengthXY > XY_NEUTRAL_RADIUS_SQ && lengthXY < BORDER_MULT*XY_NEUTRAL_RADIUS_SQ)
 		{

@@ -390,6 +390,7 @@ void Sculpt::sweep(const std::vector<int> &iVerts, float radiusSquared, float in
             vert+=sweepDir_*std::min(d2Move_,deformationIntensity*fallOff);
         }
     }
+    //smooth(iVerts, 0.25f*intensity);
 }
 
 void Sculpt::addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength, const float weight)

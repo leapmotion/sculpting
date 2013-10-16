@@ -63,7 +63,7 @@
       <AdditionalIncludeDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;..\..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>osdCPUd.lib;osdGPUd.lib;cinder_d.lib;Leapd.lib;glew32s.lib;glu32.lib;FreeImaged.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cinder_d.lib;Leapd.lib;glu32.lib;FreeImaged.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\lib;$(LIBRARIES_PATH)\glew-1.9.0-mt\lib;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -78,7 +78,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\include;$(LIBRARIES_PATH)\glew-1.9.0-mt\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -96,8 +96,8 @@
       <AdditionalIncludeDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;..\..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;Leap.lib;osdCPU.lib;osdGPU.lib;glew32s.lib;FreeImage.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\lib;$(LIBRARIES_PATH)\glew-1.9.0-mt\lib;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;Leap.lib;FreeImage.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
