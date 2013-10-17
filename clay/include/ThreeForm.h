@@ -135,6 +135,7 @@ private:
 	bool symmetry_;
 	float sumDisplacement_;
 	bool sculptStart_;
+  bool drawOctree_;
 };
 
 #endif

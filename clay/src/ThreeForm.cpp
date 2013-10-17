@@ -29,6 +29,7 @@ ClayDemoApp::ClayDemoApp()
 	, mesh_(0)
 	, symmetry_(false)
   , _last_update_time(0.0)
+  , drawOctree_(false)
 {
 }
 
@@ -588,7 +589,7 @@ void ClayDemoApp::keyDown( KeyEvent event )
 	{
 		case KeyEvent::KEY_ESCAPE: quit(); break;
 		case 'u': _draw_ui = !_draw_ui; break;
-		case 'o': if (mesh_) { mesh_->toggleDisplayOctree(); } break;
+		case 'o': drawOctree_ = !drawOctree_; break;
     case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
     case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
     case 's': symmetry_ = !symmetry_; break;
@@ -815,6 +816,10 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 		gl::drawSphere(temp, brushes[i]._radius, 30);
 	}
 #endif
+
+  if (drawOctree_) {
+    mesh_->drawOctree();
+  }
 
 	if (_draw_ui) 
 	{

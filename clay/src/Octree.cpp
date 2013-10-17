@@ -104,8 +104,10 @@ void Octree::constructCells(Mesh *mesh)
 /** Draw the octree */
 void Octree::draw() const
 {
-    aabbSplit_.draw(QColor(0,255,0));
-    aabbLoose_.draw(QColor(255,0,0));
+  glColor3f(0, 1, 0);
+    aabbSplit_.draw();
+    glColor3f(1, 0, 0);
+    aabbLoose_.draw();
     if (child_[0]!=0)
         for (int i=0;i<8;++i)
             child_[i]->draw();

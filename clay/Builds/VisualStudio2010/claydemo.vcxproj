@@ -118,6 +118,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Aabb.cpp" />
+    <ClCompile Include="..\..\src\Brush.cpp" />
     <ClCompile Include="..\..\src\Camera.cpp" />
     <ClCompile Include="..\..\src\CBBoxInt32.cpp" />
     <ClCompile Include="..\..\src\CCubeMapProcessor.cpp" />
@@ -125,6 +126,7 @@
     <ClCompile Include="..\..\src\Environment.cpp" />
     <ClCompile Include="..\..\src\Files.cpp" />
     <ClCompile Include="..\..\src\Geometry.cpp" />
+    <ClCompile Include="..\..\src\GLBuffer.cpp" />
     <ClCompile Include="..\..\src\Grid.cpp" />
     <ClCompile Include="..\..\src\LeapInteraction.cpp" />
     <ClCompile Include="..\..\src\LeapListener.cpp" />
@@ -144,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Aabb.h" />
+    <ClInclude Include="..\..\include\Brush.h" />
     <ClInclude Include="..\..\include\Camera.h" />
     <ClInclude Include="..\..\include\CBBoxInt32.h" />
     <ClInclude Include="..\..\include\CCubeMapProcessor.h" />
@@ -152,6 +155,7 @@
     <ClInclude Include="..\..\include\Environment.h" />
     <ClInclude Include="..\..\include\Files.h" />
     <ClInclude Include="..\..\include\Geometry.h" />
+    <ClInclude Include="..\..\include\GLBuffer.h" />
     <ClInclude Include="..\..\include\Grid.h" />
     <ClInclude Include="..\..\include\LeapInteraction.h" />
     <ClInclude Include="..\..\include\LeapListener.h" />

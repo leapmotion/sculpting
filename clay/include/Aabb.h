@@ -23,7 +23,7 @@ public:
     bool intersectRay(const Vector3& vert, const Vector3& dir) const;
     bool intersectSphere(const Vector3& vert, float radiusSquared) const;
     void checkFlat(float offset);
-    void draw(const QColor &color) const;
+    void draw() const;
 		Vector3 closestPoint(const Vector3& vert) const;
 
 public :

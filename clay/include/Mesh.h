@@ -13,6 +13,8 @@
 #include "State.h"
 #include "omp.h"
 #include "Geometry.h"
+#include "GLBuffer.h"
+#include "Brush.h"
 
 class Octree;
 
@@ -40,8 +42,6 @@ public:
 	Octree* getOctree() const;
 	float getScale() const;
 	void setIsSelected(bool);
-	bool getDisplayOctree() const;
-	void toggleDisplayOctree();
 	Matrix4x4& getTransformation();
 	Matrix4x4 getInverseTransformation() const;
 
@@ -57,6 +57,7 @@ public:
 	void setTransformation(const Matrix4x4& matTransform);
 
 	void draw(GLint vertex, GLint normal);
+  void drawOctree() const;
 	void initVBO();
 	void initMesh();
 
@@ -80,65 +81,6 @@ public:
 
 private:
 
-	class GLBuffer {
-	public:
-		GLBuffer(GLenum type) : type_(type), buffer_(0) { }
-		void create() {
-			glGenBuffers(1, &buffer_);
-			checkError();
-		}
-		void setUsagePattern(GLenum pattern) {
-			pattern_ = pattern;
-		}
-		void bind() {
-			glBindBuffer(type_, buffer_);
-			checkError();
-		}
-		void allocate(const void* data, int count) {
-			glBufferData(type_, count, data, pattern_);
-			checkError();
-		}
-		void release() {
-			glBindBuffer(type_, 0);
-			checkError();
-		}
-		int size() const {
-			GLint value = -1;
-			glGetBufferParameteriv(type_, GL_BUFFER_SIZE, &value);
-			checkError();
-			return value;
-		}
-		void* map(GLuint access) {
-			void* ptr = glMapBufferARB(type_, access);
-			if (ptr == NULL) {
-				std::cout << "asdf" << std::endl;
-			}
-			checkError();
-			return ptr;
-		}
-		bool unmap() {
-			bool result = glUnmapBufferARB(type_) == GL_TRUE;
-			checkError();
-			return result;
-		}
-		bool isCreated() const {
-			return buffer_ != 0;
-		}
-		void destroy() {
-			glDeleteBuffers(1, &buffer_);
-		}
-		static void checkError() {
-			GLenum err = glGetError();
-			if (err != GL_NO_ERROR) {
-				std::cout << err << std::endl;
-			}
-		}
-	private:
-		GLenum pattern_;
-		GLuint buffer_;
-		GLenum type_;
-	};
-
 	void updateOctree(const std::vector<int> &iTris);
 	void updateNormals(const std::vector<int> &iVerts);
 	float angleTri(int iTri, int iVer);
@@ -155,7 +97,6 @@ private:
 	Vector3 center_; //center of mesh
 	float scale_; //scale
 	Octree *octree_; //octree
-	bool displayOctree_; //if the octree is displayed
 	Matrix4x4 matTransform_; //transformation matrix of the mesh
 	GLfloat matTransformArray_[16]; //transformation matrix of the mesh (openGL)
 	std::vector<Octree*> leavesUpdate_; //leaves of the octree to check

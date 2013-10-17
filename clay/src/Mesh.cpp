@@ -8,8 +8,8 @@ const int undoLimit_ = 10;
 
 /** Constructor */
 Mesh::Mesh() : center_(Vector3::Zero()), scale_(1),
-	octree_(0), displayOctree_(false), matTransform_(Matrix4x4::Identity()), beginIte_(false),
-	verticesBuffer_(GL_ARRAY_BUFFER), normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER)
+	octree_(0), matTransform_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
+  normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER)
 {
 	updateTransformation();
 }
@@ -31,8 +31,6 @@ int Mesh::getNbVertices() const { return vertices_.size(); }
 Vector3 Mesh::getCenter() const { return center_; }
 Octree* Mesh::getOctree() const { return octree_; }
 float Mesh::getScale() const { return scale_; }
-bool Mesh::getDisplayOctree() const { return displayOctree_; }
-void Mesh::toggleDisplayOctree() { displayOctree_=!displayOctree_; }
 Matrix4x4& Mesh::getTransformation() { return matTransform_; }
 Matrix4x4 Mesh::getInverseTransformation() const { return matTransform_.inverse(); }
 
@@ -283,12 +281,13 @@ void Mesh::draw(GLint vertex, GLint normal) {
 
 	normalsBuffer_.release();
 	verticesBuffer_.release();
-	if (displayOctree_) {
-		glPushMatrix();
-		glMultMatrixf(matTransformArray_);
-		octree_->draw();
-		glPopMatrix();
-	}
+}
+
+void Mesh::drawOctree() const {
+	glPushMatrix();
+	glMultMatrixf(matTransformArray_);
+	octree_->draw();
+	glPopMatrix();
 }
 
 /** Initialize Vertex Buffer Object (VBO) */
@@ -336,27 +335,24 @@ void Mesh::initVBO()
 		verticesBuffer_.destroy();
 	}
 	verticesBuffer_.create();
-	verticesBuffer_.setUsagePattern(GL_DYNAMIC_DRAW);
 	verticesBuffer_.bind();
-	verticesBuffer_.allocate(verticesArray, verticesBytes);
+	verticesBuffer_.allocate(verticesArray, verticesBytes, GL_DYNAMIC_DRAW);
 	verticesBuffer_.release();
 
 	if (normalsBuffer_.isCreated()) {
 		normalsBuffer_.destroy();
 	}
 	normalsBuffer_.create();
-	normalsBuffer_.setUsagePattern(GL_DYNAMIC_DRAW);
 	normalsBuffer_.bind();
-	normalsBuffer_.allocate(normalsArray, verticesBytes);
+	normalsBuffer_.allocate(normalsArray, verticesBytes, GL_DYNAMIC_DRAW);
 	normalsBuffer_.release();
 
 	if (indicesBuffer_.isCreated()) {
 		indicesBuffer_.destroy();
 	}
 	indicesBuffer_.create();
-	indicesBuffer_.setUsagePattern(GL_DYNAMIC_DRAW);
 	indicesBuffer_.bind();
-	indicesBuffer_.allocate(indicesArray, indicesBytes);
+	indicesBuffer_.allocate(indicesArray, indicesBytes, GL_DYNAMIC_DRAW);
 	indicesBuffer_.release();
 
 	free(verticesArray);

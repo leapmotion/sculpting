@@ -108,10 +108,9 @@ void Aabb::checkFlat(float offset)
 }
 
 /** Draw the aabb */
-void Aabb::draw(const QColor &color) const
+void Aabb::draw() const
 {
     glBegin(GL_LINES);
-    glColor3f(color.red(), color.green(), color.blue());
     glVertex3f(min_.x(), min_.y(), min_.z());glVertex3f(max_.x(), min_.y(), min_.z());
     glVertex3f(max_.x(), min_.y(), min_.z());glVertex3f(max_.x(), max_.y(), min_.z());
     glVertex3f(max_.x(), max_.y(), min_.z());glVertex3f(min_.x(), max_.y(), min_.z());
