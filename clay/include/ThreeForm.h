@@ -114,6 +114,8 @@ private:
 	GlslProg _horizontal_blur_shader;
 	GlslProg _vertical_blur_shader;
 	GlslProg _screen_shader;
+  GlslProg _fxaa_shader;
+  bool _use_fxaa;
 	float _exposure; // hdr exposure
 	float _contrast;
 	bool _bloom_visible;

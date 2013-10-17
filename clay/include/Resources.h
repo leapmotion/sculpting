@@ -17,3 +17,5 @@
 #define RES_BLUR_VERTICAL_FRAG_GLSL           CINDER_RESOURCE( ../resources/, blur_vertical-frag.glsl, 129, GLSL )
 #define RES_SCREEN_VERT_GLSL                  CINDER_RESOURCE( ../resources/, screen-vert.glsl, 130, GLSL )
 #define RES_SCREEN_FRAG_GLSL                  CINDER_RESOURCE( ../resources/, screen-frag.glsl, 131, GLSL )
+#define RES_FXAA_VERT_GLSL                    CINDER_RESOURCE( ../resources/, fxaa-vert.glsl, 132, GLSL )
+#define RES_FXAA_FRAG_GLSL                    CINDER_RESOURCE( ../resources/, fxaa-frag.glsl, 133, GLSL )

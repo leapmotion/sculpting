@@ -181,6 +181,8 @@
     <None Include="..\..\resources\blur_horizontal-vert.glsl" />
     <None Include="..\..\resources\blur_vertical-frag.glsl" />
     <None Include="..\..\resources\blur_vertical-vert.glsl" />
+    <None Include="..\..\resources\fxaa-frag.glsl" />
+    <None Include="..\..\resources\fxaa-vert.glsl" />
     <None Include="..\..\resources\light_clamp-frag.glsl" />
     <None Include="..\..\resources\light_clamp-vert.glsl" />
     <None Include="..\..\resources\material-frag.glsl" />

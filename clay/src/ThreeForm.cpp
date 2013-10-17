@@ -30,6 +30,7 @@ ClayDemoApp::ClayDemoApp()
 	, symmetry_(false)
   , _last_update_time(0.0)
   , drawOctree_(false)
+  , _use_fxaa(true)
 {
 }
 
@@ -390,6 +391,7 @@ void ClayDemoApp::setup()
 	_params->addParam( "Bloom size", &_bloom_size, "min=0.0 max=2.0 step=0.01" );
 	_params->addParam( "Bloom strength", &_bloom_strength, "min=0.0 max=1.0 step=0.01" );
 	_params->addParam( "Bloom threshold", &_bloom_light_threshold, "min=0.0 max=2.0 step=0.01" );
+  _params->addParam( "Use FXAA", &_use_fxaa, "" );
 
 	_environment = new Environment();
 
@@ -402,10 +404,10 @@ void ClayDemoApp::setup()
 		_material_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
 		_metaball_shader = gl::GlslProg( loadResource( RES_METABALL_VERT_GLSL ), loadResource( RES_METABALL_FRAG_GLSL ) );
 		_sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
-//		_blur_shader = gl::GlslProg( loadResource( RES_BLUR_VERT_GLSL ), loadResource( RES_BLUR_FRAG_GLSL ) );
+    _fxaa_shader = gl::GlslProg( loadResource( RES_FXAA_VERT_GLSL ), loadResource( RES_FXAA_FRAG_GLSL ) );
 	} catch (gl::GlslProgCompileExc e) {
-		console() << e.what() << std::endl;
-		quit();	
+		std::cout << e.what() << std::endl;
+		quit();
 	}
 
 	sculpt_.clearBrushes();
@@ -516,14 +518,12 @@ void ClayDemoApp::resize()
 	height = std::max(DOWNSCALE_FACTOR, height);
 	Fbo::Format format;
 	format.setColorInternalFormat(GL_RGB32F_ARB);
+  format.enableDepthBuffer(false);
 	//format.setSamples( 4 ); // uncomment this to enable 4x antialiasing
 	//_screen_fbo = Fbo( width, height, format );
 	console() << "FBO size: " << width << "    " << height << "\n";
 
 	// set up blur FBOs
-	Fbo::Format blur_format;
-	blur_format.setColorInternalFormat(GL_RGB32F_ARB);
-	blur_format.enableDepthBuffer(false);
 	_color_fbo = Fbo( width, height, format );
 	_depth_fbo = Fbo( width, height, format );
 	_blur_fbo = Fbo( width, height, format );
@@ -834,13 +834,6 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 		setViewport( getWindowBounds() );
 		Matrix33f rot = _camera.getModelViewMatrix().subMatrix33(0, 0).inverted();
 		_ui->draw(_environment, rot);
-		if (mesh_) {
-			int tris = mesh_->getNbTriangles();
-			int verts = mesh_->getNbVertices();
-	    std::stringstream ss;
-			ss << getAverageFps() << " fps, " << tris << " triangles, " << verts << " vertices";
-			ci::gl::drawString(ss.str(), Vec2f(5.0f, 5.0f), ColorA::white(), Font("Arial", 18));
-		}
 		enableDepthRead();
 		enableDepthWrite();
 	}
@@ -957,6 +950,9 @@ void ClayDemoApp::draw()
 		_screen_fbo.bindTexture(0);
 		_vertical_blur_fbo.bindTexture(1);
 		_screen_fbo.getDepthTexture().bind(2);
+    if (_use_fxaa) {
+      _color_fbo.bindFramebuffer();
+    }
 		_screen_shader.bind();
 		_screen_shader.uniform( "color_texture", 0 );
 		_screen_shader.uniform( "bloom_texture", 1 );
@@ -975,18 +971,41 @@ void ClayDemoApp::draw()
 		_screen_fbo.unbindTexture();
 		_vertical_blur_fbo.unbindTexture();
 		_screen_fbo.getDepthTexture().unbind(2);
-	}
-	else
-	{
-		setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
-		static const float FONT_SIZE = 24.0f;
-		Font font("Arial", FONT_SIZE);
-		glPushMatrix();
-		gl::scale(1, -1);
-		gl::drawStringCentered("Loading...", Vec2f(width/2.0f, -height/2.0f), ColorA::white(), font);
-		glPopMatrix();
-	}
-		
+
+    if (_use_fxaa) {
+      _color_fbo.unbindFramebuffer();
+
+      _color_fbo.bindTexture(0);
+      _fxaa_shader.bind();
+      _fxaa_shader.uniform( "textureSampler", 0 );
+      _fxaa_shader.uniform( "texcoordOffset", Vec2f(1.0f/width, 1.0f/height) );
+      gl::drawSolidRect(Rectf(0,0,width,height));
+      _fxaa_shader.unbind();
+      _color_fbo.unbindTexture();
+    }
+
+    if (mesh_) {
+      int tris = mesh_->getNbTriangles();
+      int verts = mesh_->getNbVertices();
+      std::stringstream ss;
+      ss << getAverageFps() << " fps, " << tris << " triangles, " << verts << " vertices";
+      glPushMatrix();
+      gl::scale(1, -1);
+      ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));
+      glPopMatrix();
+    }
+  }
+  else
+  {
+    setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
+    static const float FONT_SIZE = 24.0f;
+    Font font("Arial", FONT_SIZE);
+    glPushMatrix();
+    gl::scale(1, -1);
+    gl::drawStringCentered("Loading...", Vec2f(width/2.0f, -height/2.0f), ColorA::white(), font);
+    glPopMatrix();
+  }
+
 	_params->draw(); // draw the interface
 }
 
@@ -997,10 +1016,12 @@ int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic::prepareLaunch();
   cinder::app::AppBasic *app = new ClayDemoApp;
   cinder::app::RendererRef ren(new RendererGl);
+  //cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
   cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo");
   cinder::app::AppBasic::cleanupLaunch();
   return 0;
 }
 #else
 CINDER_APP_NATIVE( ClayDemoApp, RendererGl )
+//CINDER_APP_NATIVE( ClayDemoApp, RendererGl(RendererGl::AA_NONE) )
 #endif
