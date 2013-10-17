@@ -14,7 +14,7 @@ class Sculpt
 {
 
 public:
-    enum SculptMode{INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PULL};
+    enum SculptMode{INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PULL, PAINT};
     enum TopoMode{DECIMATION, SUBDIVISION, UNIFORMISATION, ADAPTIVE, STATIC};
     Sculpt();
     ~Sculpt();
@@ -38,6 +38,7 @@ public:
     void smoothNoMp(const std::vector<int> &iVerts, bool flat = false);
     void sweep(const std::vector<int> &iVerts, float radiusSquared, float intensity);
     void airbrush(const std::vector<int> &iVerts, const Vector3& direction, float radiusSquared, float intensity);
+    void paint(const std::vector<int> &iVerts, float radiusSquared, int material, float intensity);
 
 	int getNumBrushes() const { return (int)_brushes.size(); }
 	void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength, const float weight);
@@ -83,6 +84,7 @@ private:
     float minDetailMult_;
     Matrix4x4 prevTransform_;
     bool prevSculpt_;
+    int material_;
 
 		BrushVector _brushes;
 };

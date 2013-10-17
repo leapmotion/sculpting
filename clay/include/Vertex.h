@@ -36,6 +36,7 @@ public:
     std::vector<int> tIndices_; //triangles indices around the vertex
     Vector3 normal_; //normal
     std::vector<int> ringVertices_; //vertices neighborhood (1-ring)
+    Vector3 material_;
 };
 
 bool operator<(const Vertex &a,const Vertex &b);

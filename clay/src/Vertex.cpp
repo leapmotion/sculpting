@@ -5,12 +5,12 @@ int Vertex::sculptMask_ = 1;
 
 /** Constructor */
 Vertex::Vertex(float x, float y, float z, int id) : Vector3(x, y, z), tagFlag_(1), sculptFlag_(1),
-    stateFlag_(1), id_(id), normal_(Vector3::Zero()), ringVertices_()
+    stateFlag_(1), id_(id), normal_(Vector3::Zero()), material_(Vector3::Ones())
 {}
 
 /** Constructor */
 Vertex::Vertex(const Vector3& vec, int id) : Vector3(vec), tagFlag_(1), sculptFlag_(1),
-    stateFlag_(1), id_(id), normal_(Vector3::Zero()), ringVertices_()
+    stateFlag_(1), id_(id), normal_(Vector3::Zero()), material_(Vector3::Ones())
 {}
 
 /** Assignment operator */

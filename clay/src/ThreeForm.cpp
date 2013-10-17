@@ -138,6 +138,9 @@ void ClayDemoApp::setBrushMode(const std::string& str) {
   } else if (str == "Pull") {
     sculpt_.setSculptMode(Sculpt::PULL);
     _brush_color = Color(0.5f, 0.5f, 0.5f);
+  } else if (str == "Paint") {
+    sculpt_.setSculptMode(Sculpt::PAINT);
+    _brush_color = Color(0.5f, 0.5f, 0.5f);
   }
 }
 
@@ -442,6 +445,7 @@ void ClayDemoApp::setup()
 	_ui->addElement(UIElement("Sweep", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
   _ui->addElement(UIElement("Push", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
   _ui->addElement(UIElement("Pull", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  _ui->addElement(UIElement("Paint", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 
 	// Editing nodes
 	_ui->addElement(UIElement("Fullscreen", boost::bind(&ClayDemoApp::toggleFullscreen, this, ::_1)), "Editing");
@@ -744,6 +748,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	_material_shader.bind();
 	GLint vertex = _material_shader.getAttribLocation("vertex");
 	GLint normal = _material_shader.getAttribLocation("normal");
+  GLint color = _material_shader.getAttribLocation("color");
 
 	// draw mesh
 	_material_shader.uniform( "useRefraction", true);
@@ -768,7 +773,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	_material_shader.uniform( "lightRadius", 3.0f);
 	if (mesh_) {
 		glPushMatrix();
-		mesh_->draw(vertex, normal);
+		mesh_->draw(vertex, normal, color);
     if (_draw_edges) {
     	_material_shader.uniform( "reflectionFactor", 0.0f );
 	    _material_shader.uniform( "ambientFactor", 0.0f );
@@ -776,7 +781,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	    _material_shader.uniform( "surfaceColor", Color::black() );
       glLineWidth(2.0f);
       glPolygonMode(GL_FRONT, GL_LINE);
-      mesh_->draw(vertex, normal);
+      mesh_->draw(vertex, normal, color);
 			glPolygonMode(GL_FRONT, GL_FILL);
 		}
 		glPopMatrix();

@@ -12,6 +12,7 @@ uniform bool useRefraction;
 
 varying vec3 worldPosition; 
 varying vec3 worldNormal;
+varying vec3 vertexColor;
 uniform float reflectionBias;
 uniform float refractionBias;
 uniform float refractionIndex;
@@ -35,7 +36,7 @@ void main()
 	vec3 refractray = normalize(refract(eyedir, normal, refractionIndex));
 
 	vec3 ambientcolor = vec3(ambientFactor);
-	vec3 diffusecolor = textureCube(irradiance, normal).rgb * diffuseFactor;
+	vec3 diffusecolor = (vertexColor * textureCube(irradiance, normal).rgb) * diffuseFactor;
 	vec3 reflectcolor = textureCube(radiance, reflectray, reflectionBias).rgb * reflectionFactor;
 
   vec3 highlightColor = vec3(0);
@@ -58,7 +59,7 @@ void main()
 	vec3 blend;
 	if (useRefraction)
 	{
-		vec3 refractcolor = (1.0-diffuseFactor)*textureCube(radiance, refractray, refractionBias).rgb;
+		vec3 refractcolor = (1.0-diffuseFactor)*vertexColor*textureCube(radiance, refractray, refractionBias).rgb;
 		blend = mix(mix(reflectcolor, refractcolor, dot(normal, -eyedir)), reflectcolor, diffuseFactor);
 	}
 	else

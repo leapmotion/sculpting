@@ -56,7 +56,7 @@ public:
 	void moveTo(const Vector3& destination);
 	void setTransformation(const Matrix4x4& matTransform);
 
-	void draw(GLint vertex, GLint normal);
+	void draw(GLint vertex, GLint normal, GLint color);
   void drawOctree() const;
 	void initVBO();
 	void initMesh();
@@ -86,6 +86,7 @@ private:
 	float angleTri(int iTri, int iVer);
 	void updateVertexBuffer(const std::vector<int> &iVerts);
 	void updateNormalBuffer(const std::vector<int> &iVerts);
+  void updateColorBuffer(const std::vector<int> &iVerts);
 	void updateIndexBuffer(const std::vector<int> &iTris);
 	void updateTransformation();
 
@@ -94,6 +95,7 @@ private:
 	GLBuffer verticesBuffer_; //vertices buffer (openGL)
 	GLBuffer normalsBuffer_; //normals buffer (openGL)
 	GLBuffer indicesBuffer_; //indexes (openGL)
+  GLBuffer colorsBuffer_;
 	Vector3 center_; //center of mesh
 	float scale_; //scale
 	Octree *octree_; //octree

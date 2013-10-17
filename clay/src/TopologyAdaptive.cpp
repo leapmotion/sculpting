@@ -559,6 +559,7 @@ void Topology::cleanUpSingularVertex(int iv)
 
     int ivNew = vertices_.size();
     Vertex vNew(v,ivNew);
+    vNew.material_ = v.material_;
     vNew.normal_ = -v.normal_;
     vNew.stateFlag_ = Mesh::stateMask_;
 

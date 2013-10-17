@@ -9,7 +9,7 @@ const int undoLimit_ = 10;
 /** Constructor */
 Mesh::Mesh() : center_(Vector3::Zero()), scale_(1),
 	octree_(0), matTransform_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
-  normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER)
+  normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER), colorsBuffer_(GL_ARRAY_BUFFER)
 {
 	updateTransformation();
 }
@@ -260,7 +260,7 @@ void Mesh::updateTransformation()
 		matTransformArray_[i] = dataMat[i];
 }
 
-void Mesh::draw(GLint vertex, GLint normal) {
+void Mesh::draw(GLint vertex, GLint normal, GLint color) {
 	verticesBuffer_.bind();
 	glEnableVertexAttribArray(vertex);
 	GLBuffer::checkError();
@@ -273,14 +273,22 @@ void Mesh::draw(GLint vertex, GLint normal) {
 	glVertexAttribPointer(normal, 3, GL_FLOAT, GL_TRUE, 0, 0);
 	GLBuffer::checkError();
 
+  colorsBuffer_.bind();
+  glEnableVertexAttribArray(color);
+  GLBuffer::checkError();
+  glVertexAttribPointer(color, 3, GL_FLOAT, GL_TRUE, 0, 0);
+  GLBuffer::checkError();
+
 	indicesBuffer_.bind();
 	glDrawElements(GL_TRIANGLES, getNbTriangles()*3, GL_UNSIGNED_INT, 0);
 	indicesBuffer_.release();
 	glDisableVertexAttribArray(vertex);
 	glDisableVertexAttribArray(normal);
+  glDisableVertexAttribArray(color);
 
 	normalsBuffer_.release();
 	verticesBuffer_.release();
+  colorsBuffer_.release();
 }
 
 void Mesh::drawOctree() const {
@@ -300,6 +308,7 @@ void Mesh::initVBO()
 
 	GLfloat* verticesArray=(GLfloat*)malloc(verticesBytes);
 	GLfloat* normalsArray=(GLfloat*)malloc(verticesBytes);
+  GLfloat* colorsArray=(GLfloat*)malloc(verticesBytes);
 	GLuint* indicesArray=(GLuint*)malloc(indicesBytes);
 
 #pragma omp parallel for
@@ -320,6 +329,10 @@ void Mesh::initVBO()
 		normalsArray[i*3]=normal.x();
 		normalsArray[i*3+1]=normal.y();
 		normalsArray[i*3+2]=normal.z();
+    const Vector3& color = ver.material_;
+    colorsArray[i*3]=color.x();
+    colorsArray[i*3+1]=color.y();
+    colorsArray[i*3+2]=color.z();
 	}
 
 #pragma omp parallel for
@@ -347,6 +360,14 @@ void Mesh::initVBO()
 	normalsBuffer_.allocate(normalsArray, verticesBytes, GL_DYNAMIC_DRAW);
 	normalsBuffer_.release();
 
+  if (colorsBuffer_.isCreated()) {
+		colorsBuffer_.destroy();
+	}
+	colorsBuffer_.create();
+	colorsBuffer_.bind();
+	colorsBuffer_.allocate(colorsArray, verticesBytes, GL_DYNAMIC_DRAW);
+	colorsBuffer_.release();
+
 	if (indicesBuffer_.isCreated()) {
 		indicesBuffer_.destroy();
 	}
@@ -357,6 +378,7 @@ void Mesh::initVBO()
 
 	free(verticesArray);
 	free(normalsArray);
+  free(colorsArray);
 	free(indicesArray);
 }
 
@@ -427,12 +449,12 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 	updateOctree(iTris);
 	updateNormals(iVerts);
 	assert(_CrtCheckMemory());
-	if(nbIndicesBuffer>getNbTriangles() && nbVerticesBuffer>getNbVertices())
-	{
-		updateIndexBuffer(iTris);
-		updateVertexBuffer(iVerts);
-		updateNormalBuffer(iVerts);
-	}
+  if(nbIndicesBuffer>getNbTriangles() && nbVerticesBuffer>getNbVertices()) {  
+	  updateIndexBuffer(iTris);
+	  updateVertexBuffer(iVerts);
+	  updateNormalBuffer(iVerts);
+    updateColorBuffer(iVerts);
+  }
 	else
 	{
 		initVBO();
@@ -559,6 +581,25 @@ void Mesh::updateNormalBuffer(const std::vector<int> &iVerts)
 	}
 	normalsBuffer_.unmap();
 	normalsBuffer_.release();
+}
+
+void Mesh::updateColorBuffer(const std::vector<int> &iVerts)
+{
+	int nbVerts=iVerts.size();
+	GLfloat* colorsArray;
+	colorsBuffer_.bind();
+	colorsArray = (GLfloat*)colorsBuffer_.map(GL_WRITE_ONLY);
+#pragma omp parallel for
+	for(int i=0;i<nbVerts;++i)
+	{
+		int j=iVerts[i];
+    const Vector3& color = vertices_[j].material_;
+		colorsArray[j*3] = color.x();
+		colorsArray[j*3+1] = color.y();
+		colorsArray[j*3+2] = color.z();
+	}
+	colorsBuffer_.unmap();
+	colorsBuffer_.release();
 }
 
 /** Update index buffer */

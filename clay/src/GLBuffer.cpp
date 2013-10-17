@@ -52,6 +52,6 @@ void GLBuffer::destroy() {
 void GLBuffer::checkError() {
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR) {
-		std::cout << err << std::endl;
+		std::cout << "GL Error code: " << err << std::endl;
 	}
 }

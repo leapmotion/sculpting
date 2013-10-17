@@ -1,11 +1,12 @@
 #include "Sculpt.h"
+#include "Utilities.h"
 #include <algorithm>
 #include <cinder/gl/gl.h>
 
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), intensity_(0.5f), sculptMode_(INFLATE), topoMode_(ADAPTIVE), centerPoint_(Vector3::Zero()), culling_(false),
     detail_(1.0f), thickness_(0.5f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), sweepCenter_(Vector3::Zero()), sweepDir_(Vector3::Zero()),
-    prevTransform_(Matrix4x4::Identity()), deltaTime_(0.0f), minDetailMult_(0.05), prevSculpt_(false)
+    prevTransform_(Matrix4x4::Identity()), deltaTime_(0.0f), minDetailMult_(0.05), prevSculpt_(false), material_(0)
 {}
 
 /** Destructor */
@@ -101,6 +102,7 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Vector3& interse
     case SWEEP : sweep(iVerts, radiusSquared, intensity_); break;
     case PUSH :
     case PULL : airbrush(iVerts, direction, radiusSquared, intensity_); break;
+    case PAINT : paint(iVerts, radiusSquared, material_, intensity_); break;
     default: break;
     }
 
@@ -422,6 +424,21 @@ void Sculpt::airbrush(const std::vector<int> &iVerts, const Vector3& direction, 
     }
 }
 
+void Sculpt::paint(const std::vector<int> &iVerts, float radiusSquared, int material, float intensity) {
+    VertexVector &vertices = mesh_->getVertices();
+    int nbVerts = iVerts.size();
+    float radius = sqrtf(radiusSquared);
+#pragma omp parallel for
+    for (int i = 0; i<nbVerts; ++i)
+    {
+        Vertex &vert=vertices[iVerts[i]];
+        const Vector3& newColor = Utilities::colorForIndex(material);
+        float dist = ((vert-centerPoint_).norm()/radius);
+        float changeSpeed = intensity*falloff(dist);
+        vert.material_ = (1.0f-changeSpeed)*vert.material_ + changeSpeed*newColor;
+    }
+}
+
 void Sculpt::addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength, const float weight)
 {
 	_brushes.push_back(Brush());
@@ -477,6 +494,7 @@ void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime, bool symm
 	}
   if (!haveSculpt && prevSculpt_) {
     mesh_->checkLeavesUpdate();
+    material_++;
   }
 
   prevTransform_ = transform;

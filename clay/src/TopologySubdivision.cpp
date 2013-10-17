@@ -210,6 +210,7 @@ void Topology::halfEdgeSplit(int iTri, int iv1, int iv2, int iv3)
     if(pair.second) //new vertex
     {
         Vertex vMidTest((v1+v2)*0.5f,vertices_.size());
+        vMidTest.material_ = 0.33333f*(v1.material_+v2.material_+v3.material_);
         float dot = v1.normal_.dot(v2.normal_);
         float angle;
         if(dot<=-1.f) angle = static_cast<float>(M_PI);
