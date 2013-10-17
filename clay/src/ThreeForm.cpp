@@ -980,4 +980,17 @@ void ClayDemoApp::draw()
 	_params->draw(); // draw the interface
 }
 
+#if 1
+#pragma comment( linker, "/subsystem:\"console\" /entry:\"mainCRTStartup\"" )
+
+int main( int argc, char * const argv[] ) {
+  cinder::app::AppBasic::prepareLaunch();
+  cinder::app::AppBasic *app = new ClayDemoApp;
+  cinder::app::RendererRef ren(new RendererGl);
+  cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo");
+  cinder::app::AppBasic::cleanupLaunch();
+  return 0;
+}
+#else
 CINDER_APP_NATIVE( ClayDemoApp, RendererGl )
+#endif
