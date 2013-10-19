@@ -115,8 +115,7 @@ int Topology::findOppositeTriangle(int iTri, int iv1, int iv2)
     std::sort(iTris2.begin(),iTris2.end());
     std::vector<int> res(iTris1.size(),-1);
     std::set_intersection(iTris1.begin(),iTris1.end(),iTris2.begin(),iTris2.end(),res.begin());
-    assert(res.size() >= 2);
-    if(res[2]!=-1) {
+    if(res.size() < 3 || res[2]!=-1) {
         return -1;
 		}
 		if(res[0]==iTri) {

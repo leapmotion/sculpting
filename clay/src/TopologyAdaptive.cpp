@@ -139,7 +139,9 @@ void Topology::checkCollisions(std::vector<int> &iVerts, float d2Thickness)
     Sculpt smo;
     smo.setMesh(mesh_);
     mesh_->expandVertices(vSmooth,1);
-    smo.smooth(vSmooth,1.f);
+    Brush brush;
+    brush._strength = 1.0f;
+    smo.smooth(vSmooth, brush);
 }
 
 /** Vertex joint */
@@ -176,10 +178,21 @@ void Topology::vertexJoin(int iv1, int iv2)
     std::vector<int> common(nbRing2,-1);
     std::set_intersection(ring1.begin(),ring1.end(),ring2.begin(),ring2.end(),common.begin());
 
-    if(common.front()==-1)
+    int nbCommon = common.size();
+    for(int i=0;i<nbCommon;++i)
+    {
+        if(common[i]==-1)
+        {
+            common.resize(i);
+            break;
+        }
+    }
+
+    if(common.empty()) {
         connect1Ring(edges1,edges2);
-    else
+    } else {
         connect1RingCommonVertices(edges1, edges2, common);
+    }
 
     for(int i = 0; i<nbRing1; ++i) mesh_->computeRingVertices(ring1[i]);
     for(int i = 0; i<nbRing2; ++i) mesh_->computeRingVertices(ring2[i]);
@@ -200,15 +213,6 @@ void Topology::connect1RingCommonVertices(std::vector<Edge> &edges1, std::vector
     int nbEdges1 = edges1.size();
     int nbEdges2 = edges2.size();
     int nbCommon = common.size();
-    for(int i=0;i<nbCommon;++i)
-    {
-        if(common[i]==-1)
-        {
-            common.resize(i);
-            break;
-        }
-    }
-    nbCommon = common.size();
 
     ++Vertex::tagMask_;
     for(int i = 0; i<nbCommon; ++i)
@@ -281,13 +285,13 @@ void Topology::connect1RingCommonVertices(std::vector<Edge> &edges1, std::vector
     int i1 = 0;
     while(i1<nbSubEdges1 || i2>=0)
     {
-        int v1 = -1;
-        int v2 = -1;
+        int iv1 = -1;
+        int iv2 = -1;
         if(i1<nbSubEdges1)
-            v1 = subEdges1[i1].front().v1_;
+            iv1 = subEdges1[i1].front().v1_;
         if(i2>=0)
-            v2 = subEdges2[i2].back().v2_;
-        if(v1==v2)
+            iv2 = subEdges2[i2].back().v2_;
+        if(iv1==iv2)
         {
             if(subEdges1[i1].size()>subEdges2[i2].size())
                 connectLinkedEdges(subEdges1[i1], subEdges2[i2]);
@@ -300,14 +304,14 @@ void Topology::connect1RingCommonVertices(std::vector<Edge> &edges1, std::vector
         {
             for(int i = 0; i<nbEdges1; ++i)
             {
-                int vTest = edges1[i].v1_;
-                if(vTest==v1)
+                int ivTest = edges1[i].v1_;
+                if(ivTest==iv1)
                 {
                     connectLoop(subEdges1[i1]);
                     ++i1;
                     break;
                 }
-                else if(vTest==v2)
+                else if(ivTest==iv2)
                 {
                     connectLoop(subEdges2[i2]);
                     --i2;
@@ -324,7 +328,7 @@ void Topology::connect1Ring(std::vector<Edge> &edges1, std::vector<Edge> &edges2
     matchEdgesNearest(edges1,edges2);
     int nbEdges1 = edges1.size();
     int nbEdges2 = edges2.size();
-    float step = (float) nbEdges2/nbEdges1;
+    float step = static_cast<float>(nbEdges2)/static_cast<float>(nbEdges1);
     int temp = 0;
     if(nbEdges1==nbEdges2)
         temp = -1;
@@ -560,6 +564,7 @@ void Topology::cleanUpSingularVertex(int iv)
     int ivNew = vertices_.size();
     Vertex vNew(v,ivNew);
     vNew.material_ = v.material_;
+    assert(fabs(v.normal_.squaredNorm() - 1.0f) < 0.001f);
     vNew.normal_ = -v.normal_;
     vNew.stateFlag_ = Mesh::stateMask_;
 

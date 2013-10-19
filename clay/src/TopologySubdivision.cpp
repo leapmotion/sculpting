@@ -83,7 +83,7 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
     mesh_->expandVertices(vNew,1);
     Sculpt sc;
     sc.setMesh(mesh_);
-    sc.smoothFlat(std::vector<int>(vNew.begin() + nbVNew, vNew.end()), 1.f);
+    sc.smoothFlat(std::vector<int>(vNew.begin() + nbVNew, vNew.end()));
 
     nbVNew = vNew.size();
 #pragma omp parallel for
@@ -210,13 +210,14 @@ void Topology::halfEdgeSplit(int iTri, int iv1, int iv2, int iv3)
     if(pair.second) //new vertex
     {
         Vertex vMidTest((v1+v2)*0.5f,vertices_.size());
-        vMidTest.material_ = 0.33333f*(v1.material_+v2.material_+v3.material_);
+        vMidTest.material_ = 0.5f*(v1.material_+v2.material_);
         float dot = v1.normal_.dot(v2.normal_);
         float angle;
         if(dot<=-1.f) angle = static_cast<float>(M_PI);
         else if(dot>=1.f) angle = 0.f;
         else angle = acosf(dot);
         vMidTest.normal_ = (v1.normal_+v2.normal_).normalized();
+        assert(fabs(vMidTest.normal_.squaredNorm() - 1.0f) < 0.001f);
         Vector3 edge = v1-v2;
         if((edge.dot(v1.normal_)-edge.dot(v2.normal_))>=0.f)
             vMidTest+=vMidTest.normal_*edge.norm()*angle*0.12f;
