@@ -84,6 +84,10 @@ static const Vector3& colorForIndex(int idx) {
   return colors[idx];
 }
 
+static inline float falloff(float dist) {
+  return 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
+}
+
 }
 
 #endif

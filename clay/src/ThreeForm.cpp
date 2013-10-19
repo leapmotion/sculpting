@@ -136,9 +136,6 @@ void ClayDemoApp::setBrushMode(const std::string& str) {
 	} else if (str == "Push") {
     sculpt_.setSculptMode(Sculpt::PUSH);
     _brush_color = Color(0.5f, 0.5f, 0.5f);
-  } else if (str == "Pull") {
-    sculpt_.setSculptMode(Sculpt::PULL);
-    _brush_color = Color(0.5f, 0.5f, 0.5f);
   } else if (str == "Paint") {
     sculpt_.setSculptMode(Sculpt::PAINT);
     _brush_color = Color(0.5f, 0.5f, 0.5f);
@@ -181,17 +178,14 @@ void ClayDemoApp::setBrushStrength(const std::string& str)
 	if (str == "Fine")
 	{
 		strength = 0.2f;
-    sculpt_.setIntensity(0.2f);
 	}
 	else if (str == "Medium")
 	{
 		strength = 0.6f;
-    sculpt_.setIntensity(0.6f);
 	}
 	else if (str == "Strong")
 	{
 		strength = 1.0f;
-    sculpt_.setIntensity(1.0f);
 	}
 	_leap_interaction->setBrushStrength(strength);
 }
@@ -339,13 +333,6 @@ void ClayDemoApp::setup()
 	enableDepthWrite();
 	glCullFace( GL_BACK );
 	glEnable(GL_CULL_FACE);
-#if 0
-  glEnable(GL_POINT_SMOOTH);
-  glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-  glEnable(GL_LINE_SMOOTH);
-  glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-  glEnable(GL_MULTISAMPLE_ARB);
-#endif
 
 	_ambient_factor = 0.00f;
 	_diffuse_factor = 1.0f;
@@ -446,7 +433,6 @@ void ClayDemoApp::setup()
 	_ui->addElement(UIElement("Flatten", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 	_ui->addElement(UIElement("Sweep", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
   _ui->addElement(UIElement("Push", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  _ui->addElement(UIElement("Pull", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
   _ui->addElement(UIElement("Paint", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 
 	// Editing nodes
@@ -814,11 +800,9 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	_material_shader.unbind();
   const BrushVector& brushes = sculpt_.getBrushes();
 	for (size_t i=0; i<brushes.size(); i++) {
-		const Vector3& pos = brushes[i]._position;
     ColorA color(_brush_color, 0.25f);
     gl::color(color);
-		ci::Vec3f temp(pos.x(), pos.y(), pos.z());
-		gl::drawSphere(temp, brushes[i]._radius, 30);
+    brushes[i].draw();
 	}
 #endif
 
@@ -1015,13 +999,13 @@ void ClayDemoApp::draw()
 int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic::prepareLaunch();
   cinder::app::AppBasic *app = new ClayDemoApp;
-  cinder::app::RendererRef ren(new RendererGl);
-  //cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
+  //cinder::app::RendererRef ren(new RendererGl);
+  cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
   cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo");
   cinder::app::AppBasic::cleanupLaunch();
   return 0;
 }
 #else
-CINDER_APP_NATIVE( ClayDemoApp, RendererGl )
-//CINDER_APP_NATIVE( ClayDemoApp, RendererGl(RendererGl::AA_NONE) )
+//CINDER_APP_NATIVE( ClayDemoApp, RendererGl )
+CINDER_APP_NATIVE( ClayDemoApp, RendererGl(RendererGl::AA_NONE) )
 #endif

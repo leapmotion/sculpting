@@ -51,7 +51,7 @@ void LeapInteraction::interact()
 	for (int i=0; i<num_pointables; i++)
 	{
 		// add brushes
-		const float weight = Utilities::SmootherStep(math<float>::clamp(pointables[i].timeVisible()/AGE_WARMUP_TIME));
+		const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[i].timeVisible()/AGE_WARMUP_TIME));
 		Leap::Vector tip_pos = pointables[i].tipPosition();
 		Leap::Vector tip_dir = pointables[i].direction();
     Leap::Vector tip_vel = pointables[i].tipVelocity();
@@ -61,7 +61,7 @@ void LeapInteraction::interact()
 		Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
 		Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
     Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
-		_sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, ui_mult*_desired_brush_strength, weight);
+		_sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, strengthMult*ui_mult*_desired_brush_strength);
 
 		Vec3f transPos = _projection.transformPoint(pos);
 		Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));
@@ -98,7 +98,7 @@ void LeapInteraction::interact()
 		radPos.z = 1.0f;
 		float rad = transPos.distance(radPos);
 		transPos.z = rad;
-		Vec4f tip(transPos.x, transPos.y, transPos.z, weight);
+		Vec4f tip(transPos.x, transPos.y, transPos.z, strengthMult);
 		_tips.push_back(tip);
 	}
 

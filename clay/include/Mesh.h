@@ -51,6 +51,7 @@ public:
 	void expandVertices(std::vector<int> &iVerts, int nRing);
 	void computeRingVertices(int iVert);
 	void getVerticesInsideSphere(const Vector3& point, float radiusWorldSquared, std::vector<int>& result);
+  void getVerticesInsideBrush(const Brush& brush, std::vector<int>& result);
 
 	Vector3 getTriangleCenter(int iTri) const;
 	void moveTo(const Vector3& destination);

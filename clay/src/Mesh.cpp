@@ -220,15 +220,23 @@ void Mesh::getVerticesInsideSphere(const Vector3& point, float radiusWorldSquare
 			result.push_back(iVerts[i]);
 		}
 	}
-#if 0
-	if(pickedVertices_.empty() && pickedTriangle_!=-1) //no vertices inside the brush radius (big triangle or small radius)
+}
+
+void Mesh::getVerticesInsideBrush(const Brush& brush, std::vector<int>& result) {
+  VertexVector &vertices = getVertices();
+  std::vector<Octree*> &leavesHit = getLeavesUpdate();
+  std::vector<int> iTrisInCells = getOctree()->intersectSphere(brush.boundingSphereCenter(),brush.boundingSphereRadiusSq(),leavesHit);
+	std::vector<int> iVerts = getVerticesFromTriangles(iTrisInCells);
+	int nbVerts = iVerts.size();
+	++Vertex::sculptMask_;
+	for (int i=0;i<nbVerts;++i)
 	{
-		Triangle &t = mesh_->getTriangle(pickedTriangle_);
-		pickedVertices_.push_back(t.vIndices_[0]);
-		pickedVertices_.push_back(t.vIndices_[1]);
-		pickedVertices_.push_back(t.vIndices_[2]);
+		Vertex &v=vertices[iVerts[i]];
+    if (brush.contains(v)) {
+      v.sculptFlag_ = Vertex::sculptMask_;
+      result.push_back(iVerts[i]);
+    }
 	}
-#endif
 }
 
 /** Return center of a triangle */
@@ -320,12 +328,7 @@ void Mesh::initVBO()
 		verticesArray[i*3+2]=ver.z();
 		const std::vector<int> &iTri=ver.tIndices_;
 		int nbTri = iTri.size();
-		Vector3 normal(Vector3::Zero());
-		for (int j=0;j<nbTri;++j) {
-			normal+=triangles_[iTri[j]].normal_;
-		}
-		normal.normalize();
-		vertices_[i].normal_=normal;
+    const Vector3& normal = ver.normal_;
 		normalsArray[i*3]=normal.x();
 		normalsArray[i*3+1]=normal.y();
 		normalsArray[i*3+2]=normal.z();
@@ -365,7 +368,7 @@ void Mesh::initVBO()
 	}
 	colorsBuffer_.create();
 	colorsBuffer_.bind();
-	colorsBuffer_.allocate(colorsArray, verticesBytes, GL_DYNAMIC_DRAW);
+  colorsBuffer_.allocate(colorsArray, verticesBytes, GL_DYNAMIC_DRAW);
 	colorsBuffer_.release();
 
 	if (indicesBuffer_.isCreated()) {
@@ -373,13 +376,13 @@ void Mesh::initVBO()
 	}
 	indicesBuffer_.create();
 	indicesBuffer_.bind();
-	indicesBuffer_.allocate(indicesArray, indicesBytes, GL_DYNAMIC_DRAW);
+  indicesBuffer_.allocate(indicesArray, indicesBytes, GL_DYNAMIC_DRAW);
 	indicesBuffer_.release();
 
-	free(verticesArray);
-	free(normalsArray);
+  free(verticesArray);
+  free(normalsArray);
   free(colorsArray);
-	free(indicesArray);
+  free(indicesArray);
 }
 
 /** Initialize the mesh information : center, octree, scale ... */
@@ -424,6 +427,24 @@ void Mesh::initMesh()
 		delete octree_;
 	octree_ = new Octree();
 	octree_->build(this,triangles,aabb);
+  for (int i=0;i<nbVertices;++i) {
+    Vertex &ver=vertices_[i];
+		const std::vector<int> &iTri=ver.tIndices_;
+		int nbTri = iTri.size();
+		Vector3 normal(Vector3::Zero());
+		for (int j=0;j<nbTri;++j) {
+			normal+=triangles_[iTri[j]].normal_;
+		}
+    float length = normal.norm();
+    if (length < 0.0001f) {
+      // normals added up to zero length, so just pick one
+      normal = triangles_[iTri[0]].normal_;
+    } else {
+      normal = normal/length;
+    }
+    assert(fabs(normal.squaredNorm() - 1.0f) < 0.001f);
+		ver.normal_=normal;
+  }
 }
 
 /** Update geometry  */
@@ -443,7 +464,14 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 		const Vector3& v1=vertices_[t.vIndices_[0]];
 		const Vector3& v2=vertices_[t.vIndices_[1]];
 		const Vector3& v3=vertices_[t.vIndices_[2]];
-		t.normal_ = (v2-v1).cross(v3-v1).normalized();
+    Vector3 normal = (v2-v1).cross(v3-v1);
+    float length = normal.norm();
+    if (length < 0.001f) {
+      t.normal_ = Vector3::UnitY();
+    } else {
+      t.normal_ = normal/length;
+    }
+    assert(fabs(t.normal_.norm() - 1.0f) < 0.001f);
 		t.aabb_ = Geometry::computeTriangleAabb(v1,v2,v3);
 	}
 	updateOctree(iTris);
@@ -539,7 +567,15 @@ void Mesh::updateNormals(const std::vector<int> &iVerts)
 		Vector3 normal(Vector3::Zero());
 		for (int j=0;j<nbTri;++j)
 			normal+=triangles_[iTri[j]].normal_;
-		vert.normal_ = normal.normalized();
+    float length = normal.norm();
+    if (length < 0.0001f) {
+      // normals added up to zero length, so just pick one
+      normal = triangles_[iTri[0]].normal_;
+    } else {
+      normal = normal/length;
+    }
+		vert.normal_ = normal;
+    assert(fabs(vert.normal_.squaredNorm() - 1.0f) < 0.001f);
 	}
 }
 
