@@ -242,8 +242,9 @@ void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoo
                     ++nbVertEdge;
                 }
             }
-            assert(nbVertEdge > 0);
-            smoothVerts[i]=center/static_cast<float>(nbVertEdge);
+            if (nbVertEdge > 0) {
+              smoothVerts[i]=center/static_cast<float>(nbVertEdge);
+            }
         }
         else
         {
@@ -251,8 +252,9 @@ void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoo
             for (int j=0;j<nbVRing;++j) {
                 center+=vertices[ivRing[j]];
             }
-            assert(nbVRing > 0);
-            smoothVerts[i]=center/static_cast<float>(nbVRing);
+            if (nbVRing > 0) {
+              smoothVerts[i]=center/static_cast<float>(nbVRing);
+            }
         }
     }
 }

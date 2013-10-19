@@ -1,6 +1,7 @@
-#include "FILES.h"
+#include "Files.h"
 #include <stdlib.h>
 #include <sstream>
+#include <cstdlib>
 
 /** Constructor */
 Files::Files()
@@ -125,7 +126,6 @@ void Files::saveSTL(Mesh *mesh, const std::string &filepath) const
     }
 }
 
-/** Load OBJ file */
 Mesh* Files::loadOBJ(const std::string &filepath) const
 {
     std::ifstream file(filepath.c_str());
@@ -138,6 +138,7 @@ Mesh* Files::loadOBJ(const std::string &filepath) const
     int iVer1, iVer2, iVer3, iVer4; //vertex indices
     iVer4 = -1;
     float x, y, z;
+    char *pNext;
     while(std::getline(file,line))
     {
         if(memcmp(line.c_str(),"v ", 2)==0) //vertex
@@ -151,12 +152,16 @@ Mesh* Files::loadOBJ(const std::string &filepath) const
         }
         else if(memcmp(line.c_str(),"f ",2)==0) //face
         {
-            std::stringstream ss;
-            ss.str(line.substr(2));
-            ss >> iVer1;
-            ss >> iVer2;
-            ss >> iVer3;
-            ss >> iVer4;
+            char* iVerts[4];
+            for (int i=0; i<4; i++) {
+              iVerts[i] = new char[line.size()];
+            }
+            iVerts[3][0] = '\0';
+            sscanf(line.substr(2).c_str(), "%s %s %s %s", iVerts[0], iVerts[1], iVerts[2], iVerts[3]);
+            sscanf(iVerts[0],"%d//", &iVer1);
+            sscanf(iVerts[1],"%d//", &iVer2);
+            sscanf(iVerts[2],"%d//", &iVer3);
+            sscanf(iVerts[3],"%d//", &iVer4);
             if(iVer1<0)
             {
                 iVer1 = vertices.size()+iVer1;
@@ -190,12 +195,14 @@ Mesh* Files::loadOBJ(const std::string &filepath) const
                 triangles.push_back(Triangle((v3-v1).cross(v4-v1).normalized(), iVer1, iVer3, iVer4, triangles.size()));
                 iVer4 = -1;
             }
+            for (int i=0; i<4; i++) {
+              delete[] iVerts[i];
+            }
         }
     }
     file.close();
     mesh->initMesh();
     mesh->initVBO();
-    mesh->moveTo(Vector3::Zero());
     return mesh;
 }
 

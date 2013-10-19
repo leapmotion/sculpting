@@ -403,7 +403,9 @@ void Mesh::initMesh()
 	scale_ = Mesh::globalScale_/diag;
 #pragma omp parallel for
 	for(int i=0;i<nbVertices;++i)
-		vertices_[i]*=scale_;
+		vertices_[i] = scale_*(vertices_[i] - center_);
+  aabb.min_ -= center_;
+  aabb.max_ -= center_;
 	matTransform_ = Tools::scaleMatrix(scale_)*matTransform_;
 	aabb.max_*=scale_;
 	aabb.min_*=scale_;
