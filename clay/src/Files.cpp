@@ -138,7 +138,6 @@ Mesh* Files::loadOBJ(const std::string &filepath) const
     int iVer1, iVer2, iVer3, iVer4; //vertex indices
     iVer4 = -1;
     float x, y, z;
-    char *pNext;
     while(std::getline(file,line))
     {
         if(memcmp(line.c_str(),"v ", 2)==0) //vertex

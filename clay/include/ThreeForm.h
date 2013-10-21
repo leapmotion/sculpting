@@ -77,6 +77,7 @@ private:
 	GlslProg _sky_shader;
 	GlslProg _material_shader;
 	GlslProg _blur_shader;
+  GlslProg _wireframe_shader;
 	Fbo _color_fbo;
 	Fbo _depth_fbo;
 	Fbo _blur_fbo;
@@ -122,14 +123,6 @@ private:
 	float _bloom_size;
 	float _bloom_strength;
 	float _bloom_light_threshold;
-
-	// *** transform stuff ***
-	Matrix44f _transform;
-	Matrix44f _transform_inv;
-	Vec3f _transform_translation;
-	Vec3f _transform_rotation;
-	float _transform_scaling;
-	float _rotation_speed;
 
 	// new mesh
 	Mesh* mesh_;

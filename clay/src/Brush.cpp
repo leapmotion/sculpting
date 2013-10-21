@@ -21,20 +21,28 @@ Brush Brush::reflected(int axis) const {
 
 void Brush::transform(const Matrix4x4& matrix) {
   Vector4 temp;
-  temp << _position, 0;
+  temp << _position, 1;
   _position = (matrix * temp).head<3>();
-  //Vector3 modelVel = (_transformed_position - (prevTransform_ * temp).head<3>())/deltaTime;
-  //_transformed_radius_squared = _transformed_radius*_transformed_radius;/
   temp << _velocity, 0;
-  _velocity = (matrix * temp).head<3>();// + 2.0f*modelVel;
+  _velocity = (matrix * temp).head<3>();
   temp << _direction, 0;
   _direction = (matrix * temp).head<3>();
-
 }
 
 Brush Brush::transformed(const Matrix4x4& matrix) const {
   Brush brush(*this);
   brush.transform(matrix);
+  return brush;
+}
+
+void Brush::spinVelocity(const Vector3& rotOrigin, const Vector3& rotAxis, float rotVel) {
+  const Vector3 spinVel = rotVel * (_position - rotOrigin).cross(rotAxis);
+  _velocity += spinVel;
+}
+
+Brush Brush::withSpinVelocity(const Vector3& rotOrigin, const Vector3& rotAxis, float rotVel) const {
+  Brush brush(*this);
+  brush.spinVelocity(rotOrigin, rotAxis, rotVel);
   return brush;
 }
 

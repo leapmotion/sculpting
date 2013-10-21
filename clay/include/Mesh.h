@@ -44,6 +44,11 @@ public:
 	void setIsSelected(bool);
 	Matrix4x4& getTransformation();
 	Matrix4x4 getInverseTransformation() const;
+  void setRotationVelocity(float vel);
+  void updateRotation(float deltaTime);
+  const Vector3& getRotationOrigin() const;
+  const Vector3& getRotationAxis() const;
+  float getRotationVelocity() const;
 
 	std::vector<int> getTrianglesFromVertices(const std::vector<int> &iVerts);
 	std::vector<int> getVerticesFromTriangles(const std::vector<int> &iTris);
@@ -58,6 +63,7 @@ public:
 	void setTransformation(const Matrix4x4& matTransform);
 
 	void draw(GLint vertex, GLint normal, GLint color);
+  void drawVerticesOnly(GLint vertex);
   void drawOctree() const;
 	void initVBO();
 	void initMesh();
@@ -109,6 +115,11 @@ private:
 	std::list<State> redo_; //redo actions
 	std::list<State>::iterator undoIte_; //iterator to undo
 	bool beginIte_; //end of undo action
+
+  Vector3 rotationOrigin_;
+  Vector3 rotationAxis_;
+  float rotationVelocity_;
+  float curRotation_;
 };
 
 #endif /*__MESH_H__*/

@@ -309,19 +309,19 @@ void ClayDemoApp::setAutoSpin(const std::string& str)
 {
 	if (str == "Off")
 	{
-		_rotation_speed = 0.0f;
+		mesh_->setRotationVelocity(0.0f);
 	}
 	else if (str == "Slow")
 	{
-		_rotation_speed = 0.01f;
+    mesh_->setRotationVelocity(1.0f);
 	}
 	else if (str == "Medium")
 	{
-		_rotation_speed = 0.05f;
+    mesh_->setRotationVelocity(3.5f);
 	}
 	else if (str == "Fast")
 	{
-		_rotation_speed = 0.2f;
+    mesh_->setRotationVelocity(10.0f);
 	}
 }
 
@@ -346,13 +346,6 @@ void ClayDemoApp::setup()
 	_bloom_size = 1.f;
 	_bloom_strength = 1.f;
 	_bloom_light_threshold = 0.5f;
-
-	_transform.setToIdentity();
-	_transform_inv.setToIdentity();
-	_transform_translation = Vec3f(0,0,0);
-	_transform_rotation = Vec3f(0,0,0);
-	_transform_scaling = 1.f;
-	_rotation_speed = 0.0f;
 
 	_params = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( Vec2i( 200, 400 ) ) );
 	_params->minimize();
@@ -389,6 +382,7 @@ void ClayDemoApp::setup()
 		_blur_shader = gl::GlslProg( loadResource( RES_BLUR_VERT_GLSL ), loadResource( RES_BLUR_FRAG_GLSL ) );
 		_screen_shader = gl::GlslProg( loadResource( RES_SCREEN_VERT_GLSL ), loadResource( RES_SCREEN_FRAG_GLSL ) );
 		_material_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
+    _wireframe_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_WIREFRAME_FRAG_GLSL ) );
 		_metaball_shader = gl::GlslProg( loadResource( RES_METABALL_VERT_GLSL ), loadResource( RES_METABALL_FRAG_GLSL ) );
 		_sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
     _fxaa_shader = gl::GlslProg( loadResource( RES_FXAA_VERT_GLSL ), loadResource( RES_FXAA_FRAG_GLSL ) );
@@ -614,19 +608,12 @@ void ClayDemoApp::update()
 	float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
 	_cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
 
-	// *** object transform ***
-	_transform_rotation.y += _rotation_speed;
-	_transform.setToIdentity();
-	_transform.translate(_transform_translation);
-	_transform.rotate(_transform_rotation);
-	_transform.scale(Vec3f(1.f,1.f,1.f)*_transform_scaling);
-	_transform_inv = _transform.inverted();
-
   double curTime = ci::app::getElapsedSeconds();
 
 	if (mesh_) {
-    Matrix4x4 transformInv(_transform_inv);
-		sculpt_.applyBrushes(transformInv, static_cast<float>(curTime - _last_update_time), symmetry_);
+    const float deltaTime = curTime - _last_update_time;
+    mesh_->updateRotation(deltaTime);
+		sculpt_.applyBrushes(deltaTime, symmetry_);
 	}
 
   _last_update_time = curTime;
@@ -731,47 +718,57 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 
 	_environment->bindCubeMap(Environment::CUBEMAP_IRRADIANCE, 0);
 	_environment->bindCubeMap(Environment::CUBEMAP_RADIANCE, 1);
-	_material_shader.bind();
-	GLint vertex = _material_shader.getAttribLocation("vertex");
-	GLint normal = _material_shader.getAttribLocation("normal");
-  GLint color = _material_shader.getAttribLocation("color");
 
-	// draw mesh
-	_material_shader.uniform( "useRefraction", true);
-	_material_shader.uniform( "campos", _Camera.getEyePoint() );
-	_material_shader.uniform( "irradiance", 0 );
-	_material_shader.uniform( "radiance", 1 );
-	_material_shader.uniform( "ambientFactor", _ambient_factor );
-	_material_shader.uniform( "diffuseFactor", _diffuse_factor );
-	_material_shader.uniform( "reflectionFactor", _reflection_factor );
-	_material_shader.uniform( "surfaceColor", _surface_color );
-	_material_shader.uniform( "transform", _transform );
-	_material_shader.uniform( "transformit", _transform_inv.transposed() );
-	_material_shader.uniform( "reflectionBias", _reflection_bias );
-	_material_shader.uniform( "refractionBias", _refraction_bias );
-	_material_shader.uniform( "refractionIndex", _refraction_index );
-	_material_shader.uniform( "numLights", sculpt_.getNumBrushes() );
-	_material_shader.uniform( "brushPositions", sculpt_.brushPositions().data(), sculpt_.getNumBrushes() );
-	_material_shader.uniform( "brushWeights", sculpt_.brushWeights().data(), sculpt_.getNumBrushes() );
-  _material_shader.uniform( "brushRadii", sculpt_.brushRadii().data(), sculpt_.getNumBrushes() );
-	_material_shader.uniform( "lightColor", 0.15f*_brush_color );
-	_material_shader.uniform( "lightExponent", 30.0f);
-	_material_shader.uniform( "lightRadius", 3.0f);
-	if (mesh_) {
-		glPushMatrix();
-		mesh_->draw(vertex, normal, color);
+  if (mesh_) {
+	  _material_shader.bind();
+	  GLint vertex = _material_shader.getAttribLocation("vertex");
+	  GLint normal = _material_shader.getAttribLocation("normal");
+    GLint color = _material_shader.getAttribLocation("color");
+
+    ci::Matrix44f transform = ci::Matrix44f::identity();
+    transform = ci::Matrix44f(mesh_->getTransformation().data());
+    ci::Matrix44f transformit = transform.inverted().transposed();
+
+	  // draw mesh
+	  _material_shader.uniform( "useRefraction", true);
+	  _material_shader.uniform( "campos", _Camera.getEyePoint() );
+	  _material_shader.uniform( "irradiance", 0 );
+	  _material_shader.uniform( "radiance", 1 );
+	  _material_shader.uniform( "ambientFactor", _ambient_factor );
+	  _material_shader.uniform( "diffuseFactor", _diffuse_factor );
+	  _material_shader.uniform( "reflectionFactor", _reflection_factor );
+	  _material_shader.uniform( "surfaceColor", _surface_color );
+	  _material_shader.uniform( "transform", transform );
+	  _material_shader.uniform( "transformit", transformit );
+	  _material_shader.uniform( "reflectionBias", _reflection_bias );
+	  _material_shader.uniform( "refractionBias", _refraction_bias );
+	  _material_shader.uniform( "refractionIndex", _refraction_index );
+	  _material_shader.uniform( "numLights", sculpt_.getNumBrushes() );
+	  _material_shader.uniform( "brushPositions", sculpt_.brushPositions().data(), sculpt_.getNumBrushes() );
+	  _material_shader.uniform( "brushWeights", sculpt_.brushWeights().data(), sculpt_.getNumBrushes() );
+    _material_shader.uniform( "brushRadii", sculpt_.brushRadii().data(), sculpt_.getNumBrushes() );
+	  _material_shader.uniform( "lightColor", 0.15f*_brush_color );
+	  _material_shader.uniform( "lightExponent", 30.0f);
+	  _material_shader.uniform( "lightRadius", 3.0f);
+
+	  glPushMatrix();
+	  mesh_->draw(vertex, normal, color);
+    _material_shader.unbind();
+
     if (_draw_edges) {
-    	_material_shader.uniform( "reflectionFactor", 0.0f );
-	    _material_shader.uniform( "ambientFactor", 0.0f );
-	    _material_shader.uniform( "diffuseFactor", 1.0f );
-	    _material_shader.uniform( "surfaceColor", Color::black() );
+      _wireframe_shader.bind();
+	    vertex = _wireframe_shader.getAttribLocation("vertex");
+	    _wireframe_shader.uniform( "transform", transform );
+	    _wireframe_shader.uniform( "transformit", transformit );
+	    _wireframe_shader.uniform( "surfaceColor", Color::black() );
       glLineWidth(2.0f);
       glPolygonMode(GL_FRONT, GL_LINE);
-      mesh_->draw(vertex, normal, color);
-			glPolygonMode(GL_FRONT, GL_FILL);
-		}
-		glPopMatrix();
-	}
+      mesh_->drawVerticesOnly(vertex);
+		  glPolygonMode(GL_FRONT, GL_FILL);
+      _wireframe_shader.unbind();
+	  }
+	  glPopMatrix();
+  }
 
 	// draw brushes
 #if 0
@@ -791,13 +788,10 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 		ci::Vec3f temp(pos.x(), pos.y(), pos.z());
 		gl::drawSphere(temp, brushes[i]._radius, 30);
 	}
-	_environment->unbindCubeMap(0);
-	_environment->unbindCubeMap(1);
 	_material_shader.unbind();
 #else
 	_environment->unbindCubeMap(0);
 	_environment->unbindCubeMap(1);
-	_material_shader.unbind();
   const BrushVector& brushes = sculpt_.getBrushes();
 	for (size_t i=0; i<brushes.size(); i++) {
     ColorA color(_brush_color, 0.25f);

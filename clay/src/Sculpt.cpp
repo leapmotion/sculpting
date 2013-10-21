@@ -6,7 +6,7 @@
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INFLATE), topoMode_(ADAPTIVE),
     detail_(1.0f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f),
-    prevTransform_(Matrix4x4::Identity()), deltaTime_(0.0f), minDetailMult_(0.05f), prevSculpt_(false), material_(0)
+    deltaTime_(0.0f), minDetailMult_(0.1f), prevSculpt_(false), material_(0)
 {}
 
 /** Destructor */
@@ -370,17 +370,21 @@ void Sculpt::addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel
   brush._velocity = vel;
 }
 
-void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime, bool symmetry)
+void Sculpt::applyBrushes(float deltaTime, bool symmetry)
 {
+  const Matrix4x4& transformInv = mesh_->getInverseTransformation();
+  const Vector3& origin = mesh_->getRotationOrigin();
+  const Vector3& axis = mesh_->getRotationAxis();
+  float velocity = mesh_->getRotationVelocity();
   deltaTime_ = deltaTime;
   bool haveSculpt = false;
 	for(size_t b=0; b<_brushes.size(); ++b)
 	{
     if (symmetry) {
       brushVertices_.clear();
-      Brush brush = _brushes[b].reflected(0).transformed(transform);
+      Brush brush = _brushes[b].reflected(0).transformed(transformInv).withSpinVelocity(origin, axis, velocity);
 
-      mesh_->getVerticesInsideBrush(_brushes[b], brushVertices_);
+      mesh_->getVerticesInsideBrush(brush, brushVertices_);
       if (!brushVertices_.empty()) {
         if (!haveSculpt && !prevSculpt_) {
           mesh_->startPushState();
@@ -391,9 +395,9 @@ void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime, bool symm
     }
 
     brushVertices_.clear();
-    Brush brush = _brushes[b].transformed(transform);
+    Brush brush = _brushes[b].transformed(transformInv).withSpinVelocity(origin, axis, velocity);
 
-		mesh_->getVerticesInsideBrush(_brushes[b], brushVertices_);
+		mesh_->getVerticesInsideBrush(brush, brushVertices_);
     if (!brushVertices_.empty()) {
       if (!haveSculpt && !prevSculpt_) {
         mesh_->startPushState();
@@ -407,7 +411,6 @@ void Sculpt::applyBrushes(const Matrix4x4& transform, float deltaTime, bool symm
     material_++;
   }
 
-  prevTransform_ = transform;
   prevSculpt_ = haveSculpt;
 }
 

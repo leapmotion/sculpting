@@ -9,7 +9,8 @@ const int undoLimit_ = 10;
 /** Constructor */
 Mesh::Mesh() : center_(Vector3::Zero()), scale_(1),
 	octree_(0), matTransform_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
-  normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER), colorsBuffer_(GL_ARRAY_BUFFER)
+  normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER), colorsBuffer_(GL_ARRAY_BUFFER),
+  rotationOrigin_(Vector3::Zero()), rotationAxis_(Vector3::UnitY()), rotationVelocity_(0.0f), curRotation_(0.0f)
 {
 	updateTransformation();
 }
@@ -33,6 +34,16 @@ Octree* Mesh::getOctree() const { return octree_; }
 float Mesh::getScale() const { return scale_; }
 Matrix4x4& Mesh::getTransformation() { return matTransform_; }
 Matrix4x4 Mesh::getInverseTransformation() const { return matTransform_.inverse(); }
+void Mesh::setRotationVelocity(float vel) { rotationVelocity_ = vel; }
+void Mesh::updateRotation(float deltaTime) {
+  curRotation_+=deltaTime*rotationVelocity_;
+  Matrix4x4 mat = Tools::rotationMatrix(rotationAxis_, deltaTime*rotationVelocity_);
+  matTransform_ = mat * matTransform_;
+  updateTransformation();
+}
+const Vector3& Mesh::getRotationOrigin() const { return rotationOrigin_; }
+const Vector3& Mesh::getRotationAxis() const { return rotationAxis_; }
+float Mesh::getRotationVelocity() const { return rotationVelocity_; }
 
 /** Return all the triangles linked to a group of vertices */
 std::vector<int> Mesh::getTrianglesFromVertices(const std::vector<int> &iVerts)
@@ -275,7 +286,7 @@ void Mesh::draw(GLint vertex, GLint normal, GLint color) {
 	glVertexAttribPointer(vertex, 3, GL_FLOAT, GL_TRUE, 0, 0);
 	GLBuffer::checkError();
 
-	normalsBuffer_.bind();
+  normalsBuffer_.bind();
 	glEnableVertexAttribArray(normal);
 	GLBuffer::checkError();
 	glVertexAttribPointer(normal, 3, GL_FLOAT, GL_TRUE, 0, 0);
@@ -297,6 +308,21 @@ void Mesh::draw(GLint vertex, GLint normal, GLint color) {
 	normalsBuffer_.release();
 	verticesBuffer_.release();
   colorsBuffer_.release();
+}
+
+void Mesh::drawVerticesOnly(GLint vertex) {
+  verticesBuffer_.bind();
+	glEnableVertexAttribArray(vertex);
+	GLBuffer::checkError();
+	glVertexAttribPointer(vertex, 3, GL_FLOAT, GL_TRUE, 0, 0);
+	GLBuffer::checkError();
+
+	indicesBuffer_.bind();
+	glDrawElements(GL_TRIANGLES, getNbTriangles()*3, GL_UNSIGNED_INT, 0);
+	indicesBuffer_.release();
+	glDisableVertexAttribArray(vertex);
+
+	verticesBuffer_.release();
 }
 
 void Mesh::drawOctree() const {
@@ -406,7 +432,7 @@ void Mesh::initMesh()
 		vertices_[i] = scale_*(vertices_[i] - center_);
   aabb.min_ -= center_;
   aabb.max_ -= center_;
-	matTransform_ = Tools::scaleMatrix(scale_)*matTransform_;
+	//matTransform_ = Tools::scaleMatrix(scale_)*matTransform_;
 	aabb.max_*=scale_;
 	aabb.min_*=scale_;
 	center_*=scale_;

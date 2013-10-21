@@ -193,6 +193,7 @@
     <None Include="..\..\resources\screen-vert.glsl" />
     <None Include="..\..\resources\sky-frag.glsl" />
     <None Include="..\..\resources\sky-vert.glsl" />
+    <None Include="..\..\resources\wireframe-frag.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

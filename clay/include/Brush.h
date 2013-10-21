@@ -45,6 +45,8 @@ public:
   Brush reflected(int axis) const;
   void transform(const Matrix4x4& matrix);
   Brush transformed(const Matrix4x4& matrix) const;
+  void spinVelocity(const Vector3& rotOrigin, const Vector3& rotAxis, float rotVel);
+  Brush withSpinVelocity(const Vector3& rotOrigin, const Vector3& rotAxis, float rotVel) const;
 
   // drawing
   void draw() const;

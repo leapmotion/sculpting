@@ -38,7 +38,7 @@ public:
 	int getNumBrushes() const { return (int)_brushes.size(); }
 	void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength);
   void clearBrushes() { _brushes.clear(); }
-	void applyBrushes(const Matrix4x4& transform, float deltaTime, bool symmetry);
+	void applyBrushes(float deltaTime, bool symmetry);
 	std::vector<ci::Vec3f> brushPositions() const;
 	std::vector<float> brushWeights() const;
   std::vector<float> brushRadii() const;
@@ -73,7 +73,6 @@ private:
     float d2Move_; //max displacement of vertices per step
     float deltaTime_;
     float minDetailMult_;
-    Matrix4x4 prevTransform_;
     bool prevSculpt_;
     int material_;
     std::vector<int> brushVertices_;
