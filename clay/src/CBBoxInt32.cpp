@@ -6,6 +6,7 @@
 // (C) 2005 ATI Research, Inc., All rights reserved.
 //=============================================================================
 
+#include "StdAfx.h"
 #include "CBBoxInt32.h"
 
 #define CP_MIN_INT32 0x80000000

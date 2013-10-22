@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "LeapListener.h"
 #include "cinder/app/AppBasic.h"
 #include <boost/date_time.hpp>

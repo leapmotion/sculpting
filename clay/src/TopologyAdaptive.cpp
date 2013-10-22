@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Topology.h"
 
 /** Uniformisation operation, we subdivide... and then decimate */

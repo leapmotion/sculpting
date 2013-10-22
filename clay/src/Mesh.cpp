@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Mesh.h"
 #include "Octree.h"
 #include <iostream>

@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "LeapInteraction.h"
 #include "cinder/app/AppBasic.h"
 #include "Utilities.h"

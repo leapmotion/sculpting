@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Picking.h"
 #include <algorithm>
 

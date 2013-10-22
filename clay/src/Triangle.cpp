@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Triangle.h"
 #include <stdio.h>
 #include <stdlib.h>

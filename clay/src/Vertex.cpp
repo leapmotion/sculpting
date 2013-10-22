@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Vertex.h"
 
 int Vertex::tagMask_ = 1;

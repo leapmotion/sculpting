@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "UserInterface.h"
 #include "cinder/app/App.h"
 #include "Utilities.h"

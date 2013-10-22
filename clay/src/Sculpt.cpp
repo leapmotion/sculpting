@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Sculpt.h"
 #include "Utilities.h"
 #include <algorithm>

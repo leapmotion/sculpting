@@ -6,6 +6,7 @@
 // (C) 2005 ATI Research, Inc., All rights reserved.
 //--------------------------------------------------------------------------------------
 
+#include "StdAfx.h"
 #include "CImageSurface.h"
 
 

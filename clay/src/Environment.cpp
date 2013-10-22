@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Environment.h"
 #include "Resources.h"
 #include "cinder/app/App.h"

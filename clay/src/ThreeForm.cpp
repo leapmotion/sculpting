@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "ThreeForm.h"
 #include "Files.h"
 

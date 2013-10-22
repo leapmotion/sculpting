@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Files.h"
 #include <stdlib.h>
 #include <sstream>

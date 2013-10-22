@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Topology.h"
 
 /** Subdivide until the detail every selected triangles comply with a detail level */
