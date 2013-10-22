@@ -35,7 +35,9 @@ public:
 	VertexVector& getVertices();
 	std::vector<Octree*>& getLeavesUpdate();
 	Triangle& getTriangle(int i);
-	Vertex& getVertex(int i);
+  const Triangle& getTriangle(int i) const;
+  Vertex& getVertex(int i);
+	const Vertex& getVertex(int i) const;
 	int getNbTriangles() const;
 	int getNbVertices() const;
 	Vector3 getCenter() const;

@@ -27,7 +27,9 @@ TriangleVector& Mesh::getTriangles() { return triangles_; }
 VertexVector& Mesh::getVertices() { return vertices_; }
 std::vector<Octree*>& Mesh::getLeavesUpdate() { return leavesUpdate_; }
 Triangle& Mesh::getTriangle(int i) { return triangles_[i]; }
+const Triangle& Mesh::getTriangle(int i) const { return triangles_[i]; }
 Vertex& Mesh::getVertex(int i) { return vertices_[i]; }
+const Vertex& Mesh::getVertex(int i) const { return vertices_[i]; }
 int Mesh::getNbTriangles() const { return triangles_.size(); }
 int Mesh::getNbVertices() const { return vertices_.size(); }
 Vector3 Mesh::getCenter() const { return center_; }
@@ -214,6 +216,10 @@ void Mesh::computeRingVertices(int iVert)
 		}
 	}
 }
+
+
+
+
 
 void Mesh::getVerticesInsideSphere(const Vector3& point, float radiusWorldSquared, std::vector<int>& result) {
 	VertexVector &vertices = getVertices();
