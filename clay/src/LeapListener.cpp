@@ -21,18 +21,23 @@ void LeapListener::onDisconnect(const Leap::Controller& controller) {
 }
 
 void LeapListener::onFrame(const Leap::Controller& controller) {
+  static const int MAX_FRAME_QUEUE_SIZE = 3; // max number of frames we can be "behind"
   std::lock_guard<std::mutex> lock(_mutex);
   _is_connected = true;
-  _frame = controller.frame();
+  _frameQueue.push_back(controller.frame());
+  if (_frameQueue.size() > MAX_FRAME_QUEUE_SIZE) {
+    _frameQueue.pop_front();
+  }
   _condition.notify_all();
 }
 
 bool LeapListener::waitForFrame(Leap::Frame& _Frame, int _MillisecondsTimeout) {
   std::unique_lock<std::mutex> lock(_mutex);
-  if (_Frame.id() == _frame.id() && !_condition.timed_wait(lock, boost::posix_time::milliseconds(_MillisecondsTimeout))) {
+  if (_frameQueue.empty() && !_condition.timed_wait(lock, boost::posix_time::milliseconds(_MillisecondsTimeout))) {
     return false;
   }
-  _Frame = _frame;
+  _Frame = _frameQueue.front();
+  _frameQueue.pop_front();
   return true;
 }
 

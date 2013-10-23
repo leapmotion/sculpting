@@ -3,6 +3,7 @@
 
 #include "cinder/Thread.h"
 #include "Leap.h"
+#include <deque>
 
 class LeapListener : public Leap::Listener {
 
@@ -19,7 +20,7 @@ public:
 private:
 
   bool _is_connected;
-  Leap::Frame _frame;
+  std::deque<Leap::Frame> _frameQueue;
   std::mutex _mutex;
   std::condition_variable _condition;
 
