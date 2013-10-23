@@ -393,16 +393,16 @@ void ClayDemoApp::setup()
 	_environment = new Environment();
 
 	try {
-		_light_clamp_shader = gl::GlslProg( loadResource( RES_LIGHT_CLAMP_VERT_GLSL ), loadResource( RES_LIGHT_CLAMP_FRAG_GLSL ) );
-		_horizontal_blur_shader = gl::GlslProg( loadResource( RES_BLUR_HORIZONTAL_VERT_GLSL ), loadResource( RES_BLUR_HORIZONTAL_FRAG_GLSL ) );
-		_vertical_blur_shader = gl::GlslProg( loadResource( RES_BLUR_VERTICAL_VERT_GLSL ), loadResource( RES_BLUR_VERTICAL_FRAG_GLSL ) );
-		_blur_shader = gl::GlslProg( loadResource( RES_BLUR_VERT_GLSL ), loadResource( RES_BLUR_FRAG_GLSL ) );
-		_screen_shader = gl::GlslProg( loadResource( RES_SCREEN_VERT_GLSL ), loadResource( RES_SCREEN_FRAG_GLSL ) );
+		_light_clamp_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_LIGHT_CLAMP_FRAG_GLSL ) );
+		_horizontal_blur_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLUR_HORIZONTAL_FRAG_GLSL ) );
+		_vertical_blur_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLUR_VERTICAL_FRAG_GLSL ) );
+		_blur_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLUR_FRAG_GLSL ) );
+		_screen_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_SCREEN_FRAG_GLSL ) );
 		_material_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
     _wireframe_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_WIREFRAME_FRAG_GLSL ) );
-		_metaball_shader = gl::GlslProg( loadResource( RES_METABALL_VERT_GLSL ), loadResource( RES_METABALL_FRAG_GLSL ) );
+		_metaball_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_METABALL_FRAG_GLSL ) );
 		_sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
-    _fxaa_shader = gl::GlslProg( loadResource( RES_FXAA_VERT_GLSL ), loadResource( RES_FXAA_FRAG_GLSL ) );
+    _fxaa_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_FXAA_FRAG_GLSL ) );
 	} catch (gl::GlslProgCompileExc e) {
 		std::cout << e.what() << std::endl;
 		quit();

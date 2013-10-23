@@ -6,8 +6,6 @@ uniform sampler2D textureSampler;
 // The inverse of the texture dimensions along X and Y
 uniform vec2 texcoordOffset;
 
-varying vec2 vertTexcoord;
-
 // The parameters are hardcoded for now, but could be
 // made into uniforms to control from the program.
 const float FXAA_SPAN_MAX = 8.0;
@@ -16,6 +14,8 @@ const float FXAA_REDUCE_MIN = (1.0/128.0);
 const vec3 luma = vec3(0.299, 0.587, 0.114);
 
 void main() {
+
+  vec2 vertTexcoord = gl_TexCoord[0].st;
 
   vec3 rgbNW = texture2D(textureSampler, vertTexcoord + (vec2(-1.0, -1.0) * texcoordOffset)).xyz;
   vec3 rgbNE = texture2D(textureSampler, vertTexcoord + (vec2(+1.0, -1.0) * texcoordOffset)).xyz;

@@ -213,19 +213,10 @@
     <None Include="..\..\resources\blur_horizontal-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\blur_horizontal-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\..\resources\blur_vertical-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\blur_vertical-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\..\resources\light_clamp-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\resources\light_clamp-vert.glsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\..\resources\material-frag.glsl">
@@ -237,13 +228,7 @@
     <None Include="..\..\resources\metaball-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\metaball-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\..\resources\screen-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\resources\screen-vert.glsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="..\..\resources\sky-frag.glsl">
