@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "ThreeForm.h"
 #include "Files.h"
+#include <time.h>
 
 #define FREEIMAGE_LIB
 #include "FreeImage.h"
@@ -488,10 +489,15 @@ void ClayDemoApp::setup()
 
 	_leap_interaction = new LeapInteraction(&sculpt_, _ui);
 
+  srand(static_cast<unsigned int>(time(0)));
+  int randEnvIdx = rand() % infos.size();
+  std::string randEnvString = infos[randEnvIdx]._name;
+  Environment::TimeOfDay time = (rand() % 2) ? Environment::TIME_DAWN : Environment::TIME_NOON;
+  _loading_thread = thread(&Environment::setEnvironment, _environment, randEnvString, time);
+
 	setBrushMode("Sweep");
 	setBrushSize("Medium");
 	setBrushStrength("Medium");
-	setEnvironment("Islands");
 
 	glEnable(GL_FRAMEBUFFER_SRGB);
 
