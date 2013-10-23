@@ -100,43 +100,45 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
 /** Detect which triangles to split and the edge that need to be split */
 void Topology::initSplit(std::vector<int> &iTris, std::vector<int> &iTrisSubd, std::vector<int> &split, float detailMaxSquared)
 {
-    int nbTris = iTris.size();
+    const int nbTris = iTris.size();
     for(int i=0;i<nbTris;++i)
     {
-        int splitNum = findSplit(iTris[i], detailMaxSquared, true);
-        switch(splitNum)
-        {
-        case 0 : continue;
-        case 1 : split.push_back(1); break;
-        case 2 : split.push_back(2); break;
-        case 3 : split.push_back(3); break;
+        const int splitNum = findSplit(iTris[i], detailMaxSquared, true);
+        if (splitNum > 0) {
+          split.push_back(splitNum);
+          iTrisSubd.push_back(iTris[i]);
         }
-        iTrisSubd.push_back(iTris[i]);
     }
 }
 
 /** Find the edge to be split (0 otherwise) */
 int Topology::findSplit(int iTri, float detailMaxSquared, bool checkInsideSphere)
 {
-    Triangle &t = triangles_[iTri];
-    Vertex &v1 = vertices_[t.vIndices_[0]];
-    Vertex &v2 = vertices_[t.vIndices_[1]];
-    Vertex &v3 = vertices_[t.vIndices_[2]];
+    const Triangle &t = triangles_[iTri];
+    const Vertex &v1 = vertices_[t.vIndices_[0]];
+    const Vertex &v2 = vertices_[t.vIndices_[1]];
+    const Vertex &v3 = vertices_[t.vIndices_[2]];
 
     if(checkInsideSphere)
         if(!Geometry::sphereIntersectTriangle(centerPoint_, radiusSquared_*2.f, v1, v2, v3))
             if(!Geometry::pointInsideTriangle(centerPoint_, v1, v2, v3))
                 return 0;
 
-    float length1 = (v1-v2).squaredNorm();
-    float length2 = (v2-v3).squaredNorm();
-    float length3 = (v1-v3).squaredNorm();
-    if(length1>length2 && length1>length3)
-        return length1 > detailMaxSquared ? 1 : 0;
-    else if(length2>length3)
-        return length2 > detailMaxSquared ? 2 : 0;
-    else
-        return length3 > detailMaxSquared ? 3 : 0;
+    const float length1 = (v1-v2).squaredNorm();
+    const float length2 = (v2-v3).squaredNorm();
+    const float length3 = (v1-v3).squaredNorm();
+
+    float max = length1;
+    int idx = 1;
+    if (length2 > max) {
+      max = length2;
+      idx = 2;
+    }
+    if (length3 > max) {
+      max = length3;
+      idx = 3;
+    }
+    return max > detailMaxSquared ? idx : 0;
 }
 
 /** Subdivide all the triangles that need to be subdivided */

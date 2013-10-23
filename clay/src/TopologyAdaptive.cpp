@@ -69,6 +69,8 @@ void Topology::checkCollisions(std::vector<int> &iVerts, float d2Thickness)
     grid.init(sqrtf(r2Thickness));
     grid.build(mesh_, iVerts);
 
+    std::vector<int> iNearVerts;
+
     for(int i = 0; i<nbVerts; ++i)
     {
         int iVert = iVerts[i];
@@ -81,7 +83,7 @@ void Topology::checkCollisions(std::vector<int> &iVerts, float d2Thickness)
         for(int j=0;j<nbRing;++j)
             vertices_[ring[j]].tagFlag_ = Vertex::tagMask_;
 
-        std::vector<int> iNearVerts = grid.getNeighborhood(v);
+        grid.getNeighborhood(v, iNearVerts);
         int nbNearVerts = iNearVerts.size();
         for(int j = 0; j<nbNearVerts; ++j)
         {

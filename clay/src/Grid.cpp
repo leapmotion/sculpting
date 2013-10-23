@@ -51,10 +51,10 @@ void Grid::build(Mesh *mesh, const std::vector<int> &iVerts)
     }
 }
 /** Return neighboring vertices */
-std::vector<int> Grid::getNeighborhood(const Vector3& v)
+void Grid::getNeighborhood(const Vector3& v, std::vector<int>& iNearVerts)
 {
-    Vector3& min = aabb_.min_;
-    Vector3 diff(v-min);
+    const Vector3& min = aabb_.min_;
+    const Vector3 diff(v-min);
     int indX = static_cast<int>(diff.x()/cellSize_);
     int indY = static_cast<int>(diff.y()/cellSize_);
     int indZ = static_cast<int>(diff.z()/cellSize_);
@@ -85,7 +85,7 @@ std::vector<int> Grid::getNeighborhood(const Vector3& v)
     if(indZ<=0) zStart = 0;
     if(indZ>=(dimZ_-1)) zEnd = 0;
 
-    std::vector<int> iNearVerts;
+    iNearVerts.clear();
 
     for(int iX = xStart; iX<=xEnd; ++iX)
     {
@@ -93,11 +93,10 @@ std::vector<int> Grid::getNeighborhood(const Vector3& v)
         {
             for(int iZ = zStart; iZ<=zEnd; ++iZ)
             {
-                std::vector<int> &iVerts = iVerts_[getIndex(indX + iX, indY + iY, indZ + iZ)];
+                const std::vector<int> &iVerts = iVerts_[getIndex(indX + iX, indY + iY, indZ + iZ)];
                 iNearVerts.insert(iNearVerts.end(), iVerts.begin(), iVerts.end());
             }
         }
     }
-    return iNearVerts;
 }
 

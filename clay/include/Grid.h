@@ -20,7 +20,7 @@ public:
     ~Grid();
     void init(float cellSize);
     void build(Mesh *mesh, const std::vector<int> &iVerts);
-    std::vector<int> getNeighborhood(const Vector3& v);
+    void getNeighborhood(const Vector3& v, std::vector<int>& iNearVerts);
     inline int getIndex(int x, int y, int z) { return (x + y*dimX_ + z*dimXY_); }
 
 private:

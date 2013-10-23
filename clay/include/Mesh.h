@@ -111,8 +111,10 @@ private:
 	GLBuffer normalsBuffer_; //normals buffer (openGL)
 	GLBuffer indicesBuffer_; //indexes (openGL)
   GLBuffer colorsBuffer_;
-  bool needVerticesRefresh_;
-  bool needIndicesRefresh_;
+  bool reallocateVerticesBuffer_;
+  bool reallocateIndicesBuffer_;
+  int pendingGPUTriangles;
+  int nbGPUTriangles;
 	Vector3 center_; //center of mesh
 	float scale_; //scale
 	Octree *octree_; //octree
@@ -148,8 +150,8 @@ private:
   typedef std::vector<IndexUpdate, Eigen::aligned_allocator<IndexUpdate> > IndexUpdateVector;
   typedef std::vector<VertexUpdate, Eigen::aligned_allocator<VertexUpdate> > VertexUpdateVector;
 
-  std::deque<IndexUpdateVector> indexUpdates_;
-  std::deque<VertexUpdateVector> vertexUpdates_;
+  IndexUpdateVector indexUpdates_;
+  VertexUpdateVector vertexUpdates_;
   boost::mutex bufferMutex_;
 };
 
