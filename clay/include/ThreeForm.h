@@ -23,6 +23,8 @@ using namespace ci::gl;
 using namespace ci::app;
 using namespace std;
 
+class CameraUtil;
+
 class ClayDemoApp : public AppNative 
 {
 public:
@@ -67,6 +69,9 @@ private:
 	float _phi;
 	float _fov;
 	float _cam_dist;
+
+    // Free-floating camera utility.
+  CameraUtil* _camera_util;
 
 	// **** mouse stuff ***
 	Vec2i _initial_mouse_pos, _current_mouse_pos, _previous_mouse_pos;

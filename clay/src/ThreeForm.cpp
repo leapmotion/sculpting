@@ -5,6 +5,8 @@
 #define FREEIMAGE_LIB
 #include "FreeImage.h"
 
+#include "CameraUtil.h"
+
 const float CAMERA_SPEED = 0.005f;
 
 const float MIN_CAMERA_DIST = 250.0f;
@@ -12,6 +14,14 @@ const float MAX_CAMERA_DIST = 350.0f;
 const float SPHERE_RADIUS = 50000.0f;
 const float MIN_FOV = 50.0f;
 const float MAX_FOV = 90.0f;
+
+// Debug output
+std::vector<Vector3> debugPoints;
+std::vector<Vector3> debugLines;
+std::vector<Vector3> debugTriangles;
+
+// Cinder -- Eigen conversions
+Vec3f ToVec3f(const Vector3& v) { return Vec3f(v.x(), v.y(), v.z()); }
 
 
 //*********************************************************
@@ -33,6 +43,7 @@ ClayDemoApp::ClayDemoApp()
   , drawOctree_(false)
   , _use_fxaa(true)
 {
+  _camera_util = new CameraUtil();
 }
 
 ClayDemoApp::~ClayDemoApp()
@@ -41,6 +52,8 @@ ClayDemoApp::~ClayDemoApp()
 	if (mesh_) {
 		delete mesh_;
 	}
+
+  delete _camera_util;
 }
 
 void ClayDemoApp::prepareSettings( Settings *settings )
@@ -553,6 +566,9 @@ void ClayDemoApp::mouseDrag( MouseEvent event )
 	_current_mouse_pos = event.getPos();
 
 	updateCamera(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
+
+  // New camera update.
+  _camera_util->RecordUserInput(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
 }
 
 void ClayDemoApp::mouseWheel( MouseEvent event)
@@ -593,19 +609,41 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
 	_fov = math<float>::clamp(_fov, 50.f, 90.f);
 }
 
+
+
 void ClayDemoApp::update()
 {
-	Vec3f campos;
+  // Calculate initial camera position
+  Vec3f campos;
 	campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
 	campos.y = sinf(_phi)*_cam_dist;
 	campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
-	_camera.lookAt(campos,Vec3f(0,0,0),Vec3f(0,1,0));
+
+  // if-conditioning this will disable mouse-based movement, untill we actually handle camera update
+  if (!mesh_ || _camera_util->state == CameraUtil::STATE_INVALID) {
+    // Init camera
+    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0)); // up vector assumed to be Vec3f(0,1,0)
+  }
+
+  campos = ToVec3f(_camera_util->transform.translation);
+  Vector3 up = _camera_util->transform.rotation * Vector3::UnitY();
+  Vector3 to = _camera_util->transform.translation +  _camera_util->transform.rotation * Vector3::UnitZ() * -200.0f;
+
+  // Update camera
+	_camera.lookAt(campos,ToVec3f(to),ToVec3f(up));
 	_camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
 	_camera.getProjectionMatrix();
 	bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
 	_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress);
 
 	updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+  _camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+
+  // Camera update.
+  if (mesh_) {
+    _camera_util->UpdateCamera(mesh_, _cam_dist);
+  }
+
 	float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
 	_cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
 

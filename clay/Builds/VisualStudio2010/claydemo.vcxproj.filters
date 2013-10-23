@@ -96,6 +96,9 @@
     <ClCompile Include="..\..\src\GLBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\CameraUtil.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -186,6 +189,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\CameraUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -13,3 +13,5 @@
 
 #define FREEIMAGE_LIB
 #include "FreeImage.h"
+
+#include "Common.h"

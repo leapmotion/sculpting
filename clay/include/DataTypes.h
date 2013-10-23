@@ -15,9 +15,17 @@ typedef Eigen::Matrix<float, 3, 1> Vector3;
 typedef Eigen::Matrix<float, 4, 1> Vector4;
 
 // rotations
-typedef Eigen::Quaternion<float> Quaternion;
+typedef Eigen::Quaternion<float> Quaternion; // causes a name clash with Cinder
+typedef Eigen::Quaternion<float> lmQuat;
 typedef Eigen::AngleAxis<float> AngleAxis;
 
 typedef std::vector<Vector3, Eigen::aligned_allocator<Vector3> > Vector3Vector;
+
+typedef float lmReal;
+
+struct lmTransform {
+  Vector3 translation;
+  lmQuat rotation;
+};
 
 #endif
