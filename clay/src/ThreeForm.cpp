@@ -874,7 +874,7 @@ void ClayDemoApp::createBloom()
 	_light_clamp_shader.bind();
 	_light_clamp_shader.uniform( "input_texture", 0 );
 	_light_clamp_shader.uniform( "light_threshold", _bloom_light_threshold );
-	gl::drawSolidRect(Rectf(0,0,_light_clamp_fbo.getWidth(),_light_clamp_fbo.getHeight()));
+	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_light_clamp_fbo.getWidth(),(float)_light_clamp_fbo.getHeight()));
 	_light_clamp_shader.unbind();
 	_light_clamp_fbo.unbindFramebuffer();
 
@@ -887,7 +887,7 @@ void ClayDemoApp::createBloom()
 	_horizontal_blur_shader.bind();
 	_horizontal_blur_shader.uniform( "input_texture", 0 );
 	_horizontal_blur_shader.uniform( "blurSize",_bloom_size/_horizontal_blur_fbo.getWidth() );
-	gl::drawSolidRect(Rectf(0,0,_horizontal_blur_fbo.getWidth(),_horizontal_blur_fbo.getHeight()));
+	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_horizontal_blur_fbo.getWidth(),(float)_horizontal_blur_fbo.getHeight()));
 	_horizontal_blur_shader.unbind();
 	_horizontal_blur_fbo.unbindFramebuffer();
 
@@ -900,7 +900,7 @@ void ClayDemoApp::createBloom()
 	_vertical_blur_shader.bind();
 	_vertical_blur_shader.uniform( "input_texture", 0 );
 	_vertical_blur_shader.uniform( "blurSize", _bloom_size/_vertical_blur_fbo.getHeight() );
-	gl::drawSolidRect(Rectf(0,0,_vertical_blur_fbo.getWidth(),_vertical_blur_fbo.getHeight()));
+	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_vertical_blur_fbo.getWidth(),(float)_vertical_blur_fbo.getHeight()));
 	_vertical_blur_shader.unbind();
 	_vertical_blur_fbo.unbindFramebuffer();
 
@@ -983,7 +983,7 @@ void ClayDemoApp::draw()
 		_screen_shader.uniform( "bloom_strength", _bloom_strength * float(_bloom_visible) );
 		_screen_shader.uniform( "vignette_radius", 0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2)) );
 		_screen_shader.uniform( "vignette_strength", 0.75f );
-		gl::drawSolidRect(Rectf(0,0,width,height));
+		gl::drawSolidRect(Rectf(0.0f,0.0f,width,height));
 		_screen_shader.unbind();
 		_screen_fbo.unbindTexture();
 		_vertical_blur_fbo.unbindTexture();

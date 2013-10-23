@@ -5,9 +5,15 @@
 #include <cinder/gl/gl.h>
 
 /** Constructor */
+#if 1
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INFLATE), topoMode_(ADAPTIVE),
     detail_(1.0f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f),
     deltaTime_(0.0f), minDetailMult_(0.1f), prevSculpt_(false), material_(0)
+#else
+Sculpt::Sculpt() : mesh_(0), intensity_(0.5f), sculptMode_(INFLATE), topoMode_(ADAPTIVE), centerPoint_(Vector3::Zero()), culling_(false),
+    detail_(1.0f), thickness_(0.5f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), sweepCenter_(Vector3::Zero()), sweepDir_(Vector3::Zero()),
+    prevTransform_(Matrix4x4::Identity()), deltaTime_(0.0f), minDetailMult_(0.05f), prevSculpt_(false)
+#endif
 {}
 
 /** Destructor */
