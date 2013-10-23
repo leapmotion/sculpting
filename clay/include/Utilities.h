@@ -88,6 +88,32 @@ static inline float falloff(float dist) {
   return 3.f*dist*dist*dist*dist-4.f*dist*dist*dist+1.f;
 }
 
+struct FPSCounter {
+  FPSCounter() : lastTime(0.0), lastReportTime(0.0) {
+    reportedDeltaTime = deltaTime = 1.0f / 60.0f;
+  }
+  inline float FPS() { return 1.0f / reportedDeltaTime; }
+  inline void Update(double time) {
+    static const float SMOOTH_STRENGTH = 0.8f;
+    static const double TIME_BETWEEN_UPDATES = 1.0;
+    const float sinceLast = static_cast<float>(time - lastTime);
+    deltaTime = SMOOTH_STRENGTH*deltaTime + (1.0f-SMOOTH_STRENGTH)*sinceLast;
+    lastTime = time;
+    if (time - lastReportTime > TIME_BETWEEN_UPDATES) {
+      reportedDeltaTime = deltaTime;
+      lastReportTime = time;
+    }
+  }
+  float deltaTime;
+  float reportedDeltaTime;
+  double lastTime;
+  double lastReportTime;
+};
+
+static const int TIME_STAMP_TICKS_PER_SEC = 1000000;
+static const double TIME_STAMP_SECS_TO_TICKS  = static_cast<double>(TIME_STAMP_TICKS_PER_SEC);
+static const double TIME_STAMP_TICKS_TO_SECS  = 1.0/TIME_STAMP_SECS_TO_TICKS;
+
 }
 
 #endif

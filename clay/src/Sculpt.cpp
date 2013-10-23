@@ -93,7 +93,8 @@ void Sculpt::smooth(const std::vector<int> &iVerts, const Brush& brush)
     VertexVector &vertices = mesh_->getVertices();
     int nbVerts = iVerts.size();
     Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
-    laplacianSmooth(iVerts,smoothVerts);
+    Vector3Vector smoothColors(nbVerts, Vector3::Zero());
+    laplacianSmooth(iVerts,smoothVerts, smoothColors);
     if(topoMode_!=ADAPTIVE)
     {
 #pragma omp parallel for
@@ -101,6 +102,7 @@ void Sculpt::smooth(const std::vector<int> &iVerts, const Brush& brush)
         {
             Vertex &vert = vertices[iVerts[i]];
             vert += brush._strength*(smoothVerts[i]-vert);
+            vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
         }
     }
     else
@@ -111,6 +113,7 @@ void Sculpt::smooth(const std::vector<int> &iVerts, const Brush& brush)
         {
             Vertex &vert = vertices[iVerts[i]];
             Vector3 displ = (smoothVerts[i]-vert)*brush._strength;
+            vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
             float displLength = displ.squaredNorm();
             if(displLength<=d2Move_)
                 vert+=displ;
@@ -126,7 +129,8 @@ void Sculpt::smoothFlat(const std::vector<int> &iVerts)
     VertexVector &vertices = mesh_->getVertices();
     int nbVerts = iVerts.size();
     Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
-    laplacianSmooth(iVerts,smoothVerts);
+    Vector3Vector smoothColors(nbVerts, Vector3::Zero());
+    laplacianSmooth(iVerts,smoothVerts, smoothColors);
 #pragma omp parallel for
     for (int i = 0; i<nbVerts; ++i)
     {
@@ -135,6 +139,7 @@ void Sculpt::smoothFlat(const std::vector<int> &iVerts)
         Vector3& n = vert.normal_;
         vertSmo-=n*n.dot(vertSmo-vert);
         vert+=(vertSmo-vert);
+        vert.material_ = smoothColors[i];
     }
 }
 
@@ -147,7 +152,6 @@ void Sculpt::draw(const std::vector<int> &iVerts, const Brush& brush)
 {
     VertexVector &vertices = mesh_->getVertices();
     int nbVerts = iVerts.size();
-    //float radius = sqrtf(radiusSquared);
     float deformationIntensity = brush._radius*0.1f;
     if(topoMode_==ADAPTIVE)
         deformationIntensity = std::min(sqrtf(d2Move_), deformationIntensity);
@@ -226,7 +230,7 @@ void Sculpt::flatten(const std::vector<int> &iVerts, const Brush& brush)
 }
 
 /** Laplacian smooth. Special rule for vertex on the edge of the mesh. */
-void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts)
+void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors)
 {
     VertexVector &vertices = mesh_->getVertices();
     int nbVerts = iVerts.size();
@@ -239,6 +243,7 @@ void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoo
         if(nbVRing!=(int)vert.tIndices_.size())
         {
             Vector3 center(Vector3::Zero());
+            Vector3 color(Vector3::Zero());
             int nbVertEdge = 0;
             for(int j = 0; j<nbVRing; ++j)
             {
@@ -247,20 +252,25 @@ void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoo
                 {
                     center+=ivr;
                     ++nbVertEdge;
+                    color += ivr.material_;
                 }
             }
             if (nbVertEdge > 0) {
               smoothVerts[i]=center/static_cast<float>(nbVertEdge);
+              smoothColors[i]=color/static_cast<float>(nbVertEdge);
             }
         }
         else
         {
             Vector3 center(Vector3::Zero());
+            Vector3 color(Vector3::Zero());
             for (int j=0;j<nbVRing;++j) {
                 center+=vertices[ivRing[j]];
+                color+=vertices[ivRing[j]].material_;
             }
             if (nbVRing > 0) {
               smoothVerts[i]=center/static_cast<float>(nbVRing);
+              smoothColors[i]=color/static_cast<float>(nbVRing);
             }
         }
     }
@@ -327,7 +337,7 @@ void Sculpt::sweep(const std::vector<int> &iVerts, const Brush& brush)
 {
     VertexVector &vertices = mesh_->getVertices();
     int nbVerts = iVerts.size();
-    float deformationIntensity = brush._radius*0.025f*deltaTime_;
+    float deformationIntensity = brush._radius*0.0005f;
 
 #pragma omp parallel for
     for (int i = 0; i<nbVerts; ++i)
@@ -383,6 +393,8 @@ void Sculpt::applyBrushes(float deltaTime, bool symmetry)
     return;
   }
   
+  boost::unique_lock<boost::mutex> lock(brushMutex_);
+  mesh_->handleUndoRedo();
   const Matrix4x4& transformInv = mesh_->getInverseTransformation();
   const Vector3& origin = mesh_->getRotationOrigin();
   const Vector3& axis = mesh_->getRotationAxis();
@@ -426,38 +438,11 @@ void Sculpt::applyBrushes(float deltaTime, bool symmetry)
   prevSculpt_ = haveSculpt;
 }
 
-std::vector<ci::Vec3f> Sculpt::brushPositions() const
-{
-	std::vector<ci::Vec3f> positions;
-	for (size_t i=0; i<_brushes.size(); i++)
-	{
-		const Vector3& pos = _brushes[i]._position;
-		ci::Vec3f temp(pos.x(), pos.y(), pos.z());
-		positions.push_back(temp);
-	}
-	return positions;
-}
-
-std::vector<float> Sculpt::brushWeights() const
-{
-	std::vector<float> weights;
-	for (size_t i=0; i<_brushes.size(); i++)
-	{
-    weights.push_back(_brushes[i]._strength);
-	}
-	return weights;
-}
-
-std::vector<float> Sculpt::brushRadii() const
-{
-  std::vector<float> radii;
-  for (size_t i=0; i<_brushes.size(); i++)
-  {
-    radii.push_back(_brushes[i]._radius);
-  }
-  return radii;
-}
-
-const BrushVector& Sculpt::getBrushes() const {
+BrushVector Sculpt::getBrushes() const {
+  boost::unique_lock<boost::mutex> lock(brushMutex_);
 	return _brushes;
+}
+
+boost::mutex& Sculpt::getBrushMutex() {
+  return brushMutex_;
 }

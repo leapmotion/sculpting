@@ -39,18 +39,17 @@ public:
 	void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength);
   void clearBrushes() { _brushes.clear(); }
 	void applyBrushes(float deltaTime, bool symmetry);
-	std::vector<ci::Vec3f> brushPositions() const;
-	std::vector<float> brushWeights() const;
-  std::vector<float> brushRadii() const;
-	const BrushVector& getBrushes() const;
+	BrushVector getBrushes() const;
   
+  boost::mutex& getBrushMutex();
+
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
     void setAdaptiveParameters(float radiusSquared);
     Vector3 areaNormal(const std::vector<int> &iVerts);
     Vector3 areaCenter(const std::vector<int> &iVerts);
-    void laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts);
+    void laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors);
 
 private:
 
@@ -76,6 +75,7 @@ private:
     bool prevSculpt_;
     int material_;
     std::vector<int> brushVertices_;
+    mutable boost::mutex brushMutex_;
 
 		BrushVector _brushes;
 };

@@ -39,6 +39,7 @@ ClayDemoApp::ClayDemoApp()
   , _last_update_time(0.0)
   , drawOctree_(false)
   , _use_fxaa(true)
+  , _shutdown(false)
 {
   _camera_util = new CameraUtil();
 }
@@ -493,15 +494,18 @@ void ClayDemoApp::setup()
 	setEnvironment("Islands");
 
 	glEnable(GL_FRAMEBUFFER_SRGB);
+
+  _mesh_thread = boost::thread(&ClayDemoApp::updateLeapAndMesh, this);
 }
 
 void ClayDemoApp::shutdown() {
+  _shutdown = true;
 	FreeImage_DeInitialise();
 }
 
 void ClayDemoApp::resize()
 {
-	static const int DOWNSCALE_FACTOR = 4;
+	static const int DOWNSCALE_FACTOR = 1;
 
 	int width = getWindowWidth();
 	int height = getWindowHeight();
@@ -518,16 +522,12 @@ void ClayDemoApp::resize()
 	_color_fbo = Fbo( width, height, format );
 	_depth_fbo = Fbo( width, height, format );
 	_blur_fbo = Fbo( width, height, format );
-	_blur_fbo.bindFramebuffer();
-	gl::clear();
-	_blur_fbo.unbindFramebuffer();
 
 	gl::Fbo::Format hdr_format;
 	hdr_format.setColorInternalFormat(GL_RGBA32F_ARB);
 
 	gl::Fbo::Format ldr_format;
 	ldr_format.setColorInternalFormat(GL_RGBA32F_ARB);
-
 
 	_light_clamp_fbo = Fbo( width, height, ldr_format );
 	_horizontal_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, ldr_format );
@@ -610,6 +610,8 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
 
 void ClayDemoApp::update()
 {
+  _ui->update(_leap_interaction->getTips());
+  
   // Calculate initial camera position
   Vec3f campos;
 	campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
@@ -630,32 +632,33 @@ void ClayDemoApp::update()
 	_camera.lookAt(campos,ToVec3f(to),ToVec3f(up));
 	_camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
 	_camera.getProjectionMatrix();
-	bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
-	_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress);
+}
 
-	updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
-  // Don't record leap's angles in the user camera
-  //_camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+void ClayDemoApp::updateLeapAndMesh() {
+  while (!_shutdown) {
+    double curTime = ci::app::getElapsedSeconds();
+    bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
 
-  _camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()));
+    if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
+	    updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+      // Don't record leap's angles in the user camera
+      //_camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
 
-  // Camera update.
-  if (mesh_) {
-    _camera_util->UpdateCamera(mesh_);
+      _camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()));
+
+      float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
+      _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
+
+      if (mesh_) {
+        _camera_util->UpdateCamera(mesh_);
+        const float deltaTime = curTime - _last_update_time;
+        mesh_->updateRotation(deltaTime);
+		    sculpt_.applyBrushes(deltaTime, symmetry_);
+      }
+    }
+    _last_update_time = curTime;
+    _mesh_update_counter.Update(curTime);
   }
-
-	float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
-	_cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
-
-  double curTime = ci::app::getElapsedSeconds();
-
-	if (mesh_) {
-    const float deltaTime = curTime - _last_update_time;
-    mesh_->updateRotation(deltaTime);
-		sculpt_.applyBrushes(deltaTime, symmetry_);
-	}
-
-  _last_update_time = curTime;
 }
 
 void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
@@ -758,7 +761,20 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	_environment->bindCubeMap(Environment::CUBEMAP_IRRADIANCE, 0);
 	_environment->bindCubeMap(Environment::CUBEMAP_RADIANCE, 1);
 
+  BrushVector brushes = sculpt_.getBrushes();
+  const int numBrushes = brushes.size();
+  std::vector<ci::Vec3f> brushPositions;
+  std::vector<float> brushWeights;
+  std::vector<float> brushRadii;
+  for (int i=0; i<numBrushes; i++) {
+    const Vector3& pos = brushes[i]._position;
+    brushPositions.push_back(ci::Vec3f(pos.x(), pos.y(), pos.z()));
+    brushWeights.push_back(brushes[i]._strength);
+    brushRadii.push_back(brushes[i]._radius);
+  }
+
   if (mesh_) {
+    mesh_->updateGPUBuffers();
 	  _material_shader.bind();
 	  GLint vertex = _material_shader.getAttribLocation("vertex");
 	  GLint normal = _material_shader.getAttribLocation("normal");
@@ -782,10 +798,10 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	  _material_shader.uniform( "reflectionBias", _reflection_bias );
 	  _material_shader.uniform( "refractionBias", _refraction_bias );
 	  _material_shader.uniform( "refractionIndex", _refraction_index );
-	  _material_shader.uniform( "numLights", sculpt_.getNumBrushes() );
-	  _material_shader.uniform( "brushPositions", sculpt_.brushPositions().data(), sculpt_.getNumBrushes() );
-	  _material_shader.uniform( "brushWeights", sculpt_.brushWeights().data(), sculpt_.getNumBrushes() );
-    _material_shader.uniform( "brushRadii", sculpt_.brushRadii().data(), sculpt_.getNumBrushes() );
+	  _material_shader.uniform( "numLights", numBrushes );
+	  _material_shader.uniform( "brushPositions", brushPositions.data(), numBrushes );
+	  _material_shader.uniform( "brushWeights", brushWeights.data(), numBrushes );
+    _material_shader.uniform( "brushRadii", brushRadii.data(), numBrushes );
 	  _material_shader.uniform( "lightColor", 0.15f*_brush_color );
 	  _material_shader.uniform( "lightExponent", 30.0f);
 	  _material_shader.uniform( "lightRadius", 3.0f);
@@ -831,7 +847,6 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 #else
 	_environment->unbindCubeMap(0);
 	_environment->unbindCubeMap(1);
-  const BrushVector& brushes = sculpt_.getBrushes();
 	for (size_t i=0; i<brushes.size(); i++) {
     ColorA color(_brush_color, 0.25f);
     gl::color(color);
@@ -1005,7 +1020,7 @@ void ClayDemoApp::draw()
       int tris = mesh_->getNbTriangles();
       int verts = mesh_->getNbVertices();
       std::stringstream ss;
-      ss << getAverageFps() << " fps, " << tris << " triangles, " << verts << " vertices";
+      ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
       glPushMatrix();
       gl::scale(1, -1);
       ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));

@@ -8,6 +8,7 @@
 #include "Sculpt.h"
 #include "Utilities.h"
 #include <cinder/app/App.h>
+#include <cinder/Thread.h>
 
 class LeapInteraction
 {
@@ -15,7 +16,7 @@ class LeapInteraction
 public:
 
 	LeapInteraction(Sculpt* _Sculptor, UserInterface* _Ui);
-	void processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress);
+	bool processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress);
 
 	float getDPhi() const { return _dphi; }
 	float getDTheta() const { return _dtheta; }
@@ -23,6 +24,7 @@ public:
   Vec3f getPinchDeltaFromLastCall();
 	void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
 	void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
+  std::vector<Vec4f> getTips() { boost::unique_lock<boost::mutex> tipsLock(_tips_mutex); return _tips; }
 
 private:
 
@@ -43,6 +45,7 @@ private:
 	float _dphi;
 	float _dtheta;
 	float _dzoom;
+  boost::mutex _tips_mutex;
 
   // Handling pinch gesture
   bool _is_pinched;

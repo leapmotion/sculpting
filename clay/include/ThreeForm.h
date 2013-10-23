@@ -55,6 +55,7 @@ public:
 	void keyDown( KeyEvent event );
 	void updateCamera(const float _DTheta,const float _DPhi,const float _DFov);
 	void update();
+  void updateLeapAndMesh();
 	void renderSceneToFbo(Camera& _Camera);
 	void createBloom();
 	void draw();
@@ -88,6 +89,9 @@ private:
 	Fbo _blur_fbo;
 	boost::thread _loading_thread;
   double _last_update_time;
+  boost::thread _mesh_thread;
+  bool _shutdown;
+  Utilities::FPSCounter _mesh_update_counter;
 
 	// *** Leap stuff ***
 	LeapListener _listener;

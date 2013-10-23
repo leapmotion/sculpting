@@ -11,7 +11,9 @@ const int undoLimit_ = 10;
 Mesh::Mesh() : center_(Vector3::Zero()), scale_(1),
 	octree_(0), matTransform_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
   normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER), colorsBuffer_(GL_ARRAY_BUFFER),
-  rotationOrigin_(Vector3::Zero()), rotationAxis_(Vector3::UnitY()), rotationVelocity_(0.0f), curRotation_(0.0f)
+  rotationOrigin_(Vector3::Zero()), rotationAxis_(Vector3::UnitY()), rotationVelocity_(0.0f), curRotation_(0.0f),
+  verticesBufferCount_(0), indicesBufferCount_(0), needVerticesRefresh_(true), needIndicesRefresh_(true),
+  undoPending_(false), redoPending_(false)
 {
 	updateTransformation();
 }
@@ -339,53 +341,17 @@ void Mesh::drawOctree() const {
 	glPopMatrix();
 }
 
-/** Initialize Vertex Buffer Object (VBO) */
-void Mesh::initVBO()
-{
+void Mesh::initVertexVBO() {
 	const int nbVertices = getNbVertices();
-	const int nbTriangles = getNbTriangles();
-	const int verticesBytes = nbVertices*3*sizeof(GLfloat)*2;
-	const int indicesBytes = nbTriangles*3*sizeof(GLuint)*2;
-
-	GLfloat* verticesArray=(GLfloat*)malloc(verticesBytes);
-	GLfloat* normalsArray=(GLfloat*)malloc(verticesBytes);
-  GLfloat* colorsArray=(GLfloat*)malloc(verticesBytes);
-	GLuint* indicesArray=(GLuint*)malloc(indicesBytes);
-
-#pragma omp parallel for
-	for (int i=0;i<nbVertices;++i)
-	{
-		Vertex &ver=vertices_[i];
-		verticesArray[i*3]=ver.x();
-		verticesArray[i*3+1]=ver.y();
-		verticesArray[i*3+2]=ver.z();
-		const std::vector<int> &iTri=ver.tIndices_;
-		int nbTri = iTri.size();
-    const Vector3& normal = ver.normal_;
-		normalsArray[i*3]=normal.x();
-		normalsArray[i*3+1]=normal.y();
-		normalsArray[i*3+2]=normal.z();
-    const Vector3& color = ver.material_;
-    colorsArray[i*3]=color.x();
-    colorsArray[i*3+1]=color.y();
-    colorsArray[i*3+2]=color.z();
-	}
-
-#pragma omp parallel for
-	for (int i=0;i<nbTriangles;++i)
-	{
-		Triangle &tri=triangles_[i];
-		indicesArray[i*3]=tri.vIndices_[0];
-		indicesArray[i*3+1]=tri.vIndices_[1];
-		indicesArray[i*3+2]=tri.vIndices_[2];
-	}
+  verticesBufferCount_ = 2*nbVertices;
+	const int verticesBytes = verticesBufferCount_*3*sizeof(GLfloat);
 
 	if (verticesBuffer_.isCreated()) {
 		verticesBuffer_.destroy();
 	}
 	verticesBuffer_.create();
 	verticesBuffer_.bind();
-	verticesBuffer_.allocate(verticesArray, verticesBytes, GL_DYNAMIC_DRAW);
+	verticesBuffer_.allocate(0, verticesBytes, GL_DYNAMIC_DRAW);
 	verticesBuffer_.release();
 
 	if (normalsBuffer_.isCreated()) {
@@ -393,7 +359,7 @@ void Mesh::initVBO()
 	}
 	normalsBuffer_.create();
 	normalsBuffer_.bind();
-	normalsBuffer_.allocate(normalsArray, verticesBytes, GL_DYNAMIC_DRAW);
+	normalsBuffer_.allocate(0, verticesBytes, GL_DYNAMIC_DRAW);
 	normalsBuffer_.release();
 
   if (colorsBuffer_.isCreated()) {
@@ -401,21 +367,60 @@ void Mesh::initVBO()
 	}
 	colorsBuffer_.create();
 	colorsBuffer_.bind();
-  colorsBuffer_.allocate(colorsArray, verticesBytes, GL_DYNAMIC_DRAW);
+  colorsBuffer_.allocate(0, verticesBytes, GL_DYNAMIC_DRAW);
 	colorsBuffer_.release();
+
+  needVerticesRefresh_ = false;
+}
+
+void Mesh::initIndexVBO() {
+	const int nbTriangles = getNbTriangles();
+  indicesBufferCount_ = 2*nbTriangles;
+	const int indicesBytes = indicesBufferCount_*3*sizeof(GLuint);
 
 	if (indicesBuffer_.isCreated()) {
 		indicesBuffer_.destroy();
 	}
 	indicesBuffer_.create();
 	indicesBuffer_.bind();
-  indicesBuffer_.allocate(indicesArray, indicesBytes, GL_DYNAMIC_DRAW);
+  indicesBuffer_.allocate(0, indicesBytes, GL_DYNAMIC_DRAW);
 	indicesBuffer_.release();
 
-  free(verticesArray);
-  free(normalsArray);
-  free(colorsArray);
-  free(indicesArray);
+  needIndicesRefresh_ = false;
+}
+
+void Mesh::reinitVerticesBuffer() {
+  vertexUpdates_.clear();
+  needVerticesRefresh_ = true;
+
+  const int nbVertices = getNbVertices();
+  vertexUpdates_.resize(vertexUpdates_.size() + 1);
+  VertexUpdateVector& vertexUpdates = vertexUpdates_.back();
+  for (int i=0; i<nbVertices; i++) {
+    VertexUpdate update;
+    update.idx = i;
+    update.color = vertices_[i].material_;
+    update.normal = vertices_[i].normal_;
+    update.pos = vertices_[i];
+    vertexUpdates.push_back(update);
+  }
+}
+
+void Mesh::reinitIndicesBuffer() {
+  indexUpdates_.clear();
+  needIndicesRefresh_ = true;
+
+  const int nbTriangles = getNbTriangles();
+  indexUpdates_.resize(indexUpdates_.size() + 1);
+  IndexUpdateVector& indexUpdates = indexUpdates_.back();
+  for (int i=0; i<nbTriangles; i++) {
+    IndexUpdate update;
+    update.idx = i;
+    update.indices[0] = triangles_[i].vIndices_[0];
+    update.indices[1] = triangles_[i].vIndices_[1];
+    update.indices[2] = triangles_[i].vIndices_[2];
+    indexUpdates.push_back(update);
+  }
 }
 
 /** Initialize the mesh information : center, octree, scale ... */
@@ -480,18 +485,16 @@ void Mesh::initMesh()
     assert(fabs(normal.squaredNorm() - 1.0f) < 0.001f);
 		ver.normal_=normal;
   }
+
+  reinitIndicesBuffer();
+  reinitVerticesBuffer();
 }
 
 /** Update geometry  */
 void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVerts)
 {
-	indicesBuffer_.bind();
-	int nbIndicesBuffer = indicesBuffer_.size() / (sizeof(GLuint)*3);
-	indicesBuffer_.release();
-	verticesBuffer_.bind();
-	int nbVerticesBuffer = verticesBuffer_.size() / (sizeof(GLfloat)*3);
-	verticesBuffer_.release();
-	int nbTris=iTris.size();
+	const int nbTris=iTris.size();
+  const int nbVerts=iVerts.size();
 #pragma omp parallel for //recompute triangle normals and aabb
 	for (int i=0;i<nbTris;++i)
 	{
@@ -512,16 +515,102 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 	updateOctree(iTris);
 	updateNormals(iVerts);
 	assert(_CrtCheckMemory());
-  if(nbIndicesBuffer>getNbTriangles() && nbVerticesBuffer>getNbVertices()) {  
-	  updateIndexBuffer(iTris);
-	  updateVertexBuffer(iVerts);
-	  updateNormalBuffer(iVerts);
-    updateColorBuffer(iVerts);
+
+  boost::unique_lock<boost::mutex> lock(bufferMutex_);
+
+  if (getNbTriangles() < indicesBufferCount_) {
+    indexUpdates_.resize(indexUpdates_.size() + 1);
+    IndexUpdateVector& updates = indexUpdates_.back();
+    for (int i=0; i<nbTris; i++) {
+      IndexUpdate update;
+      update.idx = iTris[i];
+      update.indices[0] = triangles_[update.idx].vIndices_[0];
+      update.indices[1] = triangles_[update.idx].vIndices_[1];
+      update.indices[2] = triangles_[update.idx].vIndices_[2];
+      updates.push_back(update);
+    }
+  } else {
+    reinitIndicesBuffer();
   }
-	else
-	{
-		initVBO();
-	}
+
+  if (getNbVertices() < verticesBufferCount_) {
+    vertexUpdates_.resize(vertexUpdates_.size() + 1);
+    VertexUpdateVector& updates = vertexUpdates_.back();
+    for (int i=0; i<nbVerts; i++) {
+      VertexUpdate update;
+      update.idx = iVerts[i];
+      update.color = vertices_[update.idx].material_;
+      update.normal = vertices_[update.idx].normal_;
+      update.pos = vertices_[update.idx];
+      updates.push_back(update);
+    }
+  } else {
+    reinitVerticesBuffer();
+  }
+}
+
+void Mesh::updateGPUBuffers() {
+  boost::unique_lock<boost::mutex> lock(bufferMutex_);
+
+  int numIdx = 0;
+  if (needIndicesRefresh_) {
+    initIndexVBO();
+  }
+  
+	GLuint* indicesArray;
+	indicesBuffer_.bind(); indicesArray = (GLuint*)indicesBuffer_.map(GL_WRITE_ONLY); indicesBuffer_.release();
+  while (!indexUpdates_.empty()) {
+    numIdx++;
+    const IndexUpdateVector& updates = indexUpdates_.front();
+    const int nbTris = updates.size();
+#pragma omp parallel for
+	  for(int i=0;i<nbTris;++i)
+	  {
+		  int j = updates[i].idx;
+		  indicesArray[j*3]   = updates[i].indices[0];
+		  indicesArray[j*3+1] = updates[i].indices[1];
+		  indicesArray[j*3+2] = updates[i].indices[2];
+	  }
+    indexUpdates_.pop_front();
+  }
+  indicesBuffer_.bind(); indicesBuffer_.unmap(); indicesBuffer_.release();
+
+  int numVertex = 0;
+  if (needVerticesRefresh_) {
+    initVertexVBO();
+  }
+  
+	GLfloat* verticesArray;
+	GLfloat* normalsArray;
+  GLfloat* colorsArray;
+	verticesBuffer_.bind(); verticesArray = (GLfloat*)verticesBuffer_.map(GL_WRITE_ONLY); verticesBuffer_.release();
+	normalsBuffer_.bind(); normalsArray = (GLfloat*)normalsBuffer_.map(GL_WRITE_ONLY); normalsBuffer_.release();
+	colorsBuffer_.bind(); colorsArray = (GLfloat*)colorsBuffer_.map(GL_WRITE_ONLY); colorsBuffer_.release();
+  while (!vertexUpdates_.empty()) {
+    numVertex++;
+    const VertexUpdateVector& updates = vertexUpdates_.front();
+    const int nbVerts = updates.size();
+#pragma omp parallel for
+	  for(int i=0;i<nbVerts;++i)
+	  {
+		  int j = updates[i].idx;
+		  verticesArray[j*3]   = updates[i].pos.x();
+		  verticesArray[j*3+1] = updates[i].pos.y();
+		  verticesArray[j*3+2] = updates[i].pos.z();
+      normalsArray[j*3]   = updates[i].normal.x();
+      normalsArray[j*3+1] = updates[i].normal.y();
+      normalsArray[j*3+2] = updates[i].normal.z();
+      colorsArray[j*3]   = updates[i].color.x();
+      colorsArray[j*3+1] = updates[i].color.y();
+      colorsArray[j*3+2] = updates[i].color.z();
+	  }
+    vertexUpdates_.pop_front();
+  }
+  verticesBuffer_.bind(); verticesBuffer_.unmap(); verticesBuffer_.release();
+  normalsBuffer_.bind(); normalsBuffer_.unmap(); normalsBuffer_.release();
+  colorsBuffer_.bind(); colorsBuffer_.unmap(); colorsBuffer_.release();
+
+  std::cout << numIdx << " " << numVertex << std::endl;
 }
 
 /**
@@ -612,85 +701,6 @@ void Mesh::updateNormals(const std::vector<int> &iVerts)
 		vert.normal_ = normal;
     assert(fabs(vert.normal_.squaredNorm() - 1.0f) < 0.001f);
 	}
-}
-
-/** Update vertex buffer */
-void Mesh::updateVertexBuffer(const std::vector<int> &iVerts)
-{
-	int nbVerts=iVerts.size();
-	GLfloat* verticesArray;
-	verticesBuffer_.bind();
-	verticesArray = (GLfloat*)verticesBuffer_.map(GL_WRITE_ONLY);
-#pragma omp parallel for
-	for(int i=0;i<nbVerts;++i)
-	{
-		int j=iVerts[i];
-		Vertex &v = vertices_[j];
-		verticesArray[j*3] = v.x();
-		verticesArray[j*3+1] = v.y();
-		verticesArray[j*3+2] = v.z();
-	}
-	verticesBuffer_.unmap();
-	verticesBuffer_.release();
-}
-
-/** Update normal buffer */
-void Mesh::updateNormalBuffer(const std::vector<int> &iVerts)
-{
-	int nbVerts=iVerts.size();
-	GLfloat* normalsArray;
-	normalsBuffer_.bind();
-	normalsArray = (GLfloat*)normalsBuffer_.map(GL_WRITE_ONLY);
-#pragma omp parallel for
-	for(int i=0;i<nbVerts;++i)
-	{
-		int j=iVerts[i];
-		Vector3& n = vertices_[j].normal_;
-		normalsArray[j*3] = n.x();
-		normalsArray[j*3+1] = n.y();
-		normalsArray[j*3+2] = n.z();
-	}
-	normalsBuffer_.unmap();
-	normalsBuffer_.release();
-}
-
-void Mesh::updateColorBuffer(const std::vector<int> &iVerts)
-{
-	int nbVerts=iVerts.size();
-	GLfloat* colorsArray;
-	colorsBuffer_.bind();
-	colorsArray = (GLfloat*)colorsBuffer_.map(GL_WRITE_ONLY);
-#pragma omp parallel for
-	for(int i=0;i<nbVerts;++i)
-	{
-		int j=iVerts[i];
-    const Vector3& color = vertices_[j].material_;
-		colorsArray[j*3] = color.x();
-		colorsArray[j*3+1] = color.y();
-		colorsArray[j*3+2] = color.z();
-	}
-	colorsBuffer_.unmap();
-	colorsBuffer_.release();
-}
-
-/** Update index buffer */
-void Mesh::updateIndexBuffer(const std::vector<int> &iTris)
-{
-	int nbTris = iTris.size();
-	GLuint* indicesArray;
-	indicesBuffer_.bind();
-	indicesArray = (GLuint*)indicesBuffer_.map(GL_WRITE_ONLY);
-#pragma omp parallel for
-	for(int i=0;i<nbTris;++i)
-	{
-		int j = iTris[i];
-		Triangle &tri=triangles_[j];
-		indicesArray[j*3]=tri.vIndices_[0];
-		indicesArray[j*3+1]=tri.vIndices_[1];
-		indicesArray[j*3+2]=tri.vIndices_[2];
-	}
-	indicesBuffer_.unmap();
-	indicesBuffer_.release();
 }
 
 /** End of stroke, update octree (cut empty leaves or go deeper if needed) */
@@ -794,8 +804,25 @@ void Mesh::pushState(const std::vector<int> &iTris, const std::vector<int> &iVer
 	}
 }
 
+void Mesh::undo() {
+  undoPending_ = true;
+}
+
+void Mesh::redo() {
+  redoPending_ = true;
+}
+
+void Mesh::handleUndoRedo() {
+  if (undoPending_) {
+    performUndo();
+  }
+  if (redoPending_) {
+    performRedo();
+  }
+}
+
 /** Undo (also push_back the redo) */
-void Mesh::undo()
+void Mesh::performUndo()
 {
 	if(!undo_.size() || beginIte_) {
 		return;
@@ -871,7 +898,8 @@ void Mesh::undo()
     }
 	}
 	recomputeOctree(undoIte_->aabbState_);
-	initVBO();
+  reinitVerticesBuffer();
+  reinitIndicesBuffer();
 	redo_.push_back(redo);
 	if(undoIte_!=undo_.begin())
 	{
@@ -882,10 +910,11 @@ void Mesh::undo()
   {
 		beginIte_ = true;
   }
+  undoPending_ = false;
 }
 
 /** Redo */
-void Mesh::redo()
+void Mesh::performRedo()
 {
 	if(!redo_.size()) {
 		return;
@@ -911,13 +940,15 @@ void Mesh::redo()
 		vertices_[v.id_] = v;
 	}
 	recomputeOctree(redoIte_->aabbState_);
-	initVBO();
+  reinitVerticesBuffer();
+  reinitIndicesBuffer();
 	if(!beginIte_) {
 		++undoIte_;
   } else {
 		beginIte_ = false;
   }
 	redo_.pop_back();
+  redoPending_ = false;
 }
 
 /** Recompute octree */

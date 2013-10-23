@@ -2,6 +2,7 @@
 #define __MESH_H__
 
 #include <cinder/gl/gl.h>
+#include <cinder/Thread.h>
 #include "DataTypes.h"
 #include <string>
 #include <algorithm>
@@ -67,10 +68,10 @@ public:
 	void draw(GLint vertex, GLint normal, GLint color);
   void drawVerticesOnly(GLint vertex);
   void drawOctree() const;
-	void initVBO();
 	void initMesh();
 
 	void updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVerts);
+  void updateGPUBuffers();
 
 	std::vector<int> subdivide(std::vector<int> &iTris,std::vector<int> &iVerts,float inradiusMaxSquared);
 	void triangleSubdivision(int iTri);
@@ -84,6 +85,7 @@ public:
 	void pushState(const std::vector<int> &iTris, const std::vector<int> &iVerts);
 	void undo();
 	void redo();
+  void handleUndoRedo();
 	void recomputeOctree(const Aabb &aabbSplit);
 
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -93,24 +95,32 @@ private:
 	void updateOctree(const std::vector<int> &iTris);
 	void updateNormals(const std::vector<int> &iVerts);
 	float angleTri(int iTri, int iVer);
-	void updateVertexBuffer(const std::vector<int> &iVerts);
-	void updateNormalBuffer(const std::vector<int> &iVerts);
-  void updateColorBuffer(const std::vector<int> &iVerts);
-	void updateIndexBuffer(const std::vector<int> &iTris);
 	void updateTransformation();
+  void initIndexVBO();
+  void initVertexVBO();
+  void reinitVerticesBuffer();
+  void reinitIndicesBuffer();
+  void performUndo();
+  void performRedo();
 
 	VertexVector vertices_; //vertices
 	TriangleVector triangles_; //triangles
+  GLint verticesBufferCount_;
+  GLint indicesBufferCount_;
 	GLBuffer verticesBuffer_; //vertices buffer (openGL)
 	GLBuffer normalsBuffer_; //normals buffer (openGL)
 	GLBuffer indicesBuffer_; //indexes (openGL)
   GLBuffer colorsBuffer_;
+  bool needVerticesRefresh_;
+  bool needIndicesRefresh_;
 	Vector3 center_; //center of mesh
 	float scale_; //scale
 	Octree *octree_; //octree
 	Matrix4x4 matTransform_; //transformation matrix of the mesh
 	GLfloat matTransformArray_[16]; //transformation matrix of the mesh (openGL)
 	std::vector<Octree*> leavesUpdate_; //leaves of the octree to check
+  bool undoPending_;
+  bool redoPending_;
 
 	//undo-redo
 	std::list<State> undo_; //undo actions
@@ -122,6 +132,25 @@ private:
   Vector3 rotationAxis_;
   float rotationVelocity_;
   float curRotation_;
+
+  struct IndexUpdate {
+    int idx;
+    GLuint indices[3];
+  };
+
+  struct VertexUpdate {
+    int idx;
+    Vector3 pos;
+    Vector3 color;
+    Vector3 normal;
+  };
+
+  typedef std::vector<IndexUpdate, Eigen::aligned_allocator<IndexUpdate> > IndexUpdateVector;
+  typedef std::vector<VertexUpdate, Eigen::aligned_allocator<VertexUpdate> > VertexUpdateVector;
+
+  std::deque<IndexUpdateVector> indexUpdates_;
+  std::deque<VertexUpdateVector> vertexUpdates_;
+  boost::mutex bufferMutex_;
 };
 
 #endif /*__MESH_H__*/

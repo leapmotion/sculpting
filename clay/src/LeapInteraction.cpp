@@ -16,10 +16,8 @@ LeapInteraction::LeapInteraction(Sculpt* _Sculpt, UserInterface* _Ui)
   , _is_pinched(false)
 { }
 
-void LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress)
+bool LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress)
 {
-	_sculpt->clearBrushes();
-	_tips.clear();
 	_model_view_inv = _Model.inverted();
 	_model_view = _Model;
 	_projection = _Projection;
@@ -30,10 +28,15 @@ void LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect,
 	}
 	else if (_Listener.isConnected() && _Listener.waitForFrame(_cur_frame, 30))
 	{
-		interact();
-		_last_frame = _cur_frame;
-	}
-	_ui->update(_tips);
+    boost::unique_lock<boost::mutex> brushLock(_sculpt->getBrushMutex());
+    _sculpt->clearBrushes();
+    boost::unique_lock<boost::mutex> tipsLock(_tips_mutex);
+    _tips.clear();
+    interact();
+    _last_frame = _cur_frame;
+    return true;
+  }
+  return false;
 }
 
 void LeapInteraction::interact()
@@ -44,12 +47,15 @@ void LeapInteraction::interact()
 	static const float ORBIT_SPEED = 0.02f;
 	static const float ZOOM_SPEED = 0.5f;
 	static const float AGE_WARMUP_TIME = 0.75;
+  static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
 
 	// create brushes
 	static const Vec3f LEAP_OFFSET(0, 200, 150);
 	Leap::PointableList pointables = _cur_frame.pointables();
 	const float ui_mult = 1.0f - _ui->maxActivation();
 	const int num_pointables = pointables.count();
+  const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
+  const float dtMult = deltaTime / TARGET_DELTA_TIME;
 	for (int i=0; i<num_pointables; i++)
 	{
 		// add brushes
@@ -63,7 +69,9 @@ void LeapInteraction::interact()
 		Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
 		Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
     Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
-		_sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, strengthMult*ui_mult*_desired_brush_strength);
+    float strength = strengthMult*ui_mult*_desired_brush_strength;
+    strength = std::min(1.0f, strength * dtMult);
+		_sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, strength);
 
 		Vec3f transPos = _projection.transformPoint(pos);
 		Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));

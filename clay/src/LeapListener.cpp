@@ -29,9 +29,9 @@ void LeapListener::onFrame(const Leap::Controller& controller) {
 
 bool LeapListener::waitForFrame(Leap::Frame& _Frame, int _MillisecondsTimeout) {
   std::unique_lock<std::mutex> lock(_mutex);
-//  if (_Frame.id() == _frame.id() && !_condition.timed_wait(lock, boost::posix_time::milliseconds(_MillisecondsTimeout))) {
-//    return false;
-//  }
+  if (_Frame.id() == _frame.id() && !_condition.timed_wait(lock, boost::posix_time::milliseconds(_MillisecondsTimeout))) {
+    return false;
+  }
   _Frame = _frame;
   return true;
 }

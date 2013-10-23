@@ -55,7 +55,6 @@ Mesh* Files::loadSTL(const std::string &filepath) const
     }
     file.close();
     mesh->initMesh();
-    mesh->initVBO();
     mesh->moveTo(Vector3::Zero());
     return mesh;
 }
@@ -202,7 +201,6 @@ Mesh* Files::loadOBJ(const std::string &filepath) const
     }
     file.close();
     mesh->initMesh();
-    mesh->initVBO();
     return mesh;
 }
 
@@ -285,7 +283,6 @@ Mesh* Files::load3DS(const std::string &filepath) const
     }
     file.close();
     mesh->initMesh();
-    mesh->initVBO();
     mesh->moveTo(Vector3::Zero());
     return mesh;
 }
