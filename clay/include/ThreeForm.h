@@ -117,7 +117,6 @@ private:
 	bool _draw_ui;
 
 	Fbo _screen_fbo;
-	Fbo _light_clamp_fbo;
 	Fbo _horizontal_blur_fbo;
 	Fbo _vertical_blur_fbo;
 	GlslProg _light_clamp_shader;

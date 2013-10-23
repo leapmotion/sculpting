@@ -511,34 +511,26 @@ void ClayDemoApp::shutdown() {
 
 void ClayDemoApp::resize()
 {
-	static const int DOWNSCALE_FACTOR = 1;
+	static const int DOWNSCALE_FACTOR = 4;
 
 	int width = getWindowWidth();
 	int height = getWindowHeight();
 	width = std::max(DOWNSCALE_FACTOR, width);
 	height = std::max(DOWNSCALE_FACTOR, height);
-	Fbo::Format format;
-	format.setColorInternalFormat(GL_RGB32F_ARB);
-  format.enableDepthBuffer(false);
-	//format.setSamples( 4 ); // uncomment this to enable 4x antialiasing
-	//_screen_fbo = Fbo( width, height, format );
-	console() << "FBO size: " << width << "    " << height << "\n";
 
-	// set up blur FBOs
-	_color_fbo = Fbo( width, height, format );
-	_depth_fbo = Fbo( width, height, format );
-	_blur_fbo = Fbo( width, height, format );
+	Fbo::Format formatNoDepth;
+	formatNoDepth.setColorInternalFormat(GL_RGB32F_ARB);
+  formatNoDepth.enableDepthBuffer(false);
 
-	gl::Fbo::Format hdr_format;
-	hdr_format.setColorInternalFormat(GL_RGBA32F_ARB);
+  Fbo::Format formatWithDepth;
+  formatWithDepth.setColorInternalFormat(GL_RGB32F_ARB);
 
-	gl::Fbo::Format ldr_format;
-	ldr_format.setColorInternalFormat(GL_RGBA32F_ARB);
-
-	_light_clamp_fbo = Fbo( width, height, ldr_format );
-	_horizontal_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, ldr_format );
-	_vertical_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, ldr_format );
-	_screen_fbo = Fbo( width, height, hdr_format );
+	_color_fbo = Fbo( width, height, formatNoDepth );
+	_depth_fbo = Fbo( width, height, formatNoDepth );
+	_blur_fbo = Fbo( width, height, formatNoDepth );
+	_horizontal_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepth );
+	_vertical_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepth );
+	_screen_fbo = Fbo( width, height, formatWithDepth );
 
 	Vec3f campos;
 	campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
@@ -617,9 +609,12 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
 void ClayDemoApp::update()
 {
   _ui->update(_leap_interaction->getTips());
-  
+
+  float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
+  _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
+
   // Calculate initial camera position
-  Vec3f campos;
+	Vec3f campos;
 	campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
 	campos.y = sinf(_phi)*_cam_dist;
 	campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
@@ -642,18 +637,15 @@ void ClayDemoApp::update()
 
 void ClayDemoApp::updateLeapAndMesh() {
   while (!_shutdown) {
-    double curTime = ci::app::getElapsedSeconds();
     bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
 
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
+      const double curTime = _leap_interaction->mostRecentTime();
 	    updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
       // Don't record leap's angles in the user camera
       //_camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
 
       _camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()));
-
-      float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
-      _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
 
       if (mesh_) {
         _camera_util->UpdateCamera(mesh_);
@@ -661,9 +653,9 @@ void ClayDemoApp::updateLeapAndMesh() {
         mesh_->updateRotation(deltaTime);
 		    sculpt_.applyBrushes(deltaTime, symmetry_);
       }
+      _last_update_time = curTime;
     }
-    _last_update_time = curTime;
-    _mesh_update_counter.Update(curTime);
+    _mesh_update_counter.Update(ci::app::getElapsedSeconds());
   }
 }
 
@@ -887,24 +879,24 @@ void ClayDemoApp::createBloom()
 	SaveFramebufferBinding bindingSaver;
 
 	// *** clamp the light ***
-	_light_clamp_fbo.bindFramebuffer();
-	setViewport( _light_clamp_fbo.getBounds() );
+	_color_fbo.bindFramebuffer();
+	setViewport( _color_fbo.getBounds() );
 	clear( Color( 0, 0, 0 ) ); 
-	gl::setMatricesWindow(_light_clamp_fbo.getWidth(),_light_clamp_fbo.getHeight(),false);
+	gl::setMatricesWindow(_color_fbo.getWidth(),_color_fbo.getHeight(),false);
 	_screen_fbo.bindTexture(0);
 	_light_clamp_shader.bind();
 	_light_clamp_shader.uniform( "input_texture", 0 );
 	_light_clamp_shader.uniform( "light_threshold", _bloom_light_threshold );
-	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_light_clamp_fbo.getWidth(),(float)_light_clamp_fbo.getHeight()));
+	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_color_fbo.getWidth(),(float)_color_fbo.getHeight()));
 	_light_clamp_shader.unbind();
-	_light_clamp_fbo.unbindFramebuffer();
+	_color_fbo.unbindFramebuffer();
 
 	// *** blur horizontally ***
 	_horizontal_blur_fbo.bindFramebuffer();
 	setViewport( _horizontal_blur_fbo.getBounds() );
 	clear( Color( 0, 0, 0 ) ); 
 	gl::setMatricesWindow(_horizontal_blur_fbo.getWidth(),_horizontal_blur_fbo.getHeight(),false);
-	_light_clamp_fbo.bindTexture(0);
+	_color_fbo.bindTexture(0);
 	_horizontal_blur_shader.bind();
 	_horizontal_blur_shader.uniform( "input_texture", 0 );
 	_horizontal_blur_shader.uniform( "blurSize",_bloom_size/_horizontal_blur_fbo.getWidth() );
