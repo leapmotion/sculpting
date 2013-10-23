@@ -41,6 +41,8 @@ ClayDemoApp::ClayDemoApp()
   , drawOctree_(false)
   , _use_fxaa(true)
   , _shutdown(false)
+  , _draw_depth_of_field(false)
+  , _draw_background(true)
 {
   _camera_util = new CameraUtil();
 }
@@ -385,6 +387,8 @@ void ClayDemoApp::setup()
 	_params->addParam( "Bloom strength", &_bloom_strength, "min=0.0 max=1.0 step=0.01" );
 	_params->addParam( "Bloom threshold", &_bloom_light_threshold, "min=0.0 max=2.0 step=0.01" );
   _params->addParam( "Use FXAA", &_use_fxaa, "" );
+  _params->addParam( "Draw DoF", &_draw_depth_of_field, "" );
+  _params->addParam( "Draw Background", &_draw_background, "" );
 
 	_environment = new Environment();
 
@@ -676,78 +680,99 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 	gl::disableDepthWrite();
 	glDisable(GL_CULL_FACE);
 
-	// draw color pass of skybox
-	_environment->bindCubeMap(Environment::CUBEMAP_SKY, 0);
-	_sky_shader.bind();
-	_sky_shader.uniform("cubemap", 0);
-	setViewport( _color_fbo.getBounds() );
-	_color_fbo.bindFramebuffer();
-	clear();
-	setMatrices( _camera );
-	gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
-	_color_fbo.unbindFramebuffer();
-	_sky_shader.unbind();
-	_environment->unbindCubeMap(0);
+  if (_draw_background) {
+    if (_draw_depth_of_field) {
+	    // draw color pass of skybox
+	    _environment->bindCubeMap(Environment::CUBEMAP_SKY, 0);
+	    _sky_shader.bind();
+	    _sky_shader.uniform("cubemap", 0);
+	    setViewport( _color_fbo.getBounds() );
+	    _color_fbo.bindFramebuffer();
+	    clear();
+	    setMatrices( _camera );
+	    gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
+	    _color_fbo.unbindFramebuffer();
+	    _sky_shader.unbind();
+	    _environment->unbindCubeMap(0);
 
-	// draw depth pass of skybox
-	_environment->bindCubeMap(Environment::CUBEMAP_DEPTH, 0);
-	_sky_shader.bind();
-	_sky_shader.uniform("cubemap", 0);
-	setViewport( _depth_fbo.getBounds() );
-	_depth_fbo.bindFramebuffer();
-	clear();
-	setMatrices( _camera );
-	gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
-	_depth_fbo.unbindFramebuffer();
-	_sky_shader.unbind();
-	_environment->unbindCubeMap(0);
+	    // draw depth pass of skybox
+	    _environment->bindCubeMap(Environment::CUBEMAP_DEPTH, 0);
+	    _sky_shader.bind();
+	    _sky_shader.uniform("cubemap", 0);
+	    setViewport( _depth_fbo.getBounds() );
+	    _depth_fbo.bindFramebuffer();
+	    clear();
+	    setMatrices( _camera );
+	    gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
+	    _depth_fbo.unbindFramebuffer();
+	    _sky_shader.unbind();
+	    _environment->unbindCubeMap(0);
 
-	int width = getWindowWidth();
-	int height = getWindowHeight();
+	    int width = getWindowWidth();
+	    int height = getWindowHeight();
 
-	// bind blur shader and set parameters
-	_blur_shader.bind();
-	_blur_shader.uniform("color_tex", 0);
-	_blur_shader.uniform("depth_tex", 1);
-	_blur_shader.uniform("depth_min", depth_min);
-	_blur_shader.uniform("depth_max", 0.0f);
-	_blur_shader.uniform("offset_min", 0.0f);
-	_blur_shader.uniform("offset_max", 0.001f);
+	    // bind blur shader and set parameters
+	    _blur_shader.bind();
+	    _blur_shader.uniform("color_tex", 0);
+	    _blur_shader.uniform("depth_tex", 1);
+	    _blur_shader.uniform("depth_min", depth_min);
+	    _blur_shader.uniform("depth_max", 0.0f);
+	    _blur_shader.uniform("offset_min", 0.0f);
+	    _blur_shader.uniform("offset_max", 0.001f);
 
-	// prepare for first pass (horizontal) blur
-	_blur_shader.uniform("offset_mult", Vec2f(1.0f, 0.0f));
-	setViewport( _blur_fbo.getBounds() );
-	_blur_fbo.bindFramebuffer();
-	_color_fbo.bindTexture(0);
-	_depth_fbo.bindTexture(1);
+	    // prepare for first pass (horizontal) blur
+	    _blur_shader.uniform("offset_mult", Vec2f(1.0f, 0.0f));
+	    setViewport( _blur_fbo.getBounds() );
+	    _blur_fbo.bindFramebuffer();
+	    _color_fbo.bindTexture(0);
+	    _depth_fbo.bindTexture(1);
 
-	// perform first pass (horizontal) blur
-	gl::pushMatrices();
-	gl::setMatricesWindow(width, height, false);
-	gl::clear();
-	gl::drawSolidRect( _blur_fbo.getBounds() );
-	gl::popMatrices();
-	_color_fbo.unbindTexture();
-	_blur_fbo.unbindFramebuffer();
+	    // perform first pass (horizontal) blur
+	    gl::pushMatrices();
+	    gl::setMatricesWindow(width, height, false);
+	    gl::clear();
+	    gl::drawSolidRect( _blur_fbo.getBounds() );
+	    gl::popMatrices();
+	    _color_fbo.unbindTexture();
+	    _blur_fbo.unbindFramebuffer();
 
-	// prepare for second pass (vertical) blur
-	_blur_shader.uniform("offset_mult", Vec2f(0.0f, 1.0f));
-	_blur_fbo.bindTexture(0);
-	_screen_fbo.bindFramebuffer();
-	setViewport( _screen_fbo.getBounds() );
+	    // prepare for second pass (vertical) blur
+	    _blur_shader.uniform("offset_mult", Vec2f(0.0f, 1.0f));
+	    _blur_fbo.bindTexture(0);
+	    _screen_fbo.bindFramebuffer();
+	    setViewport( _screen_fbo.getBounds() );
 
-	// perform second pass (vertical) blur
-	gl::pushMatrices();
-	gl::setMatricesWindow(width, height, false);
-	gl::clear();
-	color(ColorA::white());
-	gl::drawSolidRect( _screen_fbo.getBounds() );
-	gl::popMatrices();
+	    // perform second pass (vertical) blur
+	    gl::pushMatrices();
+	    gl::setMatricesWindow(width, height, false);
+	    gl::clear();
+	    color(ColorA::white());
+	    gl::drawSolidRect( _screen_fbo.getBounds() );
+	    gl::popMatrices();
 
-	// clean up
-	_blur_fbo.unbindTexture();
-	_depth_fbo.unbindTexture();
-	_blur_shader.unbind();
+	    // clean up
+	    _blur_fbo.unbindTexture();
+	    _depth_fbo.unbindTexture();
+	    _blur_shader.unbind();
+    } else {
+      _screen_fbo.bindFramebuffer();
+
+	    // draw color pass of skybox
+	    _environment->bindCubeMap(Environment::CUBEMAP_SKY, 0);
+	    _sky_shader.bind();
+	    _sky_shader.uniform("cubemap", 0);
+	    setViewport( _screen_fbo.getBounds() );
+	    clear();
+	    setMatrices( _camera );
+	    gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
+	    _sky_shader.unbind();
+	    _environment->unbindCubeMap(0);
+    }
+  } else {
+    _screen_fbo.bindFramebuffer();
+	  clear();
+  }
+
 	setMatrices( _camera );
 
 	// enable depth and culling for rendering mesh
