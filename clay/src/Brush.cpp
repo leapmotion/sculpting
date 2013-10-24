@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Brush.h"
 
 #include <cinder/gl/gl.h>

@@ -58,6 +58,9 @@ void LeapInteraction::interact()
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
 	for (int i=0; i<num_pointables; i++)
 	{
+    if (!pointables[i].isExtended()) {
+      continue;
+    }
 		// add brushes
 		const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[i].timeVisible()/AGE_WARMUP_TIME));
 		Leap::Vector tip_pos = pointables[i].tipPosition();
@@ -112,11 +115,11 @@ void LeapInteraction::interact()
 		_tips.push_back(tip);
 	}
 
-	if (num_pointables > 0)
+	if (_tips.size() > 0)
 	{
-		cur_dtheta /= num_pointables;
-		cur_dphi /= num_pointables;
-		cur_dzoom /= num_pointables;
+		cur_dtheta /= _tips.size();
+		cur_dphi /= _tips.size();
+		cur_dzoom /= _tips.size();
 	}
 
 	static const float SMOOTH_STRENGTH = 0.9f;

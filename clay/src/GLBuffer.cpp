@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "GLBuffer.h"
 
 GLBuffer::GLBuffer(GLenum type) : type_(type), buffer_(0) { }
