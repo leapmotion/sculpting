@@ -185,13 +185,10 @@
     <ClInclude Include="..\..\include\Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\resources\bloom-frag.glsl" />
     <None Include="..\..\resources\blur-frag.glsl" />
     <None Include="..\..\resources\blur-vert.glsl" />
-    <None Include="..\..\resources\blur_horizontal-frag.glsl" />
-    <None Include="..\..\resources\blur_vertical-frag.glsl" />
     <None Include="..\..\resources\fxaa-frag.glsl" />
-    <None Include="..\..\resources\fxaa-vert.glsl" />
-    <None Include="..\..\resources\light_clamp-frag.glsl" />
     <None Include="..\..\resources\material-frag.glsl" />
     <None Include="..\..\resources\material-vert.glsl" />
     <None Include="..\..\resources\metaball-frag.glsl" />

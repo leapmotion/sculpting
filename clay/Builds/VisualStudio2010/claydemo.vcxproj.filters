@@ -210,15 +210,6 @@
     <None Include="..\..\resources\blur-vert.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\blur_horizontal-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\resources\blur_vertical-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\resources\light_clamp-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\..\resources\material-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
@@ -240,10 +231,10 @@
     <None Include="..\..\resources\fxaa-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\fxaa-vert.glsl">
+    <None Include="..\..\resources\wireframe-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\wireframe-frag.glsl">
+    <None Include="..\..\resources\bloom-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

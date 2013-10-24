@@ -383,7 +383,7 @@ void ClayDemoApp::setup()
 	_params->addParam( "Exposure", &_exposure, "min=0.05 max=8.0 step=0.01" );
 	_params->addParam( "Contrast", &_contrast, "min=0.33, max=3.0, step=0.01" );
 	_params->addParam( "Show bloom", &_bloom_visible, "" );
-	_params->addParam( "Bloom size", &_bloom_size, "min=0.0 max=2.0 step=0.01" );
+	_params->addParam( "Bloom size", &_bloom_size, "min=0.0 max=4.0 step=0.01" );
 	_params->addParam( "Bloom strength", &_bloom_strength, "min=0.0 max=1.0 step=0.01" );
 	_params->addParam( "Bloom threshold", &_bloom_light_threshold, "min=0.0 max=2.0 step=0.01" );
   _params->addParam( "Use FXAA", &_use_fxaa, "" );
@@ -393,9 +393,6 @@ void ClayDemoApp::setup()
 	_environment = new Environment();
 
 	try {
-		_light_clamp_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_LIGHT_CLAMP_FRAG_GLSL ) );
-		_horizontal_blur_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLUR_HORIZONTAL_FRAG_GLSL ) );
-		_vertical_blur_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLUR_VERTICAL_FRAG_GLSL ) );
 		_blur_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLUR_FRAG_GLSL ) );
 		_screen_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_SCREEN_FRAG_GLSL ) );
 		_material_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
@@ -403,6 +400,7 @@ void ClayDemoApp::setup()
 		_metaball_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_METABALL_FRAG_GLSL ) );
 		_sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
     _fxaa_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_FXAA_FRAG_GLSL ) );
+    _bloom_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLOOM_FRAG_GLSL ) );
 	} catch (gl::GlslProgCompileExc e) {
 		std::cout << e.what() << std::endl;
 		quit();
@@ -522,18 +520,33 @@ void ClayDemoApp::resize()
 	width = std::max(DOWNSCALE_FACTOR, width);
 	height = std::max(DOWNSCALE_FACTOR, height);
 
+  // FBOs with no depth buffer
+
 	Fbo::Format formatNoDepth;
 	formatNoDepth.setColorInternalFormat(GL_RGB32F_ARB);
   formatNoDepth.enableDepthBuffer(false);
 
-  Fbo::Format formatWithDepth;
-  formatWithDepth.setColorInternalFormat(GL_RGB32F_ARB);
-
 	_color_fbo = Fbo( width, height, formatNoDepth );
 	_depth_fbo = Fbo( width, height, formatNoDepth );
 	_blur_fbo = Fbo( width, height, formatNoDepth );
-	_horizontal_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepth );
-	_vertical_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepth );
+
+  // FBOs with no depth buffer and bilinear sampling
+
+  Fbo::Format formatNoDepthLinear;
+  formatNoDepthLinear.setColorInternalFormat(GL_RGB32F_ARB);
+  formatNoDepthLinear.enableMipmapping(true);
+  formatNoDepthLinear.setMinFilter(GL_LINEAR);
+  formatNoDepthLinear.setMagFilter(GL_LINEAR);
+  formatNoDepthLinear.enableDepthBuffer(false);
+
+	_horizontal_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepthLinear );
+	_vertical_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepthLinear );
+
+  // FBOs with depth buffer
+
+  Fbo::Format formatWithDepth;
+  formatWithDepth.setColorInternalFormat(GL_RGB32F_ARB);
+
 	_screen_fbo = Fbo( width, height, formatWithDepth );
 
 	Vec3f campos;
@@ -544,6 +557,7 @@ void ClayDemoApp::resize()
 	_camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
 	setMatrices( _camera );
 	_ui->setWindowSize( Vec2i(width, height) );
+
 	glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
@@ -653,7 +667,7 @@ void ClayDemoApp::updateLeapAndMesh() {
 
       if (mesh_) {
         _camera_util->UpdateCamera(mesh_);
-        const float deltaTime = curTime - _last_update_time;
+        const float deltaTime = static_cast<float>(curTime - _last_update_time);
         mesh_->updateRotation(deltaTime);
 		    sculpt_.applyBrushes(deltaTime, symmetry_);
       }
@@ -898,51 +912,35 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 
 void ClayDemoApp::createBloom()
 {
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_DEPTH_TEST);
-
-	SaveFramebufferBinding bindingSaver;
-
-	// *** clamp the light ***
-	_color_fbo.bindFramebuffer();
-	setViewport( _color_fbo.getBounds() );
-	clear( Color( 0, 0, 0 ) ); 
-	gl::setMatricesWindow(_color_fbo.getWidth(),_color_fbo.getHeight(),false);
-	_screen_fbo.bindTexture(0);
-	_light_clamp_shader.bind();
-	_light_clamp_shader.uniform( "input_texture", 0 );
-	_light_clamp_shader.uniform( "light_threshold", _bloom_light_threshold );
-	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_color_fbo.getWidth(),(float)_color_fbo.getHeight()));
-	_light_clamp_shader.unbind();
-	_color_fbo.unbindFramebuffer();
-
-	// *** blur horizontally ***
-	_horizontal_blur_fbo.bindFramebuffer();
+  const float horizSize = _bloom_size / _horizontal_blur_fbo.getWidth();
+  _horizontal_blur_fbo.bindFramebuffer();
 	setViewport( _horizontal_blur_fbo.getBounds() );
-	clear( Color( 0, 0, 0 ) ); 
-	gl::setMatricesWindow(_horizontal_blur_fbo.getWidth(),_horizontal_blur_fbo.getHeight(),false);
-	_color_fbo.bindTexture(0);
-	_horizontal_blur_shader.bind();
-	_horizontal_blur_shader.uniform( "input_texture", 0 );
-	_horizontal_blur_shader.uniform( "blurSize",_bloom_size/_horizontal_blur_fbo.getWidth() );
-	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_horizontal_blur_fbo.getWidth(),(float)_horizontal_blur_fbo.getHeight()));
-	_horizontal_blur_shader.unbind();
+	clear();
+	gl::setMatricesWindow(_horizontal_blur_fbo.getWidth(), _horizontal_blur_fbo.getHeight(), false);
+	_screen_fbo.bindTexture(0);
+  _bloom_shader.bind();
+	_bloom_shader.uniform( "color_tex", 0 );
+	_bloom_shader.uniform( "sample_offset", Vec2f(horizSize, 0.0f));
+  _bloom_shader.uniform( "light_threshold", _bloom_light_threshold );
+	gl::drawSolidRect(Rectf(0.0f, 0.0f, static_cast<float>(_horizontal_blur_fbo.getWidth()), static_cast<float>(_horizontal_blur_fbo.getHeight())));
+	_bloom_shader.unbind();
+  _screen_fbo.unbindTexture();
 	_horizontal_blur_fbo.unbindFramebuffer();
 
-	// *** blur vertically ***
+  const float vertSize = _bloom_size / _vertical_blur_fbo.getHeight();
 	_vertical_blur_fbo.bindFramebuffer();
-	setViewport( _vertical_blur_fbo.getBounds() );
-	clear( Color( 0, 0, 0 ) ); 
-	gl::setMatricesWindow(_vertical_blur_fbo.getWidth(),_vertical_blur_fbo.getHeight(),false);
+	setViewport(_vertical_blur_fbo.getBounds());
+	clear();
+	gl::setMatricesWindow(_vertical_blur_fbo.getWidth(), _vertical_blur_fbo.getHeight(), false);
 	_horizontal_blur_fbo.bindTexture(0);
-	_vertical_blur_shader.bind();
-	_vertical_blur_shader.uniform( "input_texture", 0 );
-	_vertical_blur_shader.uniform( "blurSize", _bloom_size/_vertical_blur_fbo.getHeight() );
-	gl::drawSolidRect(Rectf(0.0f,0.0f,(float)_vertical_blur_fbo.getWidth(),(float)_vertical_blur_fbo.getHeight()));
-	_vertical_blur_shader.unbind();
+	_bloom_shader.bind();
+	_bloom_shader.uniform( "color_tex", 0 );
+	_bloom_shader.uniform( "sample_offset", Vec2f(0.0f, vertSize));
+  _bloom_shader.uniform( "light_threshold", 0.0f );
+	gl::drawSolidRect(Rectf(0.0f, 0.0f, static_cast<float>(_vertical_blur_fbo.getWidth()), static_cast<float>(_vertical_blur_fbo.getHeight())));
+	_bloom_shader.unbind();
+  _horizontal_blur_fbo.unbindTexture();
 	_vertical_blur_fbo.unbindFramebuffer();
-
-	setViewport( _screen_fbo.getBounds() );
 }
 
 void ClayDemoApp::draw()
@@ -952,14 +950,10 @@ void ClayDemoApp::draw()
 	float exposure_mult = 1.0f;
 	const Environment::LoadingState loading_state = _environment->getLoadingState();
 	const float loading_time = _environment->getTimeSinceLoadingStateChange();
-	if (loading_state == Environment::LOADING_STATE_LOADING)
-	{
+	if (loading_state == Environment::LOADING_STATE_LOADING) {
 		float mult = 1.0f - math<float>::clamp(loading_time/LOADING_DARKEN_TIME);
 		exposure_mult *= mult;
-		
-	}
-	else if (loading_state == Environment::LOADING_STATE_DONE_LOADING && loading_time > LOADING_DARKEN_TIME)
-	{
+	} else if (loading_state == Environment::LOADING_STATE_DONE_LOADING && loading_time > LOADING_DARKEN_TIME) {
 		_environment->transitionComplete();
 		exposure_mult = 0.0f;
 		Environment::EnvironmentInfo* info = _environment->getEnvironmentInfoFromString(_environment->getCurEnvironmentString());
@@ -969,13 +963,9 @@ void ClayDemoApp::draw()
 			_exposure = info->_exposure;
 			_contrast = info->_contrast;
 		}
-	}
-	else if (loading_state == Environment::LOADING_STATE_PROCESSING)
-	{
+	} else if (loading_state == Environment::LOADING_STATE_PROCESSING) {
 		exposure_mult = 0.0f;
-	}
-	else if (loading_state == Environment::LOADING_STATE_NONE)
-	{
+	} else if (loading_state == Environment::LOADING_STATE_NONE) {
 		exposure_mult *= math<float>::clamp(loading_time/LOADING_LIGHTEN_TIME);
 	}
 
@@ -986,22 +976,19 @@ void ClayDemoApp::draw()
 	const float width = static_cast<float>(getWindowBounds().getWidth());
 	const float height = static_cast<float>(getWindowBounds().getHeight());
 
-	if (exposure_mult > 0.0f)
-	{
+	if (exposure_mult > 0.0f) {
 		renderSceneToFbo(_camera);
 
-		if( _bloom_visible )
-		{
-	//const int blur_iterations = 5;
-	//	for(int i=0; i<blur_iterations; ++i)
-	//	{
+	  glDisable(GL_CULL_FACE);
+	  glDisable(GL_DEPTH_TEST);
+
+		if (_bloom_visible) {
 			createBloom();
-	//	}
 		}
 
+	  setViewport( _screen_fbo.getBounds() );
 		setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
 
-		glDisable(GL_CULL_FACE);
 		_screen_fbo.bindTexture(0);
 		_vertical_blur_fbo.bindTexture(1);
 		_screen_fbo.getDepthTexture().bind(2);

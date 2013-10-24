@@ -119,11 +119,9 @@ private:
 	Fbo _screen_fbo;
 	Fbo _horizontal_blur_fbo;
 	Fbo _vertical_blur_fbo;
-	GlslProg _light_clamp_shader;
-	GlslProg _horizontal_blur_shader;
-	GlslProg _vertical_blur_shader;
 	GlslProg _screen_shader;
   GlslProg _fxaa_shader;
+  GlslProg _bloom_shader;
   bool _use_fxaa;
 	float _exposure; // hdr exposure
 	float _contrast;
