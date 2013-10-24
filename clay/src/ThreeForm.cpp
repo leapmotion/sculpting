@@ -20,9 +20,6 @@ std::vector<Vector3> debugPoints;
 std::vector<Vector3> debugLines;
 std::vector<Vector3> debugTriangles;
 
-// Cinder -- Eigen conversions
-Vec3f ToVec3f(const Vector3& v) { return Vec3f(v.x(), v.y(), v.z()); }
-
 
 //*********************************************************
 ClayDemoApp::ClayDemoApp()
@@ -622,7 +619,7 @@ void ClayDemoApp::update()
   // if-conditioning this will disable mouse-based movement, untill we actually handle camera update
   if (!mesh_ || _camera_util->state == CameraUtil::STATE_INVALID) {
     // Init camera
-    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0)); // up vector assumed to be Vec3f(0,1,0)
+    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), _cam_dist); // up vector assumed to be Vec3f(0,1,0)
   }
 
   campos = ToVec3f(_camera_util->transform.translation);
@@ -637,11 +634,14 @@ void ClayDemoApp::update()
 	_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress);
 
 	updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
-  _camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+  // Don't record leap's angles in the user camera
+  //_camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+
+  _camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()));
 
   // Camera update.
   if (mesh_) {
-    _camera_util->UpdateCamera(mesh_, _cam_dist);
+    _camera_util->UpdateCamera(mesh_);
   }
 
 	float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);

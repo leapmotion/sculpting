@@ -13,6 +13,7 @@ LeapInteraction::LeapInteraction(Sculpt* _Sculpt, UserInterface* _Ui)
 	, _dphi(0.0f)
 	, _dtheta(0.0f)
 	, _dzoom(0.0f)
+  , _is_pinched(false)
 { }
 
 void LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress)
@@ -114,4 +115,74 @@ void LeapInteraction::interact()
 	_dtheta = SMOOTH_STRENGTH*_dtheta + (1.0f-SMOOTH_STRENGTH)*cur_dtheta;
 	_dphi = SMOOTH_STRENGTH*_dphi + (1.0f-SMOOTH_STRENGTH)*cur_dphi;
 	_dzoom = SMOOTH_STRENGTH*_dzoom + (1.0f-SMOOTH_STRENGTH)*cur_dzoom;
+
+  //// Handle pinching
+  //const int numHands = _cur_frame.hands().count();
+  //for (int ih = 0; ih < numHands; ih++) {
+  //  Leap::Hand& hand = _cur_frame.hands()[ih];
+  //  LM_LOG << "Manipulation strength " << float(hand.manipulationStrength()) << std::endl;
+  //}
+
+  static const float PINCH_START_THRESHOLD = 0.8f;
+  static const float PINCH_END_THRESHOLD = 0.7f;
+  // Handle pinching
+  if (_is_pinched) {
+    Leap::Hand& hand = _cur_frame.hand(_pinching_hand_id);
+    // Handle pinch end
+    if (!hand.isValid() || hand.manipulationStrength() < PINCH_END_THRESHOLD) {
+      _is_pinched = false;
+    } else {
+      // Handle pinch drag
+      _pinch_last_recorded = ToVec3f(hand.manipulationPoint().toVector3<Vector3>());
+
+      // Check for pinning a movement direction
+      if (!_pin_z && !_pin_xy) {
+        Vec3f diff = _pinch_last_recorded - _pinch_origin;
+        if (20.0f < diff.length()) {
+          // Check angle and decide on direction
+          if (std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]) < std::fabs(diff[2]) ) {
+            // use z
+            _pin_xy = true;
+          } else {
+            // use xy
+            _pin_z = true;
+          }
+        }
+      }
+    }
+  } else {
+    // Handle pinch start
+    const int numHands = _cur_frame.hands().count();
+    for (int ih = 0; ih < numHands; ih++) {
+      Leap::Hand& hand = _cur_frame.hands()[ih];
+      if (PINCH_START_THRESHOLD < hand.manipulationStrength()) {
+        _is_pinched = true;
+        _pin_z = false;
+        _pin_xy = false;
+        _pinching_hand_id = hand.id();
+        _pinch_origin = ToVec3f(hand.manipulationPoint().toVector3<Vector3>());
+        _pinch_last_read = _pinch_origin;
+        _pinch_last_recorded = _pinch_origin;
+      }
+      //LM_LOG << "Manipulation strength " << float(hand.manipulationStrength()) << std::endl;
+    }
+  }
 }
+
+Vec3f LeapInteraction::getPinchDeltaFromLastCall() {
+  if (!_is_pinched) {
+    return Vec3f(0.0f, 0.0f, 0.0f);
+  } else {
+    Vec3f result = _pinch_last_recorded - _pinch_last_read;
+    _pinch_last_read = _pinch_last_recorded;
+    if (_pin_xy) {
+      result[0] = 0.0f;
+      result[1] = 0.0f;
+    } 
+    if (_pin_z) {
+      result[2] = 0.0f;
+    }
+    return result;
+  }
+}
+

@@ -14,7 +14,7 @@ class Sculpt
 {
 
 public:
-  enum SculptMode{INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT};
+  enum SculptMode{INVALID = -1, INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT};
   enum TopoMode{DECIMATION, SUBDIVISION, UNIFORMISATION, ADAPTIVE, STATIC};
   Sculpt();
   ~Sculpt();

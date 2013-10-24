@@ -6,11 +6,11 @@
 
 /** Constructor */
 #if 1
-Sculpt::Sculpt() : mesh_(0), sculptMode_(INFLATE), topoMode_(ADAPTIVE),
+Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE),
     detail_(1.0f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f),
     deltaTime_(0.0f), minDetailMult_(0.1f), prevSculpt_(false), material_(0)
 #else
-Sculpt::Sculpt() : mesh_(0), intensity_(0.5f), sculptMode_(INFLATE), topoMode_(ADAPTIVE), centerPoint_(Vector3::Zero()), culling_(false),
+Sculpt::Sculpt() : mesh_(0), intensity_(0.5f), sculptMode_(INVALID), topoMode_(ADAPTIVE), centerPoint_(Vector3::Zero()), culling_(false),
     detail_(1.0f), thickness_(0.5f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), sweepCenter_(Vector3::Zero()), sweepDir_(Vector3::Zero()),
     prevTransform_(Matrix4x4::Identity()), deltaTime_(0.0f), minDetailMult_(0.05f), prevSculpt_(false)
 #endif
@@ -379,10 +379,15 @@ void Sculpt::addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel
 
 void Sculpt::applyBrushes(float deltaTime, bool symmetry)
 {
+  if (sculptMode_ == INVALID) {
+    return;
+  }
+  
   const Matrix4x4& transformInv = mesh_->getInverseTransformation();
   const Vector3& origin = mesh_->getRotationOrigin();
   const Vector3& axis = mesh_->getRotationAxis();
   float velocity = mesh_->getRotationVelocity();
+  
   deltaTime_ = deltaTime;
   bool haveSculpt = false;
 	for(size_t b=0; b<_brushes.size(); ++b)

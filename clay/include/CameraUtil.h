@@ -64,15 +64,20 @@ public:
   CameraUtil();
 
     // Set camera from standard parameters: camera-from, camera-to, and up vector.
-  void SetFromStandardCamera(const Vector3& from, const Vector3& to);
+  void SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance);
 
     // Records user mouse input from mouse events.
     // 
     // Accumulates data for later processing in UpdateCamera.
   void RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov);
 
+    // Records user Leap's pinching drag events.
+    // 
+    // Accumulates data for later processing in UpdateCamera.
+  void RecordUserInput(const Vector3& delta);
+
     // Update camera position.
-  void UpdateCamera(const Mesh* mesh, lmReal expectedDist);
+  void UpdateCamera(const Mesh* mesh);
 
 private:
     // Generates a batch of rays from camera point in the camera's looking direction.
@@ -86,7 +91,10 @@ private:
     // todo: move to MathUtils ?
   static void GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut);
 
-  // For simlplicity.
+    // Correct up vector
+  void CorrectCameraUpVector(const Vector3& up);
+
+  // For simplicity.
 public:
 
     // Camera's current transform.
@@ -100,8 +108,11 @@ public:
     // Unused.
   lmReal referenceDistance;
 
-    // Accumulated user input.
+    // User input from the last call to CameraUpdate().
   Vector3 userInput;
+
+    // Accumulated user input, waiting to be used over subsequent frames
+  Vector3 accumulatedUserInput;
 
   enum State {
     STATE_INVALID = -1,

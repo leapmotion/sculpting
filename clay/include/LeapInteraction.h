@@ -20,6 +20,7 @@ public:
 	float getDPhi() const { return _dphi; }
 	float getDTheta() const { return _dtheta; }
 	float getDZoom() const { return _dzoom; }
+  Vec3f getPinchDeltaFromLastCall();
 	void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
 	void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
 
@@ -43,6 +44,14 @@ private:
 	float _dtheta;
 	float _dzoom;
 
+  // Handling pinch gesture
+  bool _is_pinched;
+  int _pinching_hand_id;
+  Vec3f _pinch_origin;
+  Vec3f _pinch_last_read;
+  Vec3f _pinch_last_recorded;
+  bool _pin_z;
+  bool _pin_xy;
 };
 
 #endif

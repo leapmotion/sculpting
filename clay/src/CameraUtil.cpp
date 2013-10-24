@@ -26,10 +26,11 @@ CameraUtil::CameraUtil() {
   referencePoint.normal.setZero(); // invalid
   referenceDistance = 0.0f;
   userInput.setZero();
+  accumulatedUserInput.setZero();
   state = STATE_INVALID;
 }
 
-void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to) {
+void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
   Vector3 dir = to - from;
   Vector3 flat = dir; flat.y() = 0.0;
 
@@ -41,6 +42,8 @@ void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to) {
 
   transform.translation = from;
   transform.rotation = (q1 * q2).normalized();
+
+  this->referenceDistance = referenceDistance;
 
   state = STATE_FREEFLOATING;
 }
@@ -65,8 +68,6 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
   for (size_t ri = 0; ri < rays.size(); ri++) {
     const lmRay& ray = rays[ri];
     std::vector<int> triangles = mesh->getOctree()->intersectRay(ray.start, ray.GetDirection());
-
-    LM_LOG << "Octree tris: " << triangles.size() << std::endl;
 
     int numAabbSuccess = 0;
     int numTriSuccess = 0;
@@ -107,10 +108,6 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
       }
     }
 
-    LM_LOG << "Aabbs intersected " << numAabbSuccess << std::endl;
-    LM_LOG << "Tris intersected " << numTriSuccess << std::endl;
-    LM_LOG << "Min dist idx " << minDistIdx << std::endl;
-
     const bool drawClosestOnly = true;
     if (drawClosestOnly) {
       triangles.clear(); 
@@ -135,7 +132,11 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
 
 void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov) {
   Vector3 movement(_DTheta, -_DPhi, _DFov);
-  userInput += movement;
+  userInput += 100.0f * movement;
+}
+
+void CameraUtil::RecordUserInput(const Vector3& delta) {
+  userInput += delta;
 }
 
 void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut) {
@@ -145,12 +146,6 @@ void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const V
   for (int i = 0; i < 3; i++) {
     pointToVertex[i] = mesh->getVertex(tri.vIndices_[i]) - point;
   }
-
-  Vector2 v22(1,2);
-
-  Matrix3x3 m33;
-  for (int i = 0; i < 9; i++)
-    m33(i%3,i/3) = i;
 
   lmReal area = 0.0f;
   for (int i = 0; i < 3; i++) {
@@ -163,7 +158,7 @@ void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const V
   (*coordsOut)[2] = 1 - (*coordsOut)[0] - (*coordsOut)[1];
 }
 
-void CameraUtil::UpdateCamera(const Mesh* mesh, lmReal expectedDist ) {
+void CameraUtil::UpdateCamera(const Mesh* mesh) {
   //--------------------- older main part
   assert(mesh && "Mesh required.");
 
@@ -185,10 +180,11 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, lmReal expectedDist ) {
       }
 
       minDist = std::min(minDist, rayCastResults[i].dist);
+
     }
   }
 
-  referenceDistance = expectedDist;
+  //referenceDistance = expectedDist;
 
   //--------------------------- Update part
 
@@ -196,9 +192,21 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, lmReal expectedDist ) {
 
   // Calculate a desired movement vector.
   //
+
+  // Accumulate userInput in 2d
+  accumulatedUserInput += userInput;
+  userInput = 0.1f * accumulatedUserInput;
+  accumulatedUserInput -= userInput;
+
+  // Process smoothed user input
   Vector3 deltaAngles = userInput;
-  Vector3 movement = -100.0f * (transform.rotation * userInput);
+  Vector3 movement = -1.0f * (transform.rotation * userInput);
   userInput.setZero();
+
+  // Multiply motion by distance:
+  const lmReal movementRatio = referenceDistance / 50.0f;
+  deltaAngles *= movementRatio;
+  movement *= movementRatio;
 
   lmTransform newTransform = transform;
   newTransform.translation += movement;
@@ -281,8 +289,12 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, lmReal expectedDist ) {
       DrawArrow(refPosition, refPosition + refNormal * 20.0f);
 
       // clean up:
-      static lmReal targetDist = 50.0f;
-      referenceDistance = targetDist;
+      //static lmReal targetDist = 50.0f;
+      //referenceDistance = targetDist;
+      referenceDistance -= deltaAngles.z();
+      referenceDistance = std::max(10.0f, referenceDistance);
+      referenceDistance = std::min(350.0f, referenceDistance);
+      LM_LOG << "Refernce distance is " << referenceDistance << std::endl;
 
       lmReal deltaDist = referenceDistance - refDist;
 
@@ -302,12 +314,19 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, lmReal expectedDist ) {
         dQ = dQ.slerp((1.0f-adjustOrientationRate), lmQuat::Identity());
         newTransform.rotation = dQ * transform.rotation;
 
+        //// Adjust the camera's up vector
+        //{
+        //  Vector3 oldUp = newTransform.rotation * Vector3::UnitY();
+        //  lmQuat dQ2; dQ2.setFromTwoVectors(oldUp, Vector3::UnitY());
+        //  dQ2 = dQ2.slerp((1.0f-adjustOrientationRate), lmQuat::Identity());
+        //  newTransform.rotation = dQ2 * newTransform.rotation;
+        //}
         Vector3 cameraFromRefPoint = newTransform.translation - referencePoint.position;
         newTransform.translation = referencePoint.position + dQ * cameraFromRefPoint;
       }
 
       if (adjustDistance) {
-        Vector3 deltaTranslation = 0.1f * deltaDist * (newTransform.rotation * Vector3::UnitZ()); // 'smoother' movement; add continues velocity though.
+        Vector3 deltaTranslation = adjustOrientationRate * deltaDist * (newTransform.rotation * Vector3::UnitZ()); // 'smoother' movement; add continues velocity though.
         newTransform.translation += deltaTranslation;
       }
 
@@ -316,6 +335,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, lmReal expectedDist ) {
 
     // don't update transform when there's no successful raycast
 
+    CorrectCameraUpVector(Vector3::UnitY());
 
 
     return;
@@ -338,5 +358,21 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, lmReal expectedDist ) {
   //  - within the mesh
 }
 
+void CameraUtil::CorrectCameraUpVector(const Vector3& up) {
+  // Take the up vector, and project it onto camera's xy-plane
 
+  // xy-plane normal
+  Vector3 xmPlaneNormal = transform.rotation * Vector3::UnitZ();
+
+  // Project up along that axis onto the plane.
+  const lmReal xmPlaneNormalDotUp = xmPlaneNormal.dot(up);
+  Vector3 newUp = up - xmPlaneNormal * xmPlaneNormalDotUp;
+
+  Vector3 oldUp = transform.rotation * Vector3::UnitY();
+  lmQuat dQ; dQ.setFromTwoVectors(oldUp, newUp);
+  lmReal adjustOrientationRate = std::max(0.0f, -0.2f + 1.2f * std::fabs(xmPlaneNormalDotUp));
+  dQ = dQ.slerp((1.0f-adjustOrientationRate), lmQuat::Identity());
+  transform.rotation = dQ * transform.rotation;
+
+}
 

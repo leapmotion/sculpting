@@ -6,6 +6,7 @@
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Fbo.h"
+#include "cinder/Vector.h"
 
 #include "Leap.h"
 #include "cinder/Thread.h"
@@ -15,3 +16,6 @@
 #include "FreeImage.h"
 
 #include "Common.h"
+
+// Cinder -- Eigen conversions
+inline cinder::Vec3f ToVec3f(const Vector3& v) { return cinder::Vec3f(v.x(), v.y(), v.z()); }
