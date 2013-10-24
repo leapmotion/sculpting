@@ -84,11 +84,11 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
       if (result) {
         numAabbSuccess++;
         result = Geometry::intersectionRayTriangle(
-              ray.start, ray.end, 
-              mesh->getVertex(tri.vIndices_[0]),
-              mesh->getVertex(tri.vIndices_[1]),
-              mesh->getVertex(tri.vIndices_[2]),
-              tri.normal_, rayOnPlane);
+          ray.start, ray.end, 
+          mesh->getVertex(tri.vIndices_[0]),
+          mesh->getVertex(tri.vIndices_[1]),
+          mesh->getVertex(tri.vIndices_[2]),
+          tri.normal_, rayOnPlane);
       }
       if (result) {
         numTriSuccess++;

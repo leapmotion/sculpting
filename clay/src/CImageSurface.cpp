@@ -31,34 +31,34 @@
 //--------------------------------------------------------------------------------------
 float CPf16Tof32(short aVal)
 {
-	unsigned int signVal = (aVal >> 15);              //sign bit in MSB
-	unsigned int exponent = ((aVal >> 10) & 0x01f);   //next 5 bits after signbit
-	unsigned int mantissa = (aVal & 0x03ff);          //lower 10 bits
-	unsigned int rawFloat32Data;                      //raw binary float data
+  unsigned int signVal = (aVal >> 15);              //sign bit in MSB
+  unsigned int exponent = ((aVal >> 10) & 0x01f);   //next 5 bits after signbit
+  unsigned int mantissa = (aVal & 0x03ff);          //lower 10 bits
+  unsigned int rawFloat32Data;                      //raw binary float data
 
-	//convert s10e5  5-bit exponent to IEEE754 s23e8  8-bit exponent
-	if(exponent == 31)
-	{  // infinity or Nan depending on mantissa
-		exponent = 255;
-	}
-	else if(exponent == 0) 
-	{  //  denormalized floats  mantissa is treated as = 0.f
-		exponent = 0;
-	}
-	else
-	{  //change 15base exponent to 127base exponent 
-		//normalized floats mantissa is treated as = 1.f
-		exponent += (127 - 15);
-	}
+  //convert s10e5  5-bit exponent to IEEE754 s23e8  8-bit exponent
+  if(exponent == 31)
+  {  // infinity or Nan depending on mantissa
+    exponent = 255;
+  }
+  else if(exponent == 0) 
+  {  //  denormalized floats  mantissa is treated as = 0.f
+    exponent = 0;
+  }
+  else
+  {  //change 15base exponent to 127base exponent 
+    //normalized floats mantissa is treated as = 1.f
+    exponent += (127 - 15);
+  }
 
-	//convert 10-bit mantissa to 23-bit mantissa
-	mantissa <<= (23 - 10);
+  //convert 10-bit mantissa to 23-bit mantissa
+  mantissa <<= (23 - 10);
 
-	//assemble s23e8 number using logical operations
-	rawFloat32Data = (signVal << 31) |  (exponent << 23) | mantissa ;
+  //assemble s23e8 number using logical operations
+  rawFloat32Data = (signVal << 31) |  (exponent << 23) | mantissa ;
 
-	//treat raw data as a 32 bit float
-	return *((float *) &rawFloat32Data );
+  //treat raw data as a 32 bit float
+  return *((float *) &rawFloat32Data );
 }
 
 
@@ -80,59 +80,59 @@ float CPf16Tof32(short aVal)
 //--------------------------------------------------------------------------------------
 short CPf32Tof16(float aVal)
 {
-	unsigned int rawf32Data = *((unsigned int *)&aVal); //raw binary float data
+  unsigned int rawf32Data = *((unsigned int *)&aVal); //raw binary float data
 
-	unsigned int signVal = (rawf32Data >> 31);              //sign bit in MSB
-	unsigned int exponent = ((rawf32Data >> 23) & 0xff);    //next 8 bits after signbit
-	unsigned int mantissa = (rawf32Data & 0x7fffff);        //mantissa = lower 23 bits
+  unsigned int signVal = (rawf32Data >> 31);              //sign bit in MSB
+  unsigned int exponent = ((rawf32Data >> 23) & 0xff);    //next 8 bits after signbit
+  unsigned int mantissa = (rawf32Data & 0x7fffff);        //mantissa = lower 23 bits
 
-	short rawf16Data;
+  short rawf16Data;
 
-	//convert IEEE754 s23e8 8-bit exponent to s10e5  5-bit exponent      
-	if(exponent == 255 ) 
-	{//special case 32 bit float is inf or NaN, use mantissa as is
-		exponent = 31;
-	}
-	else if(exponent < ((127-15)-10)  ) 
-	{//special case, if  32-bit float exponent is out of 16-bit float range, then set 16-bit float to 0
-		exponent = 0;
-		mantissa = 0;
-	}
-	else if(exponent >= (127+(31-15)) )
-	{  // max 15based exponent for s10e5 is 31
-		// force s10e5 number to represent infinity by setting mantissa to 0
-		//  and exponent to 31
-		exponent = 31;
-		mantissa = 0;
-	}
-	else if( exponent <= (127-15) )
-	{  //convert normalized s23e8 float to denormalized s10e5 float
+  //convert IEEE754 s23e8 8-bit exponent to s10e5  5-bit exponent      
+  if(exponent == 255 ) 
+  {//special case 32 bit float is inf or NaN, use mantissa as is
+    exponent = 31;
+  }
+  else if(exponent < ((127-15)-10)  ) 
+  {//special case, if  32-bit float exponent is out of 16-bit float range, then set 16-bit float to 0
+    exponent = 0;
+    mantissa = 0;
+  }
+  else if(exponent >= (127+(31-15)) )
+  {  // max 15based exponent for s10e5 is 31
+    // force s10e5 number to represent infinity by setting mantissa to 0
+    //  and exponent to 31
+    exponent = 31;
+    mantissa = 0;
+  }
+  else if( exponent <= (127-15) )
+  {  //convert normalized s23e8 float to denormalized s10e5 float
 
-		//add implicit 1.0 to mantissa to convert from 1.f to use as a 0.f mantissa
-		mantissa |= (1<<23);
+    //add implicit 1.0 to mantissa to convert from 1.f to use as a 0.f mantissa
+    mantissa |= (1<<23);
 
-		//shift over mantissa number of bits equal to exponent underflow
-		mantissa = mantissa >> (1 + ((127-15) - exponent));
+    //shift over mantissa number of bits equal to exponent underflow
+    mantissa = mantissa >> (1 + ((127-15) - exponent));
 
-		//zero exponent to treat value as a denormalized number
-		exponent = 0;
-	}
-	else
-	{  //change 127base exponent to 15base exponent 
-		// no underflow or overflow of exponent 
-		//normalized floats mantissa is treated as= 1.f, so 
-		// no denormalization or exponent derived shifts to the mantissa         
-		exponent -= (127 - 15);
-	}
+    //zero exponent to treat value as a denormalized number
+    exponent = 0;
+  }
+  else
+  {  //change 127base exponent to 15base exponent 
+    // no underflow or overflow of exponent 
+    //normalized floats mantissa is treated as= 1.f, so 
+    // no denormalization or exponent derived shifts to the mantissa         
+    exponent -= (127 - 15);
+  }
 
-	//convert 23-bit mantissa to 10-bit mantissa
-	mantissa >>= (23 - 10);
+  //convert 23-bit mantissa to 10-bit mantissa
+  mantissa >>= (23 - 10);
 
-	//assemble s10e5 number using logical operations
-	rawf16Data = (signVal << 15) | (exponent << 10) | mantissa;
+  //assemble s10e5 number using logical operations
+  rawf16Data = (signVal << 15) | (exponent << 10) | mantissa;
 
-	//return re-assembled raw data as a 32 bit float
-	return rawf16Data;
+  //return re-assembled raw data as a 32 bit float
+  return rawf16Data;
 }
 
 
@@ -141,25 +141,25 @@ short CPf32Tof16(float aVal)
 //--------------------------------------------------------------------------------------
 int CPTypeSizeOf(int a_Type)
 {
-	switch(a_Type)
-	{
-	case CP_VAL_UNORM8:    
-	case CP_VAL_UNORM8_BGRA:    
-		return 1;
-		break;
-	case CP_VAL_UNORM16:
-		return 2;
-		break;
-	case CP_VAL_FLOAT16:
-		return 2;
-		break;
-	case CP_VAL_FLOAT32:
-		return 4;
-		break;
-	default:
-		return 1;
-		break;
-	}
+  switch(a_Type)
+  {
+  case CP_VAL_UNORM8:    
+  case CP_VAL_UNORM8_BGRA:    
+    return 1;
+    break;
+  case CP_VAL_UNORM16:
+    return 2;
+    break;
+  case CP_VAL_FLOAT16:
+    return 2;
+    break;
+  case CP_VAL_FLOAT32:
+    return 4;
+    break;
+  default:
+    return 1;
+    break;
+  }
 }
 
 
@@ -168,25 +168,25 @@ int CPTypeSizeOf(int a_Type)
 //--------------------------------------------------------------------------------------
 CP_ITYPE CPTypeGetVal(int a_Type, void *a_Ptr)
 {
-	switch(a_Type)
-	{
-	case CP_VAL_UNORM8:
-	case CP_VAL_UNORM8_BGRA:
-		return (1.0f/255.0f) * *((unsigned char *)a_Ptr);
-		break;
-	case CP_VAL_UNORM16:
-		return (1.0f/65535.0f) * *((short *)a_Ptr);
-		break;
-	case CP_VAL_FLOAT16:
-		return CPf16Tof32( *((short *)a_Ptr) );
-		break;
-	case CP_VAL_FLOAT32:
-		return *((float *) a_Ptr);
-		break;
-	default:
-		return 0;
-		break;
-	}
+  switch(a_Type)
+  {
+  case CP_VAL_UNORM8:
+  case CP_VAL_UNORM8_BGRA:
+    return (1.0f/255.0f) * *((unsigned char *)a_Ptr);
+    break;
+  case CP_VAL_UNORM16:
+    return (1.0f/65535.0f) * *((short *)a_Ptr);
+    break;
+  case CP_VAL_FLOAT16:
+    return CPf16Tof32( *((short *)a_Ptr) );
+    break;
+  case CP_VAL_FLOAT32:
+    return *((float *) a_Ptr);
+    break;
+  default:
+    return 0;
+    break;
+  }
 }
 
 
@@ -196,28 +196,28 @@ CP_ITYPE CPTypeGetVal(int a_Type, void *a_Ptr)
 //--------------------------------------------------------------------------------------
 void CPTypeSetVal(CP_ITYPE a_Val, int a_Type, void *a_Ptr)
 {
-	CP_ITYPE clampVal;  //clamp value to 0-1 range to output UNORM types
+  CP_ITYPE clampVal;  //clamp value to 0-1 range to output UNORM types
 
-	switch(a_Type)
-	{
-	case CP_VAL_UNORM8:
-	case CP_VAL_UNORM8_BGRA:
-		clampVal = VM_MIN(VM_MAX(a_Val, 0.0f), 1.0f);
-		*((unsigned char *)a_Ptr) = (unsigned char)(clampVal * 255.0f);
-		break;
-	case CP_VAL_UNORM16:
-		clampVal = VM_MIN(VM_MAX(a_Val, 0.0f), 1.0f);
-		*((short *)a_Ptr) = (short)(clampVal * 65535.0f);
-		break;
-	case CP_VAL_FLOAT16:
-		*((short *)a_Ptr) =  CPf32Tof16( a_Val );
-		break;
-	case CP_VAL_FLOAT32:
-		*((float *) a_Ptr) = a_Val;
-		break;
-	default:
-		break;
-	}
+  switch(a_Type)
+  {
+  case CP_VAL_UNORM8:
+  case CP_VAL_UNORM8_BGRA:
+    clampVal = VM_MIN(VM_MAX(a_Val, 0.0f), 1.0f);
+    *((unsigned char *)a_Ptr) = (unsigned char)(clampVal * 255.0f);
+    break;
+  case CP_VAL_UNORM16:
+    clampVal = VM_MIN(VM_MAX(a_Val, 0.0f), 1.0f);
+    *((short *)a_Ptr) = (short)(clampVal * 65535.0f);
+    break;
+  case CP_VAL_FLOAT16:
+    *((short *)a_Ptr) =  CPf32Tof16( a_Val );
+    break;
+  case CP_VAL_FLOAT32:
+    *((float *) a_Ptr) = a_Val;
+    break;
+  default:
+    break;
+  }
 }
 
 //--------------------------------------------------------------------------------------
@@ -225,10 +225,10 @@ void CPTypeSetVal(CP_ITYPE a_Val, int a_Type, void *a_Ptr)
 //--------------------------------------------------------------------------------------
 CImageSurface::CImageSurface(void)
 {
-	m_Width = 0;          //cubemap face width
-	m_Height = 0;         //cubemap face height
-	m_NumChannels = 0;    //number of channels
-	m_ImgData = NULL;
+  m_Width = 0;          //cubemap face width
+  m_Height = 0;         //cubemap face height
+  m_NumChannels = 0;    //number of channels
+  m_ImgData = NULL;
 
 }
 
@@ -238,14 +238,14 @@ CImageSurface::CImageSurface(void)
 //--------------------------------------------------------------------------------------
 void CImageSurface::Clear(void)
 {
-	m_Width = 0;                        //cubemap face width
-	m_Height = 0;                       //cubemap face height
-	m_NumChannels = 0;                  //number of channels
-	if (!m_ImgDataShared) {
-		SAFE_DELETE_ARRAY(m_ImgData);       //safe delete old image data	
-	}
-	m_ImgData = 0;
-	m_ImgDataShared = false;
+  m_Width = 0;                        //cubemap face width
+  m_Height = 0;                       //cubemap face height
+  m_NumChannels = 0;                  //number of channels
+  if (!m_ImgDataShared) {
+    SAFE_DELETE_ARRAY(m_ImgData);       //safe delete old image data	
+  }
+  m_ImgData = 0;
+  m_ImgDataShared = false;
 }
 
 
@@ -254,27 +254,27 @@ void CImageSurface::Clear(void)
 //--------------------------------------------------------------------------------------
 void CImageSurface::Init(int a_Width, int a_Height, int a_NumChannels, bool shared)
 {
-	m_Width = a_Width;                 //cubemap face width
-	m_Height = a_Height;               //cubemap face height
-	m_NumChannels = a_NumChannels;     //number of channels
+  m_Width = a_Width;                 //cubemap face width
+  m_Height = a_Height;               //cubemap face height
+  m_NumChannels = a_NumChannels;     //number of channels
 
-	if (!m_ImgDataShared) {
-		SAFE_DELETE_ARRAY(m_ImgData);       //safe delete old image data	
-	}
-	m_ImgData = 0;
-	m_ImgDataShared = shared;
+  if (!m_ImgDataShared) {
+    SAFE_DELETE_ARRAY(m_ImgData);       //safe delete old image data	
+  }
+  m_ImgData = 0;
+  m_ImgDataShared = shared;
 
-	if (!m_ImgDataShared)
-	{
-		try 
-		{
-			m_ImgData = new CP_ITYPE [ m_Width * m_Height * m_NumChannels];   //assume tight data packing
-		}
-		catch ( ... )
-		{
-			m_ImgData = NULL;
-		}
-	}
+  if (!m_ImgDataShared)
+  {
+    try 
+    {
+      m_ImgData = new CP_ITYPE [ m_Width * m_Height * m_NumChannels];   //assume tight data packing
+    }
+    catch ( ... )
+    {
+      m_ImgData = NULL;
+    }
+  }
 }
 
 
@@ -285,57 +285,57 @@ void CImageSurface::Init(int a_Width, int a_Height, int a_NumChannels, bool shar
 //--------------------------------------------------------------------------------------
 void CImageSurface::SetImageData(int a_SrcType, int a_SrcNumChannels, int a_SrcPitch, void *a_SrcDataPtr )
 {
-	int i, j, k;
+  int i, j, k;
 
-	CP_ITYPE *dstDataWalk = m_ImgData;
-	unsigned char *srcDataWalk = (unsigned char *)a_SrcDataPtr;
+  CP_ITYPE *dstDataWalk = m_ImgData;
+  unsigned char *srcDataWalk = (unsigned char *)a_SrcDataPtr;
 
-	int srcValueSize = CPTypeSizeOf(a_SrcType);
-	int srcTexelStep = srcValueSize * a_SrcNumChannels;
-	int numChannelsSet = VM_MIN(a_SrcNumChannels, m_NumChannels);
-	int srcChannelSelect;
+  int srcValueSize = CPTypeSizeOf(a_SrcType);
+  int srcTexelStep = srcValueSize * a_SrcNumChannels;
+  int numChannelsSet = VM_MIN(a_SrcNumChannels, m_NumChannels);
+  int srcChannelSelect;
 
-	//loop over rows
-	for(j=0; j<m_Height; j++)
-	{
-		//pointer arithmetic to offset pointer by pitch in bytes
-		srcDataWalk = ( (unsigned char *)a_SrcDataPtr + (j * a_SrcPitch) );
+  //loop over rows
+  for(j=0; j<m_Height; j++)
+  {
+    //pointer arithmetic to offset pointer by pitch in bytes
+    srcDataWalk = ( (unsigned char *)a_SrcDataPtr + (j * a_SrcPitch) );
 
-		//loop over texels within row
-		for(i=0; i<m_Width; i++)
-		{
-			srcChannelSelect = 0;
+    //loop over texels within row
+    for(i=0; i<m_Width; i++)
+    {
+      srcChannelSelect = 0;
 
-			//loop over channels within texel
-			for(k=0; k<numChannelsSet; k++)
-			{
-				if(a_SrcType == CP_VAL_UNORM8_BGRA) //swap channels 0, and 2 if in BGRA format
-				{
-					switch(k)
-					{
-					case 0:
-						*(dstDataWalk + 2) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
-						break;
-					case 2:
-						*(dstDataWalk + 0) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
-						break;
-					default:
-						*(dstDataWalk + k) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
-						break;
-					}
-				}
-				else
-				{
-					*(dstDataWalk + k) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
-				}
+      //loop over channels within texel
+      for(k=0; k<numChannelsSet; k++)
+      {
+        if(a_SrcType == CP_VAL_UNORM8_BGRA) //swap channels 0, and 2 if in BGRA format
+        {
+          switch(k)
+          {
+          case 0:
+            *(dstDataWalk + 2) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
+            break;
+          case 2:
+            *(dstDataWalk + 0) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
+            break;
+          default:
+            *(dstDataWalk + k) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
+            break;
+          }
+        }
+        else
+        {
+          *(dstDataWalk + k) = CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
+        }
 
-				srcChannelSelect += srcValueSize;
-			}   
+        srcChannelSelect += srcValueSize;
+      }   
 
-			dstDataWalk += m_NumChannels;
-			srcDataWalk += srcTexelStep;
-		}    
-	}        
+      dstDataWalk += m_NumChannels;
+      srcDataWalk += srcTexelStep;
+    }    
+  }        
 }
 
 
@@ -345,72 +345,72 @@ void CImageSurface::SetImageData(int a_SrcType, int a_SrcNumChannels, int a_SrcP
 //
 //--------------------------------------------------------------------------------------
 void CImageSurface::SetImageDataClampDegammaScale(int a_SrcType, int a_SrcNumChannels, int a_SrcPitch, 
-																									void *a_SrcDataPtr, float a_MaxClamp, float a_Gamma, float a_Scale)
+                                                  void *a_SrcDataPtr, float a_MaxClamp, float a_Gamma, float a_Scale)
 {
-	int i, j, k;
+  int i, j, k;
 
-	CP_ITYPE *dstDataWalk = m_ImgData;
-	unsigned char *srcDataWalk = (unsigned char *)a_SrcDataPtr;
+  CP_ITYPE *dstDataWalk = m_ImgData;
+  unsigned char *srcDataWalk = (unsigned char *)a_SrcDataPtr;
 
-	int srcValueSize = CPTypeSizeOf(a_SrcType);
-	int srcTexelStep = srcValueSize * a_SrcNumChannels;
-	int numChannelsSet = VM_MIN(a_SrcNumChannels, m_NumChannels);
-	int srcChannelSelect;
-	const bool needGammaRescale = a_Gamma != 1.0f || a_Scale != 1.0f;
+  int srcValueSize = CPTypeSizeOf(a_SrcType);
+  int srcTexelStep = srcValueSize * a_SrcNumChannels;
+  int numChannelsSet = VM_MIN(a_SrcNumChannels, m_NumChannels);
+  int srcChannelSelect;
+  const bool needGammaRescale = a_Gamma != 1.0f || a_Scale != 1.0f;
 
-	//loop over rows
-	for(j=0; j<m_Height; j++)
-	{
-		//pointer arithmetic to offset pointer by pitch in bytes
-		srcDataWalk = ( (unsigned char *)a_SrcDataPtr + (j * a_SrcPitch) );
+  //loop over rows
+  for(j=0; j<m_Height; j++)
+  {
+    //pointer arithmetic to offset pointer by pitch in bytes
+    srcDataWalk = ( (unsigned char *)a_SrcDataPtr + (j * a_SrcPitch) );
 
-		//loop over texels within row
-		for(i=0; i<m_Width; i++)
-		{
-			srcChannelSelect = 0;
+    //loop over texels within row
+    for(i=0; i<m_Width; i++)
+    {
+      srcChannelSelect = 0;
 
-			//loop over channels within texel
-			for(k=0; k<numChannelsSet; k++)
-			{
-				CP_ITYPE texelVal; 
+      //loop over channels within texel
+      for(k=0; k<numChannelsSet; k++)
+      {
+        CP_ITYPE texelVal; 
 
-				//get texel value from external buffer
-				texelVal= CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
+        //get texel value from external buffer
+        texelVal= CPTypeGetVal(a_SrcType, srcDataWalk + srcChannelSelect);
 
-				//clamp texelVal using max value only 
-				// (using texelVal as the min clamping arguement means no minimum clamping)
-				VM_CLAMP(texelVal, texelVal, texelVal, a_MaxClamp);
+        //clamp texelVal using max value only 
+        // (using texelVal as the min clamping arguement means no minimum clamping)
+        VM_CLAMP(texelVal, texelVal, texelVal, a_MaxClamp);
 
-				if(needGammaRescale && k < 3)  //only apply gamma and scale to RGB channels
-				{
-					//degamma texel val, by raising to the power gamma 
-					texelVal = pow(texelVal, a_Gamma);
+        if(needGammaRescale && k < 3)  //only apply gamma and scale to RGB channels
+        {
+          //degamma texel val, by raising to the power gamma 
+          texelVal = pow(texelVal, a_Gamma);
 
-					//scale texel val in linear space (after degamma)
-					texelVal *= a_Scale;
-				}
+          //scale texel val in linear space (after degamma)
+          texelVal *= a_Scale;
+        }
 
-				//write data
-				if( (a_SrcType == CP_VAL_UNORM8_BGRA) && (k==0))
-				{
-					*(dstDataWalk + 2) = texelVal;                
-				}
-				else if( (a_SrcType == CP_VAL_UNORM8_BGRA) && (k==2))
-				{
-					*(dstDataWalk + 0) = texelVal;                
-				}
-				else
-				{
-					*(dstDataWalk + k) = texelVal;
-				}
+        //write data
+        if( (a_SrcType == CP_VAL_UNORM8_BGRA) && (k==0))
+        {
+          *(dstDataWalk + 2) = texelVal;                
+        }
+        else if( (a_SrcType == CP_VAL_UNORM8_BGRA) && (k==2))
+        {
+          *(dstDataWalk + 0) = texelVal;                
+        }
+        else
+        {
+          *(dstDataWalk + k) = texelVal;
+        }
 
-				srcChannelSelect += srcValueSize;
-			}   
+        srcChannelSelect += srcValueSize;
+      }   
 
-			dstDataWalk += m_NumChannels;
-			srcDataWalk += srcTexelStep;
-		}    
-	}        
+      dstDataWalk += m_NumChannels;
+      srcDataWalk += srcTexelStep;
+    }    
+  }        
 }
 
 
@@ -420,52 +420,52 @@ void CImageSurface::SetImageDataClampDegammaScale(int a_SrcType, int a_SrcNumCha
 //--------------------------------------------------------------------------------------
 void CImageSurface::GetImageData(int a_DstType, int a_DstNumChannels, int a_DstPitch, void *a_DstDataPtr )
 {
-	int i, j, k;
+  int i, j, k;
 
-	CP_ITYPE *srcDataWalk = m_ImgData;
-	unsigned char *dstDataWalk = (unsigned char *)a_DstDataPtr;
+  CP_ITYPE *srcDataWalk = m_ImgData;
+  unsigned char *dstDataWalk = (unsigned char *)a_DstDataPtr;
 
-	int dstValueSize = CPTypeSizeOf(a_DstType);
-	int dstTexelStep = dstValueSize * a_DstNumChannels;
+  int dstValueSize = CPTypeSizeOf(a_DstType);
+  int dstTexelStep = dstValueSize * a_DstNumChannels;
 
-	int numChannelsSet = VM_MIN(a_DstNumChannels, m_NumChannels);
-	int dstChannelSelect;
+  int numChannelsSet = VM_MIN(a_DstNumChannels, m_NumChannels);
+  int dstChannelSelect;
 
-	//loop over rows
-	for(j=0; j<m_Height; j++)
-	{
-		//pointer arithmetic to offset pointer by pitch in bytes
-		dstDataWalk = ( (unsigned char *)a_DstDataPtr + (j * a_DstPitch) );
+  //loop over rows
+  for(j=0; j<m_Height; j++)
+  {
+    //pointer arithmetic to offset pointer by pitch in bytes
+    dstDataWalk = ( (unsigned char *)a_DstDataPtr + (j * a_DstPitch) );
 
-		//loop over texels within row
-		for(i=0; i<m_Width; i++)
-		{
-			dstChannelSelect = 0;
+    //loop over texels within row
+    for(i=0; i<m_Width; i++)
+    {
+      dstChannelSelect = 0;
 
-			//loop over channels within texel
-			for(k=0; k<numChannelsSet; k++)
-			{               
-				//write data
-				if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 0))
-				{
-					CPTypeSetVal(*(srcDataWalk + 2), a_DstType, dstDataWalk + dstChannelSelect);
-				}
-				else if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 2))
-				{
-					CPTypeSetVal(*(srcDataWalk + 0), a_DstType, dstDataWalk + dstChannelSelect);
-				}
-				else
-				{
-					CPTypeSetVal(*(srcDataWalk + k), a_DstType, dstDataWalk + dstChannelSelect);
-				}
+      //loop over channels within texel
+      for(k=0; k<numChannelsSet; k++)
+      {               
+        //write data
+        if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 0))
+        {
+          CPTypeSetVal(*(srcDataWalk + 2), a_DstType, dstDataWalk + dstChannelSelect);
+        }
+        else if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 2))
+        {
+          CPTypeSetVal(*(srcDataWalk + 0), a_DstType, dstDataWalk + dstChannelSelect);
+        }
+        else
+        {
+          CPTypeSetVal(*(srcDataWalk + k), a_DstType, dstDataWalk + dstChannelSelect);
+        }
 
-				dstChannelSelect += dstValueSize;
-			}   
+        dstChannelSelect += dstValueSize;
+      }   
 
-			srcDataWalk += m_NumChannels;
-			dstDataWalk += dstTexelStep;
-		}    
-	}       
+      srcDataWalk += m_NumChannels;
+      dstDataWalk += dstTexelStep;
+    }    
+  }       
 }
 
 
@@ -475,69 +475,69 @@ void CImageSurface::GetImageData(int a_DstType, int a_DstNumChannels, int a_DstP
 // 
 //--------------------------------------------------------------------------------------
 void CImageSurface::GetImageDataScaleGamma(int a_DstType, int a_DstNumChannels, int a_DstPitch, 
-																					 void *a_DstDataPtr, float a_Scale, float a_Gamma)
+                                           void *a_DstDataPtr, float a_Scale, float a_Gamma)
 {
-	int i, j, k;
+  int i, j, k;
 
-	CP_ITYPE *srcDataWalk = m_ImgData;
-	unsigned char *dstDataWalk = (unsigned char *)a_DstDataPtr;
+  CP_ITYPE *srcDataWalk = m_ImgData;
+  unsigned char *dstDataWalk = (unsigned char *)a_DstDataPtr;
 
-	int dstValueSize = CPTypeSizeOf(a_DstType);
-	int dstTexelStep = dstValueSize * a_DstNumChannels;
+  int dstValueSize = CPTypeSizeOf(a_DstType);
+  int dstTexelStep = dstValueSize * a_DstNumChannels;
 
-	int numChannelsSet = VM_MIN(a_DstNumChannels, m_NumChannels);
-	int dstChannelSelect;
-	const bool needGammaRescale = a_Scale != 1.0f || a_Gamma != 1.0f;
+  int numChannelsSet = VM_MIN(a_DstNumChannels, m_NumChannels);
+  int dstChannelSelect;
+  const bool needGammaRescale = a_Scale != 1.0f || a_Gamma != 1.0f;
 
-	//loop over rows
-	for(j=0; j<m_Height; j++)
-	{
-		//pointer arithmetic to offset pointer by pitch in bytes
-		dstDataWalk = ( (unsigned char *)a_DstDataPtr + (j * a_DstPitch) );
+  //loop over rows
+  for(j=0; j<m_Height; j++)
+  {
+    //pointer arithmetic to offset pointer by pitch in bytes
+    dstDataWalk = ( (unsigned char *)a_DstDataPtr + (j * a_DstPitch) );
 
-		//loop over texels within row
-		for(i=0; i<m_Width; i++)
-		{
-			dstChannelSelect = 0;
+    //loop over texels within row
+    for(i=0; i<m_Width; i++)
+    {
+      dstChannelSelect = 0;
 
-			//loop over channels within texel
-			for(k=0; k<numChannelsSet ; k++)
-			{               
-				CP_ITYPE texelVal; 
+      //loop over channels within texel
+      for(k=0; k<numChannelsSet ; k++)
+      {               
+        CP_ITYPE texelVal; 
 
-				texelVal = *(srcDataWalk + k);
+        texelVal = *(srcDataWalk + k);
 
-				if(needGammaRescale && k < 3)  //only apply gamma and scale to RGB channels
-				{
-					//scale texel val
-					texelVal *= a_Scale;
+        if(needGammaRescale && k < 3)  //only apply gamma and scale to RGB channels
+        {
+          //scale texel val
+          texelVal *= a_Scale;
 
-					//apply gamma to texel val by raising the texelVal to the power of (1/gamma)
-					texelVal = pow(texelVal, 1.0f / a_Gamma);
-				}
+          //apply gamma to texel val by raising the texelVal to the power of (1/gamma)
+          texelVal = pow(texelVal, 1.0f / a_Gamma);
+        }
 
-				//write out texture value
-				if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 0))
-				{
-					CPTypeSetVal(texelVal, a_DstType, dstDataWalk + (dstValueSize * 2) );
-				}
-				else if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 2))
-				{
-					CPTypeSetVal(texelVal, a_DstType, dstDataWalk + (dstValueSize * 0) );
-				}
-				else
-				{
-					CPTypeSetVal(texelVal, a_DstType, dstDataWalk + dstChannelSelect);
-				}
+        //write out texture value
+        if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 0))
+        {
+          CPTypeSetVal(texelVal, a_DstType, dstDataWalk + (dstValueSize * 2) );
+        }
+        else if( (a_DstType == CP_VAL_UNORM8_BGRA) && (k == 2))
+        {
+          CPTypeSetVal(texelVal, a_DstType, dstDataWalk + (dstValueSize * 0) );
+        }
+        else
+        {
+          CPTypeSetVal(texelVal, a_DstType, dstDataWalk + dstChannelSelect);
+        }
 
 
-				dstChannelSelect += dstValueSize;
-			}   
+        dstChannelSelect += dstValueSize;
+      }   
 
-			srcDataWalk += m_NumChannels;
-			dstDataWalk += dstTexelStep;
-		}
-	}   
+      srcDataWalk += m_NumChannels;
+      dstDataWalk += dstTexelStep;
+    }
+  }   
 }
 
 
@@ -547,24 +547,24 @@ void CImageSurface::GetImageDataScaleGamma(int a_DstType, int a_DstNumChannels, 
 //--------------------------------------------------------------------------------------
 void CImageSurface::ClearChannelConst(int a_ChannelIdx, CP_ITYPE a_ClearColor)
 {
-	int u, v;
-	CP_ITYPE *texelPtr;
+  int u, v;
+  CP_ITYPE *texelPtr;
 
-	//if channel does not exist, do not attempt to clear the channel
-	if(a_ChannelIdx > (m_NumChannels-1) )
-	{
-		return;
-	}
+  //if channel does not exist, do not attempt to clear the channel
+  if(a_ChannelIdx > (m_NumChannels-1) )
+  {
+    return;
+  }
 
-	for(v=0; v<m_Height; v++)
-	{
-		for(u=0; u<m_Width; u++)
-		{
-			texelPtr = GetSurfaceTexelPtr(u, v );
+  for(v=0; v<m_Height; v++)
+  {
+    for(u=0; u<m_Width; u++)
+    {
+      texelPtr = GetSurfaceTexelPtr(u, v );
 
-			*(texelPtr + a_ChannelIdx) = a_ClearColor;
-		}    
-	}
+      *(texelPtr + a_ChannelIdx) = a_ClearColor;
+    }    
+  }
 }
 
 
@@ -574,7 +574,7 @@ void CImageSurface::ClearChannelConst(int a_ChannelIdx, CP_ITYPE a_ClearColor)
 //--------------------------------------------------------------------------------------
 CP_ITYPE *CImageSurface::GetSurfaceTexelPtr(int u, int v)
 {
-	return( m_ImgData + (((m_Width * v) + u) * m_NumChannels) );
+  return( m_ImgData + (((m_Width * v) + u) * m_NumChannels) );
 }
 
 
@@ -584,29 +584,29 @@ CP_ITYPE *CImageSurface::GetSurfaceTexelPtr(int u, int v)
 //--------------------------------------------------------------------------------------
 void CImageSurface::InPlaceHorizonalFlip(void)
 {
-	int u, v, k;
-	CP_ITYPE *texelPtrTop, *texelPtrBottom;
+  int u, v, k;
+  CP_ITYPE *texelPtrTop, *texelPtrBottom;
 
-	//iterate over V
-	for(v=0; v<(m_Height/2); v++)
-	{
-		for(u=0; u<m_Height; u++)
-		{
-			texelPtrTop = GetSurfaceTexelPtr(u, v );
-			texelPtrBottom = GetSurfaceTexelPtr(u, (m_Height-1) - v);
+  //iterate over V
+  for(v=0; v<(m_Height/2); v++)
+  {
+    for(u=0; u<m_Height; u++)
+    {
+      texelPtrTop = GetSurfaceTexelPtr(u, v );
+      texelPtrBottom = GetSurfaceTexelPtr(u, (m_Height-1) - v);
 
-			//iterate over channels
-			for(k=0; k<m_NumChannels; k++)
-			{
-				CP_ITYPE tmpTexelVal;
+      //iterate over channels
+      for(k=0; k<m_NumChannels; k++)
+      {
+        CP_ITYPE tmpTexelVal;
 
-				tmpTexelVal = *(texelPtrTop + k);
-				*(texelPtrTop + k) = *(texelPtrBottom + k);
-				*(texelPtrBottom + k) = tmpTexelVal;
+        tmpTexelVal = *(texelPtrTop + k);
+        *(texelPtrTop + k) = *(texelPtrBottom + k);
+        *(texelPtrBottom + k) = tmpTexelVal;
 
-			}
-		}    
-	}
+      }
+    }    
+  }
 }
 
 
@@ -616,27 +616,27 @@ void CImageSurface::InPlaceHorizonalFlip(void)
 //--------------------------------------------------------------------------------------
 void CImageSurface::InPlaceVerticalFlip(void)
 {
-	int u, v, k;
-	CP_ITYPE *texelPtrLeft, *texelPtrRight;
+  int u, v, k;
+  CP_ITYPE *texelPtrLeft, *texelPtrRight;
 
-	for(u=0; u<(m_Width/2); u++)
-	{
-		for(v=0; v<m_Height; v++)
-		{
-			texelPtrLeft = GetSurfaceTexelPtr(u, v );
-			texelPtrRight = GetSurfaceTexelPtr((m_Width-1)-u, v );
+  for(u=0; u<(m_Width/2); u++)
+  {
+    for(v=0; v<m_Height; v++)
+    {
+      texelPtrLeft = GetSurfaceTexelPtr(u, v );
+      texelPtrRight = GetSurfaceTexelPtr((m_Width-1)-u, v );
 
-			//iterate over channels
-			for(k=0; k<m_NumChannels; k++)
-			{
-				CP_ITYPE tmpTexelVal;
+      //iterate over channels
+      for(k=0; k<m_NumChannels; k++)
+      {
+        CP_ITYPE tmpTexelVal;
 
-				tmpTexelVal = *(texelPtrLeft + k);
-				*(texelPtrLeft + k) = *(texelPtrRight + k);
-				*(texelPtrRight + k) = tmpTexelVal;
-			}
-		}    
-	}
+        tmpTexelVal = *(texelPtrLeft + k);
+        *(texelPtrLeft + k) = *(texelPtrRight + k);
+        *(texelPtrRight + k) = tmpTexelVal;
+      }
+    }    
+  }
 }
 
 
@@ -645,32 +645,32 @@ void CImageSurface::InPlaceVerticalFlip(void)
 //--------------------------------------------------------------------------------------
 void CImageSurface::InPlaceDiagonalUVFlip(void)
 {
-	int u, v, k;
-	CP_ITYPE *texelPtrLeft, *texelPtrRight;
+  int u, v, k;
+  CP_ITYPE *texelPtrLeft, *texelPtrRight;
 
-	if(m_Width != m_Height)
-	{ //only flip image if square
-		return;
-	}
+  if(m_Width != m_Height)
+  { //only flip image if square
+    return;
+  }
 
-	for(v=0; v<m_Height; v++)
-	{
-		for(u=0; u<v; u++) //only iterate over lower left triangle
-		{
-			texelPtrLeft = GetSurfaceTexelPtr(u, v );
-			texelPtrRight = GetSurfaceTexelPtr(v, u );
+  for(v=0; v<m_Height; v++)
+  {
+    for(u=0; u<v; u++) //only iterate over lower left triangle
+    {
+      texelPtrLeft = GetSurfaceTexelPtr(u, v );
+      texelPtrRight = GetSurfaceTexelPtr(v, u );
 
-			//iterate over channels
-			for(k=0; k<m_NumChannels; k++)
-			{
-				CP_ITYPE tmpTexelVal;
+      //iterate over channels
+      for(k=0; k<m_NumChannels; k++)
+      {
+        CP_ITYPE tmpTexelVal;
 
-				tmpTexelVal = *(texelPtrLeft + k);
-				*(texelPtrLeft + k) = *(texelPtrRight + k);
-				*(texelPtrRight + k) = tmpTexelVal;
-			}
-		}    
-	}
+        tmpTexelVal = *(texelPtrLeft + k);
+        *(texelPtrLeft + k) = *(texelPtrRight + k);
+        *(texelPtrRight + k) = tmpTexelVal;
+      }
+    }    
+  }
 }
 
 //--------------------------------------------------------------------------------------
@@ -678,5 +678,5 @@ void CImageSurface::InPlaceDiagonalUVFlip(void)
 //--------------------------------------------------------------------------------------
 CImageSurface::~CImageSurface()
 {
-	SAFE_DELETE_ARRAY(m_ImgData);    
+  SAFE_DELETE_ARRAY(m_ImgData);    
 }

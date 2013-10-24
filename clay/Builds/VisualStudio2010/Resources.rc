@@ -1,6 +1,6 @@
 #include "../include/Resources.h"
 
-1 ICON	"../resources/cinder_app_icon.ico"
+1 ICON "../resources/cinder_app_icon.ico"
 RES_SKY_VERT_GLSL
 RES_SKY_FRAG_GLSL
 RES_PASSTHROUGH_VERT_GLSL

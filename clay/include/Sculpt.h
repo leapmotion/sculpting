@@ -7,9 +7,9 @@
 #include <vector>
 
 /**
- * Sculpt
- * @author Stéphane GINIER
- */
+* Sculpt
+* @author Stéphane GINIER
+*/
 class Sculpt
 {
 
@@ -35,21 +35,21 @@ public:
   void push(const std::vector<int> &iVerts, const Brush& brush);
   void paint(const std::vector<int> &iVerts, const Brush& brush, int material);
 
-	int getNumBrushes() const { return (int)_brushes.size(); }
-	void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength);
+  int getNumBrushes() const { return (int)_brushes.size(); }
+  void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength);
   void clearBrushes() { _brushes.clear(); }
-	void applyBrushes(float deltaTime, bool symmetry);
-	BrushVector getBrushes() const;
-  
+  void applyBrushes(float deltaTime, bool symmetry);
+  BrushVector getBrushes() const;
+
   boost::mutex& getBrushMutex();
 
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
-    void setAdaptiveParameters(float radiusSquared);
-    Vector3 areaNormal(const std::vector<int> &iVerts);
-    Vector3 areaCenter(const std::vector<int> &iVerts);
-    void laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors);
+  void setAdaptiveParameters(float radiusSquared);
+  Vector3 areaNormal(const std::vector<int> &iVerts);
+  Vector3 areaCenter(const std::vector<int> &iVerts);
+  void laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors);
 
 private:
 
@@ -62,22 +62,22 @@ private:
     const VertexVector* verticesPtr;
   };
 
-    Mesh* mesh_; //selected meshs
-    SculptMode sculptMode_; //sculpting mode
-    TopoMode topoMode_; //topological mode
-    float detail_; //intensity of details
-    float d2Min_; //uniform refinement of mesh (min edge length)
-    float d2Max_; //uniform refinement of mesh (max edge length)
-    float d2Thickness_; //distance between 2 vertices before split/merge
-    float d2Move_; //max displacement of vertices per step
-    float deltaTime_;
-    float minDetailMult_;
-    bool prevSculpt_;
-    int material_;
-    std::vector<int> brushVertices_;
-    mutable boost::mutex brushMutex_;
+  Mesh* mesh_; //selected meshs
+  SculptMode sculptMode_; //sculpting mode
+  TopoMode topoMode_; //topological mode
+  float detail_; //intensity of details
+  float d2Min_; //uniform refinement of mesh (min edge length)
+  float d2Max_; //uniform refinement of mesh (max edge length)
+  float d2Thickness_; //distance between 2 vertices before split/merge
+  float d2Move_; //max displacement of vertices per step
+  float deltaTime_;
+  float minDetailMult_;
+  bool prevSculpt_;
+  int material_;
+  std::vector<int> brushVertices_;
+  mutable boost::mutex brushMutex_;
 
-		BrushVector _brushes;
+  BrushVector _brushes;
 };
 
 #endif /*__SCULPT_H__*/

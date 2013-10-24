@@ -22,79 +22,79 @@ const float ambient_scale = 8.0f;
 
 void main(void)
 {
-	vec4 color = vec4(0.0);
-	float sumW = 0.0;
-	vec2 sumWVec = vec2(0.0);
-	float sumG = 0.0;
-	vec2 sumGVec = vec2(0.0);
+  vec4 color = vec4(0.0);
+  float sumW = 0.0;
+  vec2 sumWVec = vec2(0.0);
+  float sumG = 0.0;
+  vec2 sumGVec = vec2(0.0);
 
-	float epsilonSquared = epsilon*epsilon;
+  float epsilonSquared = epsilon*epsilon;
 
-	// calculate total energy
-	for (int i=0; i<num && i<MAX_METABALLS; i++)
-	{
-		float r = radii[i];
-		vec2 diff = gl_FragCoord.xy - positions[i];
+  // calculate total energy
+  for (int i=0; i<num && i<MAX_METABALLS; i++)
+  {
+    float r = radii[i];
+    vec2 diff = gl_FragCoord.xy - positions[i];
 
-		// step 1
-		float x = length(diff);
-		vec2 xVec = diff/x;
+    // step 1
+    float x = length(diff);
+    vec2 xVec = diff/x;
 
-		// step 2
-		float rN = pow(r, POWER);
-		float xN = pow(x, POWER);
-		float xN_1 = pow(x, POWER-1);
-		float sum = rN + xN;
-		float term1 = rN / sum;
-		float w = weights[i] * term1;
-		float term2 = xN_1 / sum;
-		vec2 wVec = -POWER * xVec * w * term2;
-		
-		// step 3
-		float h = r*r - x*x;
-		vec2 hVec = -2 * diff;
+    // step 2
+    float rN = pow(r, POWER);
+    float xN = pow(x, POWER);
+    float xN_1 = pow(x, POWER-1);
+    float sum = rN + xN;
+    float term1 = rN / sum;
+    float w = weights[i] * term1;
+    float term2 = xN_1 / sum;
+    vec2 wVec = -POWER * xVec * w * term2;
 
-		// step 4
-		float g = h * w;
-		vec2 gVec = h*wVec + w*hVec;
+    // step 3
+    float h = r*r - x*x;
+    vec2 hVec = -2 * diff;
 
-		// accumulate
-		sumW += w;
-		sumWVec += wVec;
-		sumG += g;
-		sumGVec += gVec;
-		color.rgb += (1.0 + ambient_scale*ambients[i]*ambients[i])*w*colors[i].rgb;
-		color.a += w*colors[i].a;
-	}
-	color /= sumW;
+    // step 4
+    float g = h * w;
+    vec2 gVec = h*wVec + w*hVec;
 
-	// step 5
-	float f = sumG / sumW;
-	vec2 fVec = (sumW*sumGVec - sumG*sumWVec) / (sumW * sumW);
+    // accumulate
+    sumW += w;
+    sumWVec += wVec;
+    sumG += g;
+    sumGVec += gVec;
+    color.rgb += (1.0 + ambient_scale*ambients[i]*ambients[i])*w*colors[i].rgb;
+    color.a += w*colors[i].a;
+  }
+  color /= sumW;
 
-	// step 6
-	float mult = 0.0;
-	float p = f + epsilonSquared;
-	if (p >= thresh_lower)
-	{
-		if (p < thresh_upper)
-		{
-			mult = smoothstep(1.0, 0.0, smooth_mult*(thresh_upper - p));
-		}
-		else
-		{
-			mult = 1.0;
-		}
-		vec2 pVec = 0.5 * fVec / sqrt(p);
+  // step 5
+  float f = sumG / sumW;
+  vec2 fVec = (sumW*sumGVec - sumG*sumWVec) / (sumW * sumW);
 
-		// step 7
-		vec3 normal = normalize(vec3(-pVec.x, -pVec.y, 1));
+  // step 6
+  float mult = 0.0;
+  float p = f + epsilonSquared;
+  if (p >= thresh_lower)
+  {
+    if (p < thresh_upper)
+    {
+      mult = smoothstep(1.0, 0.0, smooth_mult*(thresh_upper - p));
+    }
+    else
+    {
+      mult = 1.0;
+    }
+    vec2 pVec = 0.5 * fVec / sqrt(p);
 
-		vec3 diffuse = diffuseFactor * color.rgb * textureCube(irradiance, normalTransform*normal).rgb;
-		vec3 reflection = reflectionFactor * textureCube(radiance, normalTransform*reflect(eye_dir, normal)).rgb;
-		color.rgb = diffuse + reflection;
-	}
+    // step 7
+    vec3 normal = normalize(vec3(-pVec.x, -pVec.y, 1));
 
-	color.a *= mult;
-	gl_FragColor = color;
+    vec3 diffuse = diffuseFactor * color.rgb * textureCube(irradiance, normalTransform*normal).rgb;
+    vec3 reflection = reflectionFactor * textureCube(radiance, normalTransform*reflect(eye_dir, normal)).rgb;
+    color.rgb = diffuse + reflection;
+  }
+
+  color.a *= mult;
+  gl_FragColor = color;
 }

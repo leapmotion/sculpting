@@ -52,12 +52,12 @@ public:
   void draw() const;
 
 public:
-	float _radius;
-	float _radius_squared;
+  float _radius;
+  float _radius_squared;
   float _length;
-	float _strength;
-	Vector3 _position;
-	Vector3 _direction;
+  float _strength;
+  Vector3 _position;
+  Vector3 _direction;
   Vector3 _velocity;
 };
 

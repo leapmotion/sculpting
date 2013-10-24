@@ -7,22 +7,22 @@ class GLBuffer {
 
 public:
 
-	GLBuffer(GLenum type);
-	void create();
-	void bind();
-	void allocate(const void* data, int count, GLenum pattern);
-	void release();
-	int size() const;
-	void* map(GLuint access);
-	bool unmap();
-	bool isCreated() const;
-	void destroy();
-	static void checkError();
+  GLBuffer(GLenum type);
+  void create();
+  void bind();
+  void allocate(const void* data, int count, GLenum pattern);
+  void release();
+  int size() const;
+  void* map(GLuint access);
+  bool unmap();
+  bool isCreated() const;
+  void destroy();
+  static void checkError();
 
 private:
 
-	GLuint buffer_;
-	GLenum type_;
+  GLuint buffer_;
+  GLenum type_;
 
 };
 

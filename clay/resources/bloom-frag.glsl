@@ -1,6 +1,6 @@
 #version 120
 
-uniform sampler2D	color_tex;
+uniform sampler2D color_tex;
 uniform vec2 sample_offset;
 uniform float light_threshold;
 

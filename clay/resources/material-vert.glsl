@@ -11,9 +11,9 @@ varying vec3 vertexColor;
 
 void main()
 {
-	vec4 wpos       = transform * vertex;
-	worldPosition   = wpos.xyz;
-	worldNormal     = (transformit * vec4(normal,0.0)).xyz;
+  vec4 wpos       = transform * vertex;
+  worldPosition   = wpos.xyz;
+  worldNormal     = (transformit * vec4(normal,0.0)).xyz;
   vertexColor     = color;
-	gl_Position			= gl_ModelViewProjectionMatrix * wpos;
+  gl_Position     = gl_ModelViewProjectionMatrix * wpos;
 }

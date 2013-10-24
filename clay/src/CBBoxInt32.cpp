@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------------------
 CBBoxInt32::CBBoxInt32(void)
 { 
-   Clear();
+  Clear();
 }
 
 
@@ -29,16 +29,16 @@ CBBoxInt32::CBBoxInt32(void)
 //--------------------------------------------------------------------------------------
 bool CBBoxInt32::Empty(void)
 {
-   if( (m_minCoord[0] > m_maxCoord[0]) ||
-       (m_minCoord[1] > m_maxCoord[1]) ||
-       (m_minCoord[2] > m_maxCoord[2]) )
-   {
-      return true;
-   }
-   else
-   {
-      return false;    
-   }
+  if( (m_minCoord[0] > m_maxCoord[0]) ||
+    (m_minCoord[1] > m_maxCoord[1]) ||
+    (m_minCoord[2] > m_maxCoord[2]) )
+  {
+    return true;
+  }
+  else
+  {
+    return false;    
+  }
 }
 
 
@@ -47,12 +47,12 @@ bool CBBoxInt32::Empty(void)
 //--------------------------------------------------------------------------------------
 void CBBoxInt32::Clear(void)
 { 
-   m_minCoord[0] = CP_MAX_INT32;
-   m_minCoord[1] = CP_MAX_INT32;
-   m_minCoord[2] = CP_MAX_INT32;
-   m_maxCoord[0] = CP_MIN_INT32;
-   m_maxCoord[1] = CP_MIN_INT32;
-   m_maxCoord[2] = CP_MIN_INT32;
+  m_minCoord[0] = CP_MAX_INT32;
+  m_minCoord[1] = CP_MAX_INT32;
+  m_minCoord[2] = CP_MAX_INT32;
+  m_maxCoord[0] = CP_MIN_INT32;
+  m_maxCoord[1] = CP_MIN_INT32;
+  m_maxCoord[2] = CP_MIN_INT32;
 }
 
 
@@ -61,12 +61,12 @@ void CBBoxInt32::Clear(void)
 //--------------------------------------------------------------------------------------
 void CBBoxInt32::Augment(int aX, int aY, int aZ)
 { 
-   m_minCoord[0] = CP_MIN( m_minCoord[0], aX );
-   m_minCoord[1] = CP_MIN( m_minCoord[1], aY );
-   m_minCoord[2] = CP_MIN( m_minCoord[2], aZ );
-   m_maxCoord[0] = CP_MAX( m_maxCoord[0], aX );
-   m_maxCoord[1] = CP_MAX( m_maxCoord[1], aY );
-   m_maxCoord[2] = CP_MAX( m_maxCoord[2], aZ );
+  m_minCoord[0] = CP_MIN( m_minCoord[0], aX );
+  m_minCoord[1] = CP_MIN( m_minCoord[1], aY );
+  m_minCoord[2] = CP_MIN( m_minCoord[2], aZ );
+  m_maxCoord[0] = CP_MAX( m_maxCoord[0], aX );
+  m_maxCoord[1] = CP_MAX( m_maxCoord[1], aY );
+  m_maxCoord[2] = CP_MAX( m_maxCoord[2], aZ );
 }
 
 
@@ -75,8 +75,8 @@ void CBBoxInt32::Augment(int aX, int aY, int aZ)
 //--------------------------------------------------------------------------------------
 void CBBoxInt32::AugmentX(int aX)
 { 
-   m_minCoord[0] = CP_MIN( m_minCoord[0], aX );
-   m_maxCoord[0] = CP_MAX( m_maxCoord[0], aX );
+  m_minCoord[0] = CP_MIN( m_minCoord[0], aX );
+  m_maxCoord[0] = CP_MAX( m_maxCoord[0], aX );
 }
 
 
@@ -85,8 +85,8 @@ void CBBoxInt32::AugmentX(int aX)
 //--------------------------------------------------------------------------------------
 void CBBoxInt32::AugmentY(int aY)
 { 
-   m_minCoord[1] = CP_MIN( m_minCoord[1], aY );
-   m_maxCoord[1] = CP_MAX( m_maxCoord[1], aY );
+  m_minCoord[1] = CP_MIN( m_minCoord[1], aY );
+  m_maxCoord[1] = CP_MAX( m_maxCoord[1], aY );
 }
 
 
@@ -95,8 +95,8 @@ void CBBoxInt32::AugmentY(int aY)
 //--------------------------------------------------------------------------------------
 void CBBoxInt32::AugmentZ(int aZ)
 { 
-   m_minCoord[2] = CP_MIN( m_minCoord[2], aZ );
-   m_maxCoord[2] = CP_MAX( m_maxCoord[2], aZ );
+  m_minCoord[2] = CP_MIN( m_minCoord[2], aZ );
+  m_maxCoord[2] = CP_MAX( m_maxCoord[2], aZ );
 }
 
 
@@ -105,9 +105,9 @@ void CBBoxInt32::AugmentZ(int aZ)
 //--------------------------------------------------------------------------------------
 void CBBoxInt32::ClampMin(int aX, int aY, int aZ)
 { 
-   m_minCoord[0] = CP_MAX( m_minCoord[0], aX );
-   m_minCoord[1] = CP_MAX( m_minCoord[1], aY );
-   m_minCoord[2] = CP_MAX( m_minCoord[2], aZ );
+  m_minCoord[0] = CP_MAX( m_minCoord[0], aX );
+  m_minCoord[1] = CP_MAX( m_minCoord[1], aY );
+  m_minCoord[2] = CP_MAX( m_minCoord[2], aZ );
 }
 
 
@@ -116,9 +116,9 @@ void CBBoxInt32::ClampMin(int aX, int aY, int aZ)
 //--------------------------------------------------------------------------------------
 void CBBoxInt32::ClampMax(int aX, int aY, int aZ)
 {
-   m_maxCoord[0] = CP_MIN( m_maxCoord[0], aX );
-   m_maxCoord[1] = CP_MIN( m_maxCoord[1], aY );
-   m_maxCoord[2] = CP_MIN( m_maxCoord[2], aZ );
+  m_maxCoord[0] = CP_MIN( m_maxCoord[0], aX );
+  m_maxCoord[1] = CP_MIN( m_maxCoord[1], aY );
+  m_maxCoord[2] = CP_MIN( m_maxCoord[2], aZ );
 }
 
 

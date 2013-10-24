@@ -26,76 +26,76 @@ class Octree;
 class Mesh
 {
 public:
-	static const float globalScale_; //for precision issue...
-	static int stateMask_; //for history
+  static const float globalScale_; //for precision issue...
+  static int stateMask_; //for history
 
 public:
-	Mesh();
-	~Mesh();
-	TriangleVector& getTriangles();
-	VertexVector& getVertices();
-	std::vector<Octree*>& getLeavesUpdate();
-	Triangle& getTriangle(int i);
+  Mesh();
+  ~Mesh();
+  TriangleVector& getTriangles();
+  VertexVector& getVertices();
+  std::vector<Octree*>& getLeavesUpdate();
+  Triangle& getTriangle(int i);
   const Triangle& getTriangle(int i) const;
   Vertex& getVertex(int i);
-	const Vertex& getVertex(int i) const;
-	int getNbTriangles() const;
-	int getNbVertices() const;
-	Vector3 getCenter() const;
-	Octree* getOctree() const;
-	float getScale() const;
-	void setIsSelected(bool);
-	Matrix4x4& getTransformation();
-	Matrix4x4 getInverseTransformation() const;
+  const Vertex& getVertex(int i) const;
+  int getNbTriangles() const;
+  int getNbVertices() const;
+  Vector3 getCenter() const;
+  Octree* getOctree() const;
+  float getScale() const;
+  void setIsSelected(bool);
+  Matrix4x4& getTransformation();
+  Matrix4x4 getInverseTransformation() const;
   void setRotationVelocity(float vel);
   void updateRotation(float deltaTime);
   const Vector3& getRotationOrigin() const;
   const Vector3& getRotationAxis() const;
   float getRotationVelocity() const;
 
-	std::vector<int> getTrianglesFromVertices(const std::vector<int> &iVerts);
-	std::vector<int> getVerticesFromTriangles(const std::vector<int> &iTris);
-	void expandTriangles(std::vector<int> &iTris, int nRing);
-	void expandVertices(std::vector<int> &iVerts, int nRing);
-	void computeRingVertices(int iVert);
-	void getVerticesInsideSphere(const Vector3& point, float radiusWorldSquared, std::vector<int>& result);
+  std::vector<int> getTrianglesFromVertices(const std::vector<int> &iVerts);
+  std::vector<int> getVerticesFromTriangles(const std::vector<int> &iTris);
+  void expandTriangles(std::vector<int> &iTris, int nRing);
+  void expandVertices(std::vector<int> &iVerts, int nRing);
+  void computeRingVertices(int iVert);
+  void getVerticesInsideSphere(const Vector3& point, float radiusWorldSquared, std::vector<int>& result);
   void getVerticesInsideBrush(const Brush& brush, std::vector<int>& result);
 
-	Vector3 getTriangleCenter(int iTri) const;
-	void moveTo(const Vector3& destination);
-	void setTransformation(const Matrix4x4& matTransform);
+  Vector3 getTriangleCenter(int iTri) const;
+  void moveTo(const Vector3& destination);
+  void setTransformation(const Matrix4x4& matTransform);
 
-	void draw(GLint vertex, GLint normal, GLint color);
+  void draw(GLint vertex, GLint normal, GLint color);
   void drawVerticesOnly(GLint vertex);
   void drawOctree() const;
-	void initMesh();
+  void initMesh();
 
-	void updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVerts);
+  void updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVerts);
   void updateGPUBuffers();
 
-	std::vector<int> subdivide(std::vector<int> &iTris,std::vector<int> &iVerts,float inradiusMaxSquared);
-	void triangleSubdivision(int iTri);
+  std::vector<int> subdivide(std::vector<int> &iTris,std::vector<int> &iVerts,float inradiusMaxSquared);
+  void triangleSubdivision(int iTri);
 
-	void checkLeavesUpdate();
+  void checkLeavesUpdate();
 
-	//undo-redo
-	TriangleVector& getTrianglesState();
-	VertexVector& getVerticesState();
-	void startPushState();
-	void pushState(const std::vector<int> &iTris, const std::vector<int> &iVerts);
-	void undo();
-	void redo();
+  //undo-redo
+  TriangleVector& getTrianglesState();
+  VertexVector& getVerticesState();
+  void startPushState();
+  void pushState(const std::vector<int> &iTris, const std::vector<int> &iVerts);
+  void undo();
+  void redo();
   void handleUndoRedo();
-	void recomputeOctree(const Aabb &aabbSplit);
+  void recomputeOctree(const Aabb &aabbSplit);
 
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
 
-	void updateOctree(const std::vector<int> &iTris);
-	void updateNormals(const std::vector<int> &iVerts);
-	float angleTri(int iTri, int iVer);
-	void updateTransformation();
+  void updateOctree(const std::vector<int> &iTris);
+  void updateNormals(const std::vector<int> &iVerts);
+  float angleTri(int iTri, int iVer);
+  void updateTransformation();
   void initIndexVBO();
   void initVertexVBO();
   void reinitVerticesBuffer();
@@ -103,32 +103,32 @@ private:
   void performUndo();
   void performRedo();
 
-	VertexVector vertices_; //vertices
-	TriangleVector triangles_; //triangles
+  VertexVector vertices_; //vertices
+  TriangleVector triangles_; //triangles
   GLint verticesBufferCount_;
   GLint indicesBufferCount_;
-	GLBuffer verticesBuffer_; //vertices buffer (openGL)
-	GLBuffer normalsBuffer_; //normals buffer (openGL)
-	GLBuffer indicesBuffer_; //indexes (openGL)
+  GLBuffer verticesBuffer_; //vertices buffer (openGL)
+  GLBuffer normalsBuffer_; //normals buffer (openGL)
+  GLBuffer indicesBuffer_; //indexes (openGL)
   GLBuffer colorsBuffer_;
   bool reallocateVerticesBuffer_;
   bool reallocateIndicesBuffer_;
   int pendingGPUTriangles;
   int nbGPUTriangles;
-	Vector3 center_; //center of mesh
-	float scale_; //scale
-	Octree *octree_; //octree
-	Matrix4x4 matTransform_; //transformation matrix of the mesh
-	GLfloat matTransformArray_[16]; //transformation matrix of the mesh (openGL)
-	std::vector<Octree*> leavesUpdate_; //leaves of the octree to check
+  Vector3 center_; //center of mesh
+  float scale_; //scale
+  Octree *octree_; //octree
+  Matrix4x4 matTransform_; //transformation matrix of the mesh
+  GLfloat matTransformArray_[16]; //transformation matrix of the mesh (openGL)
+  std::vector<Octree*> leavesUpdate_; //leaves of the octree to check
   bool undoPending_;
   bool redoPending_;
 
-	//undo-redo
-	std::list<State> undo_; //undo actions
-	std::list<State> redo_; //redo actions
-	std::list<State>::iterator undoIte_; //iterator to undo
-	bool beginIte_; //end of undo action
+  //undo-redo
+  std::list<State> undo_; //undo actions
+  std::list<State> redo_; //redo actions
+  std::list<State>::iterator undoIte_; //iterator to undo
+  bool beginIte_; //end of undo action
 
   Vector3 rotationOrigin_;
   Vector3 rotationAxis_;
