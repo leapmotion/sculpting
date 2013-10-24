@@ -213,9 +213,6 @@
     <None Include="..\..\resources\blur-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\blur-vert.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\..\resources\material-frag.glsl">
       <Filter>Shaders</Filter>
     </None>

@@ -74,6 +74,7 @@ private:
   float minDetailMult_;
   bool prevSculpt_;
   int material_;
+  float autoSmoothStrength_;
   std::vector<int> brushVertices_;
   mutable boost::mutex brushMutex_;
 
