@@ -6,6 +6,8 @@
 
 using namespace ci;
 
+#define USE_SKELETON_API 0
+
 LeapInteraction::LeapInteraction(Sculpt* _Sculpt, UserInterface* _Ui)
   : _sculpt(_Sculpt)
   , _ui(_Ui)
@@ -58,9 +60,11 @@ void LeapInteraction::interact()
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
   for (int i=0; i<num_pointables; i++)
   {
+#if USE_SKELETON_API
     if (!pointables[i].isExtended()) {
       continue;
     }
+#endif
     // add brushes
     const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[i].timeVisible()/AGE_WARMUP_TIME));
     Leap::Vector tip_pos = pointables[i].tipPosition();
@@ -127,6 +131,7 @@ void LeapInteraction::interact()
   _dphi = SMOOTH_STRENGTH*_dphi + (1.0f-SMOOTH_STRENGTH)*cur_dphi;
   _dzoom = SMOOTH_STRENGTH*_dzoom + (1.0f-SMOOTH_STRENGTH)*cur_dzoom;
 
+#if USE_SKELETON_API
   //// Handle pinching
   //const int numHands = _cur_frame.hands().count();
   //for (int ih = 0; ih < numHands; ih++) {
@@ -178,6 +183,7 @@ void LeapInteraction::interact()
       //LM_LOG << "Manipulation strength " << float(hand.manipulationStrength()) << std::endl;
     }
   }
+#endif
 }
 
 Vec3f LeapInteraction::getPinchDeltaFromLastCall() {
