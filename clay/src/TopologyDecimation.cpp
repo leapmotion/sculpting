@@ -220,7 +220,7 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
     }
 
     n1 = (v1.normal_+v2.normal_).normalized();
-    assert(fabs(n1.squaredNorm() - 1.0f) < 0.0001f);
+    assert(fabs(n1.squaredNorm() - 1.0f) < 0.0001f); // crash n1 coords set to -1.#IND0000
     ring1.insert(ring1.end(),ring2.begin(),ring2.end());
 
     v1.removeTriangle(iTri1);

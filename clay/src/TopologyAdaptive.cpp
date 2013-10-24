@@ -284,10 +284,12 @@ void Topology::connect1RingCommonVertices(std::vector<Edge> &edges1, std::vector
     //connect linked edges (loops)
     int i2 = nbSubEdges2-1;
     int i1 = 0;
+    int hackCount = 0;
     while(i1<nbSubEdges1 || i2>=0)
     {
         int iv1 = -1;
         int iv2 = -1;
+        if (100000 < hackCount++) { break; }
         if(i1<nbSubEdges1)
             iv1 = subEdges1[i1].front().v1_;
         if(i2>=0)
