@@ -126,6 +126,7 @@
     <ClCompile Include="..\..\src\CBBoxInt32.cpp" />
     <ClCompile Include="..\..\src\CCubeMapProcessor.cpp" />
     <ClCompile Include="..\..\src\CImageSurface.cpp" />
+    <ClCompile Include="..\..\src\DebugDrawUtil.cpp" />
     <ClCompile Include="..\..\src\Environment.cpp" />
     <ClCompile Include="..\..\src\Files.cpp" />
     <ClCompile Include="..\..\src\Geometry.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="..\..\include\CImageSurface.h" />
     <ClInclude Include="..\..\include\Common.h" />
     <ClInclude Include="..\..\include\DataTypes.h" />
+    <ClInclude Include="..\..\include\DebugDrawUtil.h" />
     <ClInclude Include="..\..\include\Environment.h" />
     <ClInclude Include="..\..\include\Files.h" />
     <ClInclude Include="..\..\include\Geometry.h" />
