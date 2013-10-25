@@ -72,7 +72,7 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   default: break;
   }
 
-  if (sculptMode_ != SMOOTH) {
+  if (sculptMode_ != SMOOTH && sculptMode_ != PAINT && sculptMode_ != INVALID) {
     Brush autoSmoothBrush(brush);
     autoSmoothBrush._strength *= autoSmoothStrength_;
     smooth(iVertsSelected, autoSmoothBrush);

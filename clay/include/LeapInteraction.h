@@ -18,9 +18,9 @@ public:
   LeapInteraction(Sculpt* _Sculptor, UserInterface* _Ui);
   bool processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress);
 
-  float getDPhi() const { return _dphi; }
-  float getDTheta() const { return _dtheta; }
-  float getDZoom() const { return _dzoom; }
+  float getDPhi() const { return _dphi.value; }
+  float getDTheta() const { return _dtheta.value; }
+  float getDZoom() const { return _dzoom.value; }
   Vec3f getPinchDeltaFromLastCall();
   bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
@@ -31,6 +31,13 @@ public:
 private:
 
   void interact();
+
+  static Leap::Vector paddleTranslation(const Leap::Hand& hand, const Leap::Frame& sinceFrame) {
+    const Leap::Vector translation = hand.translation(sinceFrame);
+    float mult = std::fabs(hand.palmNormal().dot(translation.normalized()));
+    mult = mult*mult*mult;
+    return mult * translation;
+  }
 
   Leap::Frame _cur_frame;
   Leap::Frame _last_frame;
@@ -44,9 +51,9 @@ private:
   Vec2i _window_size;
   float _desired_brush_radius;
   float _desired_brush_strength;
-  float _dphi;
-  float _dtheta;
-  float _dzoom;
+  Utilities::ExponentialFilter<float> _dphi;
+  Utilities::ExponentialFilter<float> _dtheta;
+  Utilities::ExponentialFilter<float> _dzoom;
   boost::mutex _tips_mutex;
 
   // Handling pinch gesture

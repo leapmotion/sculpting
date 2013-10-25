@@ -7,16 +7,18 @@
 using namespace ci;
 
 #define USE_SKELETON_API 0
+#define USE_PADDLING_CAMERA 1
 
 LeapInteraction::LeapInteraction(Sculpt* _Sculpt, UserInterface* _Ui)
   : _sculpt(_Sculpt)
   , _ui(_Ui)
   , _desired_brush_radius(0.4f)
-  , _dphi(0.0f)
-  , _dtheta(0.0f)
-  , _dzoom(0.0f)
   , _is_pinched(false)
-{ }
+{
+  _dphi.value = 0.0f;
+  _dtheta.value = 0.0f;
+  _dzoom.value = 0.0f;
+}
 
 bool LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress)
 {
@@ -46,10 +48,12 @@ void LeapInteraction::interact()
   float cur_dtheta = 0;
   float cur_dphi = 0;
   float cur_dzoom = 0;
-  static const float ORBIT_SPEED = 0.02f;
-  static const float ZOOM_SPEED = 0.5f;
+  static const float ORBIT_SPEED = 0.007f;
+  static const float ZOOM_SPEED = 25.0f;
   static const float AGE_WARMUP_TIME = 0.75;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
+
+  const double curTime = static_cast<double>(Utilities::TIME_STAMP_TICKS_TO_SECS * _cur_frame.timestamp());
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 200, 150);
@@ -83,6 +87,7 @@ void LeapInteraction::interact()
     Vec3f transPos = _projection.transformPoint(pos);
     Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));
 
+#if !USE_PADDLING_CAMERA
     // move camera based on finger distance from the center of the screen
     Vec2f diffXY(transPos.x, transPos.y);
     float lengthXY = diffXY.lengthSquared();
@@ -103,6 +108,7 @@ void LeapInteraction::interact()
       float mult = math<float>::clamp(lengthZ - Z_NEUTRAL_RADIUS_SQ);
       cur_dzoom += 0.01f*ui_mult*mult*diffZ*ZOOM_SPEED;
     }
+#endif
 
     // compute screen-space coordinate of this finger
     transPos.x = (transPos.x + 1)/2;
@@ -119,17 +125,38 @@ void LeapInteraction::interact()
     _tips.push_back(tip);
   }
 
+#if USE_PADDLING_CAMERA
+  const Leap::HandList hands = _cur_frame.hands();
+  const int numHands = hands.count();
+  static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
+  for (int i=0; i<numHands; i++) {
+    const float warmupMult = std::min(1.0f, hands[i].timeVisible()/HAND_INFLUENCE_WARMUP);
+    const Leap::Vector movement = warmupMult * paddleTranslation(hands[i], _last_frame);
+    cur_dtheta += ORBIT_SPEED * movement.x;
+    cur_dphi += ORBIT_SPEED * -movement.y;
+  }
+
+  if (numHands >= 2) {
+    float minY = 1.0f;
+    float scale = -std::logf(_cur_frame.scaleFactor(_last_frame));
+    for (int i=0; i<numHands; i++) {
+      minY = std::min(std::fabs(hands[i].palmNormal().y), minY);
+    }
+    cur_dzoom += ZOOM_SPEED * (1.0f - minY) * scale;
+  }
+#else
   if (_tips.size() > 0)
   {
     cur_dtheta /= _tips.size();
     cur_dphi /= _tips.size();
     cur_dzoom /= _tips.size();
   }
+#endif
 
   static const float SMOOTH_STRENGTH = 0.9f;
-  _dtheta = SMOOTH_STRENGTH*_dtheta + (1.0f-SMOOTH_STRENGTH)*cur_dtheta;
-  _dphi = SMOOTH_STRENGTH*_dphi + (1.0f-SMOOTH_STRENGTH)*cur_dphi;
-  _dzoom = SMOOTH_STRENGTH*_dzoom + (1.0f-SMOOTH_STRENGTH)*cur_dzoom;
+  _dtheta.Update(cur_dtheta, curTime, SMOOTH_STRENGTH);
+  _dphi.Update(cur_dphi, curTime, SMOOTH_STRENGTH);
+  _dzoom.Update(cur_dzoom, curTime, SMOOTH_STRENGTH);
 
 #if USE_SKELETON_API
   //// Handle pinching

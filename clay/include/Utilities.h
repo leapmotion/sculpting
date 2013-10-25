@@ -110,6 +110,26 @@ namespace Utilities {
     double lastReportTime;
   };
 
+  template <class T>
+  struct ExponentialFilter {
+    ExponentialFilter() : first(true), lastTimeSeconds(0), targetFramerate(100) { }
+    void Update(const T& data, double timeSeconds, float smoothStrength) {
+      if (first) {
+        value = data;
+        first = false;
+      } else {
+        const float dtExponent = static_cast<float>((timeSeconds - lastTimeSeconds) * targetFramerate);
+        smoothStrength = std::powf(smoothStrength, dtExponent);
+        value = smoothStrength*value + (1.0f-smoothStrength)*data;
+      }
+      lastTimeSeconds = timeSeconds;
+    }
+    T value;
+    bool first;
+    double lastTimeSeconds;
+    float targetFramerate;
+  };
+
   static const int TIME_STAMP_TICKS_PER_SEC = 1000000;
   static const double TIME_STAMP_SECS_TO_TICKS  = static_cast<double>(TIME_STAMP_TICKS_PER_SEC);
   static const double TIME_STAMP_TICKS_TO_SECS  = 1.0/TIME_STAMP_SECS_TO_TICKS;
