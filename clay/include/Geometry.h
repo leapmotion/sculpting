@@ -3,7 +3,7 @@
 
 #include "DataTypes.h"
 #include <cinder/gl/gl.h>
-#include <Aabb.h>
+#include "Aabb.h"
 
 class Mesh;
 

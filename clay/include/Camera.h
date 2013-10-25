@@ -2,7 +2,7 @@
 #define __CAMERA_H__
 
 #include <cinder/gl/gl.h>
-#include <Geometry.h>
+#include "Geometry.h"
 
 /**
 * Camera

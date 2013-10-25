@@ -119,7 +119,7 @@ namespace Utilities {
         first = false;
       } else {
         const float dtExponent = static_cast<float>((timeSeconds - lastTimeSeconds) * targetFramerate);
-        smoothStrength = std::powf(smoothStrength, dtExponent);
+        smoothStrength = std::pow(smoothStrength, dtExponent);
         value = smoothStrength*value + (1.0f-smoothStrength)*data;
       }
       lastTimeSeconds = timeSeconds;

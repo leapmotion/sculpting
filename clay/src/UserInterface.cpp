@@ -343,7 +343,7 @@ size_t UserInterface::numMetaballs() const
 float UserInterface::radiusForDepth(float depth) const
 {
   const float MAX_RADIUS = 0.16f;
-  float radius = MAX_RADIUS * std::powf(RADIUS_FALLOFF, depth);
+  float radius = MAX_RADIUS * std::pow(RADIUS_FALLOFF, depth);
   if (depth == 0)
   {
     return radius * 1.1f * _radius_mult;
