@@ -17,6 +17,7 @@
 #include "cinder/Thread.h"
 #include "Mesh.h"
 #include "Sculpt.h"
+#include "CameraUtil.h"
 
 using namespace ci;
 using namespace ci::gl;
@@ -24,6 +25,7 @@ using namespace ci::app;
 using namespace std;
 
 class CameraUtil;
+class DebugDrawUtil;
 
 class ClayDemoApp : public AppNative 
 {
@@ -139,6 +141,13 @@ private:
   float sumDisplacement_;
   bool sculptStart_;
   bool drawOctree_;
+
+  // camera control settings
+  CameraUtil::Params _camera_params;
+
+  // Debug drawing utility;
+  DebugDrawUtil* _debug_draw_util;
+
 };
 
 #endif

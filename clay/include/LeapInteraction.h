@@ -22,6 +22,7 @@ public:
   float getDTheta() const { return _dtheta; }
   float getDZoom() const { return _dzoom; }
   Vec3f getPinchDeltaFromLastCall();
+  bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
   void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
   double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*_cur_frame.timestamp(); }

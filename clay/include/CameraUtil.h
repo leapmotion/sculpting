@@ -24,6 +24,7 @@
 
 
 class Mesh;
+class DebugDrawUtil;
 
 struct lmRay {
   lmRay() {}
@@ -60,6 +61,31 @@ struct lmSurfacePoint {
 // Camera object. todo: rename.
 class CameraUtil {
 public:
+  struct Params {
+    lmReal minDist;
+    lmReal maxDist;
+    lmReal speedAtMinDist;
+    lmReal speedAtMaxDist;
+    bool pinUpVector;
+    bool drawDebugLines;
+
+    // Orbiting vs detailed mode blending
+    lmReal blendMinDist;
+    lmReal blendMaxDist;
+
+    Params() {
+      minDist= 10.0f;
+      maxDist = 350.0f;
+      speedAtMinDist = 0.5f;
+      speedAtMaxDist = 4.0f;
+      pinUpVector = true;
+      drawDebugLines = true;
+
+      blendMinDist = 100.0f;
+      blendMaxDist = 200.0f;
+    }
+  };
+
   // Init camera at the origin.
   CameraUtil();
 
@@ -74,12 +100,21 @@ public:
   // Records user Leap's pinching drag events.
   // 
   // Accumulates data for later processing in UpdateCamera.
-  void RecordUserInput(const Vector3& delta);
+  // 
+  // todo: record velocity, for inertial movement too?
+  void RecordUserInput(const Vector3& deltaPosition, bool controlOn);
 
   // Update camera position.
-  void UpdateCamera(const Mesh* mesh);
+  void UpdateCamera(const Mesh* mesh, const Params& params);
+
+  // Gets final camera used for graphics.
+  lmTransform GetFinalCamera();
 
 private:
+
+  // Compute camera transform from standard camera vectors: from, to, & assumed up along y-axis.
+  static void GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut);
+
   // Generates a batch of rays from camera point in the camera's looking direction.
   void GenerateRays(const lmTransform& transform, int castsPerRow, std::vector<lmRay>* rays);
 
@@ -91,8 +126,19 @@ private:
   // todo: move to MathUtils ?
   static void GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut);
 
+  // Correct orientation.
+  void CorrectCameraOrientation();
+
+  // Correct distance from the mesh.
+  //
+  // todo: remove param.
+  void CorrectCameraDistance(lmReal currentDistance);
+
   // Correct up vector
   void CorrectCameraUpVector(const Vector3& up);
+
+  // Gets blended camera view transforms
+  lmTransform GetHybridCameraTransform();
 
   // For simplicity.
 public:
@@ -113,6 +159,20 @@ public:
 
   // Accumulated user input, waiting to be used over subsequent frames
   Vector3 accumulatedUserInput;
+
+  // Momentary velocity vector of user input.
+  Vector3 userInputVelocity;
+
+  // External debug draw util.
+  DebugDrawUtil* debugDrawUtil;
+
+  // Last time of checking for user input -- specifically from the leap
+  lmReal lastUserInputFromVectorTime;
+
+  // Time of last camera udpate
+  lmReal lastCameraUpdateTime;
+
+  Params params;
 
   enum State {
     STATE_INVALID = -1,

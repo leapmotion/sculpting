@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "CameraUtil.h"
+#include "DebugDrawUtil.h"
 
 const float CAMERA_SPEED = 0.005f;
 
@@ -13,11 +14,8 @@ const float SPHERE_RADIUS = 50000.0f;
 const float MIN_FOV = 50.0f;
 const float MAX_FOV = 90.0f;
 
-// Debug output
-std::vector<Vector3> debugPoints;
-std::vector<Vector3> debugLines;
-std::vector<Vector3> debugTriangles;
 
+#define TODO(owner, message) LM_LOG << #owner << ": " << #message << std::endl;
 
 //*********************************************************
 ClayDemoApp::ClayDemoApp()
@@ -42,6 +40,7 @@ ClayDemoApp::ClayDemoApp()
   , _draw_background(true)
 {
   _camera_util = new CameraUtil();
+  _debug_draw_util = new DebugDrawUtil();
 }
 
 ClayDemoApp::~ClayDemoApp()
@@ -52,6 +51,7 @@ ClayDemoApp::~ClayDemoApp()
   }
 
   delete _camera_util;
+  delete _debug_draw_util;
 }
 
 void ClayDemoApp::prepareSettings( Settings *settings )
@@ -361,6 +361,15 @@ void ClayDemoApp::setup()
 
   _params = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( Vec2i( 200, 400 ) ) );
   _params->minimize();
+
+  _params->addSeparator();
+  _params->addText( "text", "label=`Camera parameters:`" );
+  _params->addParam( "Min Dist", &_camera_params.minDist, "min=1.0 max=10.0 step=1.0" );
+  _params->addParam( "Max Dist", &_camera_params.maxDist, "min=100.0 max=1000.0 step=20.0" );
+  _params->addParam( "Speed @ Min Dist", &_camera_params.speedAtMinDist, "min=0.01 max=1.0 step=0.1" );
+  _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
+  _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
+  _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_ambient_factor, "min=0.0 max=0.5 step=0.01" );
@@ -637,17 +646,29 @@ void ClayDemoApp::update()
   // if-conditioning this will disable mouse-based movement, untill we actually handle camera update
   if (!mesh_ || _camera_util->state == CameraUtil::STATE_INVALID) {
     // Init camera
-    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), _cam_dist); // up vector assumed to be Vec3f(0,1,0)
+    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), 100/*_cam_dist*/); // up vector assumed to be Vec3f(0,1,0)
+    _camera_util->debugDrawUtil = _debug_draw_util;
   }
-
-  campos = ToVec3f(_camera_util->transform.translation);
-  Vector3 up = _camera_util->transform.rotation * Vector3::UnitY();
-  Vector3 to = _camera_util->transform.translation +  _camera_util->transform.rotation * Vector3::UnitZ() * -200.0f;
+  
+  TODO(adrian, this is not thread shafe);
+  //lmTransform tCamera = _camera_util->transform;
+  lmTransform tCamera = _camera_util->GetFinalCamera();
+  campos = ToVec3f(tCamera.translation);
+  Vector3 up = tCamera.rotation * Vector3::UnitY();
+  Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
 
   // Update camera
   _camera.lookAt(campos,ToVec3f(to),ToVec3f(up));
   _camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
+
+  // Force load-file prompt
+  static bool init = true;
+  if (init && ci::app::getElapsedSeconds() > 1) {
+    init = false;
+    loadFile();
+  }
+
 }
 
 void ClayDemoApp::updateLeapAndMesh() {
@@ -657,13 +678,10 @@ void ClayDemoApp::updateLeapAndMesh() {
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = _leap_interaction->mostRecentTime();
       updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
-      // Don't record leap's angles in the user camera
-      //_camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
-
-      _camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()));
+      _camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
 
       if (mesh_) {
-        _camera_util->UpdateCamera(mesh_);
+        _camera_util->UpdateCamera(mesh_, _camera_params);
         const float deltaTime = static_cast<float>(curTime - _last_update_time);
         mesh_->updateRotation(deltaTime);
         sculpt_.applyBrushes(deltaTime, symmetry_);
@@ -672,6 +690,19 @@ void ClayDemoApp::updateLeapAndMesh() {
     }
     _mesh_update_counter.Update(ci::app::getElapsedSeconds());
   }
+
+  float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
+  _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
+
+  double curTime = ci::app::getElapsedSeconds();
+
+  if (mesh_) {
+    const float deltaTime = float(curTime - _last_update_time);
+    mesh_->updateRotation(deltaTime);
+    sculpt_.applyBrushes(deltaTime, symmetry_);
+  }
+
+  _last_update_time = curTime;
 }
 
 void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
