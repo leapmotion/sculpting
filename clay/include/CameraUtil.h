@@ -182,6 +182,8 @@ public:
   // Current state of the camera.
   State state;
 
+  boost::mutex mutex;
+
 public:
 
   // Settings

@@ -27,6 +27,7 @@ public:
   void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
   double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*_cur_frame.timestamp(); }
   std::vector<Vec4f> getTips() { boost::unique_lock<boost::mutex> tipsLock(_tips_mutex); return _tips; }
+  void setDetailMode(bool detailMode) { _detailMode = detailMode; }
 
 private:
 
@@ -64,6 +65,8 @@ private:
   Vec3f _pinch_last_recorded;
   bool _pin_z;
   bool _pin_xy;
+
+  bool _detailMode;
 };
 
 #endif

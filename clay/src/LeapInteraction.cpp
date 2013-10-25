@@ -7,13 +7,13 @@
 using namespace ci;
 
 #define USE_SKELETON_API 0
-#define USE_PADDLING_CAMERA 1
 
 LeapInteraction::LeapInteraction(Sculpt* _Sculpt, UserInterface* _Ui)
   : _sculpt(_Sculpt)
   , _ui(_Ui)
   , _desired_brush_radius(0.4f)
   , _is_pinched(false)
+  , _detailMode(false)
 {
   _dphi.value = 0.0f;
   _dtheta.value = 0.0f;
@@ -87,28 +87,30 @@ void LeapInteraction::interact()
     Vec3f transPos = _projection.transformPoint(pos);
     Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));
 
-#if !USE_PADDLING_CAMERA
-    // move camera based on finger distance from the center of the screen
-    Vec2f diffXY(transPos.x, transPos.y);
-    float lengthXY = diffXY.lengthSquared();
-    float diffZ = (pos.z + LEAP_OFFSET.z);
-    diffXY = diffXY.normalized();
-    float lengthZ = diffZ*diffZ;
-    static const float XY_NEUTRAL_RADIUS_SQ = 1.0f;
-    static const float Z_NEUTRAL_RADIUS_SQ = 100.0f * 100.0f;
-    static const float BORDER_MULT = 6.0f;
-    if (lengthXY > XY_NEUTRAL_RADIUS_SQ && lengthXY < BORDER_MULT*XY_NEUTRAL_RADIUS_SQ)
-    {
-      float mult = math<float>::clamp(lengthXY - XY_NEUTRAL_RADIUS_SQ);
-      cur_dtheta += -ui_mult*mult*diffXY.x*ORBIT_SPEED;
-      cur_dphi += ui_mult*mult*diffXY.y*ORBIT_SPEED;
-    }
-    if (lengthZ > Z_NEUTRAL_RADIUS_SQ && lengthZ < BORDER_MULT*Z_NEUTRAL_RADIUS_SQ)
-    {
-      float mult = math<float>::clamp(lengthZ - Z_NEUTRAL_RADIUS_SQ);
-      cur_dzoom += 0.01f*ui_mult*mult*diffZ*ZOOM_SPEED;
-    }
+    if (_detailMode) {
+      // move camera based on finger distance from the center of the screen
+      Vec2f diffXY(transPos.x, transPos.y);
+      float lengthXY = diffXY.lengthSquared();
+      float diffZ = (pos.z + LEAP_OFFSET.z);
+      diffXY = diffXY.normalized();
+      float lengthZ = diffZ*diffZ;
+      static const float XY_NEUTRAL_RADIUS_SQ = 1.0f;
+      static const float Z_NEUTRAL_RADIUS_SQ = 100.0f * 100.0f;
+      static const float BORDER_MULT = 6.0f;
+      if (lengthXY > XY_NEUTRAL_RADIUS_SQ && lengthXY < BORDER_MULT*XY_NEUTRAL_RADIUS_SQ)
+      {
+        float mult = math<float>::clamp(lengthXY - XY_NEUTRAL_RADIUS_SQ);
+        cur_dtheta += -ui_mult*mult*diffXY.x*ORBIT_SPEED;
+        cur_dphi += ui_mult*mult*diffXY.y*ORBIT_SPEED;
+      }
+#if 0
+      if (lengthZ > Z_NEUTRAL_RADIUS_SQ && lengthZ < BORDER_MULT*Z_NEUTRAL_RADIUS_SQ)
+      {
+        float mult = math<float>::clamp(lengthZ - Z_NEUTRAL_RADIUS_SQ);
+        cur_dzoom += 0.01f*ui_mult*mult*diffZ*ZOOM_SPEED;
+      }
 #endif
+    }
 
     // compute screen-space coordinate of this finger
     transPos.x = (transPos.x + 1)/2;
@@ -125,33 +127,33 @@ void LeapInteraction::interact()
     _tips.push_back(tip);
   }
 
-#if USE_PADDLING_CAMERA
-  const Leap::HandList hands = _cur_frame.hands();
-  const int numHands = hands.count();
-  static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
-  for (int i=0; i<numHands; i++) {
-    const float warmupMult = std::min(1.0f, hands[i].timeVisible()/HAND_INFLUENCE_WARMUP);
-    const Leap::Vector movement = warmupMult * paddleTranslation(hands[i], _last_frame);
-    cur_dtheta += ORBIT_SPEED * movement.x;
-    cur_dphi += ORBIT_SPEED * -movement.y;
-  }
-
-  if (numHands >= 2) {
-    float minY = 1.0f;
-    float scale = -std::logf(_cur_frame.scaleFactor(_last_frame));
-    for (int i=0; i<numHands; i++) {
-      minY = std::min(std::fabs(hands[i].palmNormal().y), minY);
+  if (_detailMode) {
+    if (_tips.size() > 0)
+    {
+      cur_dtheta /= _tips.size();
+      cur_dphi /= _tips.size();
+      cur_dzoom /= _tips.size();
     }
-    cur_dzoom += ZOOM_SPEED * (1.0f - minY) * scale;
+  } else {
+    const Leap::HandList hands = _cur_frame.hands();
+    const int numHands = hands.count();
+    static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
+    for (int i=0; i<numHands; i++) {
+      const float warmupMult = std::min(1.0f, hands[i].timeVisible()/HAND_INFLUENCE_WARMUP);
+      const Leap::Vector movement = warmupMult * paddleTranslation(hands[i], _last_frame);
+      cur_dtheta += ORBIT_SPEED * movement.x;
+      cur_dphi += ORBIT_SPEED * -movement.y;
+    }
+
+    if (numHands >= 2) {
+      float minY = 1.0f;
+      float scale = -std::logf(_cur_frame.scaleFactor(_last_frame));
+      for (int i=0; i<numHands; i++) {
+        minY = std::min(std::fabs(hands[i].palmNormal().y), minY);
+      }
+      cur_dzoom += ZOOM_SPEED * (1.0f - minY) * scale;
+    }
   }
-#else
-  if (_tips.size() > 0)
-  {
-    cur_dtheta /= _tips.size();
-    cur_dphi /= _tips.size();
-    cur_dzoom /= _tips.size();
-  }
-#endif
 
   static const float SMOOTH_STRENGTH = 0.9f;
   _dtheta.Update(cur_dtheta, curTime, SMOOTH_STRENGTH);

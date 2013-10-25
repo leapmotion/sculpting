@@ -38,6 +38,7 @@ ClayDemoApp::ClayDemoApp()
   , _shutdown(false)
   , _draw_depth_of_field(false)
   , _draw_background(true)
+  , detailMode_(false)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = new DebugDrawUtil();
@@ -370,6 +371,7 @@ void ClayDemoApp::setup()
   _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
   _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
   _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
+  _params->addParam( "Use Detail Mode", &detailMode_, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_ambient_factor, "min=0.0 max=0.5 step=0.01" );
@@ -644,15 +646,23 @@ void ClayDemoApp::update()
   campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
 
   // if-conditioning this will disable mouse-based movement, untill we actually handle camera update
-  if (!mesh_ || _camera_util->state == CameraUtil::STATE_INVALID) {
+  //if (!mesh_ || _camera_util->state == CameraUtil::STATE_INVALID) {
+
+  static bool lastDetailMode = detailMode_;
+
+  if (!detailMode_ || _camera_util->state == CameraUtil::STATE_INVALID || !mesh_ || (detailMode_ && !lastDetailMode)) {
     // Init camera
-    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), 100/*_cam_dist*/); // up vector assumed to be Vec3f(0,1,0)
+    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), _cam_dist); // up vector assumed to be Vec3f(0,1,0)
     _camera_util->debugDrawUtil = _debug_draw_util;
   }
+
+  lastDetailMode = detailMode_;
   
   TODO(adrian, this is not thread shafe);
   //lmTransform tCamera = _camera_util->transform;
+  boost::unique_lock<boost::mutex> lock(_camera_util->mutex);
   lmTransform tCamera = _camera_util->GetFinalCamera();
+  lock.unlock();
   campos = ToVec3f(tCamera.translation);
   Vector3 up = tCamera.rotation * Vector3::UnitY();
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
@@ -662,13 +672,14 @@ void ClayDemoApp::update()
   _camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
+#if 0
   // Force load-file prompt
   static bool init = true;
   if (init && ci::app::getElapsedSeconds() > 1) {
     init = false;
     loadFile();
   }
-
+#endif
 }
 
 void ClayDemoApp::updateLeapAndMesh() {
@@ -677,8 +688,10 @@ void ClayDemoApp::updateLeapAndMesh() {
 
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = _leap_interaction->mostRecentTime();
+      _leap_interaction->setDetailMode(detailMode_);
       updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
-      _camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
+      //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
+      _camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
 
       if (mesh_) {
         _camera_util->UpdateCamera(mesh_, _camera_params);

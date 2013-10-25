@@ -19,6 +19,7 @@ CameraUtil::CameraUtil() {
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
+  boost::unique_lock<boost::mutex> lock(mutex);
 
   GetTransformFromStandardCamera(from, to, transform);
   this->referenceDistance = referenceDistance;
@@ -128,11 +129,13 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
 }
 
 void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov) {
-  Vector3 movement(_DTheta, -_DPhi, _DFov);
+  boost::unique_lock<boost::mutex> lock(mutex);
+  Vector3 movement(_DTheta, -_DPhi, 0);
   userInput += 100.0f * movement;
 }
 
 void CameraUtil::RecordUserInput(const Vector3& deltaPosition, bool controlOn) {
+  boost::unique_lock<boost::mutex> lock(mutex);
   lmReal prevTime = lastUserInputFromVectorTime;
   lmReal time = lmReal(ci::app::getElapsedSeconds());
   lastUserInputFromVectorTime = time;
@@ -185,6 +188,8 @@ void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const V
 }
 
 void CameraUtil::UpdateCamera(const Mesh* mesh, const Params& params) {
+  boost::unique_lock<boost::mutex> lock(mutex);
+
   //--------------------- older main part
   //assert(mesh && "Mesh required.");
 

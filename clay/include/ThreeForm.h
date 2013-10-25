@@ -141,6 +141,7 @@ private:
   float sumDisplacement_;
   bool sculptStart_;
   bool drawOctree_;
+  bool detailMode_;
 
   // camera control settings
   CameraUtil::Params _camera_params;
