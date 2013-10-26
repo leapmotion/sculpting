@@ -689,17 +689,21 @@ void ClayDemoApp::update()
 void ClayDemoApp::updateLeapAndMesh() {
   while (!_shutdown) {
     bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
-
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = _leap_interaction->mostRecentTime();
       _leap_interaction->setDetailMode(detailMode_);
+
+      float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - sculpt_.getLastSculptTime()))/0.5f);
+
       updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
 
       //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
-      _camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+      _camera_util->RecordUserInput(sculptMult*_leap_interaction->getDTheta(), sculptMult*_leap_interaction->getDPhi(), sculptMult*_leap_interaction->getDZoom());
 
       if (mesh_) {
-        _camera_util->UpdateCamera(mesh_, _camera_params);
+        if (fabs(curTime - sculpt_.getLastSculptTime()) > 0.25) {
+          _camera_util->UpdateCamera(mesh_, _camera_params);
+        }
         const float deltaTime = static_cast<float>(curTime - _last_update_time);
         mesh_->updateRotation(deltaTime);
         if (detailMode_) {
@@ -886,7 +890,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     _material_shader.uniform( "reflectionBias", _reflection_bias );
     _material_shader.uniform( "refractionBias", _refraction_bias );
     _material_shader.uniform( "refractionIndex", _refraction_index );
-    _material_shader.uniform( "numLights", numBrushes );
+    _material_shader.uniform( "numLights", detailMode_ ? numBrushes : 0 );
     _material_shader.uniform( "brushPositions", brushPositions.data(), numBrushes );
     _material_shader.uniform( "brushWeights", brushWeights.data(), numBrushes );
     _material_shader.uniform( "brushRadii", brushRadii.data(), numBrushes );

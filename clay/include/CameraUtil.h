@@ -85,17 +85,17 @@ public:
       minDist= 10.0f;
       maxDist = 350.0f;
       speedAtMinDist = 0.5f;
-      speedAtMaxDist = 4.0f;
-      pinUpVector = false;
+      speedAtMaxDist = 2.5f;
+      pinUpVector = true;
       smoothCameraOrientation = true;
-      smoothingFactor = 0.1f;
-      drawDebugLines = true;
+      smoothingFactor = 0.05f;
+      drawDebugLines = false;
 
       blendMinDist = 100.0f;
       blendMaxDist = 200.0f;
 
       useSphereQuery = true;
-      sphereRadiusMultiplier = 0.125f;
+      sphereRadiusMultiplier = 0.2f;
       useSphereQueryToMoveRefernecePoint = true;
       userFaultyTriangles = false;
     }
