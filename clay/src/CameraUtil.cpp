@@ -367,7 +367,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, const Params& params) {
       referenceDistance -= deltaAngles.z();
       referenceDistance = std::max(params.minDist, referenceDistance);
       referenceDistance = std::min(params.maxDist, referenceDistance);
-      LM_LOG << "Reference distance is " << referenceDistance << std::endl;
+      //LM_LOG << "Reference distance is " << referenceDistance << std::endl;
 
 
       // testing settings

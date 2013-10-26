@@ -4,6 +4,10 @@
 #include "cinder/app/App.h"
 #include "CCubeMapProcessor.h"
 
+#if _WIN32
+#include <direct.h>
+#endif
+
 using namespace ci::app;
 
 const int MIPMAP_LEVELS = 6;
@@ -16,15 +20,29 @@ Environment::Environment()
   , _loading_state(LOADING_STATE_NONE)
   , _loading_state_change_time(0.0)
 {
+
+#if _WIN32
+  const size_t bufferSize = 1024;
+  char buffer[bufferSize];
+  if (_getcwd(buffer, bufferSize) != NULL) {
+    working_directory = std::string(buffer);
+    for (size_t i=0; i<working_directory.size(); i++) {
+      if (working_directory[i] == '\\') {
+        working_directory[i] = '/';
+      }
+    }
+  }
+#endif
+
   // set up filenames for the different supported environments
-  _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.8f, 1.0f, 4.5f, 1.01f));
+  _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.6f, 1.0f, 4.5f, 1.01f));
   _environment_infos.push_back(prepareEnvironmentInfo("Arctic", 0.2f, 2.5f, 2.25f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.6f, 0.5f, 4.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.8f, 0.7f, 4.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.9f, 0.7f, 4.5f, 1.01f));
+  _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.5f, 0.5f, 4.5f, 1.01f));
+  _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.6f, 0.7f, 4.5f, 1.01f));
+  _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.6f, 0.7f, 4.5f, 1.01f));
   _environment_infos.push_back(prepareEnvironmentInfo("Desert", 0.5f, 1.5f, 3.5f, 1.01f));
   _environment_infos.push_back(prepareEnvironmentInfo("River", 0.5f, 0.75f, 3.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Moonscape", 0.25f, 0.5f, 2.25f, 1.01f));
+  _environment_infos.push_back(prepareEnvironmentInfo("Moonscape", 0.3f, 0.5f, 2.25f, 1.01f));
 }
 
 Environment::~Environment()
@@ -372,7 +390,7 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
 
 Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure, float contrast)
 {
-  static const std::string ASSETS_PATH = "../../assets/";
+  const std::string ASSETS_PATH = working_directory + "/../../assets/";
   EnvironmentInfo info;
   info._name = name;
   preparePaths(ASSETS_PATH + name + "/noon/", info._noon_images);

@@ -106,6 +106,8 @@ private:
   GLint depth_internal_formats[6];
   GLenum depth_formats[6];
 
+  std::string working_directory;
+
   static CCubeMapProcessor* _cubemap_processor;
 
 };

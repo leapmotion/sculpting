@@ -326,15 +326,15 @@ void ClayDemoApp::setAutoSpin(const std::string& str)
   }
   else if (str == "Slow")
   {
-    mesh_->setRotationVelocity(1.0f);
+    mesh_->setRotationVelocity(0.5f);
   }
   else if (str == "Medium")
   {
-    mesh_->setRotationVelocity(3.5f);
+    mesh_->setRotationVelocity(2.0f);
   }
   else if (str == "Fast")
   {
-    mesh_->setRotationVelocity(10.0f);
+    mesh_->setRotationVelocity(5.0f);
   }
 }
 
@@ -658,7 +658,7 @@ void ClayDemoApp::update()
 
   lastDetailMode = detailMode_;
   
-  TODO(adrian, this is not thread shafe);
+  //TODO(adrian, this is not thread shafe);
   //lmTransform tCamera = _camera_util->transform;
   boost::unique_lock<boost::mutex> lock(_camera_util->mutex);
   lmTransform tCamera = _camera_util->GetFinalCamera();
@@ -690,6 +690,7 @@ void ClayDemoApp::updateLeapAndMesh() {
       const double curTime = _leap_interaction->mostRecentTime();
       _leap_interaction->setDetailMode(detailMode_);
       updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+
       //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
       _camera_util->RecordUserInput(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
 
@@ -697,7 +698,9 @@ void ClayDemoApp::updateLeapAndMesh() {
         _camera_util->UpdateCamera(mesh_, _camera_params);
         const float deltaTime = static_cast<float>(curTime - _last_update_time);
         mesh_->updateRotation(deltaTime);
-        sculpt_.applyBrushes(deltaTime, symmetry_);
+        if (detailMode_) {
+          sculpt_.applyBrushes(curTime, symmetry_);
+        }
       }
       _last_update_time = curTime;
     }
@@ -925,10 +928,12 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 #else
   _environment->unbindCubeMap(0);
   _environment->unbindCubeMap(1);
-  for (size_t i=0; i<brushes.size(); i++) {
-    ColorA color(_brush_color, 0.25f);
-    gl::color(color);
-    brushes[i].draw();
+  if (detailMode_) {
+    for (size_t i=0; i<brushes.size(); i++) {
+      ColorA color(_brush_color, 0.25f);
+      gl::color(color);
+      brushes[i].draw();
+    }
   }
 #endif
 

@@ -30,7 +30,7 @@ bool LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect,
   {
     _cur_frame = Leap::Frame::invalid();
   }
-  else if (_Listener.isConnected() && _Listener.waitForFrame(_cur_frame, 30))
+  else if (_Listener.isConnected() && _Listener.waitForFrame(_cur_frame, 16))
   {
     boost::unique_lock<boost::mutex> brushLock(_sculpt->getBrushMutex());
     _sculpt->clearBrushes();

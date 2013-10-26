@@ -14,7 +14,7 @@ class Sculpt
 {
 
 public:
-  enum SculptMode{INVALID = -1, INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT};
+  enum SculptMode{INVALID = -1, INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT, ERASE};
   enum TopoMode{DECIMATION, SUBDIVISION, UNIFORMISATION, ADAPTIVE, STATIC};
   Sculpt();
   ~Sculpt();
@@ -38,8 +38,9 @@ public:
   int getNumBrushes() const { return (int)_brushes.size(); }
   void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength);
   void clearBrushes() { _brushes.clear(); }
-  void applyBrushes(float deltaTime, bool symmetry);
+  void applyBrushes(double curTime, bool symmetry);
   BrushVector getBrushes() const;
+  double getLastSculptTime() const { return lastSculptTime_; }
 
   boost::mutex& getBrushMutex();
 
@@ -77,6 +78,7 @@ private:
   float autoSmoothStrength_;
   std::vector<int> brushVertices_;
   mutable boost::mutex brushMutex_;
+  double lastSculptTime_;
 
   BrushVector _brushes;
 };
