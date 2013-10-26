@@ -103,7 +103,7 @@ void LeapInteraction::interact()
         cur_dtheta += -ui_mult*mult*diffXY.x*ORBIT_SPEED;
         cur_dphi += ui_mult*mult*diffXY.y*ORBIT_SPEED;
       }
-#if 0
+#if 1
       if (lengthZ > Z_NEUTRAL_RADIUS_SQ && lengthZ < BORDER_MULT*Z_NEUTRAL_RADIUS_SQ)
       {
         float mult = math<float>::clamp(lengthZ - Z_NEUTRAL_RADIUS_SQ);

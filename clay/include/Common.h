@@ -49,3 +49,7 @@ template <typename T>
 inline T lmInterpolate(lmReal t, const T& v0, const T& v1) {
   return (1-t)*v0+t*v1;
 }
+
+inline bool lmIsNormalized(const Vector3& v) { lmReal sqn = v.squaredNorm(); return 0.99f < sqn && sqn < 1.01f; }
+
+#define TODO(owner, message) LM_LOG << #owner << ": " << #message << std::endl;

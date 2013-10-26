@@ -2,35 +2,42 @@
 #include "DebugDrawUtil.h"
 
 
-// Debug output
-std::vector<Vector3> debugPoints;
-std::vector<Vector3> debugLines;
-std::vector<Vector3> debugTriangles;
 
 
 // Helper func
 
 void DebugDrawUtil::DrawCross(const Vector3& position, lmReal size) {
-  boost::unique_lock<boost::mutex> lock(m_mutex);
-  debugLines.push_back(Vector3(position + Vector3::UnitX() * size));
-  debugLines.push_back(Vector3(position - Vector3::UnitX() * size));
-  debugLines.push_back(Vector3(position + Vector3::UnitY() * size));
-  debugLines.push_back(Vector3(position - Vector3::UnitY() * size));
-  debugLines.push_back(Vector3(position + Vector3::UnitZ() * size));
-  debugLines.push_back(Vector3(position - Vector3::UnitZ() * size));
+  Buffers& b = m_buffers[(1+m_readyBufferIdx)%2];
+  b.debugLines.push_back(Vector3(position + Vector3::UnitX() * size));
+  b.debugLines.push_back(Vector3(position - Vector3::UnitX() * size));
+  b.debugLines.push_back(Vector3(position + Vector3::UnitY() * size));
+  b.debugLines.push_back(Vector3(position - Vector3::UnitY() * size));
+  b.debugLines.push_back(Vector3(position + Vector3::UnitZ() * size));
+  b.debugLines.push_back(Vector3(position - Vector3::UnitZ() * size));
 }
 
 void DebugDrawUtil::DrawArrow(const Vector3& from, const Vector3& to) {
-  boost::unique_lock<boost::mutex> lock(m_mutex);
-  debugLines.push_back(from);
-  debugLines.push_back(to);
+  Buffers& b = m_buffers[(1+m_readyBufferIdx)%2];
+  b.debugLines.push_back(from);
+  b.debugLines.push_back(to);
   // todo: draw arrow head
+}
+
+void DebugDrawUtil::SwitchBuffers() {
+  boost::unique_lock<boost::mutex> lock(m_mutex);
+  m_readyBufferIdx = 1 - m_readyBufferIdx;
+
+  Buffers& b = m_buffers[(1+m_readyBufferIdx)%2];
+  b.debugLines.clear();
+  b.debugPoints.clear();
+  b.debugTriangles.clear();
 }
 
 void DebugDrawUtil::FlushDebugPrimitives() {
   boost::unique_lock<boost::mutex> lock(m_mutex);
   const int primNames[] = { GL_POINTS, GL_LINES, GL_TRIANGLES };
-  std::vector<Vector3>* primBuffers[] = { &debugPoints, &debugLines, &debugTriangles };
+  Buffers& b = m_buffers[m_readyBufferIdx];
+  std::vector<Vector3>* primBuffers[] = { &b.debugPoints, &b.debugLines, &b.debugTriangles };
   glDisable(GL_DEPTH_TEST);
   glLineWidth(2.0f);
   glPolygonMode(GL_FRONT, GL_LINE);
@@ -44,7 +51,7 @@ void DebugDrawUtil::FlushDebugPrimitives() {
     }
     glEnd();
     // Clear debug buffers
-    buffer.clear();
+    //buffer.clear();
   }
   glPolygonMode(GL_FRONT, GL_FILL);
   glEnable(GL_DEPTH_TEST);

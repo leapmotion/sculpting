@@ -67,22 +67,37 @@ public:
     lmReal speedAtMinDist;
     lmReal speedAtMaxDist;
     bool pinUpVector;
+    bool smoothCameraOrientation;
+    lmReal smoothingFactor;
     bool drawDebugLines;
 
     // Orbiting vs detailed mode blending
     lmReal blendMinDist;
     lmReal blendMaxDist;
 
+    // Detailed camera options
+    bool useSphereQuery;
+    lmReal sphereRadiusMultiplier;
+    bool useSphereQueryToMoveRefernecePoint;
+    bool userFaultyTriangles;
+
     Params() {
       minDist= 10.0f;
       maxDist = 350.0f;
       speedAtMinDist = 0.5f;
       speedAtMaxDist = 4.0f;
-      pinUpVector = true;
+      pinUpVector = false;
+      smoothCameraOrientation = true;
+      smoothingFactor = 0.1f;
       drawDebugLines = true;
 
       blendMinDist = 100.0f;
       blendMaxDist = 200.0f;
+
+      useSphereQuery = true;
+      sphereRadiusMultiplier = 0.125f;
+      useSphereQueryToMoveRefernecePoint = true;
+      userFaultyTriangles = false;
     }
   };
 
@@ -120,6 +135,9 @@ private:
 
   // todo: Move to an utility.
   void CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std::vector<lmRayCastOutput>* results);
+
+  // Performs a sphere query on the mesh, and returns average normal of the visible surface
+  Vector3 VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, Vector3* avgPosition);
 
   // Helper functions.
 

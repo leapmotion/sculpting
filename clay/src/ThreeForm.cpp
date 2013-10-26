@@ -15,8 +15,6 @@ const float MIN_FOV = 50.0f;
 const float MAX_FOV = 90.0f;
 
 
-#define TODO(owner, message) LM_LOG << #owner << ": " << #message << std::endl;
-
 //*********************************************************
 ClayDemoApp::ClayDemoApp()
   : _environment(0)
@@ -38,7 +36,7 @@ ClayDemoApp::ClayDemoApp()
   , _shutdown(false)
   , _draw_depth_of_field(false)
   , _draw_background(true)
-  , detailMode_(false)
+  , detailMode_(true)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = new DebugDrawUtil();
@@ -370,8 +368,14 @@ void ClayDemoApp::setup()
   _params->addParam( "Speed @ Min Dist", &_camera_params.speedAtMinDist, "min=0.01 max=1.0 step=0.1" );
   _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
   _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
+  _params->addParam( "Smooth camera", &_camera_params.smoothCameraOrientation, "" );
+  _params->addParam( "Smooth factor", &_camera_params.smoothingFactor, "min=0.02 max=1.0 step=0.02" );
   _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
   _params->addParam( "Use Detail Mode", &detailMode_, "" );
+  _params->addParam( "Use Sphere Query", &_camera_params.useSphereQuery, "" );
+  _params->addParam( "Sphere R Mult", &_camera_params.sphereRadiusMultiplier, "min=0.0125 max=0.25 step=0.0125" );
+  _params->addParam( "Crawl mode.", &_camera_params.useSphereQueryToMoveRefernecePoint, "" );
+  _params->addParam( "Use triangles.", &_camera_params.userFaultyTriangles, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_ambient_factor, "min=0.0 max=0.5 step=0.01" );
@@ -669,7 +673,7 @@ void ClayDemoApp::update()
 
   // Update camera
   _camera.lookAt(campos,ToVec3f(to),ToVec3f(up));
-  _camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
+  _camera.setPerspective( 60.0f/*_fov*/, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
 #if 0
@@ -854,16 +858,19 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     brushRadii.push_back(brushes[i]._radius);
   }
 
+
+  ci::Matrix44f transform = ci::Matrix44f::identity();
+  if (mesh_) {
+    transform = ci::Matrix44f(mesh_->getTransformation().data());
+  }
+  ci::Matrix44f transformit = transform.inverted().transposed();
+
   if (mesh_) {
     mesh_->updateGPUBuffers();
     _material_shader.bind();
     GLint vertex = _material_shader.getAttribLocation("vertex");
     GLint normal = _material_shader.getAttribLocation("normal");
     GLint color = _material_shader.getAttribLocation("color");
-
-    ci::Matrix44f transform = ci::Matrix44f::identity();
-    transform = ci::Matrix44f(mesh_->getTransformation().data());
-    ci::Matrix44f transformit = transform.inverted().transposed();
 
     // draw mesh
     _material_shader.uniform( "useRefraction", true);
@@ -905,6 +912,43 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     }
     glPopMatrix();
   }
+
+  if (_camera_util->params.drawDebugLines) {
+    //_material_shader.uniform( "surfaceColor", Color::hex(0x00ff00) );
+
+    //// Draw origin & XYZ
+    ////
+    //_material_shader.uniform( "surfaceColor", Color::hex(0xff0000) );
+    //glBegin(GL_LINES);
+    //glColor3f(1,0,0);
+    //glVertex3f(0,0,0);
+    //glVertex3f(100, 0, 0);
+    //glEnd();
+    //_material_shader.uniform( "surfaceColor", Color::hex(0x00ff00) );
+    //glBegin(GL_LINES);
+    //glColor3f(0,1,0);
+    //glVertex3f(0,0,0);
+    //glVertex3f(0, 100, 0);
+    //glEnd();
+    //_material_shader.uniform( "surfaceColor", Color::hex(0x0000ff) );
+    //glBegin(GL_LINES);
+    //glColor3f(0,0,1);
+    //glVertex3f(0,0,0);
+    //glVertex3f(0, 0, 100);
+    //glEnd();
+
+    // Draw debug primitives
+
+    //const int primColors[] = { 0xbbbbbb, 0x00bbbb, 0x00bbbb };
+    //_material_shader.uniform( "surfaceColor", Color::hex(primColors[2]) );
+    _wireframe_shader.bind();
+    _wireframe_shader.uniform( "transform", transform );
+    _wireframe_shader.uniform( "transformit", transformit );
+    _wireframe_shader.uniform( "surfaceColor", Color::white() );
+    _debug_draw_util->FlushDebugPrimitives();
+    _wireframe_shader.unbind();
+  }
+
 
   // draw brushes
 #if 0
