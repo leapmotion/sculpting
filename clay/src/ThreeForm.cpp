@@ -37,6 +37,7 @@ ClayDemoApp::ClayDemoApp()
   , _draw_depth_of_field(false)
   , _draw_background(true)
   , detailMode_(true)
+  , _focus_point(Vector3::Zero())
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = new DebugDrawUtil();
@@ -671,6 +672,10 @@ void ClayDemoApp::update()
   Vector3 up = tCamera.rotation * Vector3::UnitY();
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
 
+  //_focus_point = to;
+  _focus_point = _camera_util->referencePoint.position;
+  _focus_radius = _camera_params.sphereRadiusMultiplier * _camera_util->referenceDistance;
+
   // Update camera
   _camera.lookAt(campos,ToVec3f(to),ToVec3f(up));
   _camera.setPerspective( 60.0f/*_fov*/, getWindowAspectRatio(), 1.0f, 100000.f );
@@ -691,28 +696,40 @@ void ClayDemoApp::updateLeapAndMesh() {
     bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = _leap_interaction->mostRecentTime();
+      const float deltaTime = static_cast<float>(curTime - _last_update_time);
       _leap_interaction->setDetailMode(detailMode_);
+      float dTheta = _leap_interaction->getDTheta();
+      float dPhi = _leap_interaction->getDPhi();
+      float dZoom = _leap_interaction->getDZoom();
+      const double lastSculptTime = sculpt_.getLastSculptTime();
 
-      float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - sculpt_.getLastSculptTime()))/0.5f);
+      if (!detailMode_) {
+        const float activityMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/5.0f);
+        const float curSpeed = 0.1f * static_cast<float>(std::sin(curTime/6.0));
+        dTheta += activityMult * curSpeed * static_cast<float>(std::sin(curTime / 13.0)) * deltaTime;
+        dPhi += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 5.0)) * deltaTime;
+        dZoom += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 7.0)) * deltaTime;
+      }
 
-      updateCamera(_leap_interaction->getDTheta(), _leap_interaction->getDPhi(), _leap_interaction->getDZoom());
+      float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
+
+      updateCamera(dTheta, dPhi, dZoom);
 
       //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
-      _camera_util->RecordUserInput(sculptMult*_leap_interaction->getDTheta(), sculptMult*_leap_interaction->getDPhi(), sculptMult*_leap_interaction->getDZoom());
+      _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
       if (mesh_) {
         if (fabs(curTime - sculpt_.getLastSculptTime()) > 0.25) {
           _camera_util->UpdateCamera(mesh_, _camera_params);
         }
-        const float deltaTime = static_cast<float>(curTime - _last_update_time);
         mesh_->updateRotation(deltaTime);
         if (detailMode_) {
           sculpt_.applyBrushes(curTime, symmetry_);
         }
       }
       _last_update_time = curTime;
+      _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     }
-    _mesh_update_counter.Update(ci::app::getElapsedSeconds());
   }
 
   float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
@@ -851,7 +868,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
   _environment->bindCubeMap(Environment::CUBEMAP_RADIANCE, 1);
 
   BrushVector brushes = sculpt_.getBrushes();
-  const int numBrushes = brushes.size();
+  int numBrushes = brushes.size();
   std::vector<ci::Vec3f> brushPositions;
   std::vector<float> brushWeights;
   std::vector<float> brushRadii;
@@ -862,6 +879,11 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     brushRadii.push_back(brushes[i]._radius);
   }
 
+  ci::Vec3f focus(_focus_point.x(), _focus_point.y(), _focus_point.z());
+  brushPositions.push_back(focus);
+  brushWeights.push_back(1.0f);
+  brushRadii.push_back(_focus_radius);
+  numBrushes++;
 
   ci::Matrix44f transform = ci::Matrix44f::identity();
   if (mesh_) {

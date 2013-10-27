@@ -94,6 +94,8 @@ private:
   boost::thread _mesh_thread;
   bool _shutdown;
   Utilities::FPSCounter _mesh_update_counter;
+  Vector3 _focus_point;
+  float _focus_radius;
 
   // *** Leap stuff ***
   LeapListener _listener;
