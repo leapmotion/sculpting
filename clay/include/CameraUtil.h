@@ -88,7 +88,7 @@ public:
       speedAtMaxDist = 2.5f;
       pinUpVector = true;
       smoothCameraOrientation = true;
-      smoothingFactor = 0.05f;
+      smoothingFactor = 0.5f;
       drawDebugLines = false;
 
       blendMinDist = 100.0f;

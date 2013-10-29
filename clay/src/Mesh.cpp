@@ -49,7 +49,6 @@ Matrix4x4 Mesh::getTransformation(double curTime) const {
 void Mesh::setRotationVelocity(float vel) { rotationVelocity_ = vel; }
 void Mesh::updateRotation(double curTime) {
   const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
-  std::cout << deltaTime << std::endl;
   curRotation_ += deltaTime*rotationVelocity_;
   rotationMatrix_ = Tools::rotationMatrix(rotationAxis_, curRotation_);
   lastUpdateTime_ = curTime;

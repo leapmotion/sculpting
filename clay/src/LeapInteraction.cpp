@@ -48,117 +48,72 @@ void LeapInteraction::interact()
   float cur_dtheta = 0;
   float cur_dphi = 0;
   float cur_dzoom = 0;
-  static const float ORBIT_SPEED = 0.0075f;
-  static const float ZOOM_SPEED = 0.7f;
+  static const float ORBIT_SPEED = 0.006f;
+  static const float ZOOM_SPEED = 50.0f;
   static const float AGE_WARMUP_TIME = 0.75;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
+  static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
 
   const double curTime = static_cast<double>(Utilities::TIME_STAMP_TICKS_TO_SECS * _cur_frame.timestamp());
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 200, 100);
-  Leap::PointableList pointables = _cur_frame.pointables();
+  Leap::HandList hands = _cur_frame.hands();
   const float ui_mult = 1.0f - _ui->maxActivation();
-  const int num_pointables = pointables.count();
+  const int num_hands = hands.count();
   const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
-  for (int i=0; i<num_pointables; i++)
-  {
-#if USE_SKELETON_API
-    if (!pointables[i].isExtended()) {
-      continue;
-    }
-#endif
-    // add brushes
-    const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[i].timeVisible()/AGE_WARMUP_TIME));
-    Leap::Vector tip_pos = pointables[i].tipPosition();
-    Leap::Vector tip_dir = pointables[i].direction();
-    Leap::Vector tip_vel = pointables[i].tipVelocity();
-    Vec3f pos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
-    Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
-    Vec3f vel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
-    Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
-    Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
-    Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
-    float strength = strengthMult*ui_mult*_desired_brush_strength;
-    strength = std::min(1.0f, strength * dtMult);
 
-    Vec3f transPos = _projection.transformPoint(pos);
-    Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));
-
-    if (_detailMode) {
-      // move camera based on finger distance from the center of the screen
-      Vec2f diffXY(transPos.x, transPos.y);
-      float lengthXY = diffXY.lengthSquared();
-      float diffZ = (pos.z + LEAP_OFFSET.z);
-      diffXY = diffXY.normalized();
-      float lengthZ = diffZ*diffZ;
-      static const float XY_NEUTRAL_RADIUS_SQ = 1.0f;
-      static const float Z_NEUTRAL_RADIUS_SQ = 100.0f * 100.0f;
-      static const float BORDER_MULT = 20.0f;
-      if (lengthXY > XY_NEUTRAL_RADIUS_SQ && lengthXY < BORDER_MULT*XY_NEUTRAL_RADIUS_SQ)
-      {
-        float mult = math<float>::clamp(lengthXY - XY_NEUTRAL_RADIUS_SQ);
-        cur_dtheta += -ui_mult*mult*diffXY.x*ORBIT_SPEED;
-        cur_dphi += ui_mult*mult*diffXY.y*ORBIT_SPEED;
-      }
-#if 1
-      if (lengthZ > Z_NEUTRAL_RADIUS_SQ && lengthZ < BORDER_MULT*Z_NEUTRAL_RADIUS_SQ)
-      {
-        float mult = math<float>::clamp(lengthZ - Z_NEUTRAL_RADIUS_SQ);
-        cur_dzoom += 0.5f*ui_mult*mult*diffZ*ZOOM_SPEED;
-      }
-#endif
-    }
-
-    // compute screen-space coordinate of this finger
-    transPos.x = (transPos.x + 1)/2;
-    transPos.y = (transPos.y + 1)/2;
-    transPos.z = 1.0f;
-
-    if (transPos.x >= 0.0f && transPos.x <= 1.0f && transPos.y >= 0.0f && transPos.y <= 1.0f) {
-      _sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, strength);
-    }
-
-    // compute a point on the surface of the sphere to use as the screen-space radius
-    radPos.x = (radPos.x + 1)/2;
-    radPos.y = (radPos.y + 1)/2;
-    radPos.z = 1.0f;
-    float rad = transPos.distance(radPos);
-    transPos.z = rad;
-    Vec4f tip(transPos.x, transPos.y, transPos.z, strengthMult);
-    _tips.push_back(tip);
-  }
-
-  if (_detailMode) {
-    if (_tips.size() > 0)
-    {
-      cur_dtheta /= _tips.size();
-      cur_dphi /= _tips.size();
-      cur_dzoom /= _tips.size();
-    }
-  } else {
-    const Leap::HandList hands = _cur_frame.hands();
-    const int numHands = hands.count();
-    static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
-    for (int i=0; i<numHands; i++) {
+  for (int i=0; i<num_hands; i++) {
+    Leap::PointableList pointables = hands[i].pointables();
+    Leap::Vector movement;
+    const int num_pointables = pointables.count();
+    //if (num_pointables > 2) {
+    if (paddleTranslation(hands[i], _last_frame, movement)) {
+      // camera interaction
       const float warmupMult = std::min(1.0f, hands[i].timeVisible()/HAND_INFLUENCE_WARMUP);
-      const Leap::Vector movement = warmupMult * paddleTranslation(hands[i], _last_frame);
+      movement *= warmupMult;
       cur_dtheta += ORBIT_SPEED * movement.x;
       cur_dphi += ORBIT_SPEED * -movement.y;
       cur_dzoom += ZOOM_SPEED * -movement.z;
-    }
+    } else {
+      for (int j=0; j<num_pointables; j++) {
+        // add brushes
+        const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[j].timeVisible()/AGE_WARMUP_TIME));
+        Leap::Vector tip_pos = pointables[j].tipPosition();
+        Leap::Vector tip_dir = pointables[j].direction();
+        Leap::Vector tip_vel = pointables[j].tipVelocity();
+        Vec3f pos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
+        Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
+        Vec3f vel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
+        Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
+        Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
+        Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
+        float strength = strengthMult*ui_mult*_desired_brush_strength;
+        strength = std::min(1.0f, strength * dtMult);
 
-#if 0
-    if (numHands >= 2) {
-      float minY = 1.0f;
-      float scale = -std::logf(_cur_frame.scaleFactor(_last_frame));
-      for (int i=0; i<numHands; i++) {
-        minY = std::min(std::fabs(hands[i].palmNormal().y), minY);
+        Vec3f transPos = _projection.transformPoint(pos);
+        Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));
+
+        // compute screen-space coordinate of this finger
+        transPos.x = (transPos.x + 1)/2;
+        transPos.y = (transPos.y + 1)/2;
+        transPos.z = 1.0f;
+
+        if (transPos.x >= 0.0f && transPos.x <= 1.0f && transPos.y >= 0.0f && transPos.y <= 1.0f) {
+          _sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, strength);
+        }
+
+        // compute a point on the surface of the sphere to use as the screen-space radius
+        radPos.x = (radPos.x + 1)/2;
+        radPos.y = (radPos.y + 1)/2;
+        radPos.z = 1.0f;
+        float rad = transPos.distance(radPos);
+        transPos.z = rad;
+        Vec4f tip(transPos.x, transPos.y, transPos.z, strengthMult);
+        _tips.push_back(tip);
       }
-      cur_dzoom += ZOOM_SPEED * (1.0f - minY) * scale;
     }
-#endif
   }
 
   cur_dtheta /= deltaTime;

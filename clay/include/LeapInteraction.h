@@ -33,11 +33,19 @@ private:
 
   void interact();
 
-  static Leap::Vector paddleTranslation(const Leap::Hand& hand, const Leap::Frame& sinceFrame) {
-    const Leap::Vector translation = hand.translation(sinceFrame);
-    float mult = std::fabs(hand.palmNormal().dot(translation.normalized()));
-    mult = mult*mult*mult;
-    return mult * translation;
+  static bool paddleTranslation(const Leap::Hand& hand, const Leap::Frame& sinceFrame, Leap::Vector& trans) {
+    if (fabs(hand.palmNormal().y) < 0.5f || hand.pointables().count() > 2) {
+      const Leap::Vector translation = hand.translation(sinceFrame);
+#if 0
+      float mult = std::fabs(hand.palmNormal().dot(translation.normalized()));
+      trans = mult*mult*translation;
+#else
+      trans = translation;
+#endif
+      return true;
+    } else {
+      return false;
+    }
   }
 
   Leap::Frame _cur_frame;

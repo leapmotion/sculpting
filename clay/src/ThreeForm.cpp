@@ -701,8 +701,12 @@ void ClayDemoApp::update()
   _focus_point = _camera_util->referencePoint.position;
   _focus_radius = _camera_params.sphereRadiusMultiplier * _camera_util->referenceDistance;
 
+  _campos_smoother.Update(campos, curTime, 0.9f);
+  _lookat_smoother.Update(ToVec3f(to), curTime, 0.9f);
+  _up_smoother.Update(ToVec3f(up), curTime, 0.9f);
+
   // Update camera
-  _camera.lookAt(campos,ToVec3f(to),ToVec3f(up));
+  _camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
   _camera.setPerspective( 60.0f/*_fov*/, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
@@ -722,18 +726,17 @@ void ClayDemoApp::updateLeapAndMesh() {
   while (!_shutdown) {
     bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
-      const double curTime = _leap_interaction->mostRecentTime();
-      const double curTimeRender = ci::app::getElapsedSeconds();
+      const double curTime = ci::app::getElapsedSeconds();
       const double lastSculptTime = sculpt_.getLastSculptTime();
       _leap_interaction->setDetailMode(detailMode_);
 
       if (mesh_) {
-        mesh_->updateRotation(curTimeRender);
+        mesh_->updateRotation(curTime);
         if (fabs(curTime - sculpt_.getLastSculptTime()) > 0.25) {
           _camera_util->UpdateCamera(mesh_, _camera_params);
         }
         if (detailMode_) {
-          sculpt_.applyBrushes(curTimeRender, symmetry_);
+          sculpt_.applyBrushes(curTime, symmetry_);
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());

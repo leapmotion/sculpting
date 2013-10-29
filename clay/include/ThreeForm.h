@@ -101,6 +101,9 @@ private:
   LeapListener _listener;
   Leap::Controller _controller;
   LeapInteraction* _leap_interaction;
+  Utilities::ExponentialFilter<ci::Vec3f> _campos_smoother;
+  Utilities::ExponentialFilter<ci::Vec3f> _lookat_smoother;
+  Utilities::ExponentialFilter<ci::Vec3f> _up_smoother;
 
   // *** ui stuff ***
   params::InterfaceGlRef _params;
