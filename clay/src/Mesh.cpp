@@ -547,7 +547,6 @@ void Mesh::updateGPUBuffers() {
   GLuint* indicesArray;
   indicesBuffer_.bind(); indicesArray = (GLuint*)indicesBuffer_.map(GL_WRITE_ONLY); indicesBuffer_.release();
   const int nbTris = indexUpdates_.size();
-#pragma omp parallel for
   for (int i=0; i<nbTris; i++) {
     const IndexUpdate& cur = indexUpdates_[i];
     const int j = cur.idx;
@@ -571,7 +570,6 @@ void Mesh::updateGPUBuffers() {
   colorsBuffer_.bind(); colorsArray = (GLfloat*)colorsBuffer_.map(GL_WRITE_ONLY); colorsBuffer_.release();
 
   const int nbVerts = vertexUpdates_.size();
-#pragma omp parallel for
   for (int i=0; i<nbVerts; i++) {
     const VertexUpdate& cur = vertexUpdates_[i];
     const int j = cur.idx;
