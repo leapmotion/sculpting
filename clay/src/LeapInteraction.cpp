@@ -158,6 +158,10 @@ void LeapInteraction::interact()
     }
   }
 
+  cur_dtheta /= deltaTime;
+  cur_dphi /= deltaTime;
+  cur_dzoom /= deltaTime;
+
   static const float SMOOTH_STRENGTH = 0.9f;
   _dtheta.Update(cur_dtheta, curTime, SMOOTH_STRENGTH);
   _dphi.Update(cur_dphi, curTime, SMOOTH_STRENGTH);

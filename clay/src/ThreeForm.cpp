@@ -31,6 +31,7 @@ ClayDemoApp::ClayDemoApp()
   , mesh_(0)
   , symmetry_(false)
   , _last_update_time(0.0)
+  , _last_mesh_update_time(0.0)
   , drawOctree_(false)
   , _use_fxaa(true)
   , _shutdown(false)
@@ -639,6 +640,9 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
 
 void ClayDemoApp::update()
 {
+  const double curTime = ci::app::getElapsedSeconds();
+  const float deltaTime = static_cast<float>(curTime - _last_update_time);
+
   _ui->update(_leap_interaction->getTips());
 
   float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
@@ -689,6 +693,8 @@ void ClayDemoApp::update()
     loadFile();
   }
 #endif
+
+  _last_update_time = curTime;
 }
 
 void ClayDemoApp::updateLeapAndMesh() {
@@ -696,11 +702,11 @@ void ClayDemoApp::updateLeapAndMesh() {
     bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = _leap_interaction->mostRecentTime();
-      const float deltaTime = static_cast<float>(curTime - _last_update_time);
+      const float deltaTime = static_cast<float>(curTime - _last_mesh_update_time);
       _leap_interaction->setDetailMode(detailMode_);
-      float dTheta = _leap_interaction->getDTheta();
-      float dPhi = _leap_interaction->getDPhi();
-      float dZoom = _leap_interaction->getDZoom();
+      float dTheta = deltaTime*_leap_interaction->getDThetaVel();
+      float dPhi = deltaTime*_leap_interaction->getDPhiVel();
+      float dZoom = deltaTime*_leap_interaction->getDZoomVel();
       const double lastSculptTime = sculpt_.getLastSculptTime();
 
       if (!detailMode_) {
@@ -727,7 +733,7 @@ void ClayDemoApp::updateLeapAndMesh() {
           sculpt_.applyBrushes(curTime, symmetry_);
         }
       }
-      _last_update_time = curTime;
+      _last_mesh_update_time = curTime;
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     }
   }
@@ -738,12 +744,10 @@ void ClayDemoApp::updateLeapAndMesh() {
   double curTime = ci::app::getElapsedSeconds();
 
   if (mesh_) {
-    const float deltaTime = float(curTime - _last_update_time);
+    const float deltaTime = float(curTime - _last_mesh_update_time);
     mesh_->updateRotation(deltaTime);
     sculpt_.applyBrushes(deltaTime, symmetry_);
   }
-
-  _last_update_time = curTime;
 }
 
 void ClayDemoApp::renderSceneToFbo(Camera& _Camera)

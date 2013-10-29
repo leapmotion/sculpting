@@ -90,12 +90,13 @@ private:
   Fbo _depth_fbo;
   Fbo _blur_fbo;
   boost::thread _loading_thread;
-  double _last_update_time;
+  double _last_mesh_update_time;
   boost::thread _mesh_thread;
   bool _shutdown;
   Utilities::FPSCounter _mesh_update_counter;
   Vector3 _focus_point;
   float _focus_radius;
+  double _last_update_time;
 
   // *** Leap stuff ***
   LeapListener _listener;

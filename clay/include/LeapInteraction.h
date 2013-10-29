@@ -18,9 +18,9 @@ public:
   LeapInteraction(Sculpt* _Sculptor, UserInterface* _Ui);
   bool processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress);
 
-  float getDPhi() const { return _dphi.value; }
-  float getDTheta() const { return _dtheta.value; }
-  float getDZoom() const { return _dzoom.value; }
+  float getDPhiVel() const { return _dphi.value; }
+  float getDThetaVel() const { return _dtheta.value; }
+  float getDZoomVel() const { return _dzoom.value; }
   Vec3f getPinchDeltaFromLastCall();
   bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
