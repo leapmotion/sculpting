@@ -90,7 +90,6 @@ private:
   Fbo _depth_fbo;
   Fbo _blur_fbo;
   boost::thread _loading_thread;
-  double _last_mesh_update_time;
   boost::thread _mesh_thread;
   bool _shutdown;
   Utilities::FPSCounter _mesh_update_counter;

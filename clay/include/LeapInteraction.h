@@ -25,7 +25,7 @@ public:
   bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
   void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
-  double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*_cur_frame.timestamp(); }
+  double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp()); }
   std::vector<Vec4f> getTips() { boost::unique_lock<boost::mutex> tipsLock(_tips_mutex); return _tips; }
   void setDetailMode(bool detailMode) { _detailMode = detailMode; }
 

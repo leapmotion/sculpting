@@ -8,15 +8,13 @@ int Mesh::stateMask_ = 1;
 const int undoLimit_ = 10;
 
 /** Constructor */
-Mesh::Mesh() : center_(Vector3::Zero()), scale_(1),
-  octree_(0), matTransform_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
+Mesh::Mesh() : center_(Vector3::Zero()), scale_(1), lastUpdateTime_(0.0),
+  octree_(0), rotationMatrix_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
   normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER), colorsBuffer_(GL_ARRAY_BUFFER),
   rotationOrigin_(Vector3::Zero()), rotationAxis_(Vector3::UnitY()), rotationVelocity_(0.0f), curRotation_(0.0f),
   verticesBufferCount_(0), indicesBufferCount_(0), reallocateVerticesBuffer_(true), reallocateIndicesBuffer_(true),
-  undoPending_(false), redoPending_(false), nbGPUTriangles(0), pendingGPUTriangles(0)
-{
-  updateTransformation();
-}
+  undoPending_(false), redoPending_(false), nbGPUTriangles(0), pendingGPUTriangles(0), translation_(Vector3::Zero())
+{ }
 
 /** Destructor */
 Mesh::~Mesh()
@@ -37,14 +35,24 @@ int Mesh::getNbVertices() const { return vertices_.size(); }
 Vector3 Mesh::getCenter() const { return center_; }
 Octree* Mesh::getOctree() const { return octree_; }
 float Mesh::getScale() const { return scale_; }
-Matrix4x4& Mesh::getTransformation() { return matTransform_; }
-Matrix4x4 Mesh::getInverseTransformation() const { return matTransform_.inverse(); }
+Matrix4x4 Mesh::getTransformation() const {
+  Matrix4x4 transMat = Tools::translationMatrix(translation_);
+  return transMat * rotationMatrix_;
+}
+Matrix4x4 Mesh::getInverseTransformation() const { return getTransformation().inverse(); }
+Matrix4x4 Mesh::getTransformation(double curTime) const {
+  const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
+  Matrix4x4 transMat = Tools::translationMatrix(translation_);
+  Matrix4x4 rotMat = Tools::rotationMatrix(rotationAxis_, curRotation_ + deltaTime*rotationVelocity_);
+  return transMat * rotMat;
+}
 void Mesh::setRotationVelocity(float vel) { rotationVelocity_ = vel; }
-void Mesh::updateRotation(float deltaTime) {
-  curRotation_+=deltaTime*rotationVelocity_;
-  Matrix4x4 mat = Tools::rotationMatrix(rotationAxis_, deltaTime*rotationVelocity_);
-  matTransform_ = mat * matTransform_;
-  updateTransformation();
+void Mesh::updateRotation(double curTime) {
+  const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
+  std::cout << deltaTime << std::endl;
+  curRotation_ += deltaTime*rotationVelocity_;
+  rotationMatrix_ = Tools::rotationMatrix(rotationAxis_, curRotation_);
+  lastUpdateTime_ = curTime;
 }
 const Vector3& Mesh::getRotationOrigin() const { return rotationOrigin_; }
 const Vector3& Mesh::getRotationAxis() const { return rotationAxis_; }
@@ -208,10 +216,6 @@ void Mesh::computeRingVertices(int iVert)
   }
 }
 
-
-
-
-
 void Mesh::getVerticesInsideSphere(const Vector3& point, float radiusWorldSquared, std::vector<int>& result) {
   VertexVector &vertices = getVertices();
   std::vector<Octree*> &leavesHit = getLeavesUpdate();
@@ -258,23 +262,7 @@ Vector3 Mesh::getTriangleCenter(int iTri) const
 /** Move the mesh center to a certain point */
 void Mesh::moveTo(const Vector3& destination)
 {
-  matTransform_ = Tools::translationMatrix(destination-center_);
-  updateTransformation();
-}
-
-/** Set transformation */
-void Mesh::setTransformation(const Matrix4x4& matTransform)
-{
-  matTransform_=matTransform;
-  updateTransformation();
-}
-
-/** Update transformation */
-void Mesh::updateTransformation()
-{
-  float *dataMat = matTransform_.data();
-  for (int i= 0; i < 16; ++i)
-    matTransformArray_[i] = dataMat[i];
+  translation_ = destination - center_;
 }
 
 void Mesh::draw(GLint vertex, GLint normal, GLint color) {
@@ -325,7 +313,7 @@ void Mesh::drawVerticesOnly(GLint vertex) {
 
 void Mesh::drawOctree() const {
   glPushMatrix();
-  glMultMatrixf(matTransformArray_);
+  glMultMatrixf(getTransformation().data());
   octree_->draw();
   glPopMatrix();
 }

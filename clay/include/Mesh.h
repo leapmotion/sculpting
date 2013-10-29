@@ -45,10 +45,11 @@ public:
   Octree* getOctree() const;
   float getScale() const;
   void setIsSelected(bool);
-  Matrix4x4& getTransformation();
+  Matrix4x4 getTransformation() const;
   Matrix4x4 getInverseTransformation() const;
+  Matrix4x4 getTransformation(double curTime) const;
   void setRotationVelocity(float vel);
-  void updateRotation(float deltaTime);
+  void updateRotation(double curTime);
   const Vector3& getRotationOrigin() const;
   const Vector3& getRotationAxis() const;
   float getRotationVelocity() const;
@@ -63,7 +64,6 @@ public:
 
   Vector3 getTriangleCenter(int iTri) const;
   void moveTo(const Vector3& destination);
-  void setTransformation(const Matrix4x4& matTransform);
 
   void draw(GLint vertex, GLint normal, GLint color);
   void drawVerticesOnly(GLint vertex);
@@ -95,7 +95,6 @@ private:
   void updateOctree(const std::vector<int> &iTris);
   void updateNormals(const std::vector<int> &iVerts);
   float angleTri(int iTri, int iVer);
-  void updateTransformation();
   void initIndexVBO();
   void initVertexVBO();
   void reinitVerticesBuffer();
@@ -118,11 +117,13 @@ private:
   Vector3 center_; //center of mesh
   float scale_; //scale
   Octree *octree_; //octree
-  Matrix4x4 matTransform_; //transformation matrix of the mesh
-  GLfloat matTransformArray_[16]; //transformation matrix of the mesh (openGL)
+  //Matrix4x4 matTransform_; //transformation matrix of the mesh
+  Matrix4x4 rotationMatrix_;
+  Vector3 translation_;
   std::vector<Octree*> leavesUpdate_; //leaves of the octree to check
   bool undoPending_;
   bool redoPending_;
+  double lastUpdateTime_;
 
   //undo-redo
   std::list<State> undo_; //undo actions

@@ -30,7 +30,7 @@ bool LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect,
   {
     _cur_frame = Leap::Frame::invalid();
   }
-  else if (_Listener.isConnected() && _Listener.waitForFrame(_cur_frame, 16))
+  else if (_Listener.isConnected() && _Listener.waitForFrame(_cur_frame, 33))
   {
     boost::unique_lock<boost::mutex> brushLock(_sculpt->getBrushMutex());
     _sculpt->clearBrushes();
@@ -48,8 +48,8 @@ void LeapInteraction::interact()
   float cur_dtheta = 0;
   float cur_dphi = 0;
   float cur_dzoom = 0;
-  static const float ORBIT_SPEED = 0.007f;
-  static const float ZOOM_SPEED = 25.0f;
+  static const float ORBIT_SPEED = 0.0075f;
+  static const float ZOOM_SPEED = 0.7f;
   static const float AGE_WARMUP_TIME = 0.75;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
 
@@ -106,7 +106,7 @@ void LeapInteraction::interact()
       if (lengthZ > Z_NEUTRAL_RADIUS_SQ && lengthZ < BORDER_MULT*Z_NEUTRAL_RADIUS_SQ)
       {
         float mult = math<float>::clamp(lengthZ - Z_NEUTRAL_RADIUS_SQ);
-        cur_dzoom += 0.01f*ui_mult*mult*diffZ*ZOOM_SPEED;
+        cur_dzoom += 0.5f*ui_mult*mult*diffZ*ZOOM_SPEED;
       }
 #endif
     }
@@ -146,8 +146,10 @@ void LeapInteraction::interact()
       const Leap::Vector movement = warmupMult * paddleTranslation(hands[i], _last_frame);
       cur_dtheta += ORBIT_SPEED * movement.x;
       cur_dphi += ORBIT_SPEED * -movement.y;
+      cur_dzoom += ZOOM_SPEED * -movement.z;
     }
 
+#if 0
     if (numHands >= 2) {
       float minY = 1.0f;
       float scale = -std::logf(_cur_frame.scaleFactor(_last_frame));
@@ -156,6 +158,7 @@ void LeapInteraction::interact()
       }
       cur_dzoom += ZOOM_SPEED * (1.0f - minY) * scale;
     }
+#endif
   }
 
   cur_dtheta /= deltaTime;

@@ -31,7 +31,6 @@ ClayDemoApp::ClayDemoApp()
   , mesh_(0)
   , symmetry_(false)
   , _last_update_time(0.0)
-  , _last_mesh_update_time(0.0)
   , drawOctree_(false)
   , _use_fxaa(true)
   , _shutdown(false)
@@ -326,15 +325,15 @@ void ClayDemoApp::setAutoSpin(const std::string& str)
   }
   else if (str == "Slow")
   {
-    mesh_->setRotationVelocity(0.5f);
+    mesh_->setRotationVelocity(0.63f);
   }
   else if (str == "Medium")
   {
-    mesh_->setRotationVelocity(2.0f);
+    mesh_->setRotationVelocity(2.13f);
   }
   else if (str == "Fast")
   {
-    mesh_->setRotationVelocity(5.0f);
+    mesh_->setRotationVelocity(5.37f);
   }
 }
 
@@ -633,7 +632,7 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
   if( _theta<0.f ) _theta += float(M_PI)*2.f;
   if( _theta>=M_PI*2.f ) _theta -= float(M_PI)*2.f;
   _phi = math<float>::clamp(_phi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
-  _fov = math<float>::clamp(_fov, 50.f, 90.f);
+  _fov = math<float>::clamp(_fov, 40.f, 110.f);
 }
 
 
@@ -641,7 +640,29 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
 void ClayDemoApp::update()
 {
   const double curTime = ci::app::getElapsedSeconds();
-  const float deltaTime = static_cast<float>(curTime - _last_update_time);
+  const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
+
+  float dTheta = deltaTime*_leap_interaction->getDThetaVel();
+  float dPhi = deltaTime*_leap_interaction->getDPhiVel();
+  float dZoom = deltaTime*_leap_interaction->getDZoomVel();
+
+  updateCamera(dTheta, dPhi, dZoom);
+
+  const double lastSculptTime = sculpt_.getLastSculptTime();
+
+  //if (!detailMode_) {
+  //  const float activityMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/5.0f);
+  //  const float curSpeed = 0.1f * static_cast<float>(std::sin(curTime/6.0));
+  //  dTheta += activityMult * curSpeed * static_cast<float>(std::sin(curTime / 13.0)) * deltaTime;
+  //  dPhi += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 5.0)) * deltaTime;
+  //  dZoom += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 7.0)) * deltaTime;
+  //}
+
+  float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
+
+
+  //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
+  _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
   _ui->update(_leap_interaction->getTips());
 
@@ -702,56 +723,28 @@ void ClayDemoApp::updateLeapAndMesh() {
     bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = _leap_interaction->mostRecentTime();
-      const float deltaTime = static_cast<float>(curTime - _last_mesh_update_time);
-      _leap_interaction->setDetailMode(detailMode_);
-      float dTheta = deltaTime*_leap_interaction->getDThetaVel();
-      float dPhi = deltaTime*_leap_interaction->getDPhiVel();
-      float dZoom = deltaTime*_leap_interaction->getDZoomVel();
+      const double curTimeRender = ci::app::getElapsedSeconds();
       const double lastSculptTime = sculpt_.getLastSculptTime();
-
-      if (!detailMode_) {
-        const float activityMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/5.0f);
-        const float curSpeed = 0.1f * static_cast<float>(std::sin(curTime/6.0));
-        dTheta += activityMult * curSpeed * static_cast<float>(std::sin(curTime / 13.0)) * deltaTime;
-        dPhi += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 5.0)) * deltaTime;
-        dZoom += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 7.0)) * deltaTime;
-      }
-
-      float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
-
-      updateCamera(dTheta, dPhi, dZoom);
-
-      //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
-      _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
+      _leap_interaction->setDetailMode(detailMode_);
 
       if (mesh_) {
+        mesh_->updateRotation(curTimeRender);
         if (fabs(curTime - sculpt_.getLastSculptTime()) > 0.25) {
           _camera_util->UpdateCamera(mesh_, _camera_params);
         }
-        mesh_->updateRotation(deltaTime);
         if (detailMode_) {
-          sculpt_.applyBrushes(curTime, symmetry_);
+          sculpt_.applyBrushes(curTimeRender, symmetry_);
         }
       }
-      _last_mesh_update_time = curTime;
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     }
-  }
-
-  float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
-  _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
-
-  double curTime = ci::app::getElapsedSeconds();
-
-  if (mesh_) {
-    const float deltaTime = float(curTime - _last_mesh_update_time);
-    mesh_->updateRotation(deltaTime);
-    sculpt_.applyBrushes(deltaTime, symmetry_);
   }
 }
 
 void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 {
+  const double curTime = ci::app::getElapsedSeconds();
+
   // set FOV and depth parameters based on current state
   float depthMinZoomed = 0.35f;
   float depthMinOut = 0.0f;
@@ -891,7 +884,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 
   ci::Matrix44f transform = ci::Matrix44f::identity();
   if (mesh_) {
-    transform = ci::Matrix44f(mesh_->getTransformation().data());
+    transform = ci::Matrix44f(mesh_->getTransformation(curTime).data());
   }
   ci::Matrix44f transformit = transform.inverted().transposed();
 
@@ -1146,16 +1139,18 @@ void ClayDemoApp::draw()
       _color_fbo.unbindTexture();
     }
 
+    int tris = 0;
+    int verts = 0;
     if (mesh_) {
-      int tris = mesh_->getNbTriangles();
-      int verts = mesh_->getNbVertices();
-      std::stringstream ss;
-      ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
-      glPushMatrix();
-      gl::scale(1, -1);
-      ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));
-      glPopMatrix();
+      tris = mesh_->getNbTriangles();
+      verts = mesh_->getNbVertices();
     }
+    std::stringstream ss;
+    ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
+    glPushMatrix();
+    gl::scale(1, -1);
+    ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));
+    glPopMatrix();
   }
   else
   {

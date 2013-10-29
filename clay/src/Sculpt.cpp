@@ -395,7 +395,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
 
   boost::unique_lock<boost::mutex> lock(brushMutex_);
   mesh_->handleUndoRedo();
-  const Matrix4x4& transformInv = mesh_->getInverseTransformation();
+  const Matrix4x4 transformInv = mesh_->getInverseTransformation();
   const Vector3& origin = mesh_->getRotationOrigin();
   const Vector3& axis = mesh_->getRotationAxis();
   float velocity = mesh_->getRotationVelocity();
