@@ -96,6 +96,7 @@ private:
   Vector3 _focus_point;
   float _focus_radius;
   double _last_update_time;
+  Utilities::ExponentialFilter<float> _focus_opacity_smoother;
 
   // *** Leap stuff ***
   LeapListener _listener;
@@ -146,7 +147,6 @@ private:
   float sumDisplacement_;
   bool sculptStart_;
   bool drawOctree_;
-  bool detailMode_;
 
   // camera control settings
   CameraUtil::Params _camera_params;

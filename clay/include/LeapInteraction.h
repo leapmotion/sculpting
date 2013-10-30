@@ -10,6 +10,67 @@
 #include <cinder/app/App.h>
 #include <cinder/Thread.h>
 
+class HandInfo {
+public:
+
+  HandInfo() : m_lastUpdateTime(0.0) { }
+
+  float getNumFingers() const { return m_numFingers.value; }
+  Vector3 getTranslation() const { return m_translation.value; }
+  float getTranslationRatio() const { return m_transRatio.value; }
+  float getNormalY() const { return m_normalY.value; }
+  double getLastUpdateTime() const { return m_lastUpdateTime; }
+
+  Vector3 getModifiedTranslation() const {
+    const float ratio = getTranslationRatio();
+    const Vector3 origTrans = getTranslation();
+    return Vector3(ratio*origTrans.x(), ratio*origTrans.y(), (1.0f-ratio)*origTrans.z());
+  }
+
+  void update(const Leap::Hand& hand, const Leap::Frame& sinceFrame, double curTime) {
+    static const float MIN_FINGER_LENGTH = 10.0f;
+    static const float MIN_FINGER_AGE = 0.05f;
+    static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.6f;
+    static const float TRANSLATION_SMOOTH_STRENGTH = 0.6f;
+    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.95f;
+    static const float NORMAL_Y_SMOOTH_STRENGTH = 0.6f;
+    m_lastUpdateTime = curTime;
+
+    // update number of fingers
+    const Leap::PointableList pointables = hand.pointables();
+    int numFingers = 0;
+    for (int i=0; i<pointables.count(); i++) {
+      if (pointables[i].length() >= MIN_FINGER_LENGTH && pointables[i].timeVisible() >= MIN_FINGER_AGE) {
+        numFingers++;
+      }
+    }
+    m_numFingers.Update(static_cast<float>(numFingers), curTime, NUM_FINGERS_SMOOTH_STRENGTH);
+
+    // update translation
+    const Leap::Vector temp(hand.translation(sinceFrame));
+    const Vector3 translation(temp.x, temp.y, temp.z);
+    m_translation.Update(translation, curTime, TRANSLATION_SMOOTH_STRENGTH);
+
+    // update translation ratio
+    if (translation.squaredNorm() > 0.001f) {
+      const Vector3 unitTranslation = translation.normalized();
+      const float curRatio = std::sqrt(unitTranslation.x()*unitTranslation.x() + unitTranslation.y()*unitTranslation.y());
+      m_transRatio.Update(curRatio, curTime, TRANSLATION_RATIO_SMOOTH_STRENGTH);
+    } else {
+      m_transRatio.Update(0.5f, curTime, TRANSLATION_RATIO_SMOOTH_STRENGTH);
+    }
+
+    // update palm normal Y value
+    m_normalY.Update(fabs(hand.palmNormal().y), curTime, NORMAL_Y_SMOOTH_STRENGTH);
+  }
+private:
+  Utilities::ExponentialFilter<float> m_numFingers;
+  Utilities::ExponentialFilter<Vector3> m_translation;
+  Utilities::ExponentialFilter<float> m_transRatio;
+  Utilities::ExponentialFilter<float> m_normalY;
+  double m_lastUpdateTime;
+};
+
 class LeapInteraction
 {
 
@@ -27,11 +88,13 @@ public:
   void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
   double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp()); }
   std::vector<Vec4f> getTips() { boost::unique_lock<boost::mutex> tipsLock(_tips_mutex); return _tips; }
-  void setDetailMode(bool detailMode) { _detailMode = detailMode; }
+  double getLastCameraUpdateTime() const { return _last_camera_update_time; }
 
 private:
 
-  void interact();
+  void interact(double curTime);
+  void updateHandInfos(double curTime);
+  void cleanUpHandInfos(double curTime);
 
   static bool paddleTranslation(const Leap::Hand& hand, const Leap::Frame& sinceFrame, Leap::Vector& trans) {
     if (fabs(hand.palmNormal().y) < 0.5f || hand.pointables().count() > 2) {
@@ -64,6 +127,7 @@ private:
   Utilities::ExponentialFilter<float> _dtheta;
   Utilities::ExponentialFilter<float> _dzoom;
   boost::mutex _tips_mutex;
+  double _last_camera_update_time;
 
   // Handling pinch gesture
   bool _is_pinched;
@@ -74,7 +138,9 @@ private:
   bool _pin_z;
   bool _pin_xy;
 
-  bool _detailMode;
+  typedef std::map<int, HandInfo, std::less<int>, Eigen::aligned_allocator< std::pair<int, HandInfo> > > HandInfoMap;
+
+  HandInfoMap _hand_infos;
 };
 
 #endif

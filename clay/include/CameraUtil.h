@@ -95,7 +95,7 @@ public:
       blendMaxDist = 200.0f;
 
       useSphereQuery = true;
-      sphereRadiusMultiplier = 0.2f;
+      sphereRadiusMultiplier = 0.35f;
       useSphereQueryToMoveRefernecePoint = true;
       userFaultyTriangles = false;
     }

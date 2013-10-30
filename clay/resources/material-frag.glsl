@@ -45,8 +45,16 @@ void main()
   {
     float lightdist = length(brushPositions[i] - worldPosition);
     vec3 lightdir = (brushPositions[i] - worldPosition)/lightdist;
-    if (lightdist > brushRadii[i]*0.85 && lightdist < brushRadii[i]) {
-      highlightColor += lightColor;
+    if (i < numLights - 1) {
+      if (lightdist > brushRadii[i]*0.85 && lightdist < brushRadii[i]) {
+        highlightColor += lightColor;
+      }
+    } else {
+      float distMult = (lightdist / brushRadii[i]);
+      distMult = distMult * distMult * distMult;
+      if (lightdist < brushRadii[i]) {
+        highlightColor += distMult * brushWeights[i] * lightColor;
+      }
     }
     float d = clamp(dot(lightdir, normal), 0.0, 1.0);
     vec3 r = normalize(reflect(lightdir, normal));

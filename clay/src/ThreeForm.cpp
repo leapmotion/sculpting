@@ -36,7 +36,6 @@ ClayDemoApp::ClayDemoApp()
   , _shutdown(false)
   , _draw_depth_of_field(false)
   , _draw_background(true)
-  , detailMode_(true)
   , _focus_point(Vector3::Zero())
 {
   _camera_util = new CameraUtil();
@@ -372,9 +371,8 @@ void ClayDemoApp::setup()
   _params->addParam( "Smooth camera", &_camera_params.smoothCameraOrientation, "" );
   _params->addParam( "Smooth factor", &_camera_params.smoothingFactor, "min=0.02 max=1.0 step=0.02" );
   _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
-  _params->addParam( "Use Detail Mode", &detailMode_, "" );
   _params->addParam( "Use Sphere Query", &_camera_params.useSphereQuery, "" );
-  _params->addParam( "Sphere R Mult", &_camera_params.sphereRadiusMultiplier, "min=0.0125 max=0.25 step=0.0125" );
+  _params->addParam( "Sphere R Mult", &_camera_params.sphereRadiusMultiplier, "min=0.0125 max=0.5 step=0.0125" );
   _params->addParam( "Crawl mode.", &_camera_params.useSphereQueryToMoveRefernecePoint, "" );
   _params->addParam( "Use triangles.", &_camera_params.userFaultyTriangles, "" );
   _params->addSeparator();
@@ -540,8 +538,10 @@ void ClayDemoApp::resize()
   formatNoDepth.enableDepthBuffer(false);
 
   _color_fbo = Fbo( width, height, formatNoDepth );
-  _depth_fbo = Fbo( width, height, formatNoDepth );
-  _blur_fbo = Fbo( width, height, formatNoDepth );
+  if (_draw_depth_of_field) {
+    _depth_fbo = Fbo( width, height, formatNoDepth );
+    _blur_fbo = Fbo( width, height, formatNoDepth );
+  }
 
   // FBOs with no depth buffer and bilinear sampling
 
@@ -678,15 +678,11 @@ void ClayDemoApp::update()
   // if-conditioning this will disable mouse-based movement, untill we actually handle camera update
   //if (!mesh_ || _camera_util->state == CameraUtil::STATE_INVALID) {
 
-  static bool lastDetailMode = detailMode_;
-
-  if (!detailMode_ || _camera_util->state == CameraUtil::STATE_INVALID || !mesh_ || (detailMode_ && !lastDetailMode)) {
+  if (_camera_util->state == CameraUtil::STATE_INVALID || !mesh_) {
     // Init camera
     _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), _cam_dist); // up vector assumed to be Vec3f(0,1,0)
     _camera_util->debugDrawUtil = _debug_draw_util;
   }
-
-  lastDetailMode = detailMode_;
   
   //TODO(adrian, this is not thread shafe);
   //lmTransform tCamera = _camera_util->transform;
@@ -728,16 +724,13 @@ void ClayDemoApp::updateLeapAndMesh() {
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = ci::app::getElapsedSeconds();
       const double lastSculptTime = sculpt_.getLastSculptTime();
-      _leap_interaction->setDetailMode(detailMode_);
 
       if (mesh_) {
         mesh_->updateRotation(curTime);
         if (fabs(curTime - sculpt_.getLastSculptTime()) > 0.25) {
           _camera_util->UpdateCamera(mesh_, _camera_params);
         }
-        if (detailMode_) {
-          sculpt_.applyBrushes(curTime, symmetry_);
-        }
+        sculpt_.applyBrushes(curTime, symmetry_);
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     }
@@ -879,9 +872,14 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     brushRadii.push_back(brushes[i]._radius);
   }
 
+  static const float FOCUS_POINT_OPACITY_TIME = 2.0f;
+  float focusOpacity = std::min(1.0f, static_cast<float>(curTime - _leap_interaction->getLastCameraUpdateTime())/FOCUS_POINT_OPACITY_TIME);
+  focusOpacity = Utilities::SmootherStep(1.0f - focusOpacity);
+  _focus_opacity_smoother.Update(focusOpacity, curTime, 0.925f);
+  focusOpacity = _focus_opacity_smoother.value;
   ci::Vec3f focus(_focus_point.x(), _focus_point.y(), _focus_point.z());
   brushPositions.push_back(focus);
-  brushWeights.push_back(1.0f);
+  brushWeights.push_back(focusOpacity);
   brushRadii.push_back(_focus_radius);
   numBrushes++;
 
@@ -912,7 +910,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     _material_shader.uniform( "reflectionBias", _reflection_bias );
     _material_shader.uniform( "refractionBias", _refraction_bias );
     _material_shader.uniform( "refractionIndex", _refraction_index );
-    _material_shader.uniform( "numLights", detailMode_ ? numBrushes : 0 );
+    _material_shader.uniform( "numLights", numBrushes );
     _material_shader.uniform( "brushPositions", brushPositions.data(), numBrushes );
     _material_shader.uniform( "brushWeights", brushWeights.data(), numBrushes );
     _material_shader.uniform( "brushRadii", brushRadii.data(), numBrushes );
@@ -998,12 +996,10 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 #else
   _environment->unbindCubeMap(0);
   _environment->unbindCubeMap(1);
-  if (detailMode_) {
-    for (size_t i=0; i<brushes.size(); i++) {
-      ColorA color(_brush_color, 0.25f);
-      gl::color(color);
-      brushes[i].draw();
-    }
+  for (size_t i=0; i<brushes.size(); i++) {
+    ColorA color(_brush_color, 0.25f);
+    gl::color(color);
+    brushes[i].draw();
   }
 #endif
 
