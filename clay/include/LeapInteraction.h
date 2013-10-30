@@ -30,7 +30,7 @@ public:
   void update(const Leap::Hand& hand, const Leap::Frame& sinceFrame, double curTime) {
     static const float MIN_FINGER_LENGTH = 10.0f;
     static const float MIN_FINGER_AGE = 0.05f;
-    static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.6f;
+    static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.5f;
     static const float TRANSLATION_SMOOTH_STRENGTH = 0.6f;
     static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.95f;
     static const float NORMAL_Y_SMOOTH_STRENGTH = 0.6f;
