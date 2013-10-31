@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "DebugDrawUtil.h"
-
+#include "Mesh.h"
+#include "Triangle.h"
 
 
 
@@ -21,6 +22,13 @@ void DebugDrawUtil::DrawArrow(const Vector3& from, const Vector3& to) {
   b.debugLines.push_back(from);
   b.debugLines.push_back(to);
   // todo: draw arrow head
+}
+
+void DebugDrawUtil::DrawTriangle(const Mesh* mesh, const Triangle& tri) {
+  Buffers& b = m_buffers[(1+m_readyBufferIdx)%2];
+  b.debugTriangles.push_back(mesh->getVertex(tri.vIndices_[0]));
+  b.debugTriangles.push_back(mesh->getVertex(tri.vIndices_[1]));
+  b.debugTriangles.push_back(mesh->getVertex(tri.vIndices_[2]));
 }
 
 void DebugDrawUtil::SwitchBuffers() {

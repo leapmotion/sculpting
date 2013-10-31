@@ -40,8 +40,8 @@ public:
 
 template <typename T>
 inline T lmClip(T val, T min, T max) {
-   val = std::min(val, 1.0f);
-   val = std::max(0.0f, val);
+   val = std::min(val, max);
+   val = std::max(min, val);
    return val;
 }
 
@@ -53,3 +53,10 @@ inline T lmInterpolate(lmReal t, const T& v0, const T& v1) {
 inline bool lmIsNormalized(const Vector3& v) { lmReal sqn = v.squaredNorm(); return 0.99f < sqn && sqn < 1.01f; }
 
 #define TODO(owner, message) LM_LOG << #owner << ": " << #message << std::endl;
+
+#define LM_EPSILON 0.00001f
+
+#define LM_BREAK __asm { int 3 }
+
+#define LM_ASSERT(condition, message) if (!(condition)) LM_BREAK;
+

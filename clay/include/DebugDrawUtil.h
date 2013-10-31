@@ -6,7 +6,8 @@
 #include <vector>
 
 
-
+class Mesh;
+class Triangle;
 
 // Utility in temp-dev stage. Needed to lock access to bufferes for multithreading.
 class DebugDrawUtil {
@@ -26,6 +27,8 @@ public:
   void DrawCross(const Vector3& position, lmReal size);
 
   void DrawArrow(const Vector3& from, const Vector3& to);
+
+  void DrawTriangle(const Mesh* mesh, const Triangle& tri);
 
   void SwitchBuffers();
 
