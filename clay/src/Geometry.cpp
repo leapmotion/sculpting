@@ -1,7 +1,14 @@
 #include "StdAfx.h"
+
+#include "DebugDrawUtil.h"
 #include "Geometry.h"
+#include "Mesh.h"
+#include "Triangle.h"
+
 #include <algorithm>
 #include <GL/GLU.h>
+
+
 
 /** Compute intersection vertex between a ray and a triangle. Returne false if it doesn't intersect. */
 bool Geometry::intersectionRayTriangle(const Vector3& s1, const Vector3& s2,
@@ -211,4 +218,91 @@ float Geometry::distanceToSegment(const Vector3& point, const Vector3& v1, const
   if(t> 1.0) return (point-v2).squaredNorm();
   Vector3 ptProj = v1 + t*(v2-v1);
   return (point-ptProj).squaredNorm();
+}
+
+void Geometry::getClosestPoint(const Geometry::GetClosestPointInput& input, Geometry::GetClosestPointOutput* output) {
+
+  // Get input
+  const Vector3& v0 = input.mesh->getVertex(input.tri->vIndices_[0]);
+  const Vector3& v1 = input.mesh->getVertex(input.tri->vIndices_[1]);
+  const Vector3& v2 = input.mesh->getVertex(input.tri->vIndices_[2]);
+  const Vector3& pt = input.point;
+
+  // Projected point
+  const Vector3 pr = pt - input.tri->normal_.dot(pt-v0) * input.tri->normal_;
+
+  // Triangle edges
+  const Vector3& e0 = v1-v0;
+  const Vector3& e1 = v2-v1;
+  const Vector3& e2 = v0-v2;
+
+  // Get front direction of the triangle
+  const Vector3 n = e0.cross(e1);
+
+  LM_ASSERT(n.dot(input.tri->normal_) >= 0.0f, "Normal on mesh triangle flipped.");
+
+  if (n.squaredNorm() < LM_EPSILON * LM_EPSILON) {
+    // Degenerate triangle
+    // todo: should handle longest edge
+  }
+
+  // Cross point's project with every other edge
+  const Vector3 cr0 = e0.cross(pr - v0);
+  const Vector3 cr1 = e1.cross(pr - v1);
+  const Vector3 cr2 = e2.cross(pr - v2);
+
+  int numNeg = 0;
+  int numPos = 0;
+  int lastNegIdx = -1;
+  int lastPosIdx = -1;
+
+  lmReal dot0 = cr0.dot(n);
+  lmReal dot1 = cr1.dot(n);
+  lmReal dot2 = cr2.dot(n);
+
+  if (0 <= dot0) { numPos++; lastPosIdx = 0; } else { numNeg++; lastNegIdx = 0; }
+  if (0 <= dot1) { numPos++; lastPosIdx = 1; } else { numNeg++; lastNegIdx = 1; }
+  if (0 <= dot2) { numPos++; lastPosIdx = 2; } else { numNeg++; lastNegIdx = 2; }
+
+  if (numPos == 3) {
+    // inside triangle
+    output->position = pr;
+    bool positive = 0.0f <= input.tri->normal_.dot(pt);
+    output->normal = positive ? input.tri->normal_ : -1.0f * input.tri->normal_;
+    output->distance = std::fabs(input.tri->normal_.dot(pt-pr));
+  } else if (numPos == 2) {
+    // outside triangle, closest to an edge
+    lastNegIdx; // index of the edge
+    Vector3 edgeStart = input.mesh->getVertex(input.tri->vIndices_[lastNegIdx]); // edge start
+    Vector3 edgeEnd = input.mesh->getVertex(input.tri->vIndices_[(lastNegIdx+1)%3]); // edge end
+    Vector3 edge = edgeEnd - edgeStart;
+    lmReal edgeLength = edge.norm();
+    Vector3 edgeDir = edge / edgeLength;
+    Vector3 toPoint = pt - edgeStart;
+    lmReal dot = edgeDir.dot(toPoint);
+    dot = lmClip(dot, 0.0f, edgeLength);
+    Vector3 pointProjectedOnSegmet = edgeStart + dot * edgeDir;
+    {
+      lmReal check = edgeDir.dot(pr - pt);
+      check = check;
+    }
+    output->position = pointProjectedOnSegmet;
+    output->normal = (pt - output->position); // if not zero
+    output->distance = output->normal.norm();
+    if (output->distance < LM_EPSILON) {
+      output->normal = input.tri->normal_;
+    } else {
+      output->normal.normalize();
+    }
+  } else {
+    assert (numPos == 1 && "Error finding closest point");
+    output->position = input.mesh->getVertex(input.tri->vIndices_[(lastPosIdx-1+3)%3]); // index of the vertex
+    output->normal = (pt - output->position); // if not zero
+    output->distance = output->normal.norm();
+    if (output->distance < LM_EPSILON) {
+      output->normal = input.tri->normal_;
+    } else {
+      output->normal.normalize();
+    }
+  }
 }

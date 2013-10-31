@@ -6,6 +6,7 @@
 #include "Aabb.h"
 
 class Mesh;
+class Triangle;
 
 /**
 * Geometry functions
@@ -28,6 +29,31 @@ namespace Geometry
   bool pointInsideTriangle(const Vector3& point, const Vector3& v1, const Vector3& v2, const Vector3& v3);
   bool sphereIntersectTriangle(const Vector3& point, float radiusSq, const Vector3& v1, const Vector3& v2, const Vector3& v3);
   float distanceToSegment(const Vector3& point, const Vector3& v1, const Vector3& v2);
+}
+
+
+/**
+* Geometry functions
+* @author Adrian
+*/
+namespace Geometry {
+  struct GetClosestPointInput {
+    const Mesh* mesh;
+    const Triangle* tri;
+    Vector3 point;
+
+    GetClosestPointInput() : mesh(NULL), tri(NULL), point(Vector3::Zero()) {}
+  };
+
+  struct GetClosestPointOutput {
+    Vector3 position;
+    Vector3 normal;
+    lmReal distance;
+
+    GetClosestPointOutput() : position(Vector3::Zero()), normal(Vector3::Zero()), distance(-1.0f) {}
+  };
+
+  void getClosestPoint(const GetClosestPointInput& input, GetClosestPointOutput* output);
 }
 
 #endif /*__GEOMETRY_H__*/
