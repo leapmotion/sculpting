@@ -8,29 +8,32 @@ using namespace ci;
 
 #define USE_SKELETON_API 0
 
-LeapInteraction::LeapInteraction(Sculpt* _Sculpt, UserInterface* _Ui)
-  : _sculpt(_Sculpt)
-  , _ui(_Ui)
+LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui)
+  : _sculpt(sculpt)
+  , _ui(ui)
   , _desired_brush_radius(0.4f)
   , _is_pinched(false)
   , _last_camera_update_time(0.0)
+  , _autoBrush(true)
 {
   _dphi.value = 0.0f;
   _dtheta.value = 0.0f;
   _dzoom.value = 0.0f;
 }
 
-bool LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress)
+bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress)
 {
-  _model_view_inv = _Model.inverted();
-  _model_view = _Model;
-  _projection = _Projection;
-  _window_size = _Viewport;
-  if (_Supress)
+  _model_view_inv = modelView.inverted();
+  _model_view = modelView;
+  _projection = projection;
+  _window_size = viewport;
+  _reference_distance = referenceDistance;
+  _fov = fov;
+  if (suppress)
   {
     _cur_frame = Leap::Frame::invalid();
   }
-  else if (_Listener.isConnected() && _Listener.waitForFrame(_cur_frame, 33))
+  else if (listener.isConnected() && listener.waitForFrame(_cur_frame, 33))
   {
     std::unique_lock<std::mutex> brushLock(_sculpt->getBrushMutex());
     _sculpt->clearBrushes();
@@ -61,7 +64,8 @@ void LeapInteraction::interact(double curTime)
   static const float MIN_TIME_BETWEEN_FRAMES = 0.000001f;
 
   // create brushes
-  static const Vec3f LEAP_OFFSET(0, 200, 100);
+  static const Vec3f LEAP_OFFSET(0, 200, 50);
+  static const Vec3f LEAP_SIZE(200, 200, 200);
   Leap::HandList hands = _cur_frame.hands();
   const float ui_mult = 1.0f - _ui->maxActivation();
   //const int num_hands = hands.count();
@@ -70,6 +74,7 @@ void LeapInteraction::interact(double curTime)
     return;
   }
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
+  const Vector3 scaledSize = calcSize(_fov, _reference_distance);
 
   for (HandInfoMap::iterator it = _hand_infos.begin(); it != _hand_infos.end(); ++it) {
     const int id = it->first;
@@ -95,15 +100,27 @@ void LeapInteraction::interact(double curTime)
         for (int j=0; j<num_pointables; j++) {
           // add brushes
           const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[j].timeVisible()/AGE_WARMUP_TIME));
+
           Leap::Vector tip_pos = pointables[j].tipPosition();
           Leap::Vector tip_dir = pointables[j].direction();
           Leap::Vector tip_vel = pointables[j].tipVelocity();
+
           Vec3f pos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
           Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
           Vec3f vel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
+
+          float ratioX = pos.x / LEAP_SIZE.x;
+          float ratioY = pos.y / LEAP_SIZE.y;
+          float ratioZ = pos.z / LEAP_SIZE.z;
+
+          pos.x = ratioX * scaledSize.x();
+          pos.y = ratioY * scaledSize.y();
+          pos.z = ratioZ * scaledSize.z();
+
           Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
           Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
           Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
+
           float strength = strengthMult*ui_mult*_desired_brush_strength;
           strength = std::min(1.0f, strength * dtMult);
 
@@ -115,8 +132,13 @@ void LeapInteraction::interact(double curTime)
           transPos.y = (transPos.y + 1)/2;
           transPos.z = 1.0f;
 
+          const float autoBrushScaleFactor = (scaledSize.x() / LEAP_SIZE.x);
           if (transPos.x >= 0.0f && transPos.x <= 1.0f && transPos.y >= 0.0f && transPos.y <= 1.0f) {
-            _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, _desired_brush_radius, strength);
+            float adjRadius = _desired_brush_radius;
+            if (_autoBrush) {
+              adjRadius *= autoBrushScaleFactor;
+            }
+            _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength);
           }
 
           // compute a point on the surface of the sphere to use as the screen-space radius
@@ -124,6 +146,9 @@ void LeapInteraction::interact(double curTime)
           radPos.y = (radPos.y + 1)/2;
           radPos.z = 1.0f;
           float rad = transPos.distance(radPos);
+          if (_autoBrush) {
+            rad *= autoBrushScaleFactor;
+          }
           transPos.z = rad;
           Vec4f tip(transPos.x, transPos.y, transPos.z, strengthMult);
           _tips.push_back(tip);

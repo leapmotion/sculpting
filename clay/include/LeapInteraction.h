@@ -31,9 +31,9 @@ public:
     static const float MIN_FINGER_LENGTH = 10.0f;
     static const float MIN_FINGER_AGE = 0.05f;
     static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.5f;
-    static const float TRANSLATION_SMOOTH_STRENGTH = 0.6f;
+    static const float TRANSLATION_SMOOTH_STRENGTH = 0.5f;
     static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.95f;
-    static const float NORMAL_Y_SMOOTH_STRENGTH = 0.6f;
+    static const float NORMAL_Y_SMOOTH_STRENGTH = 0.5f;
     m_lastUpdateTime = curTime;
 
     // update number of fingers
@@ -76,8 +76,8 @@ class LeapInteraction
 
 public:
 
-  LeapInteraction(Sculpt* _Sculptor, UserInterface* _Ui);
-  bool processInteraction(LeapListener& _Listener, float _Aspect, const Matrix44f& _Model, const Matrix44f& _Projection, const Vec2i& _Viewport, bool _Supress);
+  LeapInteraction(Sculpt* sculpt, UserInterface* ui);
+  bool processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress);
 
   float getDPhiVel() const { return _dphi.value; }
   float getDThetaVel() const { return _dtheta.value; }
@@ -86,6 +86,7 @@ public:
   bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
   void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
+  bool setBrushAuto(bool autoBrush) { _autoBrush = autoBrush; }
   double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp()); }
   std::vector<Vec4f> getTips() { std::unique_lock<std::mutex> tipsLock(_tips_mutex); return _tips; }
   double getLastCameraUpdateTime() const { return _last_camera_update_time; }
@@ -111,6 +112,13 @@ private:
     }
   }
 
+  Vector3 calcSize(float fov, float referenceDistance) {
+    const float width = 2.0f * referenceDistance * tan(fov/2.0f);
+    const float height = width;
+    const float depth = 2.0f * referenceDistance;
+    return Vector3(width, height, depth);
+  }
+
   Leap::Frame _cur_frame;
   Leap::Frame _last_frame;
 
@@ -128,6 +136,9 @@ private:
   Utilities::ExponentialFilter<float> _dzoom;
   std::mutex _tips_mutex;
   double _last_camera_update_time;
+  float _reference_distance;
+  float _fov;
+  bool _autoBrush;
 
   // Handling pinch gesture
   bool _is_pinched;

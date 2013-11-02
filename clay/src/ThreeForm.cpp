@@ -738,8 +738,8 @@ void ClayDemoApp::update()
 
 void ClayDemoApp::updateLeapAndMesh() {
   while (!_shutdown) {
-    bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
-    if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
+    bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
+    if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress)) {
       const double curTime = ci::app::getElapsedSeconds();
       //const double lastSculptTime = sculpt_.getLastSculptTime();
 

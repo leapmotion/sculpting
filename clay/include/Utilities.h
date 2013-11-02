@@ -130,9 +130,25 @@ namespace Utilities {
     float targetFramerate;
   };
 
+  static inline float DegreesToRadians(float deg) {
+    return static_cast<float>(M_PI)*deg/180.0f;
+  }
+  static inline double DegreesToRadians(double deg) {
+    return (M_PI/180.0)*deg;
+  }
+
+  static inline float RadiansToDegrees(float rad) {
+    return 180.0f*rad/static_cast<float>(M_PI);
+  }
+  static inline double RadiansToDegrees(double rad) {
+    return (180.0/M_PI)*rad;
+  }
   static const int TIME_STAMP_TICKS_PER_SEC = 1000000;
   static const double TIME_STAMP_SECS_TO_TICKS  = static_cast<double>(TIME_STAMP_TICKS_PER_SEC);
   static const double TIME_STAMP_TICKS_TO_SECS  = 1.0/TIME_STAMP_SECS_TO_TICKS;
+
+  static const float RADIANS_TO_DEGREES = static_cast<float>(180.0 / M_PI);
+  static const float DEGREES_TO_RADIANS = static_cast<float>(M_PI / 180.0);
 
 }
 
