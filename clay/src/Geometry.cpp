@@ -165,15 +165,10 @@ Vector3 Geometry::getPerpendicularVector(const Vector3& vec)
 /** Compute the bounding box of a triangle defined by three vertices */
 Aabb Geometry::computeTriangleAabb(const Vector3& v1, const Vector3& v2, const Vector3& v3)
 {
-  float minX = std::min(std::min(v1.x(),v2.x()),v3.x());
-  float minY = std::min(std::min(v1.y(),v2.y()),v3.y());
-  float minZ = std::min(std::min(v1.z(),v2.z()),v3.z());
+  const Vector3 min = v1.cwiseMin(v2).cwiseMin(v3);
+  const Vector3 max = v1.cwiseMax(v2).cwiseMax(v3);
 
-  float maxX = std::max(std::max(v1.x(),v2.x()),v3.x());
-  float maxY = std::max(std::max(v1.y(),v2.y()),v3.y());
-  float maxZ = std::max(std::max(v1.z(),v2.z()),v3.z());
-
-  return Aabb(Vector3(minX, minY, minZ), Vector3(maxX, maxY, maxZ));
+  return Aabb(min, max);
 }
 
 /** Compute the inradius (radius of incircle) of a triangle */
