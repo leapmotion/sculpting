@@ -130,6 +130,35 @@ namespace Utilities {
     float targetFramerate;
   };
 
+  template <int N>
+  class CategoricalFilter {
+  public:
+    CategoricalFilter() {
+      for (int i=0; i<N; i++) {
+        m_categories[i].value = 0.0f;
+      }
+    }
+    void Update(int num, double timeSeconds, float smoothStrength) {
+      // num must be between 0 and N-1, inclusive
+      for (int i=0; i<N; i++) {
+        m_categories[i].Update(i==num ? 1.0f : 0.0f, timeSeconds, smoothStrength);
+      }
+    }
+    int FilteredCategory() const {
+      float max = -1;
+      int maxCategory = -1;
+      for (int i=0; i<N; i++) {
+        if (m_categories[i].value > max) {
+          max = m_categories[i].value;
+          maxCategory = i;
+        }
+      }
+      return maxCategory;
+    }
+  private:
+    ExponentialFilter<float> m_categories[N];
+  };
+
   static inline float DegreesToRadians(float deg) {
     return static_cast<float>(M_PI)*deg/180.0f;
   }

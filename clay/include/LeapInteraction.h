@@ -15,7 +15,7 @@ public:
 
   HandInfo() : m_lastUpdateTime(0.0) { }
 
-  float getNumFingers() const { return m_numFingers.value; }
+  int getNumFingers() const { return m_numFingers.FilteredCategory(); }
   Vector3 getTranslation() const { return m_translation.value; }
   float getTranslationRatio() const { return m_transRatio.value; }
   float getNormalY() const { return m_normalY.value; }
@@ -32,7 +32,7 @@ public:
     static const float MIN_FINGER_AGE = 0.05f;
     static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.5f;
     static const float TRANSLATION_SMOOTH_STRENGTH = 0.5f;
-    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.95f;
+    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.9f;
     static const float NORMAL_Y_SMOOTH_STRENGTH = 0.5f;
     m_lastUpdateTime = curTime;
 
@@ -44,7 +44,7 @@ public:
         numFingers++;
       }
     }
-    m_numFingers.Update(static_cast<float>(numFingers), curTime, NUM_FINGERS_SMOOTH_STRENGTH);
+    m_numFingers.Update(numFingers, curTime, NUM_FINGERS_SMOOTH_STRENGTH);
 
     // update translation
     const Leap::Vector temp(hand.translation(sinceFrame));
@@ -64,7 +64,7 @@ public:
     m_normalY.Update(fabs(hand.palmNormal().y), curTime, NORMAL_Y_SMOOTH_STRENGTH);
   }
 private:
-  Utilities::ExponentialFilter<float> m_numFingers;
+  Utilities::CategoricalFilter<10> m_numFingers;
   Utilities::ExponentialFilter<Vector3> m_translation;
   Utilities::ExponentialFilter<float> m_transRatio;
   Utilities::ExponentialFilter<float> m_normalY;

@@ -56,8 +56,8 @@ void LeapInteraction::interact(double curTime)
   float cur_dtheta = 0;
   float cur_dphi = 0;
   float cur_dzoom = 0;
-  static const float ORBIT_SPEED = 0.006f;
-  static const float ZOOM_SPEED = 50.0f;
+  static const float ORBIT_SPEED = 0.008f;
+  static const float ZOOM_SPEED = 70.0f;
   static const float AGE_WARMUP_TIME = 0.75;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
   //static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
@@ -79,12 +79,12 @@ void LeapInteraction::interact(double curTime)
   for (HandInfoMap::iterator it = _hand_infos.begin(); it != _hand_infos.end(); ++it) {
     const int id = it->first;
     const HandInfo& cur = it->second;
-    const float numFingers = cur.getNumFingers();
+    const int numFingers = cur.getNumFingers();
     const float normalY = cur.getNormalY();
     if (cur.getLastUpdateTime() < curTime) {
       continue;
     }
-    if (numFingers > 2.5f || normalY < 0.35f) {
+    if (numFingers > 2 || normalY < 0.35f) {
       // camera interaction
       const Vector3 movement = cur.getModifiedTranslation();
       cur_dtheta += ORBIT_SPEED * movement.x();
