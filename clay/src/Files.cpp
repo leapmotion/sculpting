@@ -16,10 +16,11 @@ Files::~Files()
 Mesh* Files::loadSTL(const std::string &filepath) const
 {
   std::ifstream file(filepath.c_str(), std::ios::binary);
-  if (!file)
+  if (!file) {
     return 0;
+  }
   Mesh *mesh = new Mesh();
-  std::set<Vertex> verticesSet; //detect already read vertices ...
+  VertexSet verticesSet; //detect already read vertices ...
   char header[80];
   int nbTrianglesFile;
   file.read(header, 80); //header
@@ -59,10 +60,115 @@ Mesh* Files::loadSTL(const std::string &filepath) const
   return mesh;
 }
 
+Mesh* Files::loadPLY(const std::string& filepath) const {
+  std::ifstream file(filepath.c_str(), std::ios::binary);
+  if (!file) {
+    return 0;
+  }
+  Mesh *mesh = new Mesh();
+  TriangleVector &triangles = mesh->getTriangles();
+  VertexVector &vertices = mesh->getVertices();
+  std::string line;
+  static const std::string ELEMENT_VERTEX = "element vertex ";
+  static const std::string ELEMENT_FACE = "element face ";
+  static const std::string END_HEADER = "end_header";
+  static const std::string PROPERTY = "property ";
+  static const std::string RED = "red";
+  int nbVertices = -1;
+  int nbFaces = -1;
+  int colorIndex = -1;
+  int i = 0;
+  while (std::getline(file, line)) {
+    if (line.find(ELEMENT_VERTEX) == 0) {
+      std::stringstream ss;
+      std::string remainder = line.substr(ELEMENT_VERTEX.size());
+      ss.str(remainder);
+      ss >> nbVertices;
+      int startIndex = i;
+      while (std::getline(file, line)) {
+        i++;
+        if (line.find(PROPERTY) == 0) {
+          if (line.find(RED) != std::string::npos) {
+            colorIndex = i - startIndex - 1;
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+      i--;
+    }
+    if (line.find(ELEMENT_FACE) == 0) {
+      std::stringstream ss;
+      std::string remainder = line.substr(ELEMENT_FACE.size());
+      ss.str(remainder);
+      ss >> nbFaces;
+    }
+    if (line.find(END_HEADER) == 0) {
+      vertices.reserve(nbVertices);
+      triangles.reserve(nbFaces);
+      float x, y, z;
+      int nbVert, iv1, iv2, iv3, iv4;
+      for (int j=0; j<nbVertices; j++) {
+        if (!std::getline(file, line)) {
+          break;
+        }
+        std::stringstream ss;
+        ss.str(line);
+        ss >> x >> y >> z;
+        vertices.push_back(Vertex(x, y, z, vertices.size()));
+        if (colorIndex >= 0) {
+          int curIdx = 3;
+          while (curIdx < colorIndex) {
+            ss >> x; // remove dummy entries
+            curIdx++;
+          }
+          ss >> x >> y >> z;
+          vertices.back().material_ << x/255.0f, y/255.0f, z/255.0f;
+        }
+      }
+      for (int j=0; j<nbFaces; j++) {
+        if (!std::getline(file, line)) {
+          break;
+        }
+        std::stringstream ss;
+        ss.str(line);
+        ss >> nbVert;
+        if (nbVert == 3 || nbVert == 4) {
+          ss >> iv1 >> iv2 >> iv3;
+          Vertex& v1 = vertices[iv1];
+          Vertex& v2 = vertices[iv2];
+          Vertex& v3 = vertices[iv3];
+          int nbTriangles = triangles.size();
+          v1.tIndices_.push_back(nbTriangles);
+          v2.tIndices_.push_back(nbTriangles);
+          v3.tIndices_.push_back(nbTriangles);
+          triangles.push_back(Triangle((v2-v1).cross(v3-v1).normalized(), iv1, iv2, iv3, nbTriangles));
+          if (nbVert == 4) {
+            nbTriangles++;
+            ss >> iv4;
+            Vertex& v4 = vertices[iv4];
+            v1.tIndices_.push_back(nbTriangles);
+            v3.tIndices_.push_back(nbTriangles);
+            v4.tIndices_.push_back(nbTriangles);
+            triangles.push_back(Triangle((v3-v1).cross(v4-v1).normalized(), iv1, iv3, iv4, nbTriangles));
+          }
+        }
+      }
+    }
+    i++;
+  }
+
+  file.close();
+  mesh->initMesh();
+  mesh->moveTo(Vector3::Zero());
+  return mesh;
+}
+
 /** Check if the vertex already exists */
-int Files::detectNewVertex(const Vertex &v, int iTri, std::set<Vertex> &verticesSet, VertexVector &vertices) const
+int Files::detectNewVertex(const Vertex &v, int iTri, VertexSet &verticesSet, VertexVector &vertices) const
 {
-  std::pair<std::set<Vertex>::iterator, bool> pair = verticesSet.insert(v);
+  std::pair<VertexSet::iterator, bool> pair = verticesSet.insert(v);
   int iVert = (*pair.first).id_;
   if (pair.second)
     vertices.push_back(v);
@@ -71,9 +177,9 @@ int Files::detectNewVertex(const Vertex &v, int iTri, std::set<Vertex> &vertices
 }
 
 /** Save file in STL format */
-void Files::saveSTL(Mesh *mesh, const std::string &filepath) const
+void Files::saveSTL(Mesh* mesh, const std::string& filename) const
 {
-  std::ofstream file(filepath.c_str(), std::ios::binary);
+  std::ofstream file(filename.c_str(), std::ios::binary);
   if (file)
   {
     TriangleVector &triangles = mesh->getTriangles();
@@ -123,6 +229,65 @@ void Files::saveSTL(Mesh *mesh, const std::string &filepath) const
       file.write((char*)attribute, 2); //attribut
     }
     file.close();
+  }
+}
+
+void Files::saveOBJ(Mesh* mesh, std::ostream& ss) const {
+  if (!ss) {
+    return;
+  }
+  const TriangleVector &triangles = mesh->getTriangles();
+  const VertexVector &vertices = mesh->getVertices();
+  const float scale = 1/mesh->getScale();
+  const int nbTriangles = triangles.size();
+  const int nbVertices = vertices.size();
+  ss << "s 0" << std::endl;
+  for (int i=0; i<nbVertices; i++) {
+    const Vector3 cur = scale*vertices[i];
+    ss << "v " << cur.x() << " " << cur.y() << " " << cur.z() << std::endl;
+  }
+  for (int i=0; i<nbTriangles; i++) {
+    const int* indices = triangles[i].vIndices_;
+    ss << "f " << indices[0]+1 << " " << indices[1]+1 << " " << indices[2]+1 << std::endl;
+  }
+}
+
+void Files::savePLY(Mesh* mesh, std::ostream& ss) const {
+  if (!ss) {
+    return;
+  }
+  const TriangleVector &triangles = mesh->getTriangles();
+  const VertexVector &vertices = mesh->getVertices();
+  const float scale = 1/mesh->getScale();
+  const int nbTriangles = triangles.size();
+  const int nbVertices = vertices.size();
+
+  // write header
+  ss << "ply" << std::endl;
+  ss << "format ascii 1.0" << std::endl;
+  ss << "element vertex " << nbVertices << std::endl;
+  ss << "property float x" << std::endl;
+  ss << "property float y" << std::endl;
+  ss << "property float z" << std::endl;
+  ss << "property uchar red" << std::endl;
+  ss << "property uchar green" << std::endl;
+  ss << "property uchar blue" << std::endl;
+  ss << "element face " << nbTriangles << std::endl;
+  ss << "property list uchar uint vertex_indices" << std::endl;
+  ss << "end_header" << std::endl;
+
+  // write geometry
+  for (int i=0; i<nbVertices; i++) {
+    const Vector3 cur = scale*vertices[i];
+    const Vector3& color = vertices[i].material_;
+    const unsigned int red = static_cast<unsigned int>(255.0f * color.x());
+    const unsigned int green = static_cast<unsigned int>(255.0f * color.y());
+    const unsigned int blue = static_cast<unsigned int>(255.0f * color.z());
+    ss << cur.x() << " " << cur.y() << " " << cur.z() << " " << red << " " << green << " " << blue << std::endl;
+  }
+  for (int i=0; i<nbTriangles; i++) {
+    const int* indices = triangles[i].vIndices_;
+    ss << "3 " << indices[0] << " " << indices[1] << " " << indices[2] << std::endl;
   }
 }
 

@@ -19,8 +19,11 @@ public:
   Files();
   ~Files();
   Mesh* loadSTL(const std::string &filepath) const;
-  int detectNewVertex(const Vertex &v, int iTri, std::set<Vertex> &setVertices, VertexVector &vertices) const;
-  void saveSTL(Mesh *mesh, const std::string &filename) const;
+  Mesh* loadPLY(const std::string& filepath) const;
+  int detectNewVertex(const Vertex &v, int iTri, VertexSet &setVertices, VertexVector &vertices) const;
+  void saveSTL(Mesh* mesh, const std::string& filename) const;
+  void saveOBJ(Mesh* mesh, std::ostream& ss) const;
+  void savePLY(Mesh* mesh, std::ostream& ss) const;
 
   Mesh* loadOBJ(const std::string &filepath) const;
 

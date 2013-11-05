@@ -649,7 +649,6 @@ void Mesh::updateOctree(const std::vector<int> &iTris)
 void Mesh::updateNormals(const std::vector<int> &iVerts)
 {
   int nbVers = iVerts.size();
-#pragma omp parallel for
   for (int i=0;i<nbVers;++i)
   {
     Vertex &vert=vertices_[iVerts[i]];

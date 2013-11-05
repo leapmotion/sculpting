@@ -70,6 +70,7 @@ int ClayDemoApp::loadFile()
   file_extensions.push_back("obj");
   file_extensions.push_back("stl");
   file_extensions.push_back("3ds");
+  file_extensions.push_back("ply");
   fs::path path = getOpenFilePath("", file_extensions);
 
   int err = -1;
@@ -90,12 +91,16 @@ int ClayDemoApp::loadFile()
         mesh = files.loadSTL(path.string());
       } else if (ext == ".3DS" || ext == ".3ds") {
         mesh = files.load3DS(path.string());
+      } else if (ext == ".PLY" || ext == ".ply") {
+        mesh = files.loadPLY(path.string());
       }
       if (mesh_) {
         delete mesh_;
       }
       mesh_ = mesh;
-      mesh_->startPushState();
+      if (mesh_) {
+        mesh_->startPushState();
+      }
       sculpt_.setMesh(mesh_);
       err = 1;
     }
@@ -110,14 +115,33 @@ int ClayDemoApp::saveFile()
     return -1;
   }
 
+#if 0
+  const Aabb& boundingBox = mesh_->getOctree()->getAabbSplit();
+  std::cout << "min: " << boundingBox.min_.transpose() << std::endl;
+  std::cout << "max: " << boundingBox.max_.transpose() << std::endl;
+#endif
+
   Files files;
   std::vector<std::string> file_extensions;
   file_extensions.push_back("stl");
+  file_extensions.push_back("ply");
+  file_extensions.push_back("obj");
   fs::path path = getSaveFilePath("", file_extensions);
 
   int err = -1;
   if (!path.empty()) {
-    files.saveSTL(mesh_, path.string());
+    const std::string ext = path.extension().string();
+    if (!ext.empty()) {
+      if (ext == ".OBJ" || ext == ".obj") {
+        std::ofstream file(path.c_str(), std::ios::binary);
+        files.saveOBJ(mesh_, file);
+      } else if (ext == ".STL" || ext == ".stl") {
+        files.saveSTL(mesh_, path.string());
+      } else if (ext == ".PLY" || ext == ".ply") {
+        std::ofstream file(path.c_str(), std::ios::binary);
+        files.savePLY(mesh_, file);
+      }
+    }
     err = 1;
   }
   return err; // error
@@ -399,6 +423,7 @@ void ClayDemoApp::setup()
   _params->addParam( "Refraction Bias", &_refraction_bias, "min=0.0 max=3.0 step=0.01" );
   _params->addSeparator();
   _params->addText( "text", "label=`Draw parameters:`" );
+  _params->addParam( "Draw UI", &_draw_ui, "" );
   _params->addParam( "Draw edges", &_draw_edges, "" );
   _params->addParam( "Draw AO", &_use_ao, "" );
   _params->addParam( "Only AO", &_only_ao, "" );
@@ -515,11 +540,13 @@ void ClayDemoApp::setup()
 
   _leap_interaction = new LeapInteraction(&sculpt_, _ui);
 
+#if 1
   srand(static_cast<unsigned int>(time(0)));
   int randEnvIdx = rand() % infos.size();
   std::string randEnvString = infos[randEnvIdx]._name;
   Environment::TimeOfDay time = (rand() % 2) ? Environment::TIME_DAWN : Environment::TIME_NOON;
   _loading_thread = std::thread(&Environment::setEnvironment, _environment, randEnvString, time);
+#endif
 
   setBrushMode("Sweep");
   setBrushSize("Medium");
@@ -1027,6 +1054,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
 
   if (_draw_ui) 
   {
+    glDisable(GL_CULL_FACE);
     disableDepthRead();
     disableDepthWrite();
     setMatricesWindow( getWindowSize() );
@@ -1156,18 +1184,20 @@ void ClayDemoApp::draw()
       _color_fbo.unbindTexture();
     }
 
-    int tris = 0;
-    int verts = 0;
-    if (mesh_) {
-      tris = mesh_->getNbTriangles();
-      verts = mesh_->getNbVertices();
+    if (_draw_ui) {
+      int tris = 0;
+      int verts = 0;
+      if (mesh_) {
+        tris = mesh_->getNbTriangles();
+        verts = mesh_->getNbVertices();
+      }
+      std::stringstream ss;
+      ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
+      glPushMatrix();
+      gl::scale(1, -1);
+      ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));
+      glPopMatrix();
     }
-    std::stringstream ss;
-    ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
-    glPushMatrix();
-    gl::scale(1, -1);
-    ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));
-    glPopMatrix();
   }
   else
   {

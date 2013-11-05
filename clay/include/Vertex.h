@@ -42,5 +42,6 @@ public:
 bool operator<(const Vertex &a,const Vertex &b);
 
 typedef std::vector<Vertex, Eigen::aligned_allocator<Vertex> > VertexVector;
+typedef std::set<Vertex, std::less<Vertex>, Eigen::aligned_allocator<Vertex> > VertexSet;
 
 #endif /*__VERTEX_H__*/
