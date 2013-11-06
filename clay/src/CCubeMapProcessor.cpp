@@ -1385,7 +1385,7 @@ void CCubeMapProcessor::FixupCubeEdges(CImageSurface *a_CubeMap, int a_FixupType
 //--------------------------------------------------------------------------------------
 CCubeMapProcessor::CCubeMapProcessor(void)
 {
-  int numberOfProcessors = static_cast<int>(boost::thread::hardware_concurrency());
+  //int numberOfProcessors = static_cast<int>(std::thread::hardware_concurrency());
   // TODO : In case of command line, we want to use all hardware thread available
   //m_NumFilterThreads  = numberOfProcessors - 1;	// - 1 cause the main core is used for the application.
   // If no extra hardware thread is available the filering will be done the main process.

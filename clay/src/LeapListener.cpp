@@ -33,9 +33,15 @@ void LeapListener::onFrame(const Leap::Controller& controller) {
 
 bool LeapListener::waitForFrame(Leap::Frame& _Frame, int _MillisecondsTimeout) {
   std::unique_lock<std::mutex> lock(_mutex);
+#if _WIN32
   if (_frameQueue.empty() && !_condition.timed_wait(lock, boost::posix_time::milliseconds(_MillisecondsTimeout))) {
     return false;
   }
+#else
+  if (_frameQueue.empty() && _condition.wait_for(lock, std::chrono::milliseconds(_MillisecondsTimeout)) == std::cv_status::timeout) {
+    return false;
+  }
+#endif
   _Frame = _frameQueue.front();
   _frameQueue.pop_front();
   return true;

@@ -332,7 +332,7 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
   float GlossScale = 10.0f;
   float GlossBias = 1.0f;
   int EdgeFixupTech = CP_FIXUP_BENT;
-  bool bCubeEdgeFixup = true;
+  //bool bCubeEdgeFixup = true;
   int EdgeFixupWidth = 1; 
 
   _cubemap_processor->InitiateFiltering(

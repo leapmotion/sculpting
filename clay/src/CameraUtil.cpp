@@ -315,7 +315,7 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
 
       // Discard rear-facing triangles
       lmReal camDotVNormal = cameraDirection.dot(vert.normal_);
-      lmReal camDotCenter = cameraDirection.dot(vert - referencePoint.position);
+//      lmReal camDotCenter = cameraDirection.dot(vert - referencePoint.position);
       if (camDotVNormal < 0.0f)// || camDotCenter < 0.0f)
       {
         lmReal weight = weightNormals ? std::max(0.0f, -camDotVNormal) : 1.0f;
@@ -431,7 +431,7 @@ void CameraUtil::GetSmoothedNormalAtPoint(const Mesh* mesh, int triIdx, const Ve
 
   lmSurfacePoint avgSurfacePoint[3];
   Geometry::GetClosestPointOutput closestPoint[3];
-  Vector3 normals[3];
+//  Vector3 normals[3];
   VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v1, v1.normal_), radius, -1.0f * v1.normal_, true, avgSurfacePoint+0, closestPoint+0);
   VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v2, v2.normal_), radius, -1.0f * v2.normal_, true, avgSurfacePoint+1, closestPoint+1);
   VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v3, v3.normal_), radius, -1.0f * v3.normal_, true, avgSurfacePoint+2, closestPoint+2);
@@ -706,7 +706,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
           Vector3 deltaNormalAlongMotion = movementDir.dot(deltaNormal) * movementDir;
           Vector3 deltaNormalPerpMotion = deltaNormal - deltaNormalAlongMotion;
 
-          lmReal movementDot = movementDir.dot(deltaNormalAlongMotion);
+//          lmReal movementDot = movementDir.dot(deltaNormalAlongMotion);
           // std::cout << "Movement Dot: " << movementDot << std::endl;
           // Apply the normal delta along only if it's towards the back
           //if (params.tmpSwitch || movementDot < 0.0f)
@@ -798,14 +798,14 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
             if (!params.useAvgNormal || params.useClosestPointForEdges)
             {
               Vector3 correction = newClosestPoint.position - referencePoint.position; // check that this is (1-rotationFraction) * dRefPt
-              lmReal correctionDist = correction.norm();
+//              lmReal correctionDist = correction.norm();
               referencePoint.position = newClosestPoint.position;
               transform.translation += correction;
             }
             else
             {
               Vector3 correction = newAvgVertex.position - referencePoint.position; // check that this is (1-rotationFraction) * dRefPt
-              lmReal correctionDist = correction.norm();
+//              lmReal correctionDist = correction.norm();
               referencePoint.position = newAvgVertex.position;
               transform.translation += correction;
             }
@@ -846,7 +846,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
     lmReal minDist = FLT_MAX;
     // todo do calculations the same way they're done in MainCameraControl()
     const int numCasts = rayCastResults.size();
-    float weightSum = 0;
+    //float weightSum = 0;
     for (int i = 0; i < numCasts; i++) {
       if (rayCastResults[i].isSuccess() && rayCastResults[i].dist < minDist) {
         rayHit = true;

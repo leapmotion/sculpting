@@ -272,11 +272,11 @@ void Geometry::getClosestPoint(const Geometry::GetClosestPointInput& input, Geom
     // inside triangle
     output->position = pr;
     bool positive = 0.0f <= input.tri->normal_.dot(pt);
-    output->normal = positive ? input.tri->normal_ : -1.0f * input.tri->normal_;
+    output->normal = positive ? input.tri->normal_ : static_cast<Vector3>(-1.0f * input.tri->normal_);
     output->distance = std::fabs(input.tri->normal_.dot(pt-pr));
   } else if (numPos == 2) {
     // outside triangle, closest to an edge
-    lastNegIdx; // index of the edge
+    //lastNegIdx; // index of the edge
     Vector3 edgeStart = input.mesh->getVertex(input.tri->vIndices_[lastNegIdx]); // edge start
     Vector3 edgeEnd = input.mesh->getVertex(input.tri->vIndices_[(lastNegIdx+1)%3]); // edge end
     Vector3 edge = edgeEnd - edgeStart;

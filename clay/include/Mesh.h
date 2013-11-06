@@ -12,7 +12,9 @@
 #include "Triangle.h"
 #include "Vertex.h"
 #include "State.h"
+#if _WIN32
 #include "omp.h"
+#endif
 #include "Geometry.h"
 #include "GLBuffer.h"
 #include "Brush.h"

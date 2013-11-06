@@ -612,7 +612,7 @@ void ClayDemoApp::mouseDrag( MouseEvent event )
 
 void ClayDemoApp::mouseWheel( MouseEvent event)
 {
-  float off = event.getWheelIncrement();
+  //float off = event.getWheelIncrement();
   _cam_dist -= 0.1f*event.getWheelIncrement();
   _cam_dist = std::min(MAX_CAMERA_DIST, std::max(0.5f, _cam_dist));
 }
@@ -741,7 +741,7 @@ void ClayDemoApp::updateLeapAndMesh() {
     bool supress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), supress)) {    
       const double curTime = ci::app::getElapsedSeconds();
-      const double lastSculptTime = sculpt_.getLastSculptTime();
+      //const double lastSculptTime = sculpt_.getLastSculptTime();
 
       if (mesh_) {
         mesh_->updateRotation(curTime);
@@ -1189,12 +1189,11 @@ void ClayDemoApp::draw()
 int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic::prepareLaunch();
   cinder::app::AppBasic *app = new ClayDemoApp;
-  //cinder::app::RendererRef ren(new RendererGl);
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
 #if _WIN32
   cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo");
 #else
-  cinder::app::AppBasic::executeLaunch( app, &ren, "ClayDemo", argc, argv);
+  cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo", argc, argv);
 #endif
   cinder::app::AppBasic::cleanupLaunch();
   return 0;

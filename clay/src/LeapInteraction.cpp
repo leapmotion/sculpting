@@ -57,14 +57,14 @@ void LeapInteraction::interact(double curTime)
   static const float ZOOM_SPEED = 50.0f;
   static const float AGE_WARMUP_TIME = 0.75;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
-  static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
+  //static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
   static const float MIN_TIME_BETWEEN_FRAMES = 0.000001f;
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 200, 100);
   Leap::HandList hands = _cur_frame.hands();
   const float ui_mult = 1.0f - _ui->maxActivation();
-  const int num_hands = hands.count();
+  //const int num_hands = hands.count();
   const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
   if (deltaTime < MIN_TIME_BETWEEN_FRAMES) {
     return;

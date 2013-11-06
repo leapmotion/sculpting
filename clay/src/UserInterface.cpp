@@ -56,7 +56,7 @@ void UserInterface::addConnection(const std::string& _First, const std::string& 
 
 void UserInterface::update(const std::vector<Vec4f>& _Tips)
 {
-  static const float ACTIVATION_BONUS_RADIUS = 0.4f;
+  //static const float ACTIVATION_BONUS_RADIUS = 0.4f;
   static const float ACTIVATION_RATE = 1.75f;
 
   double curTimeSeconds = app::getElapsedSeconds();
@@ -257,7 +257,7 @@ void UserInterface::draw(Environment* _Env, const Matrix33f& normalMatrix) const
     int idx = _elements[i].getMetaballIdx();
     if (idx >= 0)
     {
-      float activation = Utilities::SmootherStep(_elements[i].getActivation());
+      //float activation = Utilities::SmootherStep(_elements[i].getActivation());
       Vec2f pos = _metaball_positions[idx];
       pos.y = _windowSize.y - pos.y;
       ColorA textColor(ColorA::white());

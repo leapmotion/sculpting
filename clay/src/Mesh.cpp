@@ -546,7 +546,7 @@ void Mesh::updateGPUBuffers() {
   indexUpdates_.clear();
   indicesBuffer_.bind(); indicesBuffer_.unmap(); indicesBuffer_.release();
 
-  int numVertex = 0;
+  //int numVertex = 0;
   if (reallocateVerticesBuffer_) {
     initVertexVBO();
   }

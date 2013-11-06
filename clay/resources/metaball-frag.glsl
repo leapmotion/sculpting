@@ -1,5 +1,5 @@
 #define MAX_METABALLS 30
-#define POWER 8
+#define POWER 8.0
 
 uniform vec2 positions[MAX_METABALLS];
 uniform float radii[MAX_METABALLS];
@@ -18,7 +18,7 @@ const float thresh_upper = 500.0;
 const float thresh_lower = 0.0;
 const float smooth_mult = 1.0/(thresh_upper - thresh_lower);
 const vec3 eye_dir = vec3(0, 0, -1);
-const float ambient_scale = 8.0f;
+const float ambient_scale = 8.0;
 
 void main(void)
 {
@@ -43,7 +43,7 @@ void main(void)
     // step 2
     float rN = pow(r, POWER);
     float xN = pow(x, POWER);
-    float xN_1 = pow(x, POWER-1);
+    float xN_1 = pow(x, POWER-1.0);
     float sum = rN + xN;
     float term1 = rN / sum;
     float w = weights[i] * term1;
@@ -52,7 +52,7 @@ void main(void)
 
     // step 3
     float h = r*r - x*x;
-    vec2 hVec = -2 * diff;
+    vec2 hVec = -2.0 * diff;
 
     // step 4
     float g = h * w;
