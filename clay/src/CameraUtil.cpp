@@ -402,7 +402,22 @@ void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const V
   (*coordsOut)[2] = 1 - (*coordsOut)[0] - (*coordsOut)[1];
 }
 
-void CameraUtil::UpdateCamera(const Mesh* mesh, const Params& params) {
+void CameraUtil::GetNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* normalOut) {
+  Vector3 coords;
+  GetBarycentricCoordinates(mesh, triIdx, point, &coords);
+  const Triangle& tri = mesh->getTriangle(triIdx);
+  const Vertex& v1 = mesh->getVertex(tri.vIndices_[0]);
+  const Vertex& v2 = mesh->getVertex(tri.vIndices_[1]);
+  const Vertex& v3 = mesh->getVertex(tri.vIndices_[2]);
+
+  Vector3 normal = Vector3::Zero();
+  normal += coords[0] * v1.normal_;
+  normal += coords[1] * v2.normal_;
+  normal += coords[2] * v3.normal_;
+
+  *normalOut = normal.normalized();
+}
+
 
 
 void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
@@ -424,39 +439,43 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   debugDrawUtil->SwitchBuffers();
 
   // Check time
+  lmReal dt = 0.0f;
   {
     lmReal prevTime = lastCameraUpdateTime;
     lmReal time = lmReal(ci::app::getElapsedSeconds());
     lastCameraUpdateTime = time;
     if (prevTime < 0.0f) { prevTime = time; }
+    dt = time - prevTime;
+  }
+  lmReal dtOne = 1.0f;
+  lmReal dtZero = 0.0f;
+  if(!params.enableSmoothing)
+  {
+    dt = dtOne;
   }
 
   // Accumulate userInput in 2d
-  accumulatedUserInput += userInput;
-  userInput = 0.1f * accumulatedUserInput;
-  accumulatedUserInput -= userInput;
-
-  // Process smoothed user input
-  Vector3 deltaAngles = userInput;
-  Vector3 movement = -1.0f * (GetFinalCamera().rotation * userInput);
-  userInput.setZero();
+  if (params.enableSmoothing)
+  {
+    accumulatedUserInput += userInput;
+    lmReal smoothingValue = pow(params.smoothingFactor, dt);
+    userInput = (1.0f - smoothingValue) * accumulatedUserInput;
+    accumulatedUserInput -= userInput;
+  }
 
   // Multiply motion by distance:
   const lmReal distFraction = (referenceDistance-params.minDist)/(params.maxDist-params.minDist);
   const lmReal movementRatio = params.speedAtMinDist + distFraction * (params.speedAtMaxDist-params.speedAtMinDist);
 
-  deltaAngles *= movementRatio;
-  movement *= movementRatio;
+  // Process smoothed user input
+  Vector3 deltaAngles = userInput * movementRatio; 
+  Vector3 movement = userInput * movementRatio; movement.z() = 0.0f;
+  movement = -1.0f * (GetFinalCamera().rotation * userInput);
+  userInput.setZero();
 
   lmTransform originalTransform = transform;
   transform.translation += movement;
 
-  // Debug display movement
-  if (debugDrawUtil && params.drawDebugLines) {
-    Vector3 oldP = transform.translation + transform.rotation * (-100.0f * Vector3::UnitZ());
-    Vector3 newP = transform.translation + transform.rotation * (-100.0f * Vector3::UnitZ()) + movement;
-    debugDrawUtil->DrawArrow(oldP, newP);
-  }
 
   // Attempt to calculate new refernce point and normal
   //
@@ -502,7 +521,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
     while (!rayHit && attampts < 16);
   }
 
-  if (!params.useSphereQueryToMoveRefernecePoint || !rayHit)
+  if (!params.sphereCrawlMode || !rayHit)
   {
     std::vector<lmRay> rays;
     GenerateRays(transform, RAY_CAST_BATCH_SIDE, &rays);
@@ -521,49 +540,34 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
         referencePoint.position = rayCastResults[i].position;
         referencePoint.normal.setZero();
         // Calc normal from the triangle
-        Vector3 barycentric;
-        GetBarycentricCoordinates(mesh, rayCastResults[i].triangleIdx, referencePoint.position, &barycentric);
-        const Triangle& tri = mesh->getTriangle(rayCastResults[i].triangleIdx);
-        const Vertex& v1 = mesh->getVertex(tri.vIndices_[0]);
-        const Vertex& v2 = mesh->getVertex(tri.vIndices_[1]);
-        const Vertex& v3 = mesh->getVertex(tri.vIndices_[2]);
-        referencePoint.normal += barycentric[0] * v1.normal_;
-        referencePoint.normal += barycentric[1] * v2.normal_;
-        referencePoint.normal += barycentric[2] * v3.normal_;
-
+        Vector3 normal;
+        GetNormalAtPoint(mesh, rayCastResults[i].triangleIdx, referencePoint.position, &normal);
+        referencePoint.normal += normal;
         refDist = rayCastResults[i].dist;
         minDist = rayCastResults[i].dist;
       }
     }
-    //if (rayHit) {
-    //  referencePoint.position = refPosition;
-    //  referencePoint.normal = refNormal;
-    //}
 
     if (rayHit && params.useSphereQuery) {
       assert(0.1f < referencePoint.normal.squaredNorm() && referencePoint.normal.squaredNorm() < 2.0f  && "Normal wrong..");
       // Perform a sphere cast and average normal
       Vector3 cameraDirection = transform.rotation * Vector3(0.0f, 0.0f, -1.0f);
-      //lmReal sphereRadius = 0.25f * referenceDistance;
       lmReal sphereRadius = params.sphereRadiusMultiplier * referenceDistance;
-      Vector3 unusedPosition;
-      Vector3 avgNormal = VecGetAveragedSurfaceNormal(mesh, referencePoint, sphereRadius, cameraDirection, &unusedPosition);
+
+      Geometry::GetClosestPointOutput closestPoint;
+      lmSurfacePoint avgVertex;
+      VecGetAveragedSurfaceNormal(mesh, referencePoint, sphereRadius, cameraDirection, params.weightNormals, &avgVertex, &closestPoint);
+      if (!lmIsNormalized(closestPoint.normal)) {
+        GetClosestPoint(mesh, referencePoint, sphereRadius, cameraDirection, &closestPoint);
+      }
+      Vector3 avgNormal = avgVertex.normal;
+
       TODO(adrian, make mesh crawling indepenent of the camera pos);
-      //Vector3 avgNormal = VecGetAveragedSurfaceNormal(mesh, referencePoint, sphereRadius, -referencePoint.normal, &unusedPosition);
+
       referencePoint.normal = lmInterpolate(0.3f, referencePoint.normal, avgNormal).normalized();
       assert(0.1f < referencePoint.normal.squaredNorm() && referencePoint.normal.squaredNorm() < 2.0f  && "Normal wrong..");
     }
   }
-
-  // Based on the old/new reference points and their normals determine.
-  //  - angled motion
-  //  - orientation change
-
-  // 1. reorient camera to half rotation between future and current positions
-  //   - determine arc the camera would travel from original position to position right above the newly found
-  //     reference point.
-  //   - scale the rotation & translation to do. 
-  //   - goto (2) raycasts.
 
   // Adjust translation to user input.
   if (rayHit) {
@@ -573,22 +577,31 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
     }
 
     // clean up:
-    //referenceDistance = targetDist;
     referenceDistance -= deltaAngles.z();
     referenceDistance = std::max(params.minDist, referenceDistance);
     referenceDistance = std::min(params.maxDist, referenceDistance);
-    LM_LOG << "Reference distance is " << referenceDistance << std::endl;
 
     // testing settings
     static bool adjustDistance = true;
     static bool adjustOrientation = true;
 
-    if (adjustOrientation) { CorrectCameraOrientation(); }
-    if (params.useSphereQueryToMoveRefernecePoint) {
+    if (adjustOrientation) {
+      if (!params.sphereCrawlMode && !params.freeRotationEnabled)
+      {
+        CorrectCameraOrientation(dtOne, referencePoint.normal);
+      }
+      //else
+      //{
+      //  Vector3 newCameraNormal = transform.rotation * Vector3::UnitZ();
+      //  transform.rotation = oldCamera.rotation;
+      //  CorrectCameraOrientation(dtOnedt, newCameraNormal);
+      //}
+    }
+    if (params.sphereCrawlMode) {
       // recalc refdist
       refDist = (referencePoint.position - transform.translation).norm();
     }
-    if (adjustDistance) { CorrectCameraDistance(refDist); }
+    if (adjustDistance) { CorrectCameraDistance(dt, refDist); }
   } else if (0) {
     // backup - no ray hit
     // 0. interaction test -- freefloat'ed orientation around the origin.
@@ -604,25 +617,9 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   }
 
   // don't update transform when there's no successful raycast
-  if (params.pinUpVector) { CorrectCameraUpVector(Vector3::UnitY()); }
+  if (params.pinUpVector) { CorrectCameraUpVector(dt, Vector3::UnitY()); }
 
   return;
-
-  // 2. raycasts again
-  //  - problem: rotation too high, and the new reference point is in the direction opposite of our movement
-  //  - problem: surface at new reference point has much different normal 
-  //    - make movement smaller, 
-  //    - raycast range larger, 
-  //    - and raycast density higher.
-
-  // 3. at the end we might also store some type of orientation between the terrain and the camera ... 
-  //  - and possibly bend it over time, so that the orientation to ground stays consistent, but
-  //    does not move abruptly (hence blending)
-
-
-
-  // Verify the camera position is valid and is not, e.g.
-  //  - within the mesh
 }
 
 
@@ -635,15 +632,18 @@ lmTransform CameraUtil::GetFinalCamera() {
   }
 }
 
-void CameraUtil::CorrectCameraOrientation() {
-  lmReal adjustOrientationRate = 1.0f;//0.1f;
-  if (params.smoothCameraOrientation) {
-    adjustOrientationRate = params.smoothingFactor;
+void CameraUtil::CorrectCameraOrientation(lmReal dt, const Vector3& newNormal) {
+  LM_ASSERT(lmIsNormalized(newNormal), "");
+
+  lmReal adjustOrientationRate = 0.0f;
+  if (params.enableSmoothing && 0.0f < dt) {
+    adjustOrientationRate = std::pow(params.smoothingFactor, dt);
   }
 
   // Roation quaternion.
   Vector3 oldZ = transform.rotation * Vector3::UnitZ();
-  Vector3 newZ = referencePoint.normal;
+  //Vector3 newZ = referencePoint.normal;
+  Vector3 newZ = newNormal;
 
   // Adjust orientation and angle
 
@@ -651,21 +651,21 @@ void CameraUtil::CorrectCameraOrientation() {
   lmQuat dQ; dQ.setFromTwoVectors(oldZ, newZ);
 
   // Modify camera transform
-  dQ = dQ.slerp((1.0f-adjustOrientationRate), lmQuat::Identity());
+  dQ = dQ.slerp(adjustOrientationRate, lmQuat::Identity());
   transform.rotation = dQ * transform.rotation;
 
   Vector3 cameraFromRefPoint = transform.translation - referencePoint.position;
   transform.translation = referencePoint.position + dQ * cameraFromRefPoint;
 }
 
-void CameraUtil::CorrectCameraDistance(lmReal currentDistance) {
-  lmReal smoothingRate = 0.2f;
+void CameraUtil::CorrectCameraDistance(lmReal dt, lmReal currentDistance) {
+  lmReal smoothingValue = std::pow(0.8f, dt);
   lmReal deltaDist = referenceDistance - currentDistance;
-  Vector3 deltaTranslation = smoothingRate * deltaDist * (transform.rotation * Vector3::UnitZ()); // 'smoother' movement; add continues velocity though.
+  Vector3 deltaTranslation = (1.0f-smoothingValue) * deltaDist * (transform.rotation * Vector3::UnitZ()); // 'smoother' movement; add continues velocity though.
   transform.translation += deltaTranslation;
 }
 
-void CameraUtil::CorrectCameraUpVector(const Vector3& up) {
+void CameraUtil::CorrectCameraUpVector(lmReal dt, const Vector3& up) {
 
   // Camera's xy-plane normal
   Vector3 xyPlaneNormal = transform.rotation * Vector3::UnitZ();
@@ -680,10 +680,10 @@ void CameraUtil::CorrectCameraUpVector(const Vector3& up) {
     // Calc correction rotation and rate.
     Vector3 oldUp = transform.rotation * Vector3::UnitY();
     lmQuat dQ; dQ.setFromTwoVectors(oldUp, newUp);
-    lmReal adjustOrientationRate = 0.1f; //std::max(0.0f, -0.2f + 1.2f * std::fabs(xyPlaneNormalDotUp));
+    lmReal adjustOrientationRate = std::pow(0.9f, dt); //std::max(0.0f, -0.2f + 1.2f * std::fabs(xyPlaneNormalDotUp));
 
     // Apply correction.
-    dQ = dQ.slerp((1.0f-adjustOrientationRate), lmQuat::Identity());
+    dQ = dQ.slerp(adjustOrientationRate, lmQuat::Identity());
     transform.rotation = dQ * transform.rotation;
   }
 }

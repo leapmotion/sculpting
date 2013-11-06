@@ -199,16 +199,18 @@ private:
   // todo: move to MathUtils ?
   static void GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut);
 
+  static void GetNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* normalOut);
+
   // Correct orientation.
-  void CorrectCameraOrientation();
+  void CorrectCameraOrientation(lmReal dt, const Vector3& newNormal);
 
   // Correct distance from the mesh.
   //
   // todo: remove param.
-  void CorrectCameraDistance(lmReal currentDistance);
+  void CorrectCameraDistance(lmReal dt, lmReal currentDistance);
 
   // Correct up vector
-  void CorrectCameraUpVector(const Vector3& up);
+  void CorrectCameraUpVector(lmReal dt, const Vector3& up);
 
   // Gets blended camera view transforms
   lmTransform GetHybridCameraTransform();
