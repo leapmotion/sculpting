@@ -49,8 +49,9 @@ namespace Geometry {
     Vector3 position;
     Vector3 normal;
     lmReal distance;
+    int triIdx;
 
-    GetClosestPointOutput() : position(Vector3::Zero()), normal(Vector3::Zero()), distance(-1.0f) {}
+    GetClosestPointOutput() : position(Vector3::Zero()), normal(Vector3::Zero()), distance(-1.0f), triIdx(-1) {}
   };
 
   void getClosestPoint(const GetClosestPointInput& input, GetClosestPointOutput* output);

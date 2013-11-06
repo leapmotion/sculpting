@@ -55,6 +55,8 @@ struct lmSurfacePoint {
   Vector3 position;
   Vector3 normal;
 
+  lmSurfacePoint() {}
+  lmSurfacePoint(const Vector3& p, const Vector3& n) : position(p), normal(n) {}
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
