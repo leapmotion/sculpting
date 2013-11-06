@@ -60,6 +60,7 @@ public:
   float _radius_squared;
   float _length;
   float _strength;
+  float _activation;
   Vector3 _position;
   Vector3 _direction;
   Vector3 _velocity;

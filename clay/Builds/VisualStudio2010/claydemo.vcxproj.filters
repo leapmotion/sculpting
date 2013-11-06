@@ -240,5 +240,8 @@
     <None Include="..\..\resources\bloom-frag.glsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\..\resources\brush-vert.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -23,6 +23,7 @@ LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui)
 
 bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress)
 {
+  static const double MIN_TIME_BETWEEN_FRAMES = 0.000001;
   _model_view_inv = modelView.inverted();
   _model_view = modelView;
   _projection = projection;
@@ -36,11 +37,12 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
   else if (listener.isConnected() && listener.waitForFrame(_cur_frame, 33))
   {
     std::unique_lock<std::mutex> brushLock(_sculpt->getBrushMutex());
-    _sculpt->clearBrushes();
     std::unique_lock<std::mutex> tipsLock(_tips_mutex);
     const double time = Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp());
-    _tips.clear();
-    if (_last_frame.isValid() && (_cur_frame.timestamp() != _last_frame.timestamp())) {
+    const double prevTime = Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_last_frame.timestamp());
+    if (_last_frame.isValid() && fabs(time - prevTime) > MIN_TIME_BETWEEN_FRAMES) {
+      _sculpt->clearBrushes();
+      _tips.clear();
       updateHandInfos(time);
       interact(time);
       cleanUpHandInfos(time);
@@ -58,10 +60,8 @@ void LeapInteraction::interact(double curTime)
   float cur_dzoom = 0;
   static const float ORBIT_SPEED = 0.008f;
   static const float ZOOM_SPEED = 70.0f;
-  static const float AGE_WARMUP_TIME = 0.75;
+  static const float AGE_WARMUP_TIME = 0.4f;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
-  //static const float HAND_INFLUENCE_WARMUP = 0.333f; // time in seconds to reach full strength
-  static const float MIN_TIME_BETWEEN_FRAMES = 0.000001f;
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 200, 50);
@@ -70,9 +70,6 @@ void LeapInteraction::interact(double curTime)
   const float ui_mult = 1.0f - _ui->maxActivation();
   //const int num_hands = hands.count();
   const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
-  if (deltaTime < MIN_TIME_BETWEEN_FRAMES) {
-    return;
-  }
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
   const Vector3 scaledSize = calcSize(_fov, _reference_distance);
 
@@ -138,7 +135,9 @@ void LeapInteraction::interact(double curTime)
             if (_autoBrush) {
               adjRadius *= autoBrushScaleFactor;
             }
-            _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength);
+            if (strengthMult > 0.9f) {
+              _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, strengthMult);
+            }
           }
 
           // compute a point on the surface of the sphere to use as the screen-space radius

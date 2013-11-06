@@ -47,7 +47,7 @@ void main()
     vec3 lightdir = (brushPositions[i] - worldPosition)/lightdist;
     if (i < numLights - 1) {
       if (lightdist > brushRadii[i]*0.85 && lightdist < brushRadii[i]) {
-        highlightColor += lightColor;
+        highlightColor += brushWeights[i] * lightColor;
       }
     } else {
       float distMult = (lightdist / brushRadii[i]);

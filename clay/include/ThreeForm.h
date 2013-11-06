@@ -83,6 +83,7 @@ private:
   Environment* _environment;
   GlslProg _sky_shader;
   GlslProg _material_shader;
+  GlslProg _brush_shader;
   GlslProg _blur_shader;
   GlslProg _wireframe_shader;
   Fbo _color_fbo;

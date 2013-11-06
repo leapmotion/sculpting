@@ -288,7 +288,7 @@ void ClayDemoApp::setMaterial(const std::string& str)
     _ambient_factor = 0.0f;
     _diffuse_factor = 1.0f;
     _reflection_factor = 0.1f;
-    _surface_color = Color(0.0f, 0.8f, 1.0f);
+    _surface_color = Color(0.0f, 0.4f, 1.0f);
     _reflection_bias = 0.5f;
   }
   else if (str == "Onyx")
@@ -314,7 +314,7 @@ void ClayDemoApp::setMaterial(const std::string& str)
     _ambient_factor = 0.0f;
     _diffuse_factor = 1.0f;
     _reflection_factor = 0.5f;
-    _surface_color = Color(0.225f, 0.275f, 0.3f);
+    _surface_color = Color(0.2f, 0.25f, 0.275f);
     _reflection_bias = 0.0f;
   }
 }
@@ -445,6 +445,7 @@ void ClayDemoApp::setup()
     _blur_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLUR_FRAG_GLSL ) );
     _screen_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_SCREEN_FRAG_GLSL ) );
     _material_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
+    _brush_shader = gl::GlslProg( loadResource( RES_BRUSH_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
     _wireframe_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_WIREFRAME_FRAG_GLSL ) );
     _metaball_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_METABALL_FRAG_GLSL ) );
     _sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
@@ -913,7 +914,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
   for (int i=0; i<numBrushes; i++) {
     const Vector3& pos = brushes[i]._position;
     brushPositions.push_back(ci::Vec3f(pos.x(), pos.y(), pos.z()));
-    brushWeights.push_back(brushes[i]._strength);
+    brushWeights.push_back(brushes[i]._activation);
     brushRadii.push_back(brushes[i]._radius);
   }
 
@@ -1018,35 +1019,26 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     _wireframe_shader.unbind();
   }
 
-
   // draw brushes
-#if 0
-  _material_shader.uniform( "transform", Matrix44f::identity() );
-  _material_shader.uniform( "transformit", Matrix44f::identity() );
-  _material_shader.uniform( "useRefraction", false);
-  _material_shader.uniform( "ambientFactor", 0.15f );
-  _material_shader.uniform( "diffuseFactor", 0.15f );
-  _material_shader.uniform( "reflectionFactor", 0.2f );
-  _material_shader.uniform( "surfaceColor", _brush_color );
-  _material_shader.uniform( "reflectionBias", 0.0f );
-  _material_shader.uniform( "numLights", 0 );
-  const BrushVector& brushes = sculpt_.getBrushes();
+  _brush_shader.bind();
+  _brush_shader.uniform( "campos", _Camera.getEyePoint() );
+  _brush_shader.uniform( "irradiance", 0 );
+  _brush_shader.uniform( "radiance", 1 );
+  _brush_shader.uniform( "useRefraction", false);
+  _brush_shader.uniform( "ambientFactor", 0.3f );
+  _brush_shader.uniform( "diffuseFactor", 0.15f );
+  _brush_shader.uniform( "reflectionFactor", 0.2f );
+  _brush_shader.uniform( "surfaceColor", _brush_color );
+  _brush_shader.uniform( "reflectionBias", 2.0f );
+  _brush_shader.uniform( "numLights", 0 );
   for (size_t i=0; i<brushes.size(); i++) {
-    _material_shader.uniform("alphaMult", brushes[i]._weight);
-    const Vector3& pos = brushes[i]._position;
-    ci::Vec3f temp(pos.x(), pos.y(), pos.z());
-    gl::drawSphere(temp, brushes[i]._radius, 30);
-  }
-  _material_shader.unbind();
-#else
-  _environment->unbindCubeMap(0);
-  _environment->unbindCubeMap(1);
-  for (size_t i=0; i<brushes.size(); i++) {
-    ColorA color(_brush_color, 0.25f);
-    gl::color(color);
+    _brush_shader.uniform("alphaMult", 0.6f*brushes[i]._activation);
     brushes[i].draw();
   }
-#endif
+  _brush_shader.unbind();
+
+  _environment->unbindCubeMap(0);
+  _environment->unbindCubeMap(1);
 
   if (drawOctree_) {
     mesh_->drawOctree();
