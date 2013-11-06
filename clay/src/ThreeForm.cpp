@@ -752,7 +752,7 @@ void ClayDemoApp::update()
   _camera.setPerspective( 60.0f/*_fov*/, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
-#if 1
+#if 0
   // Force load-file prompt
   static bool init = true;
   if (init && ci::app::getElapsedSeconds() > 1) {
