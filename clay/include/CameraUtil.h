@@ -176,6 +176,8 @@ public:
 
 private:
 
+  void DebugDrawNormals(const Mesh* mesh, const Params& paramsIn);
+
   // Compute camera transform from standard camera vectors: from, to, & assumed up along y-axis.
   static void GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut);
 
@@ -200,6 +202,8 @@ private:
   static void GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut);
 
   static void GetNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* normalOut);
+
+  void GetSmoothedNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, lmReal radius, Vector3* normalOut);
 
   // Correct orientation.
   void CorrectCameraOrientation(lmReal dt, const Vector3& newNormal);

@@ -350,6 +350,9 @@ void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const flo
 }
 
 void CameraUtil::RecordUserInput(const Vector3& deltaPosition, bool controlOn) {
+#if DISABLE_LEAP
+  return;
+#endif
   boost::unique_lock<boost::mutex> lock(mutex);
   lmReal prevTime = lastUserInputFromVectorTime;
   lmReal time = lmReal(ci::app::getElapsedSeconds());
@@ -418,9 +421,66 @@ void CameraUtil::GetNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& p
   *normalOut = normal.normalized();
 }
 
+void CameraUtil::GetSmoothedNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, lmReal radius, Vector3* normalOut) {
+  Vector3 coords;
+  GetBarycentricCoordinates(mesh, triIdx, point, &coords);
+  const Triangle& tri = mesh->getTriangle(triIdx);
+  const Vertex& v1 = mesh->getVertex(tri.vIndices_[0]);
+  const Vertex& v2 = mesh->getVertex(tri.vIndices_[1]);
+  const Vertex& v3 = mesh->getVertex(tri.vIndices_[2]);
+
+  lmSurfacePoint avgSurfacePoint[3];
+  Geometry::GetClosestPointOutput closestPoint[3];
+  Vector3 normals[3];
+  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v1, v1.normal_), radius, -1.0f * v1.normal_, true, avgSurfacePoint+0, closestPoint+0);
+  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v2, v2.normal_), radius, -1.0f * v2.normal_, true, avgSurfacePoint+1, closestPoint+1);
+  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v3, v3.normal_), radius, -1.0f * v3.normal_, true, avgSurfacePoint+2, closestPoint+2);
+
+  Vector3 normal = Vector3::Zero();
+  //normal += coords[0] * v1.normal_;
+  //normal += coords[1] * v2.normal_;
+  //normal += coords[2] * v3.normal_;
+  normal += coords[0] * avgSurfacePoint[0].normal;
+  normal += coords[1] * avgSurfacePoint[1].normal;
+  normal += coords[2] * avgSurfacePoint[2].normal;
+
+  *normalOut = normal.normalized();
+}
+
+void CameraUtil::DebugDrawNormals(const Mesh* mesh, const Params& paramsIn) {
+  // Draw normal for every nth triangle
+  TriangleVector trangles = const_cast<Mesh*>(mesh)->getTriangles();
+  VertexVector vertices = const_cast<Mesh*>(mesh)->getVertices();
+
+  lmReal sphereRadius = params.sphereRadiusMultiplier * referenceDistance;
+
+  for (size_t i = 0; i < vertices.size(); i+= 1) {
+    Vertex vert = vertices[i];
+
+    lmSurfacePoint refPoint(vert, vert.normal_);
+    lmSurfacePoint newAvgVertex;
+    Geometry::GetClosestPointOutput newClosestPoint;
+    VecGetAveragedSurfaceNormal(mesh, refPoint, sphereRadius, -1.0f * vert.normal_, paramsIn.weightNormals, &newAvgVertex, &newClosestPoint);
+
+    if(debugDrawUtil) {
+      //debugDrawUtil->DrawArrow(vert, vert + vert.normal_ * 10.0f);
+      debugDrawUtil->DrawArrow(vert, vert + newAvgVertex.normal * 10.0f);
+    }
+
+  }
+
+
+  for (size_t i = 0; i < trangles.size(); i++) {
+    Triangle tri = trangles[i];
+
+  }
+
+}
 
 
 void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
+
+  //DebugDrawNormals(mesh, paramsIn);
 
   assert(mesh && "Mesh required");
   boost::unique_lock<boost::mutex> lock(mutex);
