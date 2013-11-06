@@ -607,7 +607,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
             movement = sideComponent + leftover * parallelComponent;
             LM_ASSERT(movement.squaredNorm() < 100000000.0f, "");
 
-            std::cout << "ORIENTATION corrected" << std::endl;
+            // std::cout << "ORIENTATION corrected" << std::endl;
           }
         }
       }
@@ -707,7 +707,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
           Vector3 deltaNormalPerpMotion = deltaNormal - deltaNormalAlongMotion;
 
           lmReal movementDot = movementDir.dot(deltaNormalAlongMotion);
-          std::cout << "Movement Dot: " << movementDot << std::endl;
+          // std::cout << "Movement Dot: " << movementDot << std::endl;
           // Apply the normal delta along only if it's towards the back
           //if (params.tmpSwitch || movementDot < 0.0f)
           if (params.tmpSwitch || fowardVerticesDetected)
@@ -715,11 +715,11 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
             if (!params.tmpSwitch) {
               backwardsNormalChange = true;
             }
-            std::cout << "ORIENTATION backward detected" << std::endl;
+            // std::cout << "ORIENTATION backward detected" << std::endl;
           }
           else
           {
-            std::cout << "ORIENTATION forward, clipped" << std::endl;
+            // std::cout << "ORIENTATION forward, clipped" << std::endl;
 
             // forward normal change -- let the 'explicity camera movement' code handle that
             Vector3 clippedNormal = (oldCalcPoint.normal + deltaNormalPerpMotion).normalized();
@@ -785,7 +785,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
           // Add camera translation
           lmReal movedFraction = std::min((closestDist+LM_EPSILON)/(refDist+LM_EPSILON), 1.0f);
-          std::cout << "MOVED FRACTION: " << movedFraction << std::endl;
+          // std::cout << "MOVED FRACTION: " << movedFraction << std::endl;
           if (backwardsNormalChange) {
             movedFraction = 1.0f;
           }
