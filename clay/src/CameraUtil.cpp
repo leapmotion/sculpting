@@ -222,8 +222,17 @@ void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoin
   }
 }
 
+void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut) {
+  avgSurfacePoint->position.setZero();
+  avgSurfacePoint->normal.setZero();
+
   Vector3 normal = Vector3::Zero();
   Vector3 position = Vector3::Zero();
+
+  Geometry::GetClosestPointOutput closestPoint;
+  closestPoint.distance = FLT_MAX;
+  int closestTriangleIdx = -1;;
+
 
   std::vector<int> verts;
   const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
@@ -239,41 +248,62 @@ void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoin
 
       // Discard rear-facing triangles
       lmReal camDotTNormal = cameraDirection.dot(tri.normal_);
-      if (camDotTNormal < 0.0f)
+      Vector3 center = TriCenter(mesh, tri);
+      //lmReal camDotCenter = cameraDirection.dot(center - referencePoint.position);
+      if (camDotTNormal < 0.0f)// || camDotCenter < 0.0f)
       {
-        lmReal weight = std::max(0.0f, -camDotTNormal);
-
+        lmReal weight = weightNormals ? std::max(0.0f, -camDotTNormal) : 1.0f;
         // Calc distance and weight
-        Vector3 center = TriCenter(mesh, tri);
         lmReal a = TriArea(mesh, tri);
 
+        Geometry::GetClosestPointOutput output;
+        {
+          Geometry::GetClosestPointInput input;
+          input.mesh = mesh;
+          input.tri = &tri;
+          input.point = referencePoint.position;
+          Geometry::getClosestPoint(input, &output);
+          output.triIdx = tris[ti];
+          if (output.distance < closestPoint.distance) {
+            closestPoint = output;
+            closestTriangleIdx = tris[ti];
+          }
+
+#if DRAW_SPHERE_QUERY_RESULTS
+          if (debugDrawUtil && params.drawDebugLines) {
+            debugDrawUtil->DrawTriangle(mesh, tri);
+          }
+#endif
+        }
+
         // Calc point weight
-        Vector3 diff = center - referencePoint.position;
-        lmReal t = diff.norm() / radius;
+        lmReal t = closestPoint.distance / radius;
         t = 1.0f - std::min(1.0f, t);
         t = t*t;
-
         // Add weigth based on normal
-        // todo:
         t = t * weight;
-
         // Average taking area into account
         normal += t * a * tri.normal_;
         position += t * a * center;
         area += t * a;
       }
-
-      if (debugDrawUtil && params.drawDebugLines) {
-        debugDrawUtil->DrawCross(TriCenter(mesh, tri), 5.0f);
-      }
-
     }
+
     if (0.0f < area)
     {
-      //normal /= area;
-      normal.normalize();
-      position /= area;
-      *avgPosition = position;
+      avgSurfacePoint->position = position / area;
+      avgSurfacePoint->normal = normal.normalized();
+
+//#if DRAW_SPHERE_QUERY_RESULTS
+//      if (debugDrawUtil && params.drawDebugLines) {
+//        std::vector<Vector3>& lines = debugDrawUtil->GetDebugLines();
+//        //lines.push_back(center);
+//        //lines.push_back(output.position);
+//        debugDrawUtil->DrawCross(position , 10.0f);
+//        debugDrawUtil->DrawArrow(position, position + 20.0f * normal);
+//      }
+//#endif
+
     }
 
   } else {
@@ -285,25 +315,32 @@ void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoin
 
       // Discard rear-facing triangles
       lmReal camDotVNormal = cameraDirection.dot(vert.normal_);
-      if (camDotVNormal < 0.0f)
+      lmReal camDotCenter = cameraDirection.dot(vert - referencePoint.position);
+      if (camDotVNormal < 0.0f)// || camDotCenter < 0.0f)
       {
-        lmReal weight = std::max(0.0f, -camDotVNormal);
+        lmReal weight = weightNormals ? std::max(0.0f, -camDotVNormal) : 1.0f;
         normal += vert.normal_ * weight;
         position += weight * vert;
         sumWeight += weight;
 
+#if DRAW_SPHERE_QUERY_RESULTS
         if (debugDrawUtil && params.drawDebugLines) {
           debugDrawUtil->DrawCross(vert, 5.0f);
         }
+#endif
       }
     }
     if (0.0f < sumWeight) {
-      normal.normalize();
-      position /= sumWeight;
-      *avgPosition = position;
+      avgSurfacePoint->position = position / sumWeight;
+      avgSurfacePoint->normal = normal.normalized();
     }
   }
-  return normal;
+
+  if (closestPoint.distance < FLT_MAX)
+  {
+    GetNormalAtPoint(mesh, closestTriangleIdx, closestPoint.position, &closestPoint.normal);
+  }
+  *closestPointOut = closestPoint;
 }
 
 void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov) {

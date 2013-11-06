@@ -192,7 +192,7 @@ private:
   void FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices );
 
   // Performs a sphere query on the mesh, and returns average normal of the visible surface
-  Vector3 VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, Vector3* avgPosition);
+  void VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut);
 
   // Helper functions.
 
