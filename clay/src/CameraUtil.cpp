@@ -1,11 +1,19 @@
 #include "StdAfx.h"
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
+#include "Geometry.h"
+
+#define DRAW_SPHERE_QUERY_RESULTS 1
+#define DISABLE_LEAP 0
+
+#define PREFER_CLOSEST_NORMAL 0
 
 
 CameraUtil::CameraUtil() {
   transform.translation.setZero();
   transform.rotation.setIdentity();
+  smoothedTransform.translation.setZero();
+  smoothedTransform.rotation.setIdentity();
   referencePoint.position.setZero();
   referencePoint.normal.setZero(); // invalid
   referenceDistance = 0.0f;
@@ -15,13 +23,16 @@ CameraUtil::CameraUtil() {
   debugDrawUtil = NULL;
   lastUserInputFromVectorTime = -1.0f;
   lastCameraUpdateTime = -1.0f;
-
+  avgVertex.position.setZero();
+  avgVertex.normal.setZero();
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
   boost::unique_lock<boost::mutex> lock(mutex);
 
   GetTransformFromStandardCamera(from, to, transform);
+  smoothedTransform = transform;
+
   this->referenceDistance = referenceDistance;
   state = STATE_FREEFLOATING;
 }
@@ -301,9 +312,24 @@ void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const V
 }
 
 void CameraUtil::UpdateCamera(const Mesh* mesh, const Params& params) {
+
+
+void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
+
   assert(mesh && "Mesh required");
   boost::unique_lock<boost::mutex> lock(mutex);
-  this->params = params;
+  if (!this->params.walkSmoothedNormals && paramsInOut->walkSmoothedNormals)
+  {
+    paramsInOut->freeRotationEnabled = false;
+    paramsInOut->enableNormalCorrection = false;
+    paramsInOut->useAvgNormal = false;
+    paramsInOut->suppresForwardRotation = false;
+    paramsInOut->tmpSwitch = false;
+    paramsInOut->walkSmoothedNormals = true;
+  }
+
+  this->params = *paramsInOut;
+
   debugDrawUtil->SwitchBuffers();
 
   // Check time
@@ -588,5 +614,19 @@ lmTransform CameraUtil::GetHybridCameraTransform() {
   tOut.translation = transform.translation;
   // Interpolate orientation
   tOut.rotation = transform.rotation.slerp(t, orbitingTransform.rotation);
+
   return tOut;
+}
+
+lmTransform CameraUtil::GetSmoothedCamera(lmReal dt) {
+  return transform;
+
+  //lmReal smoothingRate = 0.9f;
+  //lmReal smoothingValue = std::pow(smoothingRate, dt);
+  //lmReal t = smoothingValue;
+
+  //smoothedTransform.translation = (1.0f-t)*transform.translation + t*smoothedTransform.translation;
+  //smoothedTransform.rotation = transform.rotation.slerp(t, smoothedTransform.rotation);
+
+  //return smoothedTransform;
 }

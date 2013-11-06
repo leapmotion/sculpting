@@ -22,6 +22,8 @@
 #include "Mesh.h"
 #include "Sculpt.h"
 
+#include "Geometry.h" // for GetClosestPointOutput declaration
+
 
 class Mesh;
 class DebugDrawUtil;
@@ -69,7 +71,6 @@ public:
     lmReal speedAtMinDist;
     lmReal speedAtMaxDist;
     bool pinUpVector;
-    bool smoothCameraOrientation;
     lmReal smoothingFactor;
     bool drawDebugLines;
 
@@ -80,8 +81,27 @@ public:
     // Detailed camera options
     bool useSphereQuery;
     lmReal sphereRadiusMultiplier;
-    bool useSphereQueryToMoveRefernecePoint;
+    bool sphereCrawlMode;
     bool userFaultyTriangles;
+
+    bool freeRotationEnabled;
+    lmReal freeRotationRatio;
+    bool enableNormalCorrection;
+    bool useAvgNormal;
+
+    bool suppresForwardRotation;
+    bool tmpSwitch;
+
+    bool enableSmoothing;
+    bool weightNormals;
+
+    bool clipTranslationOnFreeRotate;
+
+    bool walkSmoothedNormals;
+
+    bool overrideNormal;
+    bool useClosestPointForEdges;
+
 
     Params() {
       minDist= 10.0f;
@@ -89,17 +109,42 @@ public:
       speedAtMinDist = 0.5f;
       speedAtMaxDist = 2.5f;
       pinUpVector = true;
-      smoothCameraOrientation = true;
-      smoothingFactor = 0.5f;
+      smoothingFactor = 0.02f;
       drawDebugLines = false;
 
       blendMinDist = 100.0f;
       blendMaxDist = 200.0f;
 
       useSphereQuery = true;
-      sphereRadiusMultiplier = 0.35f;
-      useSphereQueryToMoveRefernecePoint = true;
-      userFaultyTriangles = false;
+      sphereRadiusMultiplier = 0.25f;
+      sphereCrawlMode = true;
+      userFaultyTriangles = true;
+
+      freeRotationEnabled = true;
+      freeRotationRatio = 6.0f;
+      enableNormalCorrection = true;
+      useAvgNormal = true;
+
+      suppresForwardRotation = true;
+      tmpSwitch = false;
+
+      enableSmoothing = false;
+      weightNormals = true;
+
+      clipTranslationOnFreeRotate = true;
+      walkSmoothedNormals = false;
+
+      overrideNormal = false;
+      useClosestPointForEdges = true;
+
+// test new method
+      ////freeRotationEnabled = false;
+      ////enableNormalCorrection = false;
+      ////useAvgNormal = false;
+      ////suppresForwardRotation = false;
+      ////tmpSwitch = false;
+      ////walkSmoothedNormals = true;
+//end test new method
     }
   };
 
@@ -122,10 +167,12 @@ public:
   void RecordUserInput(const Vector3& deltaPosition, bool controlOn);
 
   // Update camera position.
-  void UpdateCamera(const Mesh* mesh, const Params& params);
+  void UpdateCamera(const Mesh* mesh, Params* paramsInOut);
 
   // Gets final camera used for graphics.
   lmTransform GetFinalCamera();
+
+  lmTransform GetSmoothedCamera(lmReal dt);
 
 private:
 
@@ -166,9 +213,17 @@ public:
   // Camera's current transform.
   lmTransform transform;
 
+  // Camera's smoothed transform.
+  lmTransform smoothedTransform;
+
   // Most recent reference point on the model (used to compute camera's movement).
   // Unused.
   lmSurfacePoint referencePoint;
+
+  lmSurfacePoint avgVertex;
+
+  // Point on the mesh closest to the reference point.
+  Geometry::GetClosestPointOutput closestPoint;
 
   // Distance from the surface of the model.
   // Unused.

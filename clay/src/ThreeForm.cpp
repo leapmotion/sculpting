@@ -3,6 +3,8 @@
 #include "Files.h"
 #include <time.h>
 
+#include "cinder/app/App.h"
+
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
 
@@ -368,13 +370,24 @@ void ClayDemoApp::setup()
   _params->addParam( "Speed @ Min Dist", &_camera_params.speedAtMinDist, "min=0.01 max=1.0 step=0.1" );
   _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
   _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
-  _params->addParam( "Smooth camera", &_camera_params.smoothCameraOrientation, "" );
-  _params->addParam( "Smooth factor", &_camera_params.smoothingFactor, "min=0.02 max=1.0 step=0.02" );
   _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
   _params->addParam( "Use Sphere Query", &_camera_params.useSphereQuery, "" );
-  _params->addParam( "Sphere R Mult", &_camera_params.sphereRadiusMultiplier, "min=0.0125 max=0.5 step=0.0125" );
-  _params->addParam( "Crawl mode.", &_camera_params.useSphereQueryToMoveRefernecePoint, "" );
+  _params->addParam( "Sphere R Mult", &_camera_params.sphereRadiusMultiplier, "min=0.0125 max=0.75 step=0.0125" );
+  _params->addParam( "Crawl mode.", &_camera_params.sphereCrawlMode, "" );
   _params->addParam( "Use triangles.", &_camera_params.userFaultyTriangles, "" );
+  _params->addParam( "Use avg normal", &_camera_params.useAvgNormal, "" );
+  _params->addParam( "Free rotation", &_camera_params.freeRotationEnabled, "" );
+  _params->addParam( "Rotation ratio", &_camera_params.freeRotationRatio, "min=1.0 max=10.0 step=0.25" );
+  _params->addParam( "Normal correction", &_camera_params.enableNormalCorrection, "" );
+  _params->addParam( "Suppers fwd rot", &_camera_params.suppresForwardRotation, "" );
+  _params->addParam( "Weight normals", &_camera_params.weightNormals, "" );
+  _params->addParam( "Smoothing", &_camera_params.enableSmoothing, "" );
+  _params->addParam( "Smooth factor", &_camera_params.smoothingFactor, "min=0.0 max=1.0 step=0.05" );
+  _params->addParam( "Tmp Switch", &_camera_params.tmpSwitch, "" );
+  _params->addParam( "Clip translation", &_camera_params.clipTranslationOnFreeRotate, "" );
+  _params->addParam( "Walk smoothed normals", &_camera_params.walkSmoothedNormals, "" );
+  _params->addParam( "Override normal", &_camera_params.overrideNormal, "" );
+  _params->addParam( "CP for edges", &_camera_params.useClosestPointForEdges, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_ambient_factor, "min=0.0 max=0.5 step=0.01" );
@@ -687,7 +700,11 @@ void ClayDemoApp::update()
   //TODO(adrian, this is not thread shafe);
   //lmTransform tCamera = _camera_util->transform;
   boost::unique_lock<boost::mutex> lock(_camera_util->mutex);
-  lmTransform tCamera = _camera_util->GetFinalCamera();
+  static lmReal time = lmReal(ci::app::getElapsedSeconds());
+  lmReal prevTime = time;
+  time = lmReal(ci::app::getElapsedSeconds());
+
+  lmTransform tCamera = _camera_util->GetSmoothedCamera(time-prevTime);
   lock.unlock();
   campos = ToVec3f(tCamera.translation);
   Vector3 up = tCamera.rotation * Vector3::UnitY();
@@ -706,7 +723,7 @@ void ClayDemoApp::update()
   _camera.setPerspective( 60.0f/*_fov*/, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
-#if 0
+#if 1
   // Force load-file prompt
   static bool init = true;
   if (init && ci::app::getElapsedSeconds() > 1) {
@@ -728,7 +745,7 @@ void ClayDemoApp::updateLeapAndMesh() {
       if (mesh_) {
         mesh_->updateRotation(curTime);
         if (fabs(curTime - sculpt_.getLastSculptTime()) > 0.25) {
-          _camera_util->UpdateCamera(mesh_, _camera_params);
+          _camera_util->UpdateCamera(mesh_, &_camera_params);
         }
         sculpt_.applyBrushes(curTime, symmetry_);
       }
