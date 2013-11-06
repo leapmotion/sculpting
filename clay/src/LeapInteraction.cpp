@@ -116,7 +116,7 @@ void LeapInteraction::interact(double curTime)
           transPos.z = 1.0f;
 
           if (transPos.x >= 0.0f && transPos.x <= 1.0f && transPos.y >= 0.0f && transPos.y <= 1.0f) {
-            _sculpt->addBrush(brushPos, brushDir, brushVel, _desired_brush_radius, strength);
+            _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, _desired_brush_radius, strength);
           }
 
           // compute a point on the surface of the sphere to use as the screen-space radius

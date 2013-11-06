@@ -59,6 +59,7 @@ public:
   Vector3 _position;
   Vector3 _direction;
   Vector3 _velocity;
+  Vector3 _worldPos;
 };
 
 typedef std::vector<Brush, Eigen::aligned_allocator<Brush> > BrushVector;

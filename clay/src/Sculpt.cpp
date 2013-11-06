@@ -374,10 +374,11 @@ void Sculpt::paint(const std::vector<int> &iVerts, const Brush& brush, int mater
   }
 }
 
-void Sculpt::addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength)
+void Sculpt::addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength)
 {
   _brushes.push_back(Brush());
   Brush& brush = _brushes.back();
+  brush._worldPos = worldPos;
   brush._radius = radius;
   brush._radius_squared = radius*radius;
   brush._length = 0.0f;//30.0f;

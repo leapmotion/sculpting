@@ -36,7 +36,7 @@ public:
   void paint(const std::vector<int> &iVerts, const Brush& brush, int material);
 
   int getNumBrushes() const { return (int)_brushes.size(); }
-  void addBrush(const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength);
+  void addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3& dir, const Vector3& vel, const float radius, const float strength);
   void clearBrushes() { _brushes.clear(); }
   void applyBrushes(double curTime, bool symmetry);
   BrushVector getBrushes() const;

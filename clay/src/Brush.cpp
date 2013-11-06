@@ -28,6 +28,8 @@ void Brush::transform(const Matrix4x4& matrix) {
   _velocity = (matrix * temp).head<3>();
   temp << _direction, 0;
   _direction = (matrix * temp).head<3>();
+  temp << _worldPos, 1;
+  _worldPos = (matrix * temp).head<3>();
 }
 
 Brush Brush::transformed(const Matrix4x4& matrix) const {
