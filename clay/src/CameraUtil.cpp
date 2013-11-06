@@ -210,7 +210,7 @@ void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoin
 
   std::vector<int> verts;
   const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
-  for (int vi = 0; vi < verts.size(); vi++) {
+  for (size_t vi = 0; vi < verts.size(); vi++) {
     Vector3 translationToVert = (mesh->getVertex(verts[vi]) - referencePoint.position);
     Vector3 dirToVert = translationToVert.normalized();
     lmReal dot = movementDir.dot(dirToVert);
@@ -931,6 +931,11 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
   // don't update transform when there's no successful raycast
   if (params.pinUpVector) { CorrectCameraUpVector(dt, Vector3::UnitY()); }
+
+  // Sync reference point & camera transform
+  lmReal dist = (transform.translation - referencePoint.position).norm();
+  Vector3 cameraNormal = transform.rotation * Vector3::UnitZ();
+  transform.translation = referencePoint.position + dist * cameraNormal;
 
   return;
 }
