@@ -82,7 +82,7 @@ void Environment::setEnvironment(const std::string& _Name, TimeOfDay _Time)
 
   // wait for transition completion
   _loading_state = LOADING_STATE_DONE_LOADING;
-  boost::unique_lock<boost::mutex> lock(_loading_mutex);
+  std::unique_lock<std::mutex> lock(_loading_mutex);
   _loading_condition.wait(lock);
 }
 
@@ -123,7 +123,7 @@ const std::vector<Environment::EnvironmentInfo>& Environment::getEnvironmentInfo
 
 void Environment::transitionComplete()
 {
-  boost::unique_lock<boost::mutex> lock(_loading_mutex);
+  std::unique_lock<std::mutex> lock(_loading_mutex);
   _loading_state_change_time = getElapsedSeconds();
   _loading_state = LOADING_STATE_PROCESSING;
 
@@ -299,9 +299,9 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
   int numChannels = 3;
   int numLevels = irradiance ? 1 : MIPMAP_LEVELS;
 
-  boost::thread threads[6];
+  std::thread threads[6];
   for (int i=0; i<6; i++) {
-    threads[i] = boost::thread(&CCubeMapProcessor::SetInputFaceData,
+    threads[i] = std::thread(&CCubeMapProcessor::SetInputFaceData,
       _cubemap_processor,
       i,
       CP_VAL_FLOAT32,
@@ -363,7 +363,7 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
     for (int j=0; j<6; j++)
     {
       output_images[j] = new float[numBytes];
-      threads[j] = boost::thread(&CCubeMapProcessor::GetOutputFaceData,
+      threads[j] = std::thread(&CCubeMapProcessor::GetOutputFaceData,
         _cubemap_processor,
         j,
         i,

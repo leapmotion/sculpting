@@ -28,7 +28,7 @@ CameraUtil::CameraUtil() {
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
-  boost::unique_lock<boost::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(mutex);
 
   GetTransformFromStandardCamera(from, to, transform);
   smoothedTransform = transform;
@@ -53,7 +53,7 @@ void CameraUtil::GetTransformFromStandardCamera(const Vector3& from, const Vecto
 
 void CameraUtil::GenerateRays(const lmTransform& transform, int castsPerRow, std::vector<lmRay>* raysOut) {
   // Generate several rays.
-  std::vector<Vector3, Eigen::aligned_allocator<Vector3>> rays;
+  std::vector<Vector3, Eigen::aligned_allocator<Vector3> > rays;
   // Vector3Vector
   for (int i = 0; i < castsPerRow*castsPerRow; i++) {
     rays.push_back(Vector3((-(castsPerRow-1)/2.0f+i%castsPerRow)*4.0f,(-(castsPerRow-1)/2.0f+i/castsPerRow)*4.0f,-100) * 10);
@@ -67,7 +67,7 @@ void CameraUtil::GenerateRays(const lmTransform& transform, int castsPerRow, std
   // TODO fix debug lines
   if (0 && debugDrawUtil) {
     std::vector<Vector3>& dbgPoints = debugDrawUtil->GetDebugPoints();
-    boost::unique_lock<boost::mutex> lock(debugDrawUtil->m_mutex);
+    std::unique_lock<std::mutex> lock(debugDrawUtil->m_mutex);
     dbgPoints.insert(dbgPoints.end(), rays.begin(), rays.end());
     lock.unlock();
   }
@@ -131,7 +131,7 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
 
     // Display debug triangles
     if (debugDrawUtil) {
-      boost::unique_lock<boost::mutex> lock(debugDrawUtil->m_mutex);
+      std::unique_lock<std::mutex> lock(debugDrawUtil->m_mutex);
       for (size_t ti = 0; ti < triangles.size(); ti++) {
         const Triangle& tri = mesh->getTriangle(triangles[ti]);
         std::vector<Vector3>& debugTris = debugDrawUtil->GetDebugTriangles();
@@ -344,7 +344,7 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
 }
 
 void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov) {
-  boost::unique_lock<boost::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(mutex);
   Vector3 movement(50.0f * _DTheta, -50.0f * _DPhi, -_DFov / 100.0f);
   userInput += movement;
 }
@@ -353,7 +353,7 @@ void CameraUtil::RecordUserInput(const Vector3& deltaPosition, bool controlOn) {
 #if DISABLE_LEAP
   return;
 #endif
-  boost::unique_lock<boost::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(mutex);
   lmReal prevTime = lastUserInputFromVectorTime;
   lmReal time = lmReal(ci::app::getElapsedSeconds());
   lastUserInputFromVectorTime = time;
@@ -483,7 +483,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   //DebugDrawNormals(mesh, paramsIn);
 
   assert(mesh && "Mesh required");
-  boost::unique_lock<boost::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(mutex);
   if (!this->params.walkSmoothedNormals && paramsInOut->walkSmoothedNormals)
   {
     paramsInOut->freeRotationEnabled = false;

@@ -209,7 +209,7 @@ void ClayDemoApp::setEnvironment(const std::string& str)
   {
     return;
   }
-  _loading_thread = thread(&Environment::setEnvironment, _environment, str, _environment->getCurTimeOfDay());
+  _loading_thread = std::thread(&Environment::setEnvironment, _environment, str, _environment->getCurTimeOfDay());
 }
 
 void ClayDemoApp::setTimeOfDay(const std::string& str)
@@ -219,7 +219,7 @@ void ClayDemoApp::setTimeOfDay(const std::string& str)
     return;
   }
   Environment::TimeOfDay time = (str == "Noon") ? Environment::TIME_NOON : Environment::TIME_DAWN;
-  _loading_thread = thread(&Environment::setEnvironment, _environment, _environment->getCurEnvironmentString(), time);
+  _loading_thread = std::thread(&Environment::setEnvironment, _environment, _environment->getCurEnvironmentString(), time);
 }
 
 void ClayDemoApp::setMaterial(const std::string& str)
@@ -519,7 +519,7 @@ void ClayDemoApp::setup()
   int randEnvIdx = rand() % infos.size();
   std::string randEnvString = infos[randEnvIdx]._name;
   Environment::TimeOfDay time = (rand() % 2) ? Environment::TIME_DAWN : Environment::TIME_NOON;
-  _loading_thread = thread(&Environment::setEnvironment, _environment, randEnvString, time);
+  _loading_thread = std::thread(&Environment::setEnvironment, _environment, randEnvString, time);
 
   setBrushMode("Sweep");
   setBrushSize("Medium");
@@ -527,7 +527,7 @@ void ClayDemoApp::setup()
 
   glEnable(GL_FRAMEBUFFER_SRGB);
 
-  _mesh_thread = boost::thread(&ClayDemoApp::updateLeapAndMesh, this);
+  _mesh_thread = std::thread(&ClayDemoApp::updateLeapAndMesh, this);
 }
 
 void ClayDemoApp::shutdown() {
@@ -699,12 +699,13 @@ void ClayDemoApp::update()
   
   //TODO(adrian, this is not thread shafe);
   //lmTransform tCamera = _camera_util->transform;
-  boost::unique_lock<boost::mutex> lock(_camera_util->mutex);
+  std::unique_lock<std::mutex> lock(_camera_util->mutex);
   static lmReal time = lmReal(ci::app::getElapsedSeconds());
   lmReal prevTime = time;
   time = lmReal(ci::app::getElapsedSeconds());
 
   lmTransform tCamera = _camera_util->GetSmoothedCamera(time-prevTime);
+
   lock.unlock();
   campos = ToVec3f(tCamera.translation);
   Vector3 up = tCamera.rotation * Vector3::UnitY();
@@ -1134,8 +1135,8 @@ void ClayDemoApp::draw()
     _screen_shader.uniform( "contrast", _contrast );
     _screen_shader.uniform( "use_ao", _use_ao );
     _screen_shader.uniform( "only_ao", _only_ao );
-    _screen_shader.uniform( "bloom_strength", _bloom_strength * float(_bloom_visible) );
-    _screen_shader.uniform( "vignette_radius", 0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2)) );
+    _screen_shader.uniform( "bloom_strength", _bloom_strength * static_cast<float>(_bloom_visible) );
+    _screen_shader.uniform( "vignette_radius", static_cast<float>(0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2))) );
     _screen_shader.uniform( "vignette_strength", 0.75f );
     gl::drawSolidRect(Rectf(0.0f,0.0f,width,height));
     _screen_shader.unbind();
@@ -1190,7 +1191,11 @@ int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic *app = new ClayDemoApp;
   //cinder::app::RendererRef ren(new RendererGl);
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
+#if _WIN32
   cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo");
+#else
+  cinder::app::AppBasic::executeLaunch( app, &ren, "ClayDemo", argc, argv);
+#endif
   cinder::app::AppBasic::cleanupLaunch();
   return 0;
 }

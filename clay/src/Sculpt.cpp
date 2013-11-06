@@ -394,7 +394,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
     return;
   }
 
-  boost::unique_lock<boost::mutex> lock(brushMutex_);
+  std::unique_lock<std::mutex> lock(brushMutex_);
   mesh_->handleUndoRedo();
   const Matrix4x4 transformInv = mesh_->getInverseTransformation();
   const Vector3& origin = mesh_->getRotationOrigin();
@@ -443,10 +443,10 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
 }
 
 BrushVector Sculpt::getBrushes() const {
-  boost::unique_lock<boost::mutex> lock(brushMutex_);
+  std::unique_lock<std::mutex> lock(brushMutex_);
   return _brushes;
 }
 
-boost::mutex& Sculpt::getBrushMutex() {
+std::mutex& Sculpt::getBrushMutex() {
   return brushMutex_;
 }

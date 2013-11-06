@@ -33,8 +33,13 @@ Matrix4x4 Tools::scaleMatrix(float scale) {
 
 Matrix4x4 Tools::rotationMatrix(const Vector3& axis, float angle) {
   Matrix4x4 mat;
+#if _WIN32
   const float c = std::cosf(angle);
   const float s = std::sinf(angle);
+#else
+  const float c = std::cos(angle);
+  const float s = std::sin(angle);
+#endif
   const float C = (1-c);
   mat << axis[0]*axis[0]*C + c, axis[0]*axis[1]*C - axis[2]*s, axis[0]*axis[2]*C + axis[1]*s, 0,
     axis[1]*axis[0]*C + axis[2]*s, axis[1]*axis[1]*C + c, axis[1]*axis[2]*C - axis[0]*s, 0,

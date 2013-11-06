@@ -6,7 +6,11 @@
 #include "Triangle.h"
 
 #include <algorithm>
+#if _WIN32
 #include <GL/GLU.h>
+#else
+#include <OpenGl/glu.h>
+#endif
 
 
 

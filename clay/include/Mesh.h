@@ -153,7 +153,7 @@ private:
 
   IndexUpdateVector indexUpdates_;
   VertexUpdateVector vertexUpdates_;
-  boost::mutex bufferMutex_;
+  std::mutex bufferMutex_;
 };
 
 #endif /*__MESH_H__*/

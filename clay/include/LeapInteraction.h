@@ -87,7 +87,7 @@ public:
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
   void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
   double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp()); }
-  std::vector<Vec4f> getTips() { boost::unique_lock<boost::mutex> tipsLock(_tips_mutex); return _tips; }
+  std::vector<Vec4f> getTips() { std::unique_lock<std::mutex> tipsLock(_tips_mutex); return _tips; }
   double getLastCameraUpdateTime() const { return _last_camera_update_time; }
 
 private:
@@ -126,7 +126,7 @@ private:
   Utilities::ExponentialFilter<float> _dphi;
   Utilities::ExponentialFilter<float> _dtheta;
   Utilities::ExponentialFilter<float> _dzoom;
-  boost::mutex _tips_mutex;
+  std::mutex _tips_mutex;
   double _last_camera_update_time;
 
   // Handling pinch gesture

@@ -32,7 +32,7 @@ void DebugDrawUtil::DrawTriangle(const Mesh* mesh, const Triangle& tri) {
 }
 
 void DebugDrawUtil::SwitchBuffers() {
-  boost::unique_lock<boost::mutex> lock(m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
   m_readyBufferIdx = 1 - m_readyBufferIdx;
 
   Buffers& b = m_buffers[(1+m_readyBufferIdx)%2];
@@ -42,7 +42,7 @@ void DebugDrawUtil::SwitchBuffers() {
 }
 
 void DebugDrawUtil::FlushDebugPrimitives() {
-  boost::unique_lock<boost::mutex> lock(m_mutex);
+  std::unique_lock<std::mutex> lock(m_mutex);
   const int primNames[] = { GL_POINTS, GL_LINES, GL_TRIANGLES };
   Buffers& b = m_buffers[m_readyBufferIdx];
   std::vector<Vector3>* primBuffers[] = { &b.debugPoints, &b.debugLines, &b.debugTriangles };

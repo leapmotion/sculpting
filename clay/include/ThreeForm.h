@@ -22,7 +22,6 @@
 using namespace ci;
 using namespace ci::gl;
 using namespace ci::app;
-using namespace std;
 
 class CameraUtil;
 class DebugDrawUtil;
@@ -89,8 +88,8 @@ private:
   Fbo _color_fbo;
   Fbo _depth_fbo;
   Fbo _blur_fbo;
-  boost::thread _loading_thread;
-  boost::thread _mesh_thread;
+  std::thread _loading_thread;
+  std::thread _mesh_thread;
   bool _shutdown;
   Utilities::FPSCounter _mesh_update_counter;
   Vector3 _focus_point;

@@ -487,9 +487,11 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
   }
   updateOctree(iTris);
   updateNormals(iVerts);
+#if _WIN32
   assert(_CrtCheckMemory());
+#endif
 
-  boost::unique_lock<boost::mutex> lock(bufferMutex_);
+  std::unique_lock<std::mutex> lock(bufferMutex_);
 
   if (getNbTriangles() < indicesBufferCount_) {
     // within storage bounds, so it's OK to only update part of the buffer
@@ -525,7 +527,7 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 }
 
 void Mesh::updateGPUBuffers() {
-  boost::unique_lock<boost::mutex> lock(bufferMutex_);
+  std::unique_lock<std::mutex> lock(bufferMutex_);
 
   if (reallocateIndicesBuffer_) {
     initIndexVBO();

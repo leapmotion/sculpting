@@ -10,7 +10,6 @@
 #include <string>
 using namespace cinder;
 using namespace cinder::gl;
-using namespace std;
 
 class CCubeMapProcessor;
 struct FIBITMAP;
@@ -89,8 +88,8 @@ private:
   std::vector<EnvironmentInfo> _environment_infos;
   TimeOfDay _cur_time_of_day;
   std::string _cur_environment;
-  condition_variable _loading_condition;
-  mutex _loading_mutex;
+  std::condition_variable _loading_condition;
+  std::mutex _loading_mutex;
   LoadingState _loading_state;
   double _loading_state_change_time;
 

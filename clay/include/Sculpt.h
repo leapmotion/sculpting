@@ -42,7 +42,7 @@ public:
   BrushVector getBrushes() const;
   double getLastSculptTime() const { return lastSculptTime_; }
 
-  boost::mutex& getBrushMutex();
+  std::mutex& getBrushMutex();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -77,7 +77,7 @@ private:
   int material_;
   float autoSmoothStrength_;
   std::vector<int> brushVertices_;
-  mutable boost::mutex brushMutex_;
+  mutable std::mutex brushMutex_;
   double lastSculptTime_;
 
   BrushVector _brushes;

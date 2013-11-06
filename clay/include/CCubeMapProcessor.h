@@ -193,7 +193,7 @@ public:
 
   CImageSurface m_OutputSurface[CP_MAX_MIPLEVELS][6];   //output faces for all mip levels
 
-  boost::thread m_Threads[6];
+  std::thread m_Threads[6];
   SFilterProgress m_ThreadProgress[6];
 
   typedef std::map<int, CP_ITYPE*> CacheMap;

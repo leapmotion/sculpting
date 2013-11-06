@@ -1797,7 +1797,7 @@ void CCubeMapProcessor::FilterCubeMapMipChain()
       m_ThreadProgress[i].m_CurrentMipLevel = 0;
       m_ThreadProgress[i].m_CurrentRow = 0;
       m_ThreadProgress[i].m_CurrentFace = i;
-      m_Threads[i] = boost::thread(&CCubeMapProcessor::FilterCubeSurfaces,
+      m_Threads[i] = std::thread(&CCubeMapProcessor::FilterCubeSurfaces,
         this,
         m_InputSurface, 
         m_OutputSurface[0], 
@@ -1822,7 +1822,7 @@ void CCubeMapProcessor::FilterCubeMapMipChain()
         m_ThreadProgress[j].m_CurrentMipLevel = i;
         m_ThreadProgress[j].m_CurrentRow = 0;
         m_ThreadProgress[j].m_CurrentFace = j;
-        m_Threads[j] = boost::thread(&CCubeMapProcessor::FilterCubeSurfaces,
+        m_Threads[j] = std::thread(&CCubeMapProcessor::FilterCubeSurfaces,
           this,
           m_OutputSurface[i-1], 
           m_OutputSurface[i], 
@@ -1886,7 +1886,7 @@ void CCubeMapProcessor::PrecomputeFilterLookupTables(unsigned int a_FilterType, 
   //Normalized vectors per cubeface and per-texel solid angle 
   // SL BEGIN
   for (int i=0; i<6; i++) {
-    m_Threads[i] = boost::thread(&CCubeMapProcessor::BuildNormalizerSolidAngleCubemap,
+    m_Threads[i] = std::thread(&CCubeMapProcessor::BuildNormalizerSolidAngleCubemap,
       this,
       a_SrcCubeMapWidth,
       m_NormCubeMap,
@@ -2530,7 +2530,7 @@ void CCubeMapProcessor::SHFilterCubeMap(bool a_bUseSolidAngleWeighting, int a_Fi
 
   //Normalized vectors per cubeface and per-texel solid angle
   for (int i=0; i<6; i++) {
-    m_Threads[i] = boost::thread(&CCubeMapProcessor::BuildNormalizerSolidAngleCubemap,
+    m_Threads[i] = std::thread(&CCubeMapProcessor::BuildNormalizerSolidAngleCubemap,
       this,
       DstCubeImage->m_Width,
       m_NormCubeMap,

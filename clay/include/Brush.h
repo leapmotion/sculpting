@@ -10,7 +10,11 @@ public:
   Brush();
 
   // point sampling
+#if _WIN32
   inline float distance(const Vector3& point) const { return std::sqrtf(distanceSq(point)); }
+#else
+  inline float distance(const Vector3& point) const { return std::sqrt(distanceSq(point)); }
+#endif
 #if 1
   inline float distanceSq(const Vector3& point) const { return (point - _position).squaredNorm(); }
 #else

@@ -41,7 +41,7 @@ public:
   Buffers m_buffers[2];
   int m_readyBufferIdx;
 
-  boost::mutex m_mutex;
+  std::mutex m_mutex;
 };
 
 

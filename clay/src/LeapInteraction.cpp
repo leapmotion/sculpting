@@ -32,9 +32,9 @@ bool LeapInteraction::processInteraction(LeapListener& _Listener, float _Aspect,
   }
   else if (_Listener.isConnected() && _Listener.waitForFrame(_cur_frame, 33))
   {
-    boost::unique_lock<boost::mutex> brushLock(_sculpt->getBrushMutex());
+    std::unique_lock<std::mutex> brushLock(_sculpt->getBrushMutex());
     _sculpt->clearBrushes();
-    boost::unique_lock<boost::mutex> tipsLock(_tips_mutex);
+    std::unique_lock<std::mutex> tipsLock(_tips_mutex);
     const double time = Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp());
     _tips.clear();
     if (_last_frame.isValid() && (_cur_frame.timestamp() != _last_frame.timestamp())) {
