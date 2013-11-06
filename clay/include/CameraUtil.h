@@ -185,6 +185,12 @@ private:
   // todo: Move to an utility.
   void CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std::vector<lmRayCastOutput>* results);
 
+  // Gets closest point to the refernce point, given that:
+  // the triangle containing the cloest point has at least one of it's veritces withing the radius' distance from the reference point.
+  void GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, Geometry::GetClosestPointOutput* closestPointOut);
+
+  void FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices );
+
   // Performs a sphere query on the mesh, and returns average normal of the visible surface
   Vector3 VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, Vector3* avgPosition);
 

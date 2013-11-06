@@ -161,12 +161,66 @@ inline static Vector3 TriCenter(const Mesh* mesh, const Triangle& tri) {
   return center;
 }
 
+void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, Geometry::GetClosestPointOutput* closestPointOut) {
+  std::vector<int> verts;
+  std::vector<int> tris;
+  const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
+  tris = const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts);
 
+  Geometry::GetClosestPointOutput closestPoint;
+  closestPoint.distance = FLT_MAX;
+  int closestTriangleIdx = -1;;
 
-Vector3 CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, Vector3* avgPosition) {
-  if (debugDrawUtil) {
-    debugDrawUtil->DrawCross(referencePoint.position, radius);
+  for (size_t ti = 0; ti < tris.size(); ti++) {
+    const Triangle& tri = mesh->getTriangle(tris[ti]);
+
+    // Discard rear-facing triangles
+    lmReal camDotTNormal = cameraDirection.dot(tri.normal_);
+    if (camDotTNormal < 0.0f)
+    {
+      Geometry::GetClosestPointOutput output;
+      {
+        Geometry::GetClosestPointInput input;
+        input.mesh = mesh;
+        input.tri = &tri;
+        input.point = referencePoint.position;
+        Geometry::getClosestPoint(input, &output);
+        output.triIdx = tris[ti];
+        if (output.distance < closestPoint.distance) {
+          closestPoint = output;
+          closestPoint.normal = tri.normal_;
+          closestTriangleIdx = tris[ti];
+        }
+      }
+    }
   }
+
+  if (closestPoint.distance < FLT_MAX)
+  {
+    GetNormalAtPoint(mesh, closestTriangleIdx, closestPoint.position, &closestPoint.normal);
+  }
+
+  *closestPointOut = closestPoint;
+}
+
+void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices ) {
+  LM_ASSERT(LM_EPSILON * LM_EPSILON < movementDirection.squaredNorm(), "");
+  Vector3 movementDir = movementDirection.normalized();
+  Vector3 mixedDir = (movementDir + referencePoint.normal).normalized();
+
+  std::vector<int> verts;
+  const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
+  for (int vi = 0; vi < verts.size(); vi++) {
+    Vector3 translationToVert = (mesh->getVertex(verts[vi]) - referencePoint.position);
+    Vector3 dirToVert = translationToVert.normalized();
+    lmReal dot = movementDir.dot(dirToVert);
+    lmReal dotMixed = mixedDir.dot(dirToVert);
+    //if (0.707f < dot && 0.5f * radius < translationToVert.norm() ) {
+    if ((0.707f < dot || 0.707f < dotMixed) && 0.5f * radius < translationToVert.norm() ) {
+      vertices->push_back(vi);
+    }
+  }
+}
 
   Vector3 normal = Vector3::Zero();
   Vector3 position = Vector3::Zero();
