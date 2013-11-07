@@ -32,6 +32,12 @@ Environment::Environment()
       }
     }
   }
+#else
+  const size_t bufferSize = 1024;
+  char buffer[bufferSize];
+  if (getcwd(buffer, bufferSize) != NULL) {
+    working_directory = std::string(buffer);
+  }
 #endif
 
   // set up filenames for the different supported environments
@@ -390,7 +396,11 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
 
 Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure, float contrast)
 {
+#if _WIN32
   const std::string ASSETS_PATH = working_directory + "/../../assets/";
+#else
+  const std::string ASSETS_PATH = working_directory + "/assets/";
+#endif
   EnvironmentInfo info;
   info._name = name;
   preparePaths(ASSETS_PATH + name + "/noon/", info._noon_images);

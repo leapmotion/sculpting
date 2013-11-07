@@ -149,8 +149,12 @@ private:
   bool _pin_z;
   bool _pin_xy;
 
-  typedef std::map<int, HandInfo, std::less<int>, Eigen::aligned_allocator< std::pair<int, HandInfo> > > HandInfoMap;
-
+#if _WIN32
+  typedef std::map<int, HandInfo, std::less<int>, Eigen::aligned_allocator< std::pair<const int, HandInfo> > > HandInfoMap;
+#else
+  typedef std::map<int, HandInfo> HandInfoMap;
+#endif
+  
   HandInfoMap _hand_infos;
 };
 
