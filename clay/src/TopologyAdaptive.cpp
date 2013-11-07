@@ -373,12 +373,15 @@ void Topology::connectLinkedEdges(std::vector<Edge> &edges1, std::vector<Edge> &
     int j = (int)(nbEdges2 - step*(i+1));
     if(j<1)
       j = 1;
-    triangles_[edges1[i].t_].vIndices_[2] = edges2[j].v1_;
-    vertices_[edges2[j].v1_].addTriangle(edges1[i].t_);
-    if(j!=temp && j!=0 && j!=(nbEdges2-1))
+    if (j < nbEdges2)
     {
-      triangles_[edges2[j].t_].vIndices_[2] = edges1[i].v1_;
-      vertices_[edges1[i].v1_].addTriangle(edges2[j].t_);
+      triangles_[edges1[i].t_].vIndices_[2] = edges2[j].v1_;
+      vertices_[edges2[j].v1_].addTriangle(edges1[i].t_);
+      if(j!=temp && j!=0 && j!=(nbEdges2-1))
+      {
+        triangles_[edges2[j].t_].vIndices_[2] = edges1[i].v1_;
+        vertices_[edges1[i].v1_].addTriangle(edges2[j].t_);
+      }
     }
     temp = j;
   }
@@ -439,6 +442,11 @@ void Topology::trianglesRotate(std::vector<int> &iTris, int iv, std::vector<Edge
 bool Topology::adjustEdgeOrientation(std::vector<Edge> &edges)
 {
   int nbEdges = edges.size();
+  if (nbEdges < 2)
+  {
+    return false;
+  }
+  
   int temp = -1;
   int j;
   int vFirst = edges.front().v1_;

@@ -658,14 +658,16 @@ void Mesh::updateNormals(const std::vector<int> &iVerts)
     for (int j=0;j<nbTri;++j)
       normal+=triangles_[iTri[j]].normal_;
     float length = normal.norm();
-    if (length < 0.0001f) {
-      // normals added up to zero length, so just pick one
-      normal = triangles_[iTri[0]].normal_;
-    } else {
-      normal = normal/length;
+    if (nbTri != 0) {
+      if (length < 0.0001f && nbTri > 0) {
+        // normals added up to zero length, so just pick one
+        normal = triangles_[iTri[0]].normal_;
+      } else {
+        normal = normal/length;
+      }
+      vert.normal_ = normal;
+      assert(fabs(vert.normal_.squaredNorm() - 1.0f) < 0.001f);
     }
-    vert.normal_ = normal;
-    assert(fabs(vert.normal_.squaredNorm() - 1.0f) < 0.001f);
   }
 }
 
