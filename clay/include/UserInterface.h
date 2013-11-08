@@ -105,20 +105,6 @@ public:
     NUM_ICONS
   };
 
-  Menu();
-  void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
-  void setNumEntries(int num);
-  void draw() const;
-  int checkCollision(const Vector2& pos) const;
-  bool checkPadCollision(const Vector2& pos) const;
-  void toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const;
-
-  bool isActivated() const { return m_activation.value >= 1.0f; }
-  bool hasSelectedEntry() const { return m_curSelectedEntry >= 0; }
-  static void setWindowSize(const ci::Vec2i& size);
-
-//private:
-
   struct MenuEntry {
     enum DrawMethod { ICON, COLOR, STRING, CIRCLE };
     MenuEntry() : m_position(Vector2::Zero()), m_radius(0.02f), m_value(0.0f) {
@@ -131,10 +117,11 @@ public:
       const float opacity = std::max(m_activationStrength.value, parent->m_activation.value);
       const float brightness = selected ? 1.0f : 0.5f + 0.5f*std::max(m_activationStrength.value, m_hoverStrength.value);
       const ci::Vec2f pos(m_position.x(), m_position.y());
-      ci::ColorA color(brightness, brightness, brightness, opacity);
+      const ci::ColorA color(brightness, brightness, brightness, opacity);
+      const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, opacity);
       gl::color(color);
       if (drawMethod == ICON) {
-        ci::gl::Texture& tex = Menu::m_icons[m_entryType];
+        ci::gl::Texture& tex = Menu::g_icons[m_entryType];
         const ci::Vec2i size = tex.getSize();
         glPushMatrix();
         glTranslatef(pos.x, pos.y, 0.0f);
@@ -148,9 +135,13 @@ public:
         glPopMatrix();
       } else if (drawMethod == CIRCLE) {
         const float scale = 1.0f + (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value);
+        gl::color(shadowColor);
+        gl::drawSolidCircle(pos + g_shadowOffset, parent->relativeToAbsolute(scale * m_radius), 40);
+        gl::color(color);
         gl::drawSolidCircle(pos, parent->relativeToAbsolute(scale * m_radius), 40);
       } else if (drawMethod == STRING) {
-        gl::drawStringCentered(toString(), pos - Vec2f(0, Menu::FONT_SIZE/2.0f), color, Menu::m_font);
+        gl::drawStringCentered(toString(), pos - Vec2f(0, Menu::FONT_SIZE/2.0f) + g_shadowOffset, shadowColor, Menu::g_font);
+        gl::drawStringCentered(toString(), pos - Vec2f(0, Menu::FONT_SIZE/2.0f), color, Menu::g_font);
       }
     }
     std::string toString() const {
@@ -314,33 +305,68 @@ public:
     Utilities::ExponentialFilter<float> m_activationStrength;
   };
 
+  static const float FONT_SIZE;
+  static const float STRENGTH_UI_MULT;
+  static ci::Font g_font;
+  static ci::Font g_boldFont;
+  static std::vector<ci::gl::Texture> g_icons;
+  static ci::Vec2f g_shadowOffset;
+
+  Menu();
+  void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
+  void setNumEntries(int num);
+  void draw() const;
+  int checkCollision(const Vector2& pos) const;
+  bool checkPadCollision(const Vector2& pos) const;
+  void toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const;
+
+  float getActivation() const { return m_activation.value; }
+  bool hasSelectedEntry() const { return m_curSelectedEntry >= 0; }
+  static void setWindowSize(const ci::Vec2i& size);
   float getSweepStart() const { return static_cast<float>(-m_sweepAngle/2.0f + m_angleOffset); }
   float getSweepEnd() const { return getSweepStart() + m_sweepAngle; }
+  MenuEntry& getEntry(int idx) { return m_entries[idx]; }
+  const MenuEntry& getEntry(int idx) const { return m_entries[idx]; }
   const MenuEntry& getSelectedEntry() const { return m_entries[m_curSelectedEntry]; }
+  float relativeToAbsolute(float radius) const { return radius * g_windowSize.y(); }
+  float absoluteToRelative(float radius) const { return radius / g_windowSize.y(); }
+  float getRingRadius() const { return 0.75f * m_outerRadius; }
+  void setName(const std::string& name) { m_name = name; }
+  void setPosition(const Vector2& pos) { m_position = pos; }
+  const Vector2& getPosition() const { return m_position; }
+  void setAngleOffset(float angleOffset) { m_angleOffset = angleOffset; }
+  void setDefaultEntry(int idx) { m_defaultEntry = idx; }
+  int getDefaultEntry() const { return m_defaultEntry; }
+  void setActionsOnly(bool only) { m_actionsOnly = only; }
+  bool getActionsOnly() const { return m_actionsOnly; }
+  void setCurSelectedEntry(int idx) { m_curSelectedEntry = idx; }
+  void setActualName(const std::string& name) { m_actualName = name; }
+  void setActiveName(const std::string& name) { m_activeName = name; }
+  void setActiveColor(const ci::Color& color) { m_activeColor = color; }
+  ci::Color getActiveColor() const { return m_activeColor; }
+
+  static const Vector2& getWindowSize() { return g_windowSize; }
+
+private:
+
   static float getOpacity(float activation) {
-    static const float NORMAL_OPACITY = 0.4f;
+    static const float NORMAL_OPACITY = 0.7f;//0.4f;
     static const float ACTIVATED_OPACITY = 1.0f;
     return NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation;
   }
-  float getRingRadius() const { return 0.75f * m_outerRadius; }
-  ci::Vec2f relativeToAbsolute(const Vector2& pos) const {
+
+  ci::Vec2f relativeToAbsolute(const Vector2& pos, bool useZoom = true) const {
     Vector2 scaled = pos;
+    if (useZoom) {
+      scaled = m_zoomFactor*(scaled - Vector2::Constant(0.5f)) + Vector2::Constant(0.5f);
+    }
     //scaled.x() = (scaled.x() - 0.5f)/m_windowAspect + 0.5f;
     //scaled.y() = (scaled.y() - 0.5f)*m_windowAspect + 0.5f;
-    scaled = scaled.cwiseProduct(m_windowSize);
+    scaled = scaled.cwiseProduct(g_windowSize);
     return ci::Vec2f(scaled.data());
   }
-  float relativeToAbsolute(float radius) const {
-    //return m_windowDiagonal * radius;
-    return radius * m_windowSize.y();
-  }
-  float absoluteToRelative(float radius) const {
-    return radius / m_windowSize.y();
-  }
 
-  static const float FONT_SIZE;
   static const float RING_THICKNESS_RATIO;
-  static const float STRENGTH_UI_MULT;
   static const float BASE_OUTER_RADIUS;
   static const float BASE_INNER_RADIUS;
   static const float OUTER_RADIUS_PER_ENTRY;
@@ -358,28 +384,25 @@ public:
   double m_deselectTime;
   Vector2 m_position;
   std::string m_name;
-  static ci::Font m_font;
-  static ci::Font m_boldFont;
   float m_wedgeStart;
   float m_wedgeEnd;
+  float m_zoomFactor;
 
-  MenuEntryType iconType;
+  Menu::MenuEntryType iconType;
   std::string m_activeName;
   std::string m_actualName;
   ci::Color m_activeColor;
   int m_defaultEntry;
   bool m_actionsOnly;
 
-  static Vector2 m_windowSize;
-  static float m_windowDiagonal;
-  static float m_windowAspect;
-  static Vector2 m_windowCenter;
-  static std::vector<ci::gl::Texture> m_icons;
+  static Vector2 g_windowSize;
+  static float g_windowDiagonal;
+  static float g_windowAspect;
+  static Vector2 g_windowCenter;
 
 };
 
-class UserInterface
-{
+class UserInterface {
 
 public:
 
@@ -389,8 +412,8 @@ public:
   void setWindowSize(const Vec2i& _Size);
   float maxActivation() const;
   void handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh);
-  void setRegularFont(const ci::Font& font) { Menu::m_font = font; }
-  void setBoldFont(const ci::Font& font) { Menu::m_boldFont = font; }
+  void setRegularFont(const ci::Font& font) { Menu::g_font = font; }
+  void setBoldFont(const ci::Font& font) { Menu::g_boldFont = font; }
   void drawCursor(const ci::Vec2f& position, float opacity) const;
 
 private:

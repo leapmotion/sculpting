@@ -726,7 +726,7 @@ void ThreeFormApp::draw()
 }
 
 void ThreeFormApp::loadIcons() {
-  std::vector<ci::gl::Texture>& icons = Menu::m_icons;
+  std::vector<ci::gl::Texture>& icons = Menu::g_icons;
   icons.resize(Menu::NUM_ICONS);
 
   icons[Menu::TOOL_PAINT] = ci::gl::Texture(loadImage(loadResource(RES_PAINT_SELECTED_PNG)));
