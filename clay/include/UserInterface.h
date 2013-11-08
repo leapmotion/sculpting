@@ -6,8 +6,6 @@
 #include "cinder/gl/GlslProg.h"
 #include "cinder/params/Params.h"
 #include "cinder/Thread.h"
-//#include "cinder/svg/Svg.h"
-//#include "cinder/svg/SvgGl.h"
 #include "cinder/gl/Texture.h"
 #include "Environment.h"
 #include "Utilities.h"
@@ -19,6 +17,7 @@ using namespace ci;
 using namespace ci::gl;
 
 class LeapInteraction;
+class ThreeFormApp;
 
 class UIElement
 {
@@ -103,8 +102,6 @@ private:
 
 };
 
-
-
 class Menu {
 public:
 
@@ -132,6 +129,31 @@ public:
     STRENGTH_MEDIUM,
     STRENGTH_HIGH,
 
+    // material
+    MATERIAL_PLASTIC,
+    MATERIAL_PORCELAIN,
+    MATERIAL_GLASS,
+    MATERIAL_STEEL,
+    MATERIAL_CLAY,
+
+    // auto spin
+    SPIN_OFF,
+    SPIN_SLOW,
+    SPIN_MEDIUM,
+    SPIN_FAST,
+
+    // wireframe
+    WIREFRAME_ON,
+    WIREFRAME_OFF,
+
+    // symmetry
+    SYMMETRY_ON,
+    SYMMETRY_OFF,
+
+    // history
+    HISTORY_UNDO,
+    HISTORY_REDO,
+
     NUM_ICONS
   };
 
@@ -144,11 +166,13 @@ public:
   void toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const;
 
   bool isActivated() const { return m_activation.value >= 1.0f; }
-  void setWindowSize(const ci::Vec2i& size);
+  bool hasSelectedEntry() const { return m_curSelectedEntry >= 0; }
+  static void setWindowSize(const ci::Vec2i& size);
 
 //private:
 
   struct MenuEntry {
+    enum DrawMethod { ICON, COLOR, STRING, CIRCLE };
     MenuEntry() : m_position(Vector2::Zero()), m_radius(0.02f), m_value(0.0f) {
       m_hoverStrength.value = 0.0f;
       m_activationStrength.value = 0.0f;
@@ -159,9 +183,10 @@ public:
       const float opacity = std::max(m_activationStrength.value, parent->m_activation.value);
       const float brightness = selected ? 1.0f : 0.5f + 0.5f*std::max(m_activationStrength.value, m_hoverStrength.value);
       const ci::Vec2f pos(m_position.x(), m_position.y());
-      glColor4f(brightness, brightness, brightness, opacity);
-      if (useIcon) {
-        ci::gl::Texture& tex = Menu::m_icons[m_iconType];
+      ci::ColorA color(brightness, brightness, brightness, opacity);
+      gl::color(color);
+      if (drawMethod == ICON) {
+        ci::gl::Texture& tex = Menu::m_icons[m_entryType];
         const ci::Vec2i size = tex.getSize();
         glPushMatrix();
         glTranslatef(pos.x, pos.y, 0.0f);
@@ -173,14 +198,16 @@ public:
           gl::draw(tex);
         }
         glPopMatrix();
-      } else if (!useColor) {
+      } else if (drawMethod == CIRCLE) {
         const float scale = 1.0f + (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value);
         gl::drawSolidCircle(pos, parent->relativeToAbsolute(scale * m_radius), 40);
+      } else if (drawMethod == STRING) {
+        gl::drawStringCentered(toString(), pos - Vec2f(0, Menu::FONT_SIZE/2.0f), color, Menu::m_font);
       }
     }
     std::string toString() const {
-      if (useIcon) {
-        switch(m_iconType) {
+      if (drawMethod == ICON || drawMethod == STRING) {
+        switch(m_entryType) {
         case Menu::STRENGTH: return "Strength"; break;
         case Menu::SIZE: return "Size"; break;
         case Menu::TYPE: return "Tool"; break;
@@ -196,6 +223,21 @@ public:
         case Menu::STRENGTH_LOW: return "Low"; break;
         case Menu::STRENGTH_MEDIUM: return "Medium"; break;
         case Menu::STRENGTH_HIGH: return "High"; break;
+        case Menu::MATERIAL_PLASTIC: return "Plastic"; break;
+        case Menu::MATERIAL_PORCELAIN: return "Porcelain"; break;
+        case Menu::MATERIAL_GLASS: return "Glass"; break;
+        case Menu::MATERIAL_STEEL: return "Steel"; break;
+        case Menu::MATERIAL_CLAY: return "Clay"; break;
+        case Menu::SPIN_OFF: return "Off"; break;
+        case Menu::SPIN_SLOW: return "Slow"; break;
+        case Menu::SPIN_MEDIUM: return "Medium"; break;
+        case Menu::SPIN_FAST: return "Fast"; break;
+        case Menu::WIREFRAME_ON: return "On"; break;
+        case Menu::WIREFRAME_OFF: return "Off"; break;
+        case Menu::SYMMETRY_ON: return "On"; break;
+        case Menu::SYMMETRY_OFF: return "Off"; break;
+        case Menu::HISTORY_REDO: return "Redo"; break;
+        case Menu::HISTORY_UNDO: return "Undo"; break;
         }
         return "";
       } else {
@@ -204,10 +246,74 @@ public:
         return ss.str();
       }
     }
+    Sculpt::SculptMode toSculptMode() const {
+      switch (m_entryType) {
+      case Menu::TOOL_GROW: return Sculpt::INFLATE; break;
+      case Menu::TOOL_SHRINK: return Sculpt::DEFLATE; break;
+      case Menu::TOOL_SMOOTH: return Sculpt::SMOOTH; break;
+      case Menu::TOOL_FLATTEN: return Sculpt::FLATTEN; break;
+      case Menu::TOOL_SWEEP: return Sculpt::SWEEP; break;
+      case Menu::TOOL_PUSH: return Sculpt::PUSH; break;
+      case Menu::TOOL_PAINT: return Sculpt::PAINT; break;
+      }
+      return Sculpt::INVALID;
+    }
 
-    MenuEntryType m_iconType;
-    bool useIcon;
-    bool useColor;
+    Material toMaterial() const {
+      Material mat;
+      switch (m_entryType) {
+      case Menu::MATERIAL_PLASTIC:
+        mat.reflectionFactor = 0.1f;
+        mat.surfaceColor << 0.0f, 0.4f, 1.0f;
+        mat.reflectionBias = 0.5f;
+        break;
+      case Menu::MATERIAL_PORCELAIN:
+        mat.reflectionFactor = 0.1f;
+        mat.surfaceColor << 1.0f, 0.95f, 0.9f;
+        mat.reflectionBias = 0.5f;
+        break;
+      case Menu::MATERIAL_GLASS:
+        mat.diffuseFactor = 0.15f;
+        mat.reflectionFactor = 0.7f;
+        mat.surfaceColor << 0.4f, 0.45f, 0.5f;
+        mat.refractionIndex = 0.45f;
+        break;
+      case Menu::MATERIAL_STEEL:
+        mat.reflectionFactor = 0.5f;
+        mat.surfaceColor << 0.2f, 0.25f, 0.275f;
+        break;
+      case Menu::MATERIAL_CLAY:
+        mat.surfaceColor << 0.7f, 0.6f, 0.3f;
+        break;
+      }
+      return mat;
+    }
+    float toSpinVelocity() const {
+      switch (m_entryType) {
+      case Menu::SPIN_OFF: return 0.0f; break;
+      case Menu::SPIN_SLOW: return 0.63f; break;
+      case Menu::SPIN_MEDIUM: return 2.13f; break;
+      case Menu::SPIN_FAST: return 5.37f; break;
+      }
+      return 0.0f;
+    }
+    bool toWireframe() const {
+      switch (m_entryType) {
+      case Menu::WIREFRAME_ON: return true; break;
+      case Menu::WIREFRAME_OFF: return false; break;
+      }
+      return false;
+    }
+    bool toSymmetry() const {
+      switch (m_entryType) {
+      case Menu::SYMMETRY_ON: return true; break;
+      case Menu::SYMMETRY_OFF: return false; break;
+      }
+      return false;
+    }
+
+    MenuEntryType m_entryType;
+    DrawMethod drawMethod;
     float m_radius;
     float m_value;
     Vector2 m_position;
@@ -222,6 +328,7 @@ public:
 
   float getSweepStart() const { return static_cast<float>(-m_sweepAngle/2.0f + m_angleOffset); }
   float getSweepEnd() const { return getSweepStart() + m_sweepAngle; }
+  const MenuEntry& getSelectedEntry() const { return m_entries[m_curSelectedEntry]; }
   static float getOpacity(float activation) {
     static const float NORMAL_OPACITY = 0.4f;
     static const float ACTIVATED_OPACITY = 1.0f;
@@ -241,18 +348,6 @@ public:
   }
   float absoluteToRelative(float radius) const {
     return radius / m_windowSize.y();
-  }
-  static Sculpt::SculptMode toolToSculptMode(Menu::MenuEntryType entry) {
-    switch (entry) {
-    case Menu::TOOL_GROW: return Sculpt::INFLATE; break;
-    case Menu::TOOL_SHRINK: return Sculpt::DEFLATE; break;
-    case Menu::TOOL_SMOOTH: return Sculpt::SMOOTH; break;
-    case Menu::TOOL_FLATTEN: return Sculpt::FLATTEN; break;
-    case Menu::TOOL_SWEEP: return Sculpt::SWEEP; break;
-    case Menu::TOOL_PUSH: return Sculpt::PUSH; break;
-    case Menu::TOOL_PAINT: return Sculpt::PAINT; break;
-    }
-    return Sculpt::INVALID;
   }
 
   static const float FONT_SIZE;
@@ -277,16 +372,16 @@ public:
   float m_wedgeEnd;
 
   MenuEntryType iconType;
-  Vector2 m_windowSize;
-  float m_windowDiagonal;
-  float m_windowAspect;
-  Vector2 m_windowCenter;
-  //static std::vector<ci::svg::DocRef> m_icons;
-  static std::vector<ci::gl::Texture> m_icons;
   std::string m_activeName;
   std::string m_actualName;
   ci::Color m_activeColor;
   int m_defaultEntry;
+
+  static Vector2 m_windowSize;
+  static float m_windowDiagonal;
+  static float m_windowAspect;
+  static Vector2 m_windowCenter;
+  static std::vector<ci::gl::Texture> m_icons;
 
 };
 
@@ -304,12 +399,14 @@ public:
   void setShader(GlslProg* _Shader);
   void setRootNode(const std::string& _Name);
   float maxActivation() const;
-  void handleSelections(Sculpt* sculpt, LeapInteraction* leap);
+  void handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh);
   void setRegularFont(const ci::Font& font) { Menu::m_font = font; }
   void setBoldFont(const ci::Font& font) { Menu::m_boldFont = font; }
+  void drawCursor(const ci::Vec2f& position, float opacity) const;
 
 private:
 
+  void initializeMenu(Menu& menu);
   Vec2f normalizePosition(const Vec2i& _Position) const;
   Vec2f getCombinedForcesAt(const Vec2f& _Position, int _Id) const;
   void clearMetaballs();
@@ -345,6 +442,8 @@ private:
     int _id;
   };
 
+  std::vector<ci::Vec2f> _cursor_positions;
+
   std::vector<UIElement> _elements;
   std::vector<Force> _forces;
   std::vector<Vec2f> _metaball_positions;
@@ -369,6 +468,11 @@ private:
   Menu _strength_menu;
   Menu _size_menu;
   Menu _color_menu;
+  Menu _material_menu;
+  Menu _spin_menu;
+  Menu _wireframe_menu;
+  Menu _symmetry_menu;
+  Menu _history_menu;
   bool _draw_color_menu;
   bool _first_selection_check;
 

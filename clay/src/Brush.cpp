@@ -49,9 +49,9 @@ Brush Brush::withSpinVelocity(const Vector3& rotOrigin, const Vector3& rotAxis, 
   return brush;
 }
 
-void Brush::draw() const {
+void Brush::draw(float radiusMult) const {
 #if 1
-  ci::gl::drawSphere(ci::Vec3f(_position.x(), _position.y(), _position.z()), _radius, 30);
+  ci::gl::drawSphere(ci::Vec3f(_position.x(), _position.y(), _position.z()), radiusMult*_radius, 30);
 #else
   Utilities::drawCapsule(_radius, _length, ci::Vec3f(_position.data()), ci::Vec3f(_direction.data()));
 #endif

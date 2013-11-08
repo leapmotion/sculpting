@@ -4,6 +4,7 @@
 #include "Utilities.h"
 #include "Sculpt.h"
 #include "LeapInteraction.h"
+#include "ThreeForm.h"
 
 using namespace ci;
 using namespace ci::gl;
@@ -19,9 +20,13 @@ const float Menu::RING_THICKNESS_RATIO = 0.3f;
 const float Menu::STRENGTH_UI_MULT = 10.0f;
 ci::Font Menu::m_font;
 ci::Font Menu::m_boldFont;
+Vector2 Menu::m_windowSize = Vector2::Constant(2.0f);
+float Menu::m_windowDiagonal = 1.0f;
+float Menu::m_windowAspect = 1.0f;
+Vector2 Menu::m_windowCenter = Vector2::Constant(1.0f);
 std::vector<ci::gl::Texture> Menu::m_icons;
 
-Menu::Menu() : m_outerRadius(0.325f), m_innerRadius(0.035f), m_sweepAngle(3.5f), m_windowSize(Vector2::Ones()),
+Menu::Menu() : m_outerRadius(0.325f), m_innerRadius(0.04f), m_sweepAngle(3.5f),
   m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(0.0), m_prevSelectedEntry(-1),
   m_activeColor(Color::white()), m_defaultEntry(0) {
   m_activation.value = 0.0f;
@@ -92,7 +97,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
     }
   }
 
-  if (m_curSelectedEntry != -1) {
+  if (hasSelectedEntry()) {
     m_entries[m_curSelectedEntry].m_hoverStrength.Update(1.0f, curTime, CHILD_SMOOTH_STRENGTH);
     m_entries[m_curSelectedEntry].m_activationStrength.Update(1.0f, curTime, CHILD_SMOOTH_STRENGTH);
     if (static_cast<float>(curTime - m_selectionTime) > SELECTION_COOLDOWN) {
@@ -171,7 +176,7 @@ void Menu::draw() const {
     const bool isSelected = (i == m_prevSelectedEntry);
 
     // draw wedge behind
-    if (m_entries[i].useColor) {
+    if (m_entries[i].drawMethod == MenuEntry::COLOR) {
       const ci::Color& origColor = m_entries[i].m_color;
       ci::Vec3f color(origColor.r, origColor.g, origColor.b);
       color *= (1.0f + 0.2f*m_entries[i].m_hoverStrength.value);
@@ -215,7 +220,6 @@ void Menu::draw() const {
 
 int Menu::checkCollision(const Vector2& pos) const {
   // returns the entry this position hits, or -1 if outside
-
   float angle, radius;
   toRadialCoordinates(pos, radius, angle);
   const float sweepStart = getSweepStart();
@@ -251,6 +255,7 @@ void Menu::setWindowSize(const ci::Vec2i& size) {
 }
 
 void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const {
+  static const float TWO_PI = static_cast<float>(2.0*M_PI);
 #if 0
   const Vector2 diff = (pos - m_position);
   angle = std::atan2(diff.x(), diff.y());
@@ -264,7 +269,9 @@ void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) 
   const ci::Vec2f diff = (abs - absMenu);
   angle = std::atan2(diff.x, diff.y);
   if (angle < 0) {
-    angle += static_cast<float>(2.0 * M_PI);
+    angle += TWO_PI;
+  } else if (angle > TWO_PI) {
+    angle -= TWO_PI;
   }
   radius = absoluteToRelative(diff.length());
 
@@ -285,54 +292,51 @@ UserInterface::UserInterface()
   , _draw_color_menu(false)
   , _first_selection_check(true)
 {
-  static const int NUM_TOOL_ENTRIES = 7;
-  _type_menu.m_name = "Tool";
-  _type_menu.m_position << 0.5f, 0.925f;
-  _type_menu.m_angleOffset = M_PI;
-  _type_menu.setNumEntries(NUM_TOOL_ENTRIES);
-  _type_menu.m_entries[0].m_iconType = Menu::TOOL_PAINT;
-  _type_menu.m_entries[1].m_iconType = Menu::TOOL_PUSH;
-  _type_menu.m_entries[2].m_iconType = Menu::TOOL_SWEEP;
-  _type_menu.m_entries[3].m_iconType = Menu::TOOL_FLATTEN;
-  _type_menu.m_entries[4].m_iconType = Menu::TOOL_SMOOTH;
-  _type_menu.m_entries[5].m_iconType = Menu::TOOL_SHRINK;
-  _type_menu.m_entries[6].m_iconType = Menu::TOOL_GROW;
-  _type_menu.m_defaultEntry = 1;
-  for (int i=0; i<NUM_TOOL_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _type_menu.m_entries[i];
-    entry.useIcon = true;
-    entry.useColor = false;
-  }
-  
   static const int NUM_STRENGTH_ENTRIES = 3;
   _strength_menu.m_name = "Strength";
   _strength_menu.m_position << 0.2f, 0.925f;
   _strength_menu.setNumEntries(NUM_STRENGTH_ENTRIES);
-  _strength_menu.m_angleOffset = M_PI;
+  _strength_menu.m_angleOffset = static_cast<float>(M_PI);
   _strength_menu.m_defaultEntry = NUM_STRENGTH_ENTRIES/2;
-  _strength_menu.m_entries[0].m_iconType = Menu::STRENGTH_LOW;
-  _strength_menu.m_entries[1].m_iconType = Menu::STRENGTH_MEDIUM;
-  _strength_menu.m_entries[2].m_iconType = Menu::STRENGTH_HIGH;
+  _strength_menu.m_entries[0].m_entryType = Menu::STRENGTH_LOW;
+  _strength_menu.m_entries[1].m_entryType = Menu::STRENGTH_MEDIUM;
+  _strength_menu.m_entries[2].m_entryType = Menu::STRENGTH_HIGH;
   for (int i=0; i<NUM_STRENGTH_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_STRENGTH_ENTRIES);
     Menu::MenuEntry& entry = _strength_menu.m_entries[i];
-    entry.useIcon = true;
-    entry.useColor = false;
+    entry.drawMethod = Menu::MenuEntry::ICON;
     //entry.m_radius = 0.005f + ratio*0.03f;
     entry.m_value = Menu::STRENGTH_UI_MULT*ratio;
+  }
+
+  static const int NUM_TOOL_ENTRIES = 7;
+  _type_menu.m_name = "Tool";
+  _type_menu.m_position << 0.5f, 0.925f;
+  _type_menu.m_angleOffset = static_cast<float>(M_PI);
+  _type_menu.setNumEntries(NUM_TOOL_ENTRIES);
+  _type_menu.m_entries[0].m_entryType = Menu::TOOL_PAINT;
+  _type_menu.m_entries[1].m_entryType = Menu::TOOL_PUSH;
+  _type_menu.m_entries[2].m_entryType = Menu::TOOL_SWEEP;
+  _type_menu.m_entries[3].m_entryType = Menu::TOOL_FLATTEN;
+  _type_menu.m_entries[4].m_entryType = Menu::TOOL_SMOOTH;
+  _type_menu.m_entries[5].m_entryType = Menu::TOOL_SHRINK;
+  _type_menu.m_entries[6].m_entryType = Menu::TOOL_GROW;
+  _type_menu.m_defaultEntry = 1;
+  for (int i=0; i<NUM_TOOL_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _type_menu.m_entries[i];
+    entry.drawMethod = Menu::MenuEntry::ICON;
   }
     
   static const int NUM_SIZE_ENTRIES = 8;
   _size_menu.m_name = "Size";
   _size_menu.m_position << 0.8f, 0.925f;
   _size_menu.setNumEntries(NUM_SIZE_ENTRIES);
-  _size_menu.m_angleOffset = M_PI;
+  _size_menu.m_angleOffset = static_cast<float>(M_PI);
   _size_menu.m_defaultEntry = NUM_SIZE_ENTRIES/2;
   for (int i=0; i<NUM_SIZE_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_SIZE_ENTRIES);
     Menu::MenuEntry& entry = _size_menu.m_entries[i];
-    entry.useIcon = false;
-    entry.useColor = false;
+    entry.drawMethod = Menu::MenuEntry::CIRCLE;
     entry.m_radius = 0.005f + ratio*0.03f;
     entry.m_value = 40.0f*ratio;
   }
@@ -341,22 +345,91 @@ UserInterface::UserInterface()
   _color_menu.m_name = "Color";
   _color_menu.m_position << 0.925f, 0.3f;
   _color_menu.setNumEntries(NUM_COLOR_ENTRIES);
-  _color_menu.m_angleOffset = 3.0f*M_PI/2.0f;
+  _color_menu.m_angleOffset = static_cast<float>(3.0*M_PI/2.0);
   _color_menu.m_defaultEntry = NUM_COLOR_ENTRIES/2;
   for (int i=0; i<NUM_COLOR_ENTRIES; i++) {
     const float ratio = static_cast<float>(i-3)/static_cast<float>(NUM_COLOR_ENTRIES-4);
     Menu::MenuEntry& entry = _color_menu.m_entries[i];
-    entry.useIcon = false;
-    entry.useColor = true;
+    entry.drawMethod = Menu::MenuEntry::COLOR;
     if (i == 0) {
       entry.m_color = ci::Color::white();
     } else if (i == 1) {
       entry.m_color = ci::Color::gray(0.6f);
     } else if (i == 2) {
-      entry.m_color = ci::Color::gray(0.15f);
+      entry.m_color = ci::Color::gray(0.1f);
     } else {
       entry.m_color = ci::hsvToRGB(ci::Vec3f(ratio, 0.75f, 0.75f));
     }
+  }
+
+  static const int NUM_MATERIAL_ENTRIES = 5;
+  _material_menu.m_name = "Material";
+  _material_menu.m_position << 0.075f, 0.3f;
+  _material_menu.setNumEntries(NUM_MATERIAL_ENTRIES);
+  _material_menu.m_entries[0].m_entryType = Menu::MATERIAL_PLASTIC;
+  _material_menu.m_entries[1].m_entryType = Menu::MATERIAL_PORCELAIN;
+  _material_menu.m_entries[2].m_entryType = Menu::MATERIAL_GLASS;
+  _material_menu.m_entries[3].m_entryType = Menu::MATERIAL_STEEL;
+  _material_menu.m_entries[4].m_entryType = Menu::MATERIAL_CLAY;
+  _material_menu.m_angleOffset = static_cast<float>(M_PI/2.0);
+  _material_menu.m_defaultEntry = 1;
+  for (int i=0; i<NUM_MATERIAL_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _material_menu.m_entries[i];
+    entry.drawMethod = Menu::MenuEntry::ICON;
+  }
+
+  static const int NUM_SPIN_ENTRIES = 4;
+  _spin_menu.m_name = "Spin";
+  _spin_menu.m_position << 0.075f, 0.6f;
+  _spin_menu.setNumEntries(NUM_SPIN_ENTRIES);
+  _spin_menu.m_entries[0].m_entryType = Menu::SPIN_OFF;
+  _spin_menu.m_entries[1].m_entryType = Menu::SPIN_SLOW;
+  _spin_menu.m_entries[2].m_entryType = Menu::SPIN_MEDIUM;
+  _spin_menu.m_entries[3].m_entryType = Menu::SPIN_FAST;
+  _spin_menu.m_angleOffset = static_cast<float>(M_PI/2.0);
+  _spin_menu.m_defaultEntry = 0;
+  for (int i=0; i<NUM_SPIN_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _spin_menu.m_entries[i];
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+  
+  static const int NUM_WIREFRAME_ENTRIES = 2;
+  _wireframe_menu.m_name = "Wireframe";
+  _wireframe_menu.m_position << 0.2f, 0.075f;
+  _wireframe_menu.setNumEntries(NUM_WIREFRAME_ENTRIES);
+  _wireframe_menu.m_entries[0].m_entryType = Menu::WIREFRAME_OFF;
+  _wireframe_menu.m_entries[1].m_entryType = Menu::WIREFRAME_ON;
+  _wireframe_menu.m_angleOffset = static_cast<float>(2.0f*M_PI);
+  _wireframe_menu.m_defaultEntry = 0;
+  for (int i=0; i<NUM_WIREFRAME_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _wireframe_menu.m_entries[i];
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  static const int NUM_SYMMETRY_ENTRIES = 2;
+  _symmetry_menu.m_name = "Symmetry";
+  _symmetry_menu.m_position << 0.35f, 0.075f;
+  _symmetry_menu.setNumEntries(NUM_SYMMETRY_ENTRIES);
+  _symmetry_menu.m_entries[0].m_entryType = Menu::SYMMETRY_OFF;
+  _symmetry_menu.m_entries[1].m_entryType = Menu::SYMMETRY_ON;
+  _symmetry_menu.m_angleOffset = static_cast<float>(2.0f*M_PI);
+  _symmetry_menu.m_defaultEntry = 0;
+  for (int i=0; i<NUM_SYMMETRY_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _symmetry_menu.m_entries[i];
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  static const int NUM_HISTORY_ENTRIES = 2;
+  _history_menu.m_name = "History";
+  _history_menu.m_position << 0.5f, 0.075f;
+  _history_menu.setNumEntries(NUM_HISTORY_ENTRIES);
+  _history_menu.m_entries[0].m_entryType = Menu::HISTORY_UNDO;
+  _history_menu.m_entries[1].m_entryType = Menu::HISTORY_REDO;
+  _history_menu.m_angleOffset = static_cast<float>(2.0f*M_PI);
+  _history_menu.m_defaultEntry = 0;
+  for (int i=0; i<NUM_HISTORY_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _history_menu.m_entries[i];
+    entry.drawMethod = Menu::MenuEntry::STRING;
   }
 }
 
@@ -394,6 +467,17 @@ void UserInterface::update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt)
   _size_menu.update(_Tips, sculpt);
   if (_draw_color_menu) {
     _color_menu.update(_Tips, sculpt);
+  }
+  _material_menu.update(_Tips, sculpt);
+  _spin_menu.update(_Tips, sculpt);
+  _wireframe_menu.update(_Tips, sculpt);
+  _symmetry_menu.update(_Tips, sculpt);
+  _history_menu.update(_Tips, sculpt);
+
+  _cursor_positions.clear();
+  for (size_t i=0; i<_Tips.size(); i++) {
+    const ci::Vec2f pos(_Tips[i].x, 1.0f - _Tips[i].y);
+    _cursor_positions.push_back(pos);
   }
 
   static const float ACTIVATION_RATE = 1.75f;
@@ -540,11 +624,13 @@ void UserInterface::update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt)
 
   // add tips as metaballs
   const float max_activation = maxActivation();
+#if 0
   for (size_t i=0; i<_Tips.size(); i++)
   {
     Vec2f pixelLocation(_windowSize.x*_Tips[i].x, _windowSize.y*_Tips[i].y);
     addMetaball(pixelLocation, _windowDiagonal*_Tips[i].z, Vec4f(LEAF_ACTIVATED_COLOR.r, LEAF_ACTIVATED_COLOR.g, LEAF_ACTIVATED_COLOR.b, max_activation), _Tips[i].w, 0.75f);
   }
+#endif
 
   const float new_radius_mult = 1.0f + 0.7f*(1.0f-max_activation);
   static const float RADIUS_MULT_SMOOTH = 0.9f;
@@ -600,6 +686,11 @@ void UserInterface::draw(Environment* _Env, const Matrix33f& normalMatrix) const
     }
   }
 
+  const float opacity = maxActivation();
+  for (size_t i=0; i<_cursor_positions.size(); i++) {
+    drawCursor(_cursor_positions[i], opacity);
+  }
+
   enableAlphaBlending();
   _type_menu.draw();
   _strength_menu.draw();
@@ -607,6 +698,11 @@ void UserInterface::draw(Environment* _Env, const Matrix33f& normalMatrix) const
   if (_draw_color_menu) {
     _color_menu.draw();
   }
+  _material_menu.draw();
+  _spin_menu.draw();
+  _wireframe_menu.draw();
+  _symmetry_menu.draw();
+  _history_menu.draw();
 }
 
 void UserInterface::setWindowSize(const Vec2i& _Size)
@@ -616,10 +712,7 @@ void UserInterface::setWindowSize(const Vec2i& _Size)
   const float height = static_cast<float>(_windowSize.y);
   _windowDiagonal = std::sqrt(width*width + height*height)/2.0f;
 
-  _type_menu.setWindowSize(_Size);
-  _strength_menu.setWindowSize(_Size);
-  _size_menu.setWindowSize(_Size);
-  _color_menu.setWindowSize(_Size);
+  Menu::setWindowSize(_Size);
 }
 
 void UserInterface::setShader(GlslProg* _Shader)
@@ -648,62 +741,90 @@ float UserInterface::maxActivation() const
   result = std::max(result, _strength_menu.m_activation.value);
   result = std::max(result, _size_menu.m_activation.value);
   result = std::max(result, _color_menu.m_activation.value);
+  result = std::max(result, _material_menu.m_activation.value);
+  result = std::max(result, _spin_menu.m_activation.value);
+  result = std::max(result, _wireframe_menu.m_activation.value);
+  result = std::max(result, _symmetry_menu.m_activation.value);
+  result = std::max(result, _history_menu.m_activation.value);
 
   return result;
 }
 
-void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap) {
+void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh) {
   if (_first_selection_check) {
-    const int defaultStrength = _strength_menu.m_defaultEntry;
-    _strength_menu.m_prevSelectedEntry = defaultStrength;
-    _strength_menu.m_actualName = _strength_menu.m_activeName = _strength_menu.m_entries[defaultStrength].toString();
-    leap->setBrushStrength(_strength_menu.m_entries[defaultStrength].m_value / Menu::STRENGTH_UI_MULT);
-
-    const int defaultSize = _size_menu.m_defaultEntry;
-    _size_menu.m_prevSelectedEntry = defaultSize;
-    _size_menu.m_actualName = _size_menu.m_activeName = _size_menu.m_entries[defaultSize].toString();
-    leap->setBrushRadius(_size_menu.m_entries[defaultSize].m_value);
-
-    const int defaultType = _type_menu.m_defaultEntry;
-    _type_menu.m_prevSelectedEntry = defaultType;
-    _type_menu.m_actualName = _type_menu.m_activeName = _type_menu.m_entries[defaultType].toString();
-    Sculpt::SculptMode mode = Menu::toolToSculptMode(_type_menu.m_entries[defaultType].m_iconType);
-    sculpt->setSculptMode(mode);
-
-    const int defaultColor = _color_menu.m_defaultEntry;
-    _color_menu.m_prevSelectedEntry = defaultColor;
-    _color_menu.m_activeColor = _color_menu.m_entries[defaultColor].m_color;
-    const ci::Color& desiredColor = _color_menu.m_entries[defaultColor].m_color;
-    _color_menu.m_activeColor = desiredColor;
-    Vector3 color(desiredColor.r, desiredColor.g, desiredColor.b);
-    sculpt->setMaterialColor(color);
+    initializeMenu(_type_menu);
+    initializeMenu(_strength_menu);
+    initializeMenu(_size_menu);
+    initializeMenu(_color_menu);
+    initializeMenu(_material_menu);
+    initializeMenu(_spin_menu);
+    initializeMenu(_wireframe_menu);
+    initializeMenu(_symmetry_menu);
+    initializeMenu(_history_menu);
 
     _first_selection_check = false;
   }
 
-  if (_type_menu.m_curSelectedEntry != -1) {
-    Menu::MenuEntry& entry = _type_menu.m_entries[_type_menu.m_curSelectedEntry];
-    Sculpt::SculptMode mode = Menu::toolToSculptMode(entry.m_iconType);
+  if (_type_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _type_menu.getSelectedEntry();
+    Sculpt::SculptMode mode = entry.toSculptMode();
     sculpt->setSculptMode(mode);
     _draw_color_menu = (mode == Sculpt::PAINT);
   }
 
-  if (_strength_menu.m_curSelectedEntry != -1) {
-    Menu::MenuEntry& entry = _strength_menu.m_entries[_strength_menu.m_curSelectedEntry];
+  if (_strength_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _strength_menu.getSelectedEntry();
     leap->setBrushStrength(entry.m_value / Menu::STRENGTH_UI_MULT);
   }
 
-  if (_size_menu.m_curSelectedEntry != -1) {
-    Menu::MenuEntry& entry = _size_menu.m_entries[_size_menu.m_curSelectedEntry];
+  if (_size_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _size_menu.getSelectedEntry();
     leap->setBrushRadius(entry.m_value);
   }
 
-  if (_draw_color_menu && _color_menu.m_curSelectedEntry != -1) {
-    const ci::Color& desiredColor = _color_menu.m_entries[_color_menu.m_curSelectedEntry].m_color;
+  if (_draw_color_menu && _color_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _color_menu.getSelectedEntry();
+    const ci::Color& desiredColor = entry.m_color;
     _color_menu.m_activeColor = desiredColor;
     Vector3 color(desiredColor.r, desiredColor.g, desiredColor.b);
     sculpt->setMaterialColor(color);
   }
+
+  if (_material_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _material_menu.getSelectedEntry();
+    app->setMaterial(entry.toMaterial());
+  }
+
+  if (_spin_menu.hasSelectedEntry() && mesh) {
+    const Menu::MenuEntry& entry = _spin_menu.getSelectedEntry();
+    mesh->setRotationVelocity(entry.toSpinVelocity());
+  }
+
+  if (_wireframe_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _wireframe_menu.getSelectedEntry();
+    app->setWireframe(entry.toWireframe());
+  }
+
+  if (_symmetry_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _symmetry_menu.getSelectedEntry();
+    app->setSymmetry(entry.toSymmetry());
+  }
+
+  if (_history_menu.hasSelectedEntry()) {
+
+  }
+}
+
+void UserInterface::drawCursor(const ci::Vec2f& position, float opacity) const {
+  ci::Vec2f screenPos(position.x * _windowSize.x, position.y * _windowSize.y);
+  glColor4f(0.7f, 0.9f, 1.0f, opacity);
+  ci::gl::drawSolidCircle(screenPos, 40, 40);
+}
+
+void UserInterface::initializeMenu(Menu& menu) {
+  const int defaultOption = menu.m_defaultEntry;
+  menu.m_curSelectedEntry = defaultOption;
+  menu.m_actualName = menu.m_activeName = menu.m_entries[defaultOption].toString();
 }
 
 Vec2f UserInterface::getCombinedForcesAt(const Vec2f& _Position, int _Id) const

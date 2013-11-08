@@ -18,7 +18,7 @@ const float MAX_FOV = 90.0f;
 
 
 //*********************************************************
-ClayDemoApp::ClayDemoApp()
+ThreeFormApp::ThreeFormApp()
   : _environment(0)
   , _theta(100.f)
   , _phi(0.f)
@@ -43,7 +43,7 @@ ClayDemoApp::ClayDemoApp()
   _debug_draw_util = new DebugDrawUtil();
 }
 
-ClayDemoApp::~ClayDemoApp()
+ThreeFormApp::~ThreeFormApp()
 {
   delete _environment;
   if (mesh_) {
@@ -54,15 +54,15 @@ ClayDemoApp::~ClayDemoApp()
   delete _debug_draw_util;
 }
 
-void ClayDemoApp::prepareSettings( Settings *settings )
+void ThreeFormApp::prepareSettings( Settings *settings )
 {
-  settings->setWindowSize( 800, 600 );
+  settings->setWindowSize(800, 600);
   //settings->setFrameRate( 60.0f );
-  settings->setTitle( "Clay Demo" );
+  settings->setTitle("3Form");
   //enableVerticalSync(true);
 }
 
-int ClayDemoApp::loadFile()
+int ThreeFormApp::loadFile()
 {
   // *** open mesh file ***
   std::vector<std::string> file_extensions;
@@ -108,7 +108,7 @@ int ClayDemoApp::loadFile()
   return err; // error
 }
 
-int ClayDemoApp::saveFile()
+int ThreeFormApp::saveFile()
 {
   if (!mesh_) {
     return -1;
@@ -146,7 +146,7 @@ int ClayDemoApp::saveFile()
   return err; // error
 }
 
-void ClayDemoApp::setEnvironment(const std::string& str)
+void ThreeFormApp::setEnvironment(const std::string& str)
 {
   if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE)
   {
@@ -155,7 +155,7 @@ void ClayDemoApp::setEnvironment(const std::string& str)
   _loading_thread = std::thread(&Environment::setEnvironment, _environment, str, _environment->getCurTimeOfDay());
 }
 
-void ClayDemoApp::setTimeOfDay(const std::string& str)
+void ThreeFormApp::setTimeOfDay(const std::string& str)
 {
   if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE)
   {
@@ -165,80 +165,7 @@ void ClayDemoApp::setTimeOfDay(const std::string& str)
   _loading_thread = std::thread(&Environment::setEnvironment, _environment, _environment->getCurEnvironmentString(), time);
 }
 
-void ClayDemoApp::setMaterial(const std::string& str)
-{
-  if (str == "Amethyst")
-  {
-    _ambient_factor = 0.0f;
-    _diffuse_factor = 0.55f;
-    _reflection_factor = 0.25f;
-    _surface_color = Color(0.65f, 0.45f, 0.9f);
-    _reflection_bias = 0.0f;
-    _refraction_bias = 2.0f;
-    _refraction_index = 0.4f;
-  }
-  else if (str == "Porcelain")
-  {
-    _ambient_factor = 0.0f;
-    _diffuse_factor = 1.0f;
-    _reflection_factor = 0.1f;
-    _surface_color = Color(1.0f, 0.95f, 0.9f);
-    _reflection_bias = 0.5f;
-  }
-  else if (str == "Glass")
-  {
-    _ambient_factor = 0.0f;
-    _diffuse_factor = 0.15f;
-    _reflection_factor = 0.7f;
-    _surface_color = Color(0.4f, 0.45f, 0.5f);
-    _reflection_bias = 0.0f;
-    _refraction_bias = 0.0f;
-    _refraction_index = 0.45f;
-  }
-  else if (str == "Clay")
-  {
-    _ambient_factor = 0.0f;
-    _diffuse_factor = 1.0f;
-    _reflection_factor = 0.0f;
-    _surface_color = Color(0.7f, 0.6f, 0.3f);
-  }
-  else if (str == "Plastic")
-  {
-    _ambient_factor = 0.0f;
-    _diffuse_factor = 1.0f;
-    _reflection_factor = 0.1f;
-    _surface_color = Color(0.0f, 0.4f, 1.0f);
-    _reflection_bias = 0.5f;
-  }
-  else if (str == "Onyx")
-  {
-    _ambient_factor = 0.0f;
-    _diffuse_factor = 1.0;
-    _reflection_factor = 0.1f;
-    _surface_color = Color(0.05f, 0.06f, 0.08f);
-    _reflection_bias = 2.0f;
-  }
-  else if (str == "Flubber")
-  {
-    _ambient_factor = 0.2f;
-    _diffuse_factor = 0.1f;
-    _reflection_factor = 0.5f;
-    _surface_color = Color(0.15f, 1.0f, 0.05f);
-    _reflection_bias = 0.0f;
-    _refraction_bias = 2.0f;
-    _refraction_index = 0.8f;
-  }
-  else if (str == "Steel")
-  {
-    _ambient_factor = 0.0f;
-    _diffuse_factor = 1.0f;
-    _reflection_factor = 0.5f;
-    _surface_color = Color(0.2f, 0.25f, 0.275f);
-    _reflection_bias = 0.0f;
-  }
-}
-
-void ClayDemoApp::performFileAction(const std::string& str)
+void ThreeFormApp::performFileAction(const std::string& str)
 {
   if (str == "Load")
   {
@@ -250,38 +177,13 @@ void ClayDemoApp::performFileAction(const std::string& str)
   }
 }
 
-void ClayDemoApp::toggleFullscreen(const std::string& str)
+void ThreeFormApp::toggleFullscreen(const std::string& str)
 {
   bool full = isFullScreen();
   setFullScreen(!full);
 }
 
-void ClayDemoApp::toggleWireframe(const std::string& str)
-{
-  _draw_edges = !_draw_edges;
-}
-
-void ClayDemoApp::setAutoSpin(const std::string& str)
-{
-  if (str == "Off")
-  {
-    mesh_->setRotationVelocity(0.0f);
-  }
-  else if (str == "Slow")
-  {
-    mesh_->setRotationVelocity(0.63f);
-  }
-  else if (str == "Medium")
-  {
-    mesh_->setRotationVelocity(2.13f);
-  }
-  else if (str == "Fast")
-  {
-    mesh_->setRotationVelocity(5.37f);
-  }
-}
-
-void ClayDemoApp::setup()
+void ThreeFormApp::setup()
 {
   FreeImage_Initialise();
   enableAlphaBlending();
@@ -290,13 +192,6 @@ void ClayDemoApp::setup()
   glCullFace( GL_BACK );
   glEnable(GL_CULL_FACE);
 
-  _ambient_factor = 0.00f;
-  _diffuse_factor = 1.0f;
-  _reflection_factor = 0.1f;
-  _surface_color = Color(1.f,1.f,1.f);
-  _reflection_bias = 0;
-  _refraction_bias = 0;
-  _refraction_index = 0.4f;
   _draw_edges = false;
   _bloom_visible = true;
   _bloom_size = 1.f;
@@ -334,13 +229,12 @@ void ClayDemoApp::setup()
   _params->addParam( "CP for edges", &_camera_params.useClosestPointForEdges, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
-  _params->addParam( "Ambient", &_ambient_factor, "min=0.0 max=0.5 step=0.01" );
-  _params->addParam( "Diffuse", &_diffuse_factor, "min=0.0 max=1.0 step=0.05" );
-  _params->addParam( "Reflection", &_reflection_factor, "min=0.0 max=1.0 step=0.05" );
-  _params->addParam( "Color", &_surface_color, "" );
-  _params->addParam( "Refraction Index", &_refraction_index, "min=0.0 max=1.0 step=0.01" );
-  _params->addParam( "Reflection Bias", &_reflection_bias, "min=0.0 max=3.0 step=0.01" );
-  _params->addParam( "Refraction Bias", &_refraction_bias, "min=0.0 max=3.0 step=0.01" );
+  _params->addParam( "Ambient", &_material.ambientFactor, "min=0.0 max=0.5 step=0.01" );
+  _params->addParam( "Diffuse", &_material.diffuseFactor, "min=0.0 max=1.0 step=0.05" );
+  _params->addParam( "Reflection", &_material.reflectionFactor, "min=0.0 max=1.0 step=0.05" );
+  _params->addParam( "Refraction Index", &_material.refractionIndex, "min=0.0 max=1.0 step=0.01" );
+  _params->addParam( "Reflection Bias", &_material.reflectionBias, "min=0.0 max=3.0 step=0.01" );
+  _params->addParam( "Refraction Bias", &_material.refractionBias, "min=0.0 max=3.0 step=0.01" );
   _params->addSeparator();
   _params->addText( "text", "label=`Draw parameters:`" );
   _params->addParam( "Draw UI", &_draw_ui, "" );
@@ -387,7 +281,7 @@ void ClayDemoApp::setup()
   //_ui->addElement(UIElement("Brush"), "Menu");
   _ui->addElement(UIElement("Editing"), "Menu");
   _ui->addElement(UIElement("Environment"), "Menu");
-  _ui->addElement(UIElement("Material"), "Menu");
+  //_ui->addElement(UIElement("Material"), "Menu");
 
   // Brush nodes
   //_ui->addElement(UIElement("Strength"), "Brush");
@@ -395,62 +289,62 @@ void ClayDemoApp::setup()
   //_ui->addElement(UIElement("Type"), "Brush");
 
   // Strength nodes
-  //_ui->addElement(UIElement("Fine", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
-  //_ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
-  //_ui->addElement(UIElement("Strong", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
+  //_ui->addElement(UIElement("Fine", boost::bind(&ThreeFormApp::setBrushStrength, this, ::_1)), "Strength");
+  //_ui->addElement(UIElement("Medium", boost::bind(&ThreeFormApp::setBrushStrength, this, ::_1)), "Strength");
+  //_ui->addElement(UIElement("Strong", boost::bind(&ThreeFormApp::setBrushStrength, this, ::_1)), "Strength");
 
   // Size nodes
-  //_ui->addElement(UIElement("X-Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
-  //_ui->addElement(UIElement("Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
-  //_ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
-  //_ui->addElement(UIElement("Large", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("X-Small", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("Small", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("Medium", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("Large", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
 
   // Type nodes
-  //_ui->addElement(UIElement("Grow", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Shrink", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Smooth", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Flatten", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Sweep", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Push", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Paint", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Grow", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Shrink", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Smooth", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Flatten", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Sweep", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Push", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Paint", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
 
   // Editing nodes
-  _ui->addElement(UIElement("Fullscreen", boost::bind(&ClayDemoApp::toggleFullscreen, this, ::_1)), "Editing");
-  _ui->addElement(UIElement("Wireframe", boost::bind(&ClayDemoApp::toggleWireframe, this, ::_1)), "Editing");
-  _ui->addElement(UIElement("Load", boost::bind(&ClayDemoApp::performFileAction, this, ::_1)), "Editing");
-  _ui->addElement(UIElement("Save", boost::bind(&ClayDemoApp::performFileAction, this, ::_1)), "Editing");
-  _ui->addElement(UIElement("Auto-Spin"), "Editing");
+  _ui->addElement(UIElement("Fullscreen", boost::bind(&ThreeFormApp::toggleFullscreen, this, ::_1)), "Editing");
+  //_ui->addElement(UIElement("Wireframe", boost::bind(&ThreeFormApp::toggleWireframe, this, ::_1)), "Editing");
+  _ui->addElement(UIElement("Load", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
+  _ui->addElement(UIElement("Save", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
+  //_ui->addElement(UIElement("Auto-Spin"), "Editing");
 
   // Environment nodes
   _ui->addElement(UIElement("Scene"), "Environment");
   _ui->addElement(UIElement("Time of Day"), "Environment");
 
   // Auto-Spin nodes
-  _ui->addElement(UIElement("Off", boost::bind(&ClayDemoApp::setAutoSpin, this, ::_1)), "Auto-Spin");
-  _ui->addElement(UIElement("Slow", boost::bind(&ClayDemoApp::setAutoSpin, this, ::_1)), "Auto-Spin");
-  _ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setAutoSpin, this, ::_1)), "Auto-Spin");
-  _ui->addElement(UIElement("Fast", boost::bind(&ClayDemoApp::setAutoSpin, this, ::_1)), "Auto-Spin");
+  //_ui->addElement(UIElement("Off", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
+  //_ui->addElement(UIElement("Slow", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
+  //_ui->addElement(UIElement("Medium", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
+  //_ui->addElement(UIElement("Fast", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
 
   // Scene nodes
   const std::vector<Environment::EnvironmentInfo>& infos = _environment->getEnvironmentInfos();
   for (size_t i=0; i<infos.size(); i++)
   {
-    _ui->addElement(UIElement(infos[i]._name, boost::bind(&ClayDemoApp::setEnvironment, this, ::_1)), "Scene");
+    _ui->addElement(UIElement(infos[i]._name, boost::bind(&ThreeFormApp::setEnvironment, this, ::_1)), "Scene");
   }
 
   // Time of Day nodes
-  _ui->addElement(UIElement("Dawn", boost::bind(&ClayDemoApp::setTimeOfDay, this, ::_1)), "Time of Day");
-  _ui->addElement(UIElement("Noon", boost::bind(&ClayDemoApp::setTimeOfDay, this, ::_1)), "Time of Day");
+  _ui->addElement(UIElement("Dawn", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
+  _ui->addElement(UIElement("Noon", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
 
   // Material nodes
-  //_ui->addElement(UIElement("Amethyst", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  _ui->addElement(UIElement("Porcelain", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  _ui->addElement(UIElement("Glass", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  _ui->addElement(UIElement("Clay", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  _ui->addElement(UIElement("Plastic", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Onyx", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Flubber", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  _ui->addElement(UIElement("Steel", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Amethyst", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Porcelain", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Glass", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Clay", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Plastic", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Onyx", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Flubber", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Steel", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
 
   _ui->setRootNode("Menu");
 
@@ -478,15 +372,15 @@ void ClayDemoApp::setup()
   _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
   _ui->setBoldFont(ci::Font(loadResource( RES_FONT_FREIGHTSANSBOLD_TTF ), Menu::FONT_SIZE));
 
-  _mesh_thread = std::thread(&ClayDemoApp::updateLeapAndMesh, this);
+  _mesh_thread = std::thread(&ThreeFormApp::updateLeapAndMesh, this);
 }
 
-void ClayDemoApp::shutdown() {
+void ThreeFormApp::shutdown() {
   _shutdown = true;
   FreeImage_DeInitialise();
 }
 
-void ClayDemoApp::resize()
+void ThreeFormApp::resize()
 {
   static const int DOWNSCALE_FACTOR = 4;
 
@@ -534,19 +428,19 @@ void ClayDemoApp::resize()
   glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
-void ClayDemoApp::mouseDown( MouseEvent event )
+void ThreeFormApp::mouseDown( MouseEvent event )
 {
   _mouse_down = true;
 
   _current_mouse_pos = _previous_mouse_pos = _initial_mouse_pos = event.getPos();
 }
 
-void ClayDemoApp::mouseUp( MouseEvent event )
+void ThreeFormApp::mouseUp( MouseEvent event )
 {
   _mouse_down = false;
 }
 
-void ClayDemoApp::mouseDrag( MouseEvent event )
+void ThreeFormApp::mouseDrag( MouseEvent event )
 {
   _previous_mouse_pos = _current_mouse_pos;
   _current_mouse_pos = event.getPos();
@@ -557,20 +451,20 @@ void ClayDemoApp::mouseDrag( MouseEvent event )
   _camera_util->RecordUserInput(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
 }
 
-void ClayDemoApp::mouseWheel( MouseEvent event)
+void ThreeFormApp::mouseWheel( MouseEvent event)
 {
   //float off = event.getWheelIncrement();
   _cam_dist -= 0.1f*event.getWheelIncrement();
   _cam_dist = std::min(MAX_CAMERA_DIST, std::max(0.5f, _cam_dist));
 }
 
-void ClayDemoApp::mouseMove( MouseEvent event)
+void ThreeFormApp::mouseMove( MouseEvent event)
 {
   _previous_mouse_pos = _current_mouse_pos;
   _current_mouse_pos = event.getPos();
 }
 
-void ClayDemoApp::keyDown( KeyEvent event )
+void ThreeFormApp::keyDown( KeyEvent event )
 {
   switch( event.getChar() )
   {
@@ -583,7 +477,7 @@ void ClayDemoApp::keyDown( KeyEvent event )
   }
 }
 
-void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float _DFov)
+void ThreeFormApp::updateCamera(const float _DTheta,const float _DPhi,const float _DFov)
 {
   _theta -= _DTheta;
   _phi += _DPhi;
@@ -595,7 +489,7 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
   _fov = math<float>::clamp(_fov, 40.f, 110.f);
 }
 
-void ClayDemoApp::update()
+void ThreeFormApp::update()
 {
   const double curTime = ci::app::getElapsedSeconds();
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
@@ -623,7 +517,7 @@ void ClayDemoApp::update()
   _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
   _ui->update(_leap_interaction->getTips(), &sculpt_);
-  _ui->handleSelections(&sculpt_, _leap_interaction);
+  _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
   float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
   _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
@@ -682,16 +576,16 @@ void ClayDemoApp::update()
   _last_update_time = curTime;
 }
 
-void ClayDemoApp::updateLeapAndMesh() {
+void ThreeFormApp::updateLeapAndMesh() {
   while (!_shutdown) {
     bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress)) {
       const double curTime = ci::app::getElapsedSeconds();
-      //const double lastSculptTime = sculpt_.getLastSculptTime();
+      const double lastSculptTime = sculpt_.getLastSculptTime();
 
       if (mesh_) {
         mesh_->updateRotation(curTime);
-        if (fabs(curTime - sculpt_.getLastSculptTime()) > 0.25) {
+        if (fabs(curTime - lastSculptTime) > 0.25) {
           _camera_util->UpdateCamera(mesh_, &_camera_params);
         }
         sculpt_.applyBrushes(curTime, symmetry_);
@@ -701,7 +595,7 @@ void ClayDemoApp::updateLeapAndMesh() {
   }
 }
 
-void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
+void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
 {
   const double curTime = ci::app::getElapsedSeconds();
 
@@ -785,20 +679,22 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     GLint normal = _material_shader.getAttribLocation("normal");
     GLint color = _material_shader.getAttribLocation("color");
 
+    const ci::Color surface = ci::Color(_material.surfaceColor.x(), _material.surfaceColor.y(), _material.surfaceColor.z());
+
     // draw mesh
     _material_shader.uniform( "useRefraction", true);
     _material_shader.uniform( "campos", _Camera.getEyePoint() );
     _material_shader.uniform( "irradiance", 0 );
     _material_shader.uniform( "radiance", 1 );
-    _material_shader.uniform( "ambientFactor", _ambient_factor );
-    _material_shader.uniform( "diffuseFactor", _diffuse_factor );
-    _material_shader.uniform( "reflectionFactor", _reflection_factor );
-    _material_shader.uniform( "surfaceColor", _surface_color );
+    _material_shader.uniform( "ambientFactor", _material.ambientFactor);
+    _material_shader.uniform( "diffuseFactor", _material.diffuseFactor);
+    _material_shader.uniform( "reflectionFactor", _material.reflectionFactor);
+    _material_shader.uniform( "surfaceColor", surface);
     _material_shader.uniform( "transform", transform );
     _material_shader.uniform( "transformit", transformit );
-    _material_shader.uniform( "reflectionBias", _reflection_bias );
-    _material_shader.uniform( "refractionBias", _refraction_bias );
-    _material_shader.uniform( "refractionIndex", _refraction_index );
+    _material_shader.uniform( "reflectionBias", _material.reflectionBias);
+    _material_shader.uniform( "refractionBias", _material.refractionBias);
+    _material_shader.uniform( "refractionIndex", _material.refractionIndex);
     _material_shader.uniform( "numLights", numBrushes );
     _material_shader.uniform( "brushPositions", brushPositions.data(), numBrushes );
     _material_shader.uniform( "brushWeights", brushWeights.data(), numBrushes );
@@ -879,10 +775,10 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
   _brush_shader.uniform( "numLights", 0 );
   for (size_t i=0; i<brushes.size(); i++) {
     const double lastSculptTime = sculpt_.getLastSculptTime();
-    float mult = 0.3f*static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25)) + 0.3f;
-    mult *= (1.0f - _ui->maxActivation());
-    _brush_shader.uniform("alphaMult", mult*brushes[i]._activation);
-    brushes[i].draw();
+    const float sculptMult = static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25));
+    const float uiMult = (1.0f - _ui->maxActivation());
+    _brush_shader.uniform("alphaMult", (0.3f*sculptMult*uiMult + 0.3f)*brushes[i]._activation);
+    brushes[i].draw(uiMult);
   }
   _brush_shader.unbind();
 
@@ -908,7 +804,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
   _screen_fbo.unbindFramebuffer();
 }
 
-void ClayDemoApp::createBloom()
+void ThreeFormApp::createBloom()
 {
   const float horizSize = _bloom_size / _horizontal_blur_fbo.getWidth();
   _horizontal_blur_fbo.bindFramebuffer();
@@ -941,7 +837,7 @@ void ClayDemoApp::createBloom()
   _vertical_blur_fbo.unbindFramebuffer();
 }
 
-void ClayDemoApp::draw()
+void ThreeFormApp::draw()
 {
   static const float LOADING_DARKEN_TIME = 2.0f;
   static const float LOADING_LIGHTEN_TIME = 2.0f;
@@ -1053,7 +949,7 @@ void ClayDemoApp::draw()
   _params->draw(); // draw the interface
 }
 
-void ClayDemoApp::loadIcons() {
+void ThreeFormApp::loadIcons() {
   std::vector<ci::gl::Texture>& icons = Menu::m_icons;
   icons.resize(Menu::NUM_ICONS);
 
@@ -1068,6 +964,24 @@ void ClayDemoApp::loadIcons() {
   icons[Menu::STRENGTH_LOW] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_LOW_SELECTED_PNG)));
   icons[Menu::STRENGTH_MEDIUM] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_MEDIUM_SELECTED_PNG)));
   icons[Menu::STRENGTH_HIGH] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_HIGH_SELECTED_PNG)));
+
+  icons[Menu::MATERIAL_PLASTIC] = ci::gl::Texture(loadImage(loadResource(RES_PLASTIC_PNG)));
+  icons[Menu::MATERIAL_PORCELAIN] = ci::gl::Texture(loadImage(loadResource(RES_PORCELAIN_PNG)));
+  icons[Menu::MATERIAL_GLASS] = ci::gl::Texture(loadImage(loadResource(RES_GLASS_PNG)));
+  icons[Menu::MATERIAL_STEEL] = ci::gl::Texture(loadImage(loadResource(RES_STEEL_PNG)));
+  icons[Menu::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
+}
+
+void ThreeFormApp::setMaterial(const Material& mat) {
+  _material = mat;
+}
+
+void ThreeFormApp::setWireframe(bool wireframe) {
+  _draw_edges = wireframe;
+}
+
+void ThreeFormApp::setSymmetry(bool symmetry) {
+  symmetry_ = symmetry;
 }
 
 #if 1
@@ -1075,12 +989,12 @@ void ClayDemoApp::loadIcons() {
 
 int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic::prepareLaunch();
-  cinder::app::AppBasic *app = new ClayDemoApp;
+  cinder::app::AppBasic *app = new ThreeFormApp;
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
 #if _WIN32
-  cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo");
+  cinder::app::AppBasic::executeLaunch( app, ren, "3Form");
 #else
-  cinder::app::AppBasic::executeLaunch( app, ren, "ClayDemo", argc, argv);
+  cinder::app::AppBasic::executeLaunch( app, ren, "3Form", argc, argv);
 #endif
   cinder::app::AppBasic::cleanupLaunch();
   return 0;

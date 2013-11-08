@@ -130,7 +130,7 @@ void LeapInteraction::interact(double curTime)
           transPos.z = 1.0f;
 
           const float autoBrushScaleFactor = (scaledSize.x() / LEAP_SIZE.x);
-          if (transPos.x >= 0.0f && transPos.x <= 1.0f && transPos.y >= 0.0f && transPos.y <= 1.0f) {
+          if (transPos.x >= -0.1f && transPos.x <= 1.1f && transPos.y >= -0.1f && transPos.y <= 1.1f) {
             float adjRadius = _desired_brush_radius;
             if (_autoBrush) {
               adjRadius *= autoBrushScaleFactor;

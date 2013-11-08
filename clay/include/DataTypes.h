@@ -28,4 +28,17 @@ struct lmTransform {
   lmQuat rotation;
 };
 
+struct Material {
+  Material() : ambientFactor(0.0f), diffuseFactor(1.0f), reflectionFactor(0.0f), surfaceColor(Vector3::Ones()),
+    reflectionBias(0.0f), refractionBias(0.0f), refractionIndex(0.5f)
+  { }
+  float ambientFactor;
+  float diffuseFactor;
+  float reflectionFactor;
+  Vector3 surfaceColor;
+  float reflectionBias;
+  float refractionBias;
+  float refractionIndex;
+};
+
 #endif

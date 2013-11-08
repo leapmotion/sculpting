@@ -53,7 +53,7 @@ public:
   Brush withSpinVelocity(const Vector3& rotOrigin, const Vector3& rotAxis, float rotVel) const;
 
   // drawing
-  void draw() const;
+  void draw(float radiusMult) const;
 
 public:
   float _radius;

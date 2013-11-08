@@ -26,22 +26,20 @@ using namespace ci::app;
 class CameraUtil;
 class DebugDrawUtil;
 
-class ClayDemoApp : public AppNative 
+class ThreeFormApp : public AppNative
 {
 public:
 
-  ClayDemoApp();
-  ~ClayDemoApp();
+  ThreeFormApp();
+  ~ThreeFormApp();
   void prepareSettings( Settings *settings );
   int loadFile();
   int saveFile();
   void setEnvironment(const std::string& str);
   void setTimeOfDay(const std::string& str);
-  void setMaterial(const std::string& str);
   void performFileAction(const std::string& str);
   void toggleFullscreen(const std::string& str);
-  void toggleWireframe(const std::string& str);
-  void setAutoSpin(const std::string& str);
+  //void toggleWireframe(const std::string& str);
   void setup();
   void shutdown();
   void resize();
@@ -58,6 +56,9 @@ public:
   void createBloom();
   void draw();
   void loadIcons();
+  void setMaterial(const Material& mat);
+  void setWireframe(bool wireframe);
+  void setSymmetry(bool symmetry);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -106,15 +107,9 @@ private:
 
   // *** ui stuff ***
   params::InterfaceGlRef _params;
-  float _ambient_factor;
-  float _diffuse_factor;
-  float _reflection_factor;
-  Color _surface_color;
   Color _brush_color;
   bool _draw_edges;
-  float _reflection_bias;
-  float _refraction_bias;
-  float _refraction_index;
+  Material _material;
   bool _use_ao;
   bool _only_ao;
 
