@@ -8,6 +8,9 @@ using namespace ci;
 
 #define USE_SKELETON_API 0
 
+const float LeapInteraction::MIN_POINTABLE_LENGTH = 10.0f;
+const float LeapInteraction::MIN_POINTABLE_AGE = 0.05f;
+
 LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui)
   : _sculpt(sculpt)
   , _ui(ui)
@@ -60,7 +63,7 @@ void LeapInteraction::interact(double curTime)
   float cur_dzoom = 0;
   static const float ORBIT_SPEED = 0.008f;
   static const float ZOOM_SPEED = 100.0f;
-  static const float AGE_WARMUP_TIME = 0.4f;
+  static const float AGE_WARMUP_TIME = 0.5f;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
 
   // create brushes
@@ -95,6 +98,10 @@ void LeapInteraction::interact(double curTime)
         const Leap::PointableList pointables = hand.pointables();
         const int num_pointables = pointables.count();
         for (int j=0; j<num_pointables; j++) {
+          if (pointables[j].length() < MIN_POINTABLE_LENGTH || pointables[j].timeVisible() < MIN_POINTABLE_AGE) {
+            continue;
+          }
+
           // add brushes
           const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[j].timeVisible()/AGE_WARMUP_TIME));
 
@@ -135,7 +142,7 @@ void LeapInteraction::interact(double curTime)
             if (_autoBrush) {
               adjRadius *= autoBrushScaleFactor;
             }
-            if (strengthMult > 0.9f) {
+            if (strengthMult > 0.25f) {
               _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, strengthMult);
             }
           }

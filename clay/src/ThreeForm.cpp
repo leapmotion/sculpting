@@ -62,120 +62,17 @@ void ThreeFormApp::prepareSettings( Settings *settings )
   //enableVerticalSync(true);
 }
 
-int ThreeFormApp::loadFile()
-{
-  // *** open mesh file ***
-  std::vector<std::string> file_extensions;
-  file_extensions.push_back("obj");
-  file_extensions.push_back("stl");
-  file_extensions.push_back("3ds");
-  file_extensions.push_back("ply");
-  fs::path path = getOpenFilePath("", file_extensions);
-
-  int err = -1;
-  if (!path.empty()) {
-    const std::string ext = path.extension().string();
-    if (!ext.empty()) {
-      //reset flags... not necessary
-      Mesh::stateMask_= 1;
-      Vertex::tagMask_ = 1;
-      Vertex::sculptMask_ = 1;
-      Triangle::tagMask_ = 1;
-
-      Files files;
-      Mesh* mesh = 0;
-      if (ext == ".OBJ" || ext == ".obj") {
-        mesh = files.loadOBJ(path.string());
-      } else if (ext == ".STL" || ext == ".stl") {
-        mesh = files.loadSTL(path.string());
-      } else if (ext == ".3DS" || ext == ".3ds") {
-        mesh = files.load3DS(path.string());
-      } else if (ext == ".PLY" || ext == ".ply") {
-        mesh = files.loadPLY(path.string());
-      }
-      if (mesh_) {
-        delete mesh_;
-      }
-      mesh_ = mesh;
-      if (mesh_) {
-        mesh_->startPushState();
-      }
-      sculpt_.setMesh(mesh_);
-      err = 1;
-    }
-  }
-
-  return err; // error
-}
-
-int ThreeFormApp::saveFile()
-{
-  if (!mesh_) {
-    return -1;
-  }
-
-#if 0
-  const Aabb& boundingBox = mesh_->getOctree()->getAabbSplit();
-  std::cout << "min: " << boundingBox.min_.transpose() << std::endl;
-  std::cout << "max: " << boundingBox.max_.transpose() << std::endl;
-#endif
-
-  Files files;
-  std::vector<std::string> file_extensions;
-  file_extensions.push_back("stl");
-  file_extensions.push_back("ply");
-  file_extensions.push_back("obj");
-  fs::path path = getSaveFilePath("", file_extensions);
-
-  int err = -1;
-  if (!path.empty()) {
-    const std::string ext = path.extension().string();
-    if (!ext.empty()) {
-      if (ext == ".OBJ" || ext == ".obj") {
-        std::ofstream file(path.c_str(), std::ios::binary);
-        files.saveOBJ(mesh_, file);
-      } else if (ext == ".STL" || ext == ".stl") {
-        files.saveSTL(mesh_, path.string());
-      } else if (ext == ".PLY" || ext == ".ply") {
-        std::ofstream file(path.c_str(), std::ios::binary);
-        files.savePLY(mesh_, file);
-      }
-    }
-    err = 1;
-  }
-  return err; // error
-}
-
-void ThreeFormApp::setEnvironment(const std::string& str)
-{
-  if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE)
-  {
-    return;
-  }
-  _loading_thread = std::thread(&Environment::setEnvironment, _environment, str, _environment->getCurTimeOfDay());
-}
-
-void ThreeFormApp::setTimeOfDay(const std::string& str)
-{
-  if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE)
-  {
-    return;
-  }
-  Environment::TimeOfDay time = (str == "Noon") ? Environment::TIME_NOON : Environment::TIME_DAWN;
-  _loading_thread = std::thread(&Environment::setEnvironment, _environment, _environment->getCurEnvironmentString(), time);
-}
-
-void ThreeFormApp::performFileAction(const std::string& str)
-{
-  if (str == "Load")
-  {
-    loadFile();
-  }
-  else if (str == "Save")
-  {
-    saveFile();
-  }
-}
+//void ThreeFormApp::performFileAction(const std::string& str)
+//{
+//  if (str == "Load")
+//  {
+//    loadFile();
+//  }
+//  else if (str == "Save")
+//  {
+//    saveFile();
+//  }
+//}
 
 void ThreeFormApp::toggleFullscreen(const std::string& str)
 {
@@ -273,6 +170,8 @@ void ThreeFormApp::setup()
   loadIcons();
 
   _ui = new UserInterface();
+  _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
+  _ui->setBoldFont(ci::Font(loadResource( RES_FONT_FREIGHTSANSBOLD_TTF ), Menu::FONT_SIZE));
 
   // top level node
   _ui->addElement(UIElement("Menu"));
@@ -280,7 +179,7 @@ void ThreeFormApp::setup()
   // second level nodes
   //_ui->addElement(UIElement("Brush"), "Menu");
   _ui->addElement(UIElement("Editing"), "Menu");
-  _ui->addElement(UIElement("Environment"), "Menu");
+  //_ui->addElement(UIElement("Environment"), "Menu");
   //_ui->addElement(UIElement("Material"), "Menu");
 
   // Brush nodes
@@ -309,15 +208,15 @@ void ThreeFormApp::setup()
   //_ui->addElement(UIElement("Paint", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
 
   // Editing nodes
-  _ui->addElement(UIElement("Fullscreen", boost::bind(&ThreeFormApp::toggleFullscreen, this, ::_1)), "Editing");
+  //_ui->addElement(UIElement("Fullscreen", boost::bind(&ThreeFormApp::toggleFullscreen, this, ::_1)), "Editing");
   //_ui->addElement(UIElement("Wireframe", boost::bind(&ThreeFormApp::toggleWireframe, this, ::_1)), "Editing");
-  _ui->addElement(UIElement("Load", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
-  _ui->addElement(UIElement("Save", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
+  //_ui->addElement(UIElement("Load", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
+  //_ui->addElement(UIElement("Save", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
   //_ui->addElement(UIElement("Auto-Spin"), "Editing");
 
   // Environment nodes
-  _ui->addElement(UIElement("Scene"), "Environment");
-  _ui->addElement(UIElement("Time of Day"), "Environment");
+  //_ui->addElement(UIElement("Scene"), "Environment");
+  //_ui->addElement(UIElement("Time of Day"), "Environment");
 
   // Auto-Spin nodes
   //_ui->addElement(UIElement("Off", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
@@ -326,15 +225,15 @@ void ThreeFormApp::setup()
   //_ui->addElement(UIElement("Fast", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
 
   // Scene nodes
-  const std::vector<Environment::EnvironmentInfo>& infos = _environment->getEnvironmentInfos();
-  for (size_t i=0; i<infos.size(); i++)
-  {
-    _ui->addElement(UIElement(infos[i]._name, boost::bind(&ThreeFormApp::setEnvironment, this, ::_1)), "Scene");
-  }
+  //const std::vector<Environment::EnvironmentInfo>& infos = Environment::getEnvironmentInfos();
+  //for (size_t i=0; i<infos.size(); i++)
+  //{
+  //  _ui->addElement(UIElement(infos[i]._name, boost::bind(&ThreeFormApp::setEnvironment, this, ::_1)), "Scene");
+  //}
 
   // Time of Day nodes
-  _ui->addElement(UIElement("Dawn", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
-  _ui->addElement(UIElement("Noon", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
+  //_ui->addElement(UIElement("Dawn", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
+  //_ui->addElement(UIElement("Noon", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
 
   // Material nodes
   //_ui->addElement(UIElement("Amethyst", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
@@ -355,7 +254,7 @@ void ThreeFormApp::setup()
 
   _leap_interaction = new LeapInteraction(&sculpt_, _ui);
 
-#if 1
+#if 0
   srand(static_cast<unsigned int>(time(0)));
   int randEnvIdx = rand() % infos.size();
   std::string randEnvString = infos[randEnvIdx]._name;
@@ -368,9 +267,6 @@ void ThreeFormApp::setup()
   _leap_interaction->setBrushStrength(0.5f);
 
   glEnable(GL_FRAMEBUFFER_SRGB);
-  
-  _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
-  _ui->setBoldFont(ci::Font(loadResource( RES_FONT_FREIGHTSANSBOLD_TTF ), Menu::FONT_SIZE));
 
   _mesh_thread = std::thread(&ThreeFormApp::updateLeapAndMesh, this);
 }
@@ -701,7 +597,7 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
     _material_shader.uniform( "brushRadii", brushRadii.data(), numBrushes );
     _material_shader.uniform( "lightColor", 0.15f*_brush_color );
     _material_shader.uniform( "lightExponent", 30.0f);
-    _material_shader.uniform( "lightRadius", 3.0f);
+    _material_shader.uniform( "lightRadius", 75.0f);
 
     glPushMatrix();
     glPolygonOffset(1.0f, 1.0f);
@@ -726,33 +622,6 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
   }
 
   if (_camera_util->params.drawDebugLines) {
-    //_material_shader.uniform( "surfaceColor", Color::hex(0x00ff00) );
-
-    //// Draw origin & XYZ
-    ////
-    //_material_shader.uniform( "surfaceColor", Color::hex(0xff0000) );
-    //glBegin(GL_LINES);
-    //glColor3f(1,0,0);
-    //glVertex3f(0,0,0);
-    //glVertex3f(100, 0, 0);
-    //glEnd();
-    //_material_shader.uniform( "surfaceColor", Color::hex(0x00ff00) );
-    //glBegin(GL_LINES);
-    //glColor3f(0,1,0);
-    //glVertex3f(0,0,0);
-    //glVertex3f(0, 100, 0);
-    //glEnd();
-    //_material_shader.uniform( "surfaceColor", Color::hex(0x0000ff) );
-    //glBegin(GL_LINES);
-    //glColor3f(0,0,1);
-    //glVertex3f(0,0,0);
-    //glVertex3f(0, 0, 100);
-    //glEnd();
-
-    // Draw debug primitives
-
-    //const int primColors[] = { 0xbbbbbb, 0x00bbbb, 0x00bbbb };
-    //_material_shader.uniform( "surfaceColor", Color::hex(primColors[2]) );
     _wireframe_shader.bind();
     _wireframe_shader.uniform( "transform", transform );
     _wireframe_shader.uniform( "transformit", transformit );
@@ -777,13 +646,18 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
     const double lastSculptTime = sculpt_.getLastSculptTime();
     const float sculptMult = static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25));
     const float uiMult = (1.0f - _ui->maxActivation());
-    _brush_shader.uniform("alphaMult", (0.3f*sculptMult*uiMult + 0.3f)*brushes[i]._activation);
+    const float alphaMult = (0.3f*sculptMult*uiMult + 0.3f)*brushes[i]._activation;
+    _brush_shader.uniform("alphaMult", alphaMult);
     brushes[i].draw(uiMult);
+    if (symmetry_) {
+      _brush_shader.uniform("alphaMult", 0.333f*alphaMult);
+      brushes[i].reflected(0).draw(uiMult);
+    }
   }
   _brush_shader.unbind();
-
-  _environment->unbindCubeMap(0);
+  
   _environment->unbindCubeMap(1);
+  _environment->unbindCubeMap(0);
 
   if (drawOctree_) {
     mesh_->drawOctree();
@@ -795,8 +669,8 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
     disableDepthWrite();
     setMatricesWindow( getWindowSize() );
     setViewport( getWindowBounds() );
-    Matrix33f rot = _camera.getModelViewMatrix().subMatrix33(0, 0).inverted();
-    _ui->draw(_environment, rot);
+    //Matrix33f rot = _camera.getModelViewMatrix().subMatrix33(0, 0).inverted();
+    _ui->draw(); //_environment, rot);
     enableDepthRead();
     enableDepthWrite();
   }
@@ -850,7 +724,7 @@ void ThreeFormApp::draw()
   } else if (loading_state == Environment::LOADING_STATE_DONE_LOADING && loading_time > LOADING_DARKEN_TIME) {
     _environment->transitionComplete();
     exposure_mult = 0.0f;
-    Environment::EnvironmentInfo* info = _environment->getEnvironmentInfoFromString(_environment->getCurEnvironmentString());
+    Environment::EnvironmentInfo* info = Environment::getEnvironmentInfoFromString(_environment->getCurEnvironmentString());
     if (info) {
       _bloom_strength = info->_bloom_strength;
       _bloom_light_threshold = info->_bloom_threshold;
@@ -982,6 +856,109 @@ void ThreeFormApp::setWireframe(bool wireframe) {
 
 void ThreeFormApp::setSymmetry(bool symmetry) {
   symmetry_ = symmetry;
+}
+
+void ThreeFormApp::setEnvironment(const std::string& str) {
+  if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE) {
+    return;
+  }
+  _loading_thread = std::thread(&Environment::setEnvironment, _environment, str, _environment->getCurTimeOfDay());
+}
+
+void ThreeFormApp::setTimeOfDay(Environment::TimeOfDay time) {
+  if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE) {
+    return;
+  }
+  _loading_thread = std::thread(&Environment::setEnvironment, _environment, _environment->getCurEnvironmentString(), time);
+}
+
+int ThreeFormApp::loadFile()
+{
+  // *** open mesh file ***
+  std::vector<std::string> file_extensions;
+  file_extensions.push_back("obj");
+  file_extensions.push_back("stl");
+  file_extensions.push_back("3ds");
+  file_extensions.push_back("ply");
+  fs::path path = getOpenFilePath("", file_extensions);
+
+  int err = -1;
+  if (!path.empty()) {
+    const std::string ext = path.extension().string();
+    if (!ext.empty()) {
+      //reset flags... not necessary
+      Mesh::stateMask_= 1;
+      Vertex::tagMask_ = 1;
+      Vertex::sculptMask_ = 1;
+      Triangle::tagMask_ = 1;
+
+      Files files;
+      Mesh* mesh = 0;
+      const std::string pathString = path.string();
+      if (ext == ".OBJ" || ext == ".obj") {
+        mesh = files.loadOBJ(pathString);
+      } else if (ext == ".STL" || ext == ".stl") {
+        mesh = files.loadSTL(pathString);
+      } else if (ext == ".3DS" || ext == ".3ds") {
+        mesh = files.load3DS(pathString);
+      } else if (ext == ".PLY" || ext == ".ply") {
+        mesh = files.loadPLY(pathString);
+      }
+      if (mesh_) {
+        delete mesh_;
+      }
+      mesh_ = mesh;
+      if (mesh_) {
+        mesh_->startPushState();
+        _last_loaded_file = pathString;
+      } else {
+        _last_loaded_file = "";
+      }
+      sculpt_.setMesh(mesh_);
+      err = 1;
+    }
+  }
+
+  return err; // error
+}
+
+int ThreeFormApp::saveFile(const std::string& extension)
+{
+  if (!mesh_) {
+    return -1;
+  }
+
+#if 0
+  const Aabb& boundingBox = mesh_->getOctree()->getAabbSplit();
+  std::cout << "min: " << boundingBox.min_.transpose() << std::endl;
+  std::cout << "max: " << boundingBox.max_.transpose() << std::endl;
+#endif
+
+  Files files;
+  std::vector<std::string> file_extensions;
+  file_extensions.push_back(extension);
+  /*file_extensions.push_back("stl");
+  file_extensions.push_back("ply");
+  file_extensions.push_back("obj");*/
+  fs::path path = getSaveFilePath("", file_extensions);
+
+  int err = -1;
+  if (!path.empty()) {
+    const std::string ext = path.extension().string();
+    if (!ext.empty()) {
+      if (ext == ".OBJ" || ext == ".obj") {
+        std::ofstream file(path.c_str(), std::ios::binary);
+        files.saveOBJ(mesh_, file);
+      } else if (ext == ".STL" || ext == ".stl") {
+        files.saveSTL(mesh_, path.string());
+      } else if (ext == ".PLY" || ext == ".ply") {
+        std::ofstream file(path.c_str(), std::ios::binary);
+        files.savePLY(mesh_, file);
+      }
+    }
+    err = 1;
+  }
+  return err; // error
 }
 
 #if 1

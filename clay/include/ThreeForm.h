@@ -33,11 +33,7 @@ public:
   ThreeFormApp();
   ~ThreeFormApp();
   void prepareSettings( Settings *settings );
-  int loadFile();
-  int saveFile();
-  void setEnvironment(const std::string& str);
-  void setTimeOfDay(const std::string& str);
-  void performFileAction(const std::string& str);
+  //void performFileAction(const std::string& str);
   void toggleFullscreen(const std::string& str);
   //void toggleWireframe(const std::string& str);
   void setup();
@@ -56,9 +52,14 @@ public:
   void createBloom();
   void draw();
   void loadIcons();
+
   void setMaterial(const Material& mat);
   void setWireframe(bool wireframe);
   void setSymmetry(bool symmetry);
+  void setEnvironment(const std::string& str);
+  void setTimeOfDay(Environment::TimeOfDay time);
+  int loadFile();
+  int saveFile(const std::string& extension);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -112,6 +113,7 @@ private:
   Material _material;
   bool _use_ao;
   bool _only_ao;
+  std::string _last_loaded_file;
 
   UserInterface* _ui;
   GlslProg _metaball_shader;

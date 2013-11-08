@@ -105,6 +105,7 @@ private:
 class Menu {
 public:
 
+  // the values for a particular group should be consecutive
   enum MenuEntryType {
     // quick access menu
     STRENGTH = 0,
@@ -130,8 +131,8 @@ public:
     STRENGTH_HIGH,
 
     // material
-    MATERIAL_PLASTIC,
     MATERIAL_PORCELAIN,
+    MATERIAL_PLASTIC,
     MATERIAL_GLASS,
     MATERIAL_STEEL,
     MATERIAL_CLAY,
@@ -143,16 +144,46 @@ public:
     SPIN_FAST,
 
     // wireframe
-    WIREFRAME_ON,
     WIREFRAME_OFF,
+    WIREFRAME_ON,
 
     // symmetry
-    SYMMETRY_ON,
     SYMMETRY_OFF,
+    SYMMETRY_ON,
 
     // history
     HISTORY_UNDO,
     HISTORY_REDO,
+
+    // time of day
+    TIME_DAWN,
+    TIME_NOON,
+
+    // environment
+    ENVIRONMENT_ISLANDS,
+    ENVIRONMENT_MOONSCAPE,
+    ENVIRONMENT_RIVER,
+    ENVIRONMENT_DESERT,
+    ENVIRONMENT_REDWOOD,
+    ENVIRONMENT_JUNGLE_CLIFF,
+    ENVIRONMENT_JUNGLE,
+    ENVIRONMENT_ARCTIC,
+
+    // main
+    MAIN_ABOUT,
+    MAIN_TUTORIAL,
+    MAIN_EXIT,
+
+    // file
+    FILE_LOAD,
+    FILE_SAVE_OBJ,
+    FILE_SAVE_PLY,
+    FILE_SAVE_STL,
+    FILE_RESET,
+
+    // sound
+    SOUND_ON,
+    SOUND_OFF,
 
     NUM_ICONS
   };
@@ -238,6 +269,26 @@ public:
         case Menu::SYMMETRY_OFF: return "Off"; break;
         case Menu::HISTORY_REDO: return "Redo"; break;
         case Menu::HISTORY_UNDO: return "Undo"; break;
+        case Menu::TIME_DAWN: return "Dawn"; break;
+        case Menu::TIME_NOON: return "Noon"; break;
+        case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
+        case Menu::ENVIRONMENT_MOONSCAPE: return "Moonscape"; break;
+        case Menu::ENVIRONMENT_RIVER: return "River"; break;
+        case Menu::ENVIRONMENT_DESERT: return "Desert"; break;
+        case Menu::ENVIRONMENT_REDWOOD: return "Redwood"; break;
+        case Menu::ENVIRONMENT_JUNGLE_CLIFF: return "Jungle-Cliff"; break;
+        case Menu::ENVIRONMENT_JUNGLE: return "Jungle"; break;
+        case Menu::ENVIRONMENT_ARCTIC: return "Arctic"; break;
+        case Menu::MAIN_ABOUT: return "About"; break;
+        case Menu::MAIN_TUTORIAL: return "Tutorial"; break;
+        case Menu::MAIN_EXIT: return "Exit"; break;
+        case Menu::FILE_LOAD: return "Load"; break;
+        case Menu::FILE_SAVE_OBJ: return "Export OBJ"; break;
+        case Menu::FILE_SAVE_PLY: return "Export PLY"; break;
+        case Menu::FILE_SAVE_STL: return "Export STL"; break;
+        case Menu::FILE_RESET: return "Reload"; break;
+        case Menu::SOUND_ON: return "On"; break;
+        case Menu::SOUND_OFF: return "Off"; break;
         }
         return "";
       } else {
@@ -311,6 +362,26 @@ public:
       }
       return false;
     }
+    Environment::TimeOfDay toTimeOfDay() const {
+      switch (m_entryType) {
+      case Menu::TIME_DAWN: return Environment::TIME_DAWN; break;
+      case Menu::TIME_NOON: return Environment::TIME_NOON; break;
+      }
+      return Environment::TIME_DAWN;
+    }
+    std::string toEnvironmentName() const {
+      switch (m_entryType) {
+      case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
+      case Menu::ENVIRONMENT_MOONSCAPE: return "Moonscape"; break;
+      case Menu::ENVIRONMENT_RIVER: return "River"; break;
+      case Menu::ENVIRONMENT_DESERT: return "Desert"; break;
+      case Menu::ENVIRONMENT_REDWOOD: return "Redwood"; break;
+      case Menu::ENVIRONMENT_JUNGLE_CLIFF: return "Jungle-Cliff"; break;
+      case Menu::ENVIRONMENT_JUNGLE: return "Jungle"; break;
+      case Menu::ENVIRONMENT_ARCTIC: return "Arctic"; break;
+      }
+      return "";
+    }
 
     MenuEntryType m_entryType;
     DrawMethod drawMethod;
@@ -353,7 +424,11 @@ public:
   static const float FONT_SIZE;
   static const float RING_THICKNESS_RATIO;
   static const float STRENGTH_UI_MULT;
-  
+  static const float BASE_OUTER_RADIUS;
+  static const float BASE_INNER_RADIUS;
+  static const float OUTER_RADIUS_PER_ENTRY;
+  static const float SWEEP_ANGLE;
+
   Utilities::ExponentialFilter<float> m_activation;
   float m_outerRadius;
   float m_innerRadius;
@@ -376,6 +451,7 @@ public:
   std::string m_actualName;
   ci::Color m_activeColor;
   int m_defaultEntry;
+  bool m_actionsOnly;
 
   static Vector2 m_windowSize;
   static float m_windowDiagonal;
@@ -394,7 +470,7 @@ public:
   void addElement(const UIElement& _Element, const std::string& _ParentName = "");
   void addConnection(const std::string& _First, const std::string& _Second);
   void update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt);
-  void draw(Environment* _Env, const Matrix33f& normalMatrix) const;
+  void draw() const;
   void setWindowSize(const Vec2i& _Size);
   void setShader(GlslProg* _Shader);
   void setRootNode(const std::string& _Name);
@@ -413,6 +489,8 @@ private:
   int addMetaball(const Vec2f& _Position, float _Radius, const Vec4f& _Color, float _Weight, float _Ambient);
   size_t numMetaballs() const;
   float radiusForDepth(float depth) const;
+
+  static float angleOffsetForPosition(const Vector2& pos);
 
   struct TraversalInfo
   {
@@ -473,6 +551,12 @@ private:
   Menu _wireframe_menu;
   Menu _symmetry_menu;
   Menu _history_menu;
+  Menu _environment_menu;
+  Menu _time_of_day_menu;
+  Menu _main_menu;
+  Menu _file_menu;
+  Menu _sound_menu;
+
   bool _draw_color_menu;
   bool _first_selection_check;
 

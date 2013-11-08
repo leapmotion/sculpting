@@ -4,6 +4,7 @@
 #include "Utilities.h"
 #include "Sculpt.h"
 #include "LeapInteraction.h"
+#include "Environment.h"
 #include "ThreeForm.h"
 
 using namespace ci;
@@ -18,6 +19,10 @@ const float UserInterface::RADIUS_FALLOFF = 0.6f;
 const float Menu::FONT_SIZE = 36.0f;
 const float Menu::RING_THICKNESS_RATIO = 0.3f;
 const float Menu::STRENGTH_UI_MULT = 10.0f;
+const float Menu::BASE_OUTER_RADIUS = 0.15f;
+const float Menu::OUTER_RADIUS_PER_ENTRY = 0.025f;
+const float Menu::BASE_INNER_RADIUS = 0.05f;
+const float Menu::SWEEP_ANGLE = 3.5f;
 ci::Font Menu::m_font;
 ci::Font Menu::m_boldFont;
 Vector2 Menu::m_windowSize = Vector2::Constant(2.0f);
@@ -26,9 +31,9 @@ float Menu::m_windowAspect = 1.0f;
 Vector2 Menu::m_windowCenter = Vector2::Constant(1.0f);
 std::vector<ci::gl::Texture> Menu::m_icons;
 
-Menu::Menu() : m_outerRadius(0.325f), m_innerRadius(0.04f), m_sweepAngle(3.5f),
+Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
   m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(0.0), m_prevSelectedEntry(-1),
-  m_activeColor(Color::white()), m_defaultEntry(0) {
+  m_activeColor(Color::white()), m_defaultEntry(0), m_actionsOnly(false) {
   m_activation.value = 0.0f;
 }
 
@@ -149,6 +154,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
 
 void Menu::setNumEntries(int num) {
   m_entries.resize(num);
+  m_outerRadius = BASE_OUTER_RADIUS + num*OUTER_RADIUS_PER_ENTRY;
 }
 
 void Menu::draw() const {
@@ -173,7 +179,7 @@ void Menu::draw() const {
     const float wedgeEnd = m_entries[i].m_wedgeEnd;
     const float angleStart = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleStart;
     const float angleWidth = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleWidth;
-    const bool isSelected = (i == m_prevSelectedEntry);
+    const bool isSelected = (!m_actionsOnly) && (i == m_prevSelectedEntry);
 
     // draw wedge behind
     if (m_entries[i].drawMethod == MenuEntry::COLOR) {
@@ -207,11 +213,13 @@ void Menu::draw() const {
   gl::translate(textPos);
   gl::scale(textScale, textScale);
   gl::drawStringCentered(m_name, -offset, titleColor, m_boldFont);
-  if (m_name == "Color") {
-    gl::color(ci::ColorA(m_activeColor.r, m_activeColor.g, m_activeColor.b, menuOpacity));
-    gl::drawSolidCircle(3.0f*offset, relativeToAbsolute(0.02f), 40);
-  } else {
-    gl::drawStringCentered(m_activeName, offset, valueColor, m_font);
+  if (!m_actionsOnly) {
+    if (m_name == "Color") {
+      gl::color(ci::ColorA(m_activeColor.r, m_activeColor.g, m_activeColor.b, menuOpacity));
+      gl::drawSolidCircle(3.0f*offset, relativeToAbsolute(0.02f), 40);
+    } else {
+      gl::drawStringCentered(m_activeName, offset, valueColor, m_font);
+    }
   }
   glPopMatrix();
 
@@ -256,100 +264,76 @@ void Menu::setWindowSize(const ci::Vec2i& size) {
 
 void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const {
   static const float TWO_PI = static_cast<float>(2.0*M_PI);
-#if 0
-  const Vector2 diff = (pos - m_position);
-  angle = std::atan2(diff.x(), diff.y());
-  if (angle < 0) {
-    angle += static_cast<float>(2.0 * M_PI);
-  }
-  radius = diff.norm();
-#else
   const ci::Vec2f abs = relativeToAbsolute(pos);
   const ci::Vec2f absMenu = relativeToAbsolute(m_position);
   const ci::Vec2f diff = (abs - absMenu);
   angle = std::atan2(diff.x, diff.y);
-  if (angle < 0) {
+  if (angle < getSweepStart()) {
     angle += TWO_PI;
-  } else if (angle > TWO_PI) {
-    angle -= TWO_PI;
   }
   radius = absoluteToRelative(diff.length());
-
-#endif
 }
 
-UserInterface::UserInterface()
-  : _lastUpdateTime(0)
-  , _windowSize(Vec2i::one())
-  , _windowDiagonal(1.0f)
-  , _shader(NULL)
-  , _root_node(-1)
-  , _focus_offset(Vec2f::zero())
-  , _depth_offset(0.0f)
-  , _max_level1_activation(0.0f)
-  , _zoom_amount(1.0f)
-  , _radius_mult(0.0f)
-  , _draw_color_menu(false)
-  , _first_selection_check(true)
+UserInterface::UserInterface() : _lastUpdateTime(0), _windowSize(Vec2i::one()), _windowDiagonal(1.0f),
+  _shader(NULL), _root_node(-1), _focus_offset(Vec2f::zero()), _depth_offset(0.0f), _max_level1_activation(0.0f),
+  _zoom_amount(1.0f), _radius_mult(0.0f), _draw_color_menu(false), _first_selection_check(true)
 {
-  static const int NUM_STRENGTH_ENTRIES = 3;
+  int entryType;
+
+  const int NUM_STRENGTH_ENTRIES = 3;
   _strength_menu.m_name = "Strength";
   _strength_menu.m_position << 0.2f, 0.925f;
   _strength_menu.setNumEntries(NUM_STRENGTH_ENTRIES);
-  _strength_menu.m_angleOffset = static_cast<float>(M_PI);
+  _strength_menu.m_angleOffset = angleOffsetForPosition(_strength_menu.m_position);
   _strength_menu.m_defaultEntry = NUM_STRENGTH_ENTRIES/2;
-  _strength_menu.m_entries[0].m_entryType = Menu::STRENGTH_LOW;
-  _strength_menu.m_entries[1].m_entryType = Menu::STRENGTH_MEDIUM;
-  _strength_menu.m_entries[2].m_entryType = Menu::STRENGTH_HIGH;
+  entryType = Menu::STRENGTH_LOW;
   for (int i=0; i<NUM_STRENGTH_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_STRENGTH_ENTRIES);
     Menu::MenuEntry& entry = _strength_menu.m_entries[i];
     entry.drawMethod = Menu::MenuEntry::ICON;
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     //entry.m_radius = 0.005f + ratio*0.03f;
     entry.m_value = Menu::STRENGTH_UI_MULT*ratio;
   }
 
-  static const int NUM_TOOL_ENTRIES = 7;
+  const int NUM_TOOL_ENTRIES = 7;
   _type_menu.m_name = "Tool";
   _type_menu.m_position << 0.5f, 0.925f;
-  _type_menu.m_angleOffset = static_cast<float>(M_PI);
+  _type_menu.m_angleOffset = angleOffsetForPosition(_type_menu.m_position);
   _type_menu.setNumEntries(NUM_TOOL_ENTRIES);
-  _type_menu.m_entries[0].m_entryType = Menu::TOOL_PAINT;
-  _type_menu.m_entries[1].m_entryType = Menu::TOOL_PUSH;
-  _type_menu.m_entries[2].m_entryType = Menu::TOOL_SWEEP;
-  _type_menu.m_entries[3].m_entryType = Menu::TOOL_FLATTEN;
-  _type_menu.m_entries[4].m_entryType = Menu::TOOL_SMOOTH;
-  _type_menu.m_entries[5].m_entryType = Menu::TOOL_SHRINK;
-  _type_menu.m_entries[6].m_entryType = Menu::TOOL_GROW;
+  entryType = Menu::TOOL_PAINT;
   _type_menu.m_defaultEntry = 1;
   for (int i=0; i<NUM_TOOL_ENTRIES; i++) {
     Menu::MenuEntry& entry = _type_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::ICON;
   }
     
-  static const int NUM_SIZE_ENTRIES = 8;
+  const int NUM_SIZE_ENTRIES = 8;
   _size_menu.m_name = "Size";
   _size_menu.m_position << 0.8f, 0.925f;
   _size_menu.setNumEntries(NUM_SIZE_ENTRIES);
-  _size_menu.m_angleOffset = static_cast<float>(M_PI);
+  _size_menu.m_angleOffset = angleOffsetForPosition(_size_menu.m_position); //static_cast<float>(M_PI);
   _size_menu.m_defaultEntry = NUM_SIZE_ENTRIES/2;
   for (int i=0; i<NUM_SIZE_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_SIZE_ENTRIES);
     Menu::MenuEntry& entry = _size_menu.m_entries[i];
+    //entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::CIRCLE;
     entry.m_radius = 0.005f + ratio*0.03f;
     entry.m_value = 40.0f*ratio;
   }
 
-  static const int NUM_COLOR_ENTRIES = 12;
+  const int NUM_COLOR_ENTRIES = 10;
   _color_menu.m_name = "Color";
-  _color_menu.m_position << 0.925f, 0.3f;
+  _color_menu.m_position << 0.925f, 0.2f;
   _color_menu.setNumEntries(NUM_COLOR_ENTRIES);
-  _color_menu.m_angleOffset = static_cast<float>(3.0*M_PI/2.0);
+  _color_menu.m_angleOffset = angleOffsetForPosition(_color_menu.m_position); //static_cast<float>(3.0*M_PI/2.0);
   _color_menu.m_defaultEntry = NUM_COLOR_ENTRIES/2;
   for (int i=0; i<NUM_COLOR_ENTRIES; i++) {
     const float ratio = static_cast<float>(i-3)/static_cast<float>(NUM_COLOR_ENTRIES-4);
     Menu::MenuEntry& entry = _color_menu.m_entries[i];
+    //entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::COLOR;
     if (i == 0) {
       entry.m_color = ci::Color::white();
@@ -362,73 +346,137 @@ UserInterface::UserInterface()
     }
   }
 
-  static const int NUM_MATERIAL_ENTRIES = 5;
+  const int NUM_MATERIAL_ENTRIES = 5;
   _material_menu.m_name = "Material";
   _material_menu.m_position << 0.075f, 0.3f;
   _material_menu.setNumEntries(NUM_MATERIAL_ENTRIES);
-  _material_menu.m_entries[0].m_entryType = Menu::MATERIAL_PLASTIC;
-  _material_menu.m_entries[1].m_entryType = Menu::MATERIAL_PORCELAIN;
-  _material_menu.m_entries[2].m_entryType = Menu::MATERIAL_GLASS;
-  _material_menu.m_entries[3].m_entryType = Menu::MATERIAL_STEEL;
-  _material_menu.m_entries[4].m_entryType = Menu::MATERIAL_CLAY;
-  _material_menu.m_angleOffset = static_cast<float>(M_PI/2.0);
-  _material_menu.m_defaultEntry = 1;
+  entryType = Menu::MATERIAL_PORCELAIN;
+  _material_menu.m_angleOffset = angleOffsetForPosition(_material_menu.m_position); //static_cast<float>(M_PI/2.0);
+  _material_menu.m_defaultEntry = 0;
   for (int i=0; i<NUM_MATERIAL_ENTRIES; i++) {
     Menu::MenuEntry& entry = _material_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::ICON;
   }
 
-  static const int NUM_SPIN_ENTRIES = 4;
+  const int NUM_SPIN_ENTRIES = 4;
   _spin_menu.m_name = "Spin";
   _spin_menu.m_position << 0.075f, 0.6f;
   _spin_menu.setNumEntries(NUM_SPIN_ENTRIES);
-  _spin_menu.m_entries[0].m_entryType = Menu::SPIN_OFF;
-  _spin_menu.m_entries[1].m_entryType = Menu::SPIN_SLOW;
-  _spin_menu.m_entries[2].m_entryType = Menu::SPIN_MEDIUM;
-  _spin_menu.m_entries[3].m_entryType = Menu::SPIN_FAST;
-  _spin_menu.m_angleOffset = static_cast<float>(M_PI/2.0);
+  entryType = Menu::SPIN_OFF;
+  _spin_menu.m_angleOffset = angleOffsetForPosition(_spin_menu.m_position); //static_cast<float>(M_PI/2.0);
   _spin_menu.m_defaultEntry = 0;
   for (int i=0; i<NUM_SPIN_ENTRIES; i++) {
     Menu::MenuEntry& entry = _spin_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
   
-  static const int NUM_WIREFRAME_ENTRIES = 2;
+  const int NUM_WIREFRAME_ENTRIES = 2;
   _wireframe_menu.m_name = "Wireframe";
   _wireframe_menu.m_position << 0.2f, 0.075f;
   _wireframe_menu.setNumEntries(NUM_WIREFRAME_ENTRIES);
-  _wireframe_menu.m_entries[0].m_entryType = Menu::WIREFRAME_OFF;
-  _wireframe_menu.m_entries[1].m_entryType = Menu::WIREFRAME_ON;
-  _wireframe_menu.m_angleOffset = static_cast<float>(2.0f*M_PI);
+  entryType = Menu::WIREFRAME_OFF;
+  _wireframe_menu.m_angleOffset = angleOffsetForPosition(_wireframe_menu.m_position); //static_cast<float>(2.0f*M_PI);
   _wireframe_menu.m_defaultEntry = 0;
   for (int i=0; i<NUM_WIREFRAME_ENTRIES; i++) {
     Menu::MenuEntry& entry = _wireframe_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  static const int NUM_SYMMETRY_ENTRIES = 2;
+  const int NUM_SYMMETRY_ENTRIES = 2;
   _symmetry_menu.m_name = "Symmetry";
   _symmetry_menu.m_position << 0.35f, 0.075f;
   _symmetry_menu.setNumEntries(NUM_SYMMETRY_ENTRIES);
-  _symmetry_menu.m_entries[0].m_entryType = Menu::SYMMETRY_OFF;
-  _symmetry_menu.m_entries[1].m_entryType = Menu::SYMMETRY_ON;
-  _symmetry_menu.m_angleOffset = static_cast<float>(2.0f*M_PI);
+  entryType = Menu::SYMMETRY_OFF;
+  _symmetry_menu.m_angleOffset = angleOffsetForPosition(_symmetry_menu.m_position); //static_cast<float>(2.0f*M_PI);
   _symmetry_menu.m_defaultEntry = 0;
   for (int i=0; i<NUM_SYMMETRY_ENTRIES; i++) {
     Menu::MenuEntry& entry = _symmetry_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  static const int NUM_HISTORY_ENTRIES = 2;
+  const int NUM_HISTORY_ENTRIES = 2;
   _history_menu.m_name = "History";
   _history_menu.m_position << 0.5f, 0.075f;
   _history_menu.setNumEntries(NUM_HISTORY_ENTRIES);
-  _history_menu.m_entries[0].m_entryType = Menu::HISTORY_UNDO;
-  _history_menu.m_entries[1].m_entryType = Menu::HISTORY_REDO;
-  _history_menu.m_angleOffset = static_cast<float>(2.0f*M_PI);
+  entryType = Menu::HISTORY_UNDO;
+  _history_menu.m_angleOffset = angleOffsetForPosition(_history_menu.m_position); //static_cast<float>(2.0f*M_PI);
   _history_menu.m_defaultEntry = 0;
+  _history_menu.m_actionsOnly = true;
   for (int i=0; i<NUM_HISTORY_ENTRIES; i++) {
     Menu::MenuEntry& entry = _history_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  const int NUM_TIME_OF_DAY_ENTRIES = 2;
+  _time_of_day_menu.m_name = "Time of Day";
+  _time_of_day_menu.m_position << 0.65f, 0.075f;
+  _time_of_day_menu.setNumEntries(NUM_TIME_OF_DAY_ENTRIES);
+  entryType = Menu::TIME_DAWN;
+  _time_of_day_menu.m_angleOffset = angleOffsetForPosition(_time_of_day_menu.m_position); //static_cast<float>(2.0f*M_PI);
+  _time_of_day_menu.m_defaultEntry = rand() % 2;
+  for (int i=0; i<NUM_TIME_OF_DAY_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _time_of_day_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  const std::vector<Environment::EnvironmentInfo>& infos = Environment::getEnvironmentInfos();
+  const int NUM_ENVIRONMENT_ENTRIES = infos.size();
+  _environment_menu.m_name = "Scene";
+  _environment_menu.m_position << 0.8f, 0.075f;
+  _environment_menu.setNumEntries(NUM_ENVIRONMENT_ENTRIES);
+  entryType = Menu::ENVIRONMENT_ISLANDS;
+  _environment_menu.m_angleOffset = angleOffsetForPosition(_environment_menu.m_position); //static_cast<float>(2.0f*M_PI);
+  _environment_menu.m_defaultEntry = rand() % NUM_ENVIRONMENT_ENTRIES;
+  for (int i=0; i<NUM_ENVIRONMENT_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _environment_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  const int NUM_MAIN_ENTRIES = 3;
+  _main_menu.m_name = "3Form";
+  _main_menu.m_position << 0.075f, 0.075f;
+  _main_menu.setNumEntries(NUM_MAIN_ENTRIES);
+  entryType = Menu::MAIN_ABOUT;
+  _main_menu.m_angleOffset = angleOffsetForPosition(_main_menu.m_position); //static_cast<float>(2.0f*M_PI);
+  _main_menu.m_defaultEntry = 0;
+  _main_menu.m_actionsOnly = true;
+  for (int i=0; i<NUM_MAIN_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _main_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  const int NUM_FILE_ENTRIES = 5;
+  _file_menu.m_name = "File";
+  _file_menu.m_position << 0.925f, 0.5f;
+  _file_menu.setNumEntries(NUM_FILE_ENTRIES);
+  entryType = Menu::FILE_LOAD;
+  _file_menu.m_angleOffset = angleOffsetForPosition(_file_menu.m_position); //static_cast<float>(2.0f*M_PI);
+  _file_menu.m_defaultEntry = 0;
+  _file_menu.m_actionsOnly = true;
+  for (int i=0; i<NUM_FILE_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _file_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  const int NUM_SOUND_ENTRIES = 2;
+  _sound_menu.m_name = "Audio";
+  _sound_menu.m_position << 0.925f, 0.8f;
+  _sound_menu.setNumEntries(NUM_SOUND_ENTRIES);
+  entryType = Menu::SOUND_ON;
+  _sound_menu.m_angleOffset = angleOffsetForPosition(_sound_menu.m_position); //static_cast<float>(2.0f*M_PI);
+  _sound_menu.m_defaultEntry = 0;
+  for (int i=0; i<NUM_SOUND_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _sound_menu.m_entries[i];
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 }
@@ -460,8 +508,6 @@ void UserInterface::addConnection(const std::string& _First, const std::string& 
 
 void UserInterface::update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt)
 {
-  //static const float ACTIVATION_BONUS_RADIUS = 0.4f;
-
   _type_menu.update(_Tips, sculpt);
   _strength_menu.update(_Tips, sculpt);
   _size_menu.update(_Tips, sculpt);
@@ -473,6 +519,11 @@ void UserInterface::update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt)
   _wireframe_menu.update(_Tips, sculpt);
   _symmetry_menu.update(_Tips, sculpt);
   _history_menu.update(_Tips, sculpt);
+  _environment_menu.update(_Tips, sculpt);
+  _time_of_day_menu.update(_Tips, sculpt);
+  _main_menu.update(_Tips, sculpt);
+  _file_menu.update(_Tips, sculpt);
+  _sound_menu.update(_Tips, sculpt);
 
   _cursor_positions.clear();
   for (size_t i=0; i<_Tips.size(); i++) {
@@ -483,6 +534,7 @@ void UserInterface::update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt)
   static const float ACTIVATION_RATE = 1.75f;
 
   double curTimeSeconds = app::getElapsedSeconds();
+#if 0
   float elapsed = static_cast<float>(curTimeSeconds - _lastUpdateTime);
 
   // update metaballs
@@ -637,58 +689,15 @@ void UserInterface::update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt)
   _radius_mult = RADIUS_MULT_SMOOTH*_radius_mult + (1.0f-RADIUS_MULT_SMOOTH)*new_radius_mult;
 
   _forces = forces;
+#endif
+
   _lastUpdateTime = curTimeSeconds;
 }
 
-void UserInterface::draw(Environment* _Env, const Matrix33f& normalMatrix) const
-{
-  if (!_shader)
-  {
-    return;
-  }
-
-  // set uniforms and draw metaballs
-  int numElements = static_cast<int>(numMetaballs());
-  _Env->bindCubeMap(Environment::CUBEMAP_IRRADIANCE, 1);
-  _Env->bindCubeMap(Environment::CUBEMAP_RADIANCE, 0);
-  _shader->bind();
-  _shader->uniform("positions", _metaball_positions.data(), numElements);
-  _shader->uniform("radii", _metaball_radii.data(), numElements);
-  _shader->uniform("colors", _metaball_colors.data(), numElements);
-  _shader->uniform("weights", _metaball_weights.data(), numElements);
-  _shader->uniform("ambients", _metaball_ambients.data(), numElements);
-  _shader->uniform("irradiance", 1);
-  _shader->uniform("radiance", 0);
-  _shader->uniform("normalTransform", normalMatrix);
-  _shader->uniform("num", numElements);
-  _shader->uniform("epsilon", 0.05f*_windowDiagonal*_zoom_amount);
-  _shader->uniform("diffuseFactor", 1.0f);
-  _shader->uniform("reflectionFactor", 0.1f);
-  drawSolidRect(Rectf(0, 0, static_cast<float>(_windowSize.x), static_cast<float>(_windowSize.y)));
-  _shader->unbind();
-  _Env->unbindCubeMap(1);
-  _Env->unbindCubeMap(0);
-
-  // draw text
-  static const float FONT_SIZE = 24.0f;
-  Font font("Arial", FONT_SIZE);
-  for (size_t i=0; i<_elements.size(); i++)
-  {
-    int idx = _elements[i].getMetaballIdx();
-    if (idx >= 0)
-    {
-      //float activation = Utilities::SmootherStep(_elements[i].getActivation());
-      Vec2f pos = _metaball_positions[idx];
-      pos.y = _windowSize.y - pos.y;
-      ColorA textColor(ColorA::white());
-      textColor.a = _elements[i].getVisibility();
-      drawStringCentered(_elements[i].getName(), pos - Vec2f(0, FONT_SIZE/2.0f), textColor, font);
-    }
-  }
-
+void UserInterface::draw() const {
   const float opacity = maxActivation();
   for (size_t i=0; i<_cursor_positions.size(); i++) {
-    drawCursor(_cursor_positions[i], opacity);
+    drawCursor(_cursor_positions[i], opacity*opacity);
   }
 
   enableAlphaBlending();
@@ -703,6 +712,11 @@ void UserInterface::draw(Environment* _Env, const Matrix33f& normalMatrix) const
   _wireframe_menu.draw();
   _symmetry_menu.draw();
   _history_menu.draw();
+  _environment_menu.draw();
+  _time_of_day_menu.draw();
+  _main_menu.draw();
+  _file_menu.draw();
+  _sound_menu.draw();
 }
 
 void UserInterface::setWindowSize(const Vec2i& _Size)
@@ -746,6 +760,11 @@ float UserInterface::maxActivation() const
   result = std::max(result, _wireframe_menu.m_activation.value);
   result = std::max(result, _symmetry_menu.m_activation.value);
   result = std::max(result, _history_menu.m_activation.value);
+  result = std::max(result, _environment_menu.m_activation.value);
+  result = std::max(result, _time_of_day_menu.m_activation.value);
+  result = std::max(result, _main_menu.m_activation.value);
+  result = std::max(result, _file_menu.m_activation.value);
+  result = std::max(result, _sound_menu.m_activation.value);
 
   return result;
 }
@@ -761,7 +780,11 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     initializeMenu(_wireframe_menu);
     initializeMenu(_symmetry_menu);
     initializeMenu(_history_menu);
-
+    initializeMenu(_environment_menu);
+    initializeMenu(_time_of_day_menu);
+    initializeMenu(_main_menu);
+    initializeMenu(_file_menu);
+    initializeMenu(_sound_menu);
     _first_selection_check = false;
   }
 
@@ -811,19 +834,55 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
   }
 
   if (_history_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _history_menu.getSelectedEntry();
+  }
+  
+  if (_environment_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _environment_menu.getSelectedEntry();
+    app->setEnvironment(entry.toEnvironmentName());
+  }
 
+  if (_time_of_day_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _time_of_day_menu.getSelectedEntry();
+    app->setTimeOfDay(entry.toTimeOfDay());
+  }
+
+  if (_main_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _main_menu.getSelectedEntry();
+    switch (entry.m_entryType) {
+    case Menu::MAIN_ABOUT: break;
+    case Menu::MAIN_TUTORIAL: break;
+    case Menu::MAIN_EXIT: app->quit(); break;
+    }
+  }
+
+  if (_file_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _file_menu.getSelectedEntry();
+    switch (entry.m_entryType) {
+    case Menu::FILE_LOAD: app->loadFile(); break;
+    case Menu::FILE_RESET: break;
+    case Menu::FILE_SAVE_OBJ: app->saveFile(".obj"); break;
+    case Menu::FILE_SAVE_PLY: app->saveFile(".ply"); break;
+    case Menu::FILE_SAVE_STL: app->saveFile(".stl"); break;
+    }
+  }
+
+  if (_sound_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _sound_menu.getSelectedEntry();
   }
 }
 
 void UserInterface::drawCursor(const ci::Vec2f& position, float opacity) const {
+  static const float CURSOR_RADIUS = 40.0f;
+  const float bonusRadius = 40.0f * (1.0f - opacity);
   ci::Vec2f screenPos(position.x * _windowSize.x, position.y * _windowSize.y);
   glColor4f(0.7f, 0.9f, 1.0f, opacity);
-  ci::gl::drawSolidCircle(screenPos, 40, 40);
+  ci::gl::drawSolidCircle(screenPos, CURSOR_RADIUS + bonusRadius, 40);
 }
 
 void UserInterface::initializeMenu(Menu& menu) {
   const int defaultOption = menu.m_defaultEntry;
-  menu.m_curSelectedEntry = defaultOption;
+  menu.m_curSelectedEntry = menu.m_actionsOnly ? -1 : defaultOption;
   menu.m_actualName = menu.m_activeName = menu.m_entries[defaultOption].toString();
 }
 
@@ -877,4 +936,30 @@ float UserInterface::radiusForDepth(float depth) const
     return radius * 1.1f * _radius_mult;
   }*/
   return radius;
+}
+
+float UserInterface::angleOffsetForPosition(const Vector2& pos) {
+  const Vector2 diff = pos - Vector2::Constant(0.5f);
+  float rotAngle = std::atan2(diff.x(), diff.y()) + static_cast<float>(M_PI);
+  if (rotAngle < 0) {
+    rotAngle += static_cast<float>(2.0*M_PI);
+  }
+
+  float edgeAngle = 0;
+  if (fabs(diff.x()) > fabs(diff.y())) {
+    if (diff.x() < 0) {
+      edgeAngle = static_cast<float>(M_PI/2.0);
+    } else {
+      edgeAngle = static_cast<float>(3.0*M_PI/2.0);
+    }
+  } else {
+    if (diff.y() < 0) {
+      edgeAngle = static_cast<float>(2.0 * M_PI);
+    } else {
+      edgeAngle = static_cast<float>(M_PI);
+    }
+  }
+
+  //return 0.5f*(rotAngle + edgeAngle);
+  return edgeAngle;
 }
