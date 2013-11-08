@@ -5,34 +5,34 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>66054D8F-A575-472A-BF52-8454F102A005</string>
+	<string>B7A46CD0-DDC7-40BC-88A0-299DC3C97F48</string>
 	<key>IDESourceControlProjectName</key>
 	<string>claydemo</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>557050CB-6045-429D-BF6F-13875BC744F2</key>
-		<string>ssh://ocuserv2/var/git/applications</string>
+		<key>CE284D2C-A802-4C26-AB8E-0168F2ECC2F2</key>
+		<string>ocuserv2:/var/git/applications/</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>clay/Builds/MacOSX/claydemo.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>557050CB-6045-429D-BF6F-13875BC744F2</key>
+		<key>CE284D2C-A802-4C26-AB8E-0168F2ECC2F2</key>
 		<string>../../../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>ssh://ocuserv2/var/git/applications</string>
+	<string>ocuserv2:/var/git/applications/</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>557050CB-6045-429D-BF6F-13875BC744F2</string>
+	<string>CE284D2C-A802-4C26-AB8E-0168F2ECC2F2</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>557050CB-6045-429D-BF6F-13875BC744F2</string>
+			<string>CE284D2C-A802-4C26-AB8E-0168F2ECC2F2</string>
 			<key>IDESourceControlWCCName</key>
 			<string>applications</string>
 		</dict>
