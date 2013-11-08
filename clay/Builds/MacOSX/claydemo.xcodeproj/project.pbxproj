@@ -60,6 +60,7 @@
 		18392F4F179E92EE006709CF /* libfreeimage.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 18392F4A179E9050006709CF /* libfreeimage.dylib */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
+		8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 8A24C4B8182D9905005151DA /* brush-vert.glsl */; };
 		8A84A921182AC3EC001CD625 /* libboost_thread.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8A84A90C1829D564001CD625 /* libboost_thread.a */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
@@ -168,6 +169,7 @@
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
 		5323E6B50EAFCA7E003A9687 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
 		89C36BE2F0154685A7D47F00 /* claydemo_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = "\"\""; path = claydemo_Prefix.pch; sourceTree = "<group>"; };
+		8A24C4B8182D9905005151DA /* brush-vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "brush-vert.glsl"; path = "../../resources/brush-vert.glsl"; sourceTree = "<group>"; };
 		8A84A9081829D541001CD625 /* libcinder.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcinder.a; path = ../../../../../../../../opt/local/Libraries/cinder_0.8.4/lib/libcinder.a; sourceTree = "<group>"; };
 		8A84A90A1829D558001CD625 /* libboost_filesystem.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_filesystem.a; path = ../../../../../../../../opt/local/Libraries/cinder_0.8.4/lib/macosx/libboost_filesystem.a; sourceTree = "<group>"; };
 		8A84A90C1829D564001CD625 /* libboost_thread.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_thread.a; path = ../../../../../../../../opt/local/Libraries/cinder_0.8.4/lib/macosx/libboost_thread.a; sourceTree = "<group>"; };
@@ -476,6 +478,7 @@
 			children = (
 				01C5D77A181A482D00194132 /* bloom-frag.glsl */,
 				01C5D77B181A482D00194132 /* blur-frag.glsl */,
+				8A24C4B8182D9905005151DA /* brush-vert.glsl */,
 				01C5D77C181A482D00194132 /* cinder_app_icon.ico */,
 				01C5D77D181A482D00194132 /* CinderApp.icns */,
 				01C5D77E181A482D00194132 /* fxaa-frag.glsl */,
@@ -1012,6 +1015,7 @@
 				01C5D787181A482D00194132 /* bloom-frag.glsl in Resources */,
 				01C5D78E181A482D00194132 /* metaball-frag.glsl in Resources */,
 				01C5D78A181A482D00194132 /* CinderApp.icns in Resources */,
+				8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
