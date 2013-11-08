@@ -135,7 +135,6 @@ private:
   float _bloom_size;
   float _bloom_strength;
   float _bloom_light_threshold;
-  bool _draw_depth_of_field;
   bool _draw_background;
 
   // new mesh

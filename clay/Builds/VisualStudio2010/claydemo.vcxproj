@@ -190,7 +190,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\bloom-frag.glsl" />
-    <None Include="..\..\resources\blur-frag.glsl" />
     <None Include="..\..\resources\brush-vert.glsl" />
     <None Include="..\..\resources\fxaa-frag.glsl" />
     <None Include="..\..\resources\material-frag.glsl" />
