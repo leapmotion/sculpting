@@ -32,10 +32,8 @@ public:
 
   ThreeFormApp();
   ~ThreeFormApp();
-  void prepareSettings( Settings *settings );
-  //void performFileAction(const std::string& str);
+  void prepareSettings(Settings *settings);
   void toggleFullscreen(const std::string& str);
-  //void toggleWireframe(const std::string& str);
   void setup();
   void shutdown();
   void resize();
@@ -45,10 +43,10 @@ public:
   void mouseWheel( MouseEvent event );
   void mouseMove( MouseEvent event);
   void keyDown( KeyEvent event );
-  void updateCamera(const float _DTheta,const float _DPhi,const float _DFov);
+  void updateCamera(const float dTheta, const float dPhi, const float dFov);
   void update();
   void updateLeapAndMesh();
-  void renderSceneToFbo(Camera& _Camera);
+  void renderSceneToFbo(Camera& camera);
   void createBloom();
   void draw();
   void loadIcons();
@@ -116,7 +114,6 @@ private:
   std::string _last_loaded_file;
 
   UserInterface* _ui;
-  GlslProg _metaball_shader;
   bool _draw_ui;
 
   Fbo _screen_fbo;

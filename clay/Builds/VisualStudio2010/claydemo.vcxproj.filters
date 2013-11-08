@@ -216,9 +216,6 @@
     <None Include="..\..\resources\material-vert.glsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\..\resources\metaball-frag.glsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="..\..\resources\screen-frag.glsl">
       <Filter>Shaders</Filter>
     </None>

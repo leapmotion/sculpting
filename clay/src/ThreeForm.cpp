@@ -62,18 +62,6 @@ void ThreeFormApp::prepareSettings( Settings *settings )
   //enableVerticalSync(true);
 }
 
-//void ThreeFormApp::performFileAction(const std::string& str)
-//{
-//  if (str == "Load")
-//  {
-//    loadFile();
-//  }
-//  else if (str == "Save")
-//  {
-//    saveFile();
-//  }
-//}
-
 void ThreeFormApp::toggleFullscreen(const std::string& str)
 {
   bool full = isFullScreen();
@@ -156,7 +144,6 @@ void ThreeFormApp::setup()
     _material_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
     _brush_shader = gl::GlslProg( loadResource( RES_BRUSH_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
     _wireframe_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_WIREFRAME_FRAG_GLSL ) );
-    _metaball_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_METABALL_FRAG_GLSL ) );
     _sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
     _fxaa_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_FXAA_FRAG_GLSL ) );
     _bloom_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLOOM_FRAG_GLSL ) );
@@ -173,94 +160,10 @@ void ThreeFormApp::setup()
   _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
   _ui->setBoldFont(ci::Font(loadResource( RES_FONT_FREIGHTSANSBOLD_TTF ), Menu::FONT_SIZE));
 
-  // top level node
-  _ui->addElement(UIElement("Menu"));
-
-  // second level nodes
-  //_ui->addElement(UIElement("Brush"), "Menu");
-  _ui->addElement(UIElement("Editing"), "Menu");
-  //_ui->addElement(UIElement("Environment"), "Menu");
-  //_ui->addElement(UIElement("Material"), "Menu");
-
-  // Brush nodes
-  //_ui->addElement(UIElement("Strength"), "Brush");
-  //_ui->addElement(UIElement("Size"), "Brush");
-  //_ui->addElement(UIElement("Type"), "Brush");
-
-  // Strength nodes
-  //_ui->addElement(UIElement("Fine", boost::bind(&ThreeFormApp::setBrushStrength, this, ::_1)), "Strength");
-  //_ui->addElement(UIElement("Medium", boost::bind(&ThreeFormApp::setBrushStrength, this, ::_1)), "Strength");
-  //_ui->addElement(UIElement("Strong", boost::bind(&ThreeFormApp::setBrushStrength, this, ::_1)), "Strength");
-
-  // Size nodes
-  //_ui->addElement(UIElement("X-Small", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
-  //_ui->addElement(UIElement("Small", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
-  //_ui->addElement(UIElement("Medium", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
-  //_ui->addElement(UIElement("Large", boost::bind(&ThreeFormApp::setBrushSize, this, ::_1)), "Size");
-
-  // Type nodes
-  //_ui->addElement(UIElement("Grow", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Shrink", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Smooth", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Flatten", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Sweep", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Push", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
-  //_ui->addElement(UIElement("Paint", boost::bind(&ThreeFormApp::setBrushMode, this, ::_1)), "Type");
-
-  // Editing nodes
-  //_ui->addElement(UIElement("Fullscreen", boost::bind(&ThreeFormApp::toggleFullscreen, this, ::_1)), "Editing");
-  //_ui->addElement(UIElement("Wireframe", boost::bind(&ThreeFormApp::toggleWireframe, this, ::_1)), "Editing");
-  //_ui->addElement(UIElement("Load", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
-  //_ui->addElement(UIElement("Save", boost::bind(&ThreeFormApp::performFileAction, this, ::_1)), "Editing");
-  //_ui->addElement(UIElement("Auto-Spin"), "Editing");
-
-  // Environment nodes
-  //_ui->addElement(UIElement("Scene"), "Environment");
-  //_ui->addElement(UIElement("Time of Day"), "Environment");
-
-  // Auto-Spin nodes
-  //_ui->addElement(UIElement("Off", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
-  //_ui->addElement(UIElement("Slow", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
-  //_ui->addElement(UIElement("Medium", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
-  //_ui->addElement(UIElement("Fast", boost::bind(&ThreeFormApp::setAutoSpin, this, ::_1)), "Auto-Spin");
-
-  // Scene nodes
-  //const std::vector<Environment::EnvironmentInfo>& infos = Environment::getEnvironmentInfos();
-  //for (size_t i=0; i<infos.size(); i++)
-  //{
-  //  _ui->addElement(UIElement(infos[i]._name, boost::bind(&ThreeFormApp::setEnvironment, this, ::_1)), "Scene");
-  //}
-
-  // Time of Day nodes
-  //_ui->addElement(UIElement("Dawn", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
-  //_ui->addElement(UIElement("Noon", boost::bind(&ThreeFormApp::setTimeOfDay, this, ::_1)), "Time of Day");
-
-  // Material nodes
-  //_ui->addElement(UIElement("Amethyst", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Porcelain", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Glass", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Clay", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Plastic", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Onyx", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Flubber", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-  //_ui->addElement(UIElement("Steel", boost::bind(&ThreeFormApp::setMaterial, this, ::_1)), "Material");
-
-  _ui->setRootNode("Menu");
-
-  _ui->setShader(&_metaball_shader);
-
   _controller.setPolicyFlags(Leap::Controller::POLICY_BACKGROUND_FRAMES);
   _controller.addListener(_listener);
 
   _leap_interaction = new LeapInteraction(&sculpt_, _ui);
-
-#if 0
-  srand(static_cast<unsigned int>(time(0)));
-  int randEnvIdx = rand() % infos.size();
-  std::string randEnvString = infos[randEnvIdx]._name;
-  Environment::TimeOfDay time = (rand() % 2) ? Environment::TIME_DAWN : Environment::TIME_NOON;
-  _loading_thread = std::thread(&Environment::setEnvironment, _environment, randEnvString, time);
-#endif
 
   sculpt_.setSculptMode(Sculpt::SWEEP);
   _leap_interaction->setBrushRadius(10.0f);
@@ -373,11 +276,11 @@ void ThreeFormApp::keyDown( KeyEvent event )
   }
 }
 
-void ThreeFormApp::updateCamera(const float _DTheta,const float _DPhi,const float _DFov)
+void ThreeFormApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
 {
-  _theta -= _DTheta;
-  _phi += _DPhi;
-  _fov += _DFov;
+  _theta -= dTheta;
+  _phi += dPhi;
+  _fov += dFov;
 
   if( _theta<0.f ) _theta += float(M_PI)*2.f;
   if( _theta>=M_PI*2.f ) _theta -= float(M_PI)*2.f;
@@ -669,8 +572,7 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
     disableDepthWrite();
     setMatricesWindow( getWindowSize() );
     setViewport( getWindowBounds() );
-    //Matrix33f rot = _camera.getModelViewMatrix().subMatrix33(0, 0).inverted();
-    _ui->draw(); //_environment, rot);
+    _ui->draw();
     enableDepthRead();
     enableDepthWrite();
   }

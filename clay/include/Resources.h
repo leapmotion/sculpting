@@ -8,7 +8,6 @@
 #define RES_MATERIAL_VERT_GLSL                CINDER_RESOURCE( ../resources/, material-vert.glsl, 120, GLSL )
 #define RES_MATERIAL_FRAG_GLSL                CINDER_RESOURCE( ../resources/, material-frag.glsl, 121, GLSL )
 #define RES_BRUSH_VERT_GLSL                   CINDER_RESOURCE( ../resources/, brush-vert.glsl, 122, GLSL )
-#define RES_METABALL_FRAG_GLSL                CINDER_RESOURCE( ../resources/, metaball-frag.glsl, 123, GLSL )
 #define RES_SCREEN_FRAG_GLSL                  CINDER_RESOURCE( ../resources/, screen-frag.glsl, 131, GLSL )
 #define RES_FXAA_FRAG_GLSL                    CINDER_RESOURCE( ../resources/, fxaa-frag.glsl, 133, GLSL )
 #define RES_WIREFRAME_FRAG_GLSL               CINDER_RESOURCE( ../resources/, wireframe-frag.glsl, 134, GLSL )

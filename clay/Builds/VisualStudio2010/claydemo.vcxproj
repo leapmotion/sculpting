@@ -194,7 +194,6 @@
     <None Include="..\..\resources\fxaa-frag.glsl" />
     <None Include="..\..\resources\material-frag.glsl" />
     <None Include="..\..\resources\material-vert.glsl" />
-    <None Include="..\..\resources\metaball-frag.glsl" />
     <None Include="..\..\resources\screen-frag.glsl" />
     <None Include="..\..\resources\sky-frag.glsl" />
     <None Include="..\..\resources\sky-vert.glsl" />
