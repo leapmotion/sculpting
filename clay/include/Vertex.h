@@ -3,6 +3,7 @@
 
 #include "DataTypes.h"
 #include <vector>
+#include <set>
 #include "Tools.h"
 
 /**
@@ -42,6 +43,10 @@ public:
 bool operator<(const Vertex &a,const Vertex &b);
 
 typedef std::vector<Vertex, Eigen::aligned_allocator<Vertex> > VertexVector;
+#if _WIN32
 typedef std::set<Vertex, std::less<Vertex>, Eigen::aligned_allocator<Vertex> > VertexSet;
+#else
+typedef std::set<Vertex> VertexSet;
+#endif
 
 #endif /*__VERTEX_H__*/
