@@ -65,7 +65,7 @@ void LeapInteraction::interact(double curTime)
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 200, 50);
-  static const Vec3f LEAP_SIZE(200, 200, 200);
+  static const Vec3f LEAP_SIZE(300, 300, 300);
   Leap::HandList hands = _cur_frame.hands();
   const float ui_mult = 1.0f - _ui->maxActivation();
   //const int num_hands = hands.count();

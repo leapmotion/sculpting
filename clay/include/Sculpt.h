@@ -14,7 +14,7 @@ class Sculpt
 {
 
 public:
-  enum SculptMode{INVALID = -1, INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT, ERASE};
+  enum SculptMode{INVALID = -1, INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT};
   enum TopoMode{DECIMATION, SUBDIVISION, UNIFORMISATION, ADAPTIVE, STATIC};
   Sculpt();
   ~Sculpt();
@@ -24,6 +24,7 @@ public:
   void setTopoMode(TopoMode mode) { topoMode_ = mode; }
   void setDetail(float detail) { detail_ = detail; }
   bool isSweep() { return sculptMode_==SWEEP; }
+  void setMaterialColor(const Vector3& color) { materialColor_ = color; }
 
   void sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush);
   void smooth(const std::vector<int> &iVerts, const Brush& brush);
@@ -33,7 +34,7 @@ public:
   void smoothNoMp(const std::vector<int> &iVerts, bool flat = false);
   void sweep(const std::vector<int> &iVerts, const Brush& brush);
   void push(const std::vector<int> &iVerts, const Brush& brush);
-  void paint(const std::vector<int> &iVerts, const Brush& brush, int material);
+  void paint(const std::vector<int> &iVerts, const Brush& brush, const Vector3& color);
 
   int getNumBrushes() const { return (int)_brushes.size(); }
   void addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3& dir, const Vector3& vel, float radius, float strength, float activation);
@@ -75,6 +76,7 @@ private:
   float minDetailMult_;
   bool prevSculpt_;
   int material_;
+  Vector3 materialColor_;
   float autoSmoothStrength_;
   std::vector<int> brushVertices_;
   mutable std::mutex brushMutex_;

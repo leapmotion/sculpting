@@ -5,9 +5,9 @@
 #include <cinder/gl/gl.h>
 
 /** Constructor */
-Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE),
-  detail_(1.0f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0),
-  deltaTime_(0.0f), minDetailMult_(0.1f), prevSculpt_(false), material_(0), autoSmoothStrength_(0.15f)
+Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), detail_(1.0f), d2Min_(0.f),
+  d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0), deltaTime_(0.0f),
+  minDetailMult_(0.1f), prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f)
 {}
 
 /** Destructor */
@@ -68,8 +68,7 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   case FLATTEN : flatten(iVertsSelected, brush); break;
   case SWEEP : sweep(iVertsSelected, brush); break;
   case PUSH : push(iVertsSelected, brush); break;
-  case ERASE :
-  case PAINT : paint(iVertsSelected, brush, material_); break;
+  case PAINT : paint(iVertsSelected, brush, materialColor_); break;
   default: break;
   }
 
@@ -361,16 +360,16 @@ void Sculpt::push(const std::vector<int> &iVerts, const Brush& brush)
   }
 }
 
-void Sculpt::paint(const std::vector<int> &iVerts, const Brush& brush, int material) {
+void Sculpt::paint(const std::vector<int> &iVerts, const Brush& brush, const Vector3& color) {
   VertexVector &vertices = mesh_->getVertices();
   int nbVerts = iVerts.size();
-  const Vector3 newColor = sculptMode_ == PAINT ? Utilities::colorForIndex(material) : Vector3::Ones();
+  //const Vector3 newColor = sculptMode_ == PAINT ? Utilities::colorForIndex(material) : Vector3::Ones();
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
     Vertex &vert=vertices[iVerts[i]];
     const float changeSpeed = brush.strengthAt(vert);
-    vert.material_ = (1.0f-changeSpeed)*vert.material_ + changeSpeed*newColor;
+    vert.material_ = (1.0f-changeSpeed)*vert.material_ + changeSpeed*color;
   }
 }
 

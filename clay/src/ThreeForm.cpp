@@ -879,7 +879,8 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
   _brush_shader.uniform( "numLights", 0 );
   for (size_t i=0; i<brushes.size(); i++) {
     const double lastSculptTime = sculpt_.getLastSculptTime();
-    const float mult = 0.3f*static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25)) + 0.3f;
+    float mult = 0.3f*static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25)) + 0.3f;
+    mult *= (1.0f - _ui->maxActivation());
     _brush_shader.uniform("alphaMult", mult*brushes[i]._activation);
     brushes[i].draw();
   }
@@ -1053,22 +1054,20 @@ void ClayDemoApp::draw()
 }
 
 void ClayDemoApp::loadIcons() {
-  std::vector<svg::DocRef>& icons = Menu::m_icons;
+  std::vector<ci::gl::Texture>& icons = Menu::m_icons;
   icons.resize(Menu::NUM_ICONS);
-  icons[Menu::STRENGTH] = ci::svg::Doc::create(loadResource(RES_STRENGTH_SVG));
-  icons[Menu::SIZE] = ci::svg::Doc::create(loadResource(RES_SIZE_SVG));
-  icons[Menu::TYPE] = ci::svg::Doc::create(loadResource(RES_SIZE_SVG));
-  //icons[Menu::COLOR] = ci::svg::Doc::create(loadResource(RES_COLOR_SVG));
 
-  icons[Menu::TOOL_PAINT] = ci::svg::Doc::create(loadResource(RES_PAINT_SVG));
-  icons[Menu::TOOL_PUSH] = ci::svg::Doc::create(loadResource(RES_PUSH_SVG));
-  icons[Menu::TOOL_SWEEP] = ci::svg::Doc::create(loadResource(RES_SWEEP_SVG));
-  icons[Menu::TOOL_FLATTEN] = ci::svg::Doc::create(loadResource(RES_FLATTEN_SVG));
-  icons[Menu::TOOL_SMOOTH] = ci::svg::Doc::create(loadResource(RES_SMOOTH_SVG));
-  icons[Menu::TOOL_SHRINK] = ci::svg::Doc::create(loadResource(RES_SHRINK_SVG));
-  icons[Menu::TOOL_GROW] = ci::svg::Doc::create(loadResource(RES_GROW_SVG));
+  icons[Menu::TOOL_PAINT] = ci::gl::Texture(loadImage(loadResource(RES_PAINT_SELECTED_PNG)));
+  icons[Menu::TOOL_PUSH] = ci::gl::Texture(loadImage(loadResource(RES_PUSH_SELECTED_PNG)));
+  icons[Menu::TOOL_SWEEP] = ci::gl::Texture(loadImage(loadResource(RES_SWEEP_SELECTED_PNG)));
+  icons[Menu::TOOL_FLATTEN] = ci::gl::Texture(loadImage(loadResource(RES_FLATTEN_SELECTED_PNG)));
+  icons[Menu::TOOL_SMOOTH] = ci::gl::Texture(loadImage(loadResource(RES_SMOOTH_SELECTED_PNG)));
+  icons[Menu::TOOL_SHRINK] = ci::gl::Texture(loadImage(loadResource(RES_SHRINK_SELECTED_PNG)));
+  icons[Menu::TOOL_GROW] = ci::gl::Texture(loadImage(loadResource(RES_GROW_SELECTED_PNG)));
 
-  icons[Menu::SIZE_AUTO] = ci::svg::Doc::create(loadResource(RES_SIZE_AUTO_SVG));
+  icons[Menu::STRENGTH_LOW] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_LOW_SELECTED_PNG)));
+  icons[Menu::STRENGTH_MEDIUM] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_MEDIUM_SELECTED_PNG)));
+  icons[Menu::STRENGTH_HIGH] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_HIGH_SELECTED_PNG)));
 }
 
 #if 1

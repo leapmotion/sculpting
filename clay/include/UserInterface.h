@@ -6,17 +6,18 @@
 #include "cinder/gl/GlslProg.h"
 #include "cinder/params/Params.h"
 #include "cinder/Thread.h"
-#include "cinder/svg/Svg.h"
-#include "cinder/svg/SvgGl.h"
+//#include "cinder/svg/Svg.h"
+//#include "cinder/svg/SvgGl.h"
+#include "cinder/gl/Texture.h"
 #include "Environment.h"
 #include "Utilities.h"
 #include "Resources.h"
+#include "Sculpt.h"
 #include <boost/function.hpp>
 #include <vector>
 using namespace ci;
 using namespace ci::gl;
 
-class Sculpt;
 class LeapInteraction;
 
 class UIElement
@@ -126,6 +127,11 @@ public:
     // size
     SIZE_AUTO,
 
+    // strength
+    STRENGTH_LOW,
+    STRENGTH_MEDIUM,
+    STRENGTH_HIGH,
+
     NUM_ICONS
   };
 
@@ -147,38 +153,33 @@ public:
       m_hoverStrength.value = 0.0f;
       m_activationStrength.value = 0.0f;
     }
-    void draw(const Menu* parent) const {
-      static const float ACTIVATION_BONUS_SCALE = 0.5f;
+    void draw(const Menu* parent, bool selected) const {
+      static const float ICON_ACTIVATION_BONUS_SCALE = 0.1f;
+      static const float SHAPE_ACTIVATION_BONUS_SCALE = 0.5f;
       const float opacity = std::max(m_activationStrength.value, parent->m_activation.value);
-      const float brightness = 0.4f + 0.6f*std::max(m_activationStrength.value, m_hoverStrength.value);
-      const ci::Vec2f pos = parent->relativeToAbsolute(m_position);
-      ci::svg::Style style;
-      ColorA8u svgColor(static_cast<uint8_t>(255*brightness), static_cast<uint8_t>(255*brightness), static_cast<uint8_t>(255*brightness), static_cast<uint8_t>(255*opacity));
-      ci::svg::Paint paint(svgColor);
-      style.setFill(paint);
-      style.setFillOpacity(opacity);
-      style.setOpacity(opacity);
+      const float brightness = selected ? 1.0f : 0.5f + 0.5f*std::max(m_activationStrength.value, m_hoverStrength.value);
+      const ci::Vec2f pos(m_position.x(), m_position.y());
       glColor4f(brightness, brightness, brightness, opacity);
-      if (useSvg) {
-        ci::svg::DocRef& svg = Menu::m_icons[m_iconType];
-        svg->setStyle(style);
-        ci::Vec2i size = svg->getSize();
+      if (useIcon) {
+        ci::gl::Texture& tex = Menu::m_icons[m_iconType];
+        const ci::Vec2i size = tex.getSize();
         glPushMatrix();
         glTranslatef(pos.x, pos.y, 0.0f);
-        const float scale = (ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.065f) / size.x;
+        const float scale = (ICON_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.09f) / size.x;
         glScalef(scale, scale, scale);
         glTranslatef(-size.x/2.0f, -size.y/2.0f, 0.0f);
         if (opacity > 0.01f) {
-          gl::draw(*svg);
+          glColor4f(brightness, brightness, brightness, opacity);
+          gl::draw(tex);
         }
         glPopMatrix();
-      } else {
-        const float scale = 1.0f + (ACTIVATION_BONUS_SCALE*m_activationStrength.value);
+      } else if (!useColor) {
+        const float scale = 1.0f + (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value);
         gl::drawSolidCircle(pos, parent->relativeToAbsolute(scale * m_radius), 40);
       }
     }
     std::string toString() const {
-      if (useSvg) {
+      if (useIcon) {
         switch(m_iconType) {
         case Menu::STRENGTH: return "Strength"; break;
         case Menu::SIZE: return "Size"; break;
@@ -192,6 +193,9 @@ public:
         case Menu::TOOL_GROW: return "Inflate"; break;
         case Menu::TOOL_PAINT: return "Paint"; break;
         case Menu::SIZE_AUTO: return "Auto"; break;
+        case Menu::STRENGTH_LOW: return "Low"; break;
+        case Menu::STRENGTH_MEDIUM: return "Medium"; break;
+        case Menu::STRENGTH_HIGH: return "High"; break;
         }
         return "";
       } else {
@@ -202,46 +206,63 @@ public:
     }
 
     MenuEntryType m_iconType;
-    bool useSvg;
+    bool useIcon;
+    bool useColor;
     float m_radius;
     float m_value;
-    ci::svg::DocRef m_svg;
     Vector2 m_position;
     float m_angleStart;
     float m_angleWidth;
+    float m_wedgeStart;
+    float m_wedgeEnd;
+    ci::Color m_color;
     Utilities::ExponentialFilter<float> m_hoverStrength;
     Utilities::ExponentialFilter<float> m_activationStrength;
   };
 
-  float getSweepStart() const { return static_cast<float>(-m_sweepAngle/2.0f + M_PI); }
+  float getSweepStart() const { return static_cast<float>(-m_sweepAngle/2.0f + m_angleOffset); }
   float getSweepEnd() const { return getSweepStart() + m_sweepAngle; }
   static float getOpacity(float activation) {
-    static const float NORMAL_OPACITY = 0.3f;
+    static const float NORMAL_OPACITY = 0.4f;
     static const float ACTIVATED_OPACITY = 1.0f;
     return NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation;
   }
   float getRingRadius() const { return 0.75f * m_outerRadius; }
   ci::Vec2f relativeToAbsolute(const Vector2& pos) const {
     Vector2 scaled = pos;
-#if 1
-    scaled.x() = (scaled.x() - 0.5f)/m_windowAspect + 0.5f;
-#else
-    scaled.y() = (scaled.y() - 0.5f)*m_windowAspect + 0.5f;
-#endif
+    //scaled.x() = (scaled.x() - 0.5f)/m_windowAspect + 0.5f;
+    //scaled.y() = (scaled.y() - 0.5f)*m_windowAspect + 0.5f;
     scaled = scaled.cwiseProduct(m_windowSize);
     return ci::Vec2f(scaled.data());
   }
   float relativeToAbsolute(float radius) const {
     //return m_windowDiagonal * radius;
-    return m_windowSize.y() * radius;
+    return radius * m_windowSize.y();
   }
+  float absoluteToRelative(float radius) const {
+    return radius / m_windowSize.y();
+  }
+  static Sculpt::SculptMode toolToSculptMode(Menu::MenuEntryType entry) {
+    switch (entry) {
+    case Menu::TOOL_GROW: return Sculpt::INFLATE; break;
+    case Menu::TOOL_SHRINK: return Sculpt::DEFLATE; break;
+    case Menu::TOOL_SMOOTH: return Sculpt::SMOOTH; break;
+    case Menu::TOOL_FLATTEN: return Sculpt::FLATTEN; break;
+    case Menu::TOOL_SWEEP: return Sculpt::SWEEP; break;
+    case Menu::TOOL_PUSH: return Sculpt::PUSH; break;
+    case Menu::TOOL_PAINT: return Sculpt::PAINT; break;
+    }
+    return Sculpt::INVALID;
+  }
+
   static const float FONT_SIZE;
   static const float RING_THICKNESS_RATIO;
-
-  //float m_activation;
+  static const float STRENGTH_UI_MULT;
+  
   Utilities::ExponentialFilter<float> m_activation;
   float m_outerRadius;
   float m_innerRadius;
+  float m_angleOffset;
   float m_sweepAngle;
   std::vector<MenuEntry> m_entries;
   int m_curSelectedEntry;
@@ -252,15 +273,20 @@ public:
   std::string m_name;
   static ci::Font m_font;
   static ci::Font m_boldFont;
+  float m_wedgeStart;
+  float m_wedgeEnd;
 
   MenuEntryType iconType;
   Vector2 m_windowSize;
   float m_windowDiagonal;
   float m_windowAspect;
   Vector2 m_windowCenter;
-  static std::vector<ci::svg::DocRef> m_icons;
+  //static std::vector<ci::svg::DocRef> m_icons;
+  static std::vector<ci::gl::Texture> m_icons;
   std::string m_activeName;
   std::string m_actualName;
+  ci::Color m_activeColor;
+  int m_defaultEntry;
 
 };
 
@@ -344,6 +370,7 @@ private:
   Menu _size_menu;
   Menu _color_menu;
   bool _draw_color_menu;
+  bool _first_selection_check;
 
   static const ColorA LEAF_COLOR;
   static const ColorA NORMAL_COLOR;

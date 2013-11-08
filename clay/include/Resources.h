@@ -16,20 +16,27 @@
 
 // menu icons
 #define RES_BRUSH_SVG                         CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 200, SVG )
-
 #define RES_STRENGTH_SVG                      CINDER_RESOURCE( ../resources/menu-icons/, brush-strength-2.svg, 201, SVG )
 #define RES_SIZE_SVG                          CINDER_RESOURCE( ../resources/menu-icons/, brush-strength-3.svg, 202, SVG )
 #define RES_TYPE_SVG                          CINDER_RESOURCE( ../resources/menu-icons/, brush-type.svg, 203, SVG )
-
-#define RES_PAINT_SVG                         CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 204, SVG ) // need new
-#define RES_PUSH_SVG                          CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 205, SVG )
-#define RES_SWEEP_SVG                         CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 206, SVG )
-#define RES_FLATTEN_SVG                       CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 207, SVG )
-#define RES_SMOOTH_SVG                        CINDER_RESOURCE( ../resources/menu-icons/, smooth.svg, 208, SVG )
-#define RES_SHRINK_SVG                        CINDER_RESOURCE( ../resources/menu-icons/, shrink.svg, 209, SVG )
-#define RES_GROW_SVG                          CINDER_RESOURCE( ../resources/menu-icons/, grow.svg, 210, SVG )
-
+#define RES_PAINT_PNG                         CINDER_RESOURCE( ../resources/menu-icons/, paint.png, 204, PNG )
+#define RES_PUSH_PNG                          CINDER_RESOURCE( ../resources/menu-icons/, press.png, 205, PNG )
+#define RES_SWEEP_PNG                         CINDER_RESOURCE( ../resources/menu-icons/, sweep.png, 206, PNG )
+#define RES_FLATTEN_PNG                       CINDER_RESOURCE( ../resources/menu-icons/, flatten.png, 207, PNG )
+#define RES_SMOOTH_PNG                        CINDER_RESOURCE( ../resources/menu-icons/, smooth.png, 208, PNG )
+#define RES_SHRINK_PNG                        CINDER_RESOURCE( ../resources/menu-icons/, repel.png, 209, PNG )
+#define RES_GROW_PNG                          CINDER_RESOURCE( ../resources/menu-icons/, grow.png, 210, PNG )
 #define RES_SIZE_AUTO_SVG                     CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 211, SVG )
+#define RES_PAINT_SELECTED_PNG                CINDER_RESOURCE( ../resources/menu-icons/, paint-selected.png, 224, PNG )
+#define RES_PUSH_SELECTED_PNG                 CINDER_RESOURCE( ../resources/menu-icons/, press-selected.png, 225, PNG )
+#define RES_SWEEP_SELECTED_PNG                CINDER_RESOURCE( ../resources/menu-icons/, sweep-selected.png, 226, PNG )
+#define RES_FLATTEN_SELECTED_PNG              CINDER_RESOURCE( ../resources/menu-icons/, flatten-selected.png, 227, PNG )
+#define RES_SMOOTH_SELECTED_PNG               CINDER_RESOURCE( ../resources/menu-icons/, smooth-selected.png, 228, PNG )
+#define RES_SHRINK_SELECTED_PNG               CINDER_RESOURCE( ../resources/menu-icons/, repel-selected.png, 229, PNG )
+#define RES_GROW_SELECTED_PNG                 CINDER_RESOURCE( ../resources/menu-icons/, grow-selected.png, 230, PNG )
+#define RES_STRENGTH_LOW_SELECTED_PNG         CINDER_RESOURCE( ../resources/menu-icons/, strength-low-selected.png, 231, PNG )
+#define RES_STRENGTH_MEDIUM_SELECTED_PNG      CINDER_RESOURCE( ../resources/menu-icons/, strength-medium-selected.png, 232, PNG )
+#define RES_STRENGTH_HIGH_SELECTED_PNG        CINDER_RESOURCE( ../resources/menu-icons/, strength-high-selected.png, 233, PNG )
 
 #define RES_FONT_FREIGHTSANS_TTF              CINDER_RESOURCE( ../resources/, freigsanpromed-webfont.ttf, 212, TTF )
 #define RES_FONT_FREIGHTSANSBOLD_TTF          CINDER_RESOURCE( ../resources/, freigsanprobold-webfont.ttf, 213, TTF )

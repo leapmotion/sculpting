@@ -8,10 +8,6 @@
 using namespace ci;
 using namespace ci::gl;
 
-//const ColorA UserInterface::LEAF_COLOR(1.0f, 0.35f, 0.1f, 0.5f);
-//const ColorA UserInterface::NORMAL_COLOR(0.2f, 0.3f, 0.5f, 0.4f);
-//const ColorA UserInterface::LEAF_ACTIVATED_COLOR(0.1f, 1.0f, 0.35f, 1.0f);
-//const ColorA UserInterface::NORMAL_ACTIVATED_COLOR(0.65f, 0.7f, 1.0, 1.0f);
 const ColorA UserInterface::LEAF_COLOR(1.0f, 0.35f, 0.1f, 1.0f);
 const ColorA UserInterface::NORMAL_COLOR(0.2f, 0.3f, 0.5f, 1.0f);
 const ColorA UserInterface::LEAF_ACTIVATED_COLOR(0.1f, 1.0f, 0.35f, 1.0f);
@@ -20,19 +16,23 @@ const float UserInterface::RADIUS_FALLOFF = 0.6f;
 
 const float Menu::FONT_SIZE = 36.0f;
 const float Menu::RING_THICKNESS_RATIO = 0.3f;
+const float Menu::STRENGTH_UI_MULT = 10.0f;
 ci::Font Menu::m_font;
 ci::Font Menu::m_boldFont;
-std::vector<ci::svg::DocRef> Menu::m_icons;
+std::vector<ci::gl::Texture> Menu::m_icons;
 
-Menu::Menu() : m_outerRadius(0.4f), m_innerRadius(0.1f), m_sweepAngle(2.75f), m_windowSize(Vector2::Ones()),
-  m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(0.0), m_prevSelectedEntry(-1) {
+Menu::Menu() : m_outerRadius(0.325f), m_innerRadius(0.035f), m_sweepAngle(3.5f), m_windowSize(Vector2::Ones()),
+  m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(0.0), m_prevSelectedEntry(-1),
+  m_activeColor(Color::white()), m_defaultEntry(0) {
   m_activation.value = 0.0f;
 }
 
 void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
-  static const float ACTIVATION_SMOOTH_STRENGTH = 0.925f;
+  static const float PARENT_SMOOTH_STRENGTH = 0.925f;
+  static const float CHILD_SMOOTH_STRENGTH = 0.85f;
   static const float SELECTION_COOLDOWN = 1.0f;
   static const float MIN_TIME_SINCE_SCULPTING = 0.5f; // prevent interacting with menu if we're sculpting
+  static const float MIN_PARENT_ACTIVATION = 0.75f; // amount of menu activation needed before children can be activated
   const double lastSculptTime = sculpt->getLastSculptTime();
   const double curTime = ci::app::getElapsedSeconds();
   const int numTips = tips.size();
@@ -42,23 +42,24 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   if (timeSinceSculpting > MIN_TIME_SINCE_SCULPTING) {
     float angle, radius;
     for (int i=0; i<numTips; i++) {
-      const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
+      //const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
+      const Vector2 pos(tips[i].x, 1.0f - tips[i].y);
       const float z = tips[i].z;
       const float strength = tips[i].w;
       toRadialCoordinates(pos, radius, angle);
 
       // check for hovering in wedges
       const int hit = checkCollision(pos);
-      if (hit >= 0) {
-        m_entries[hit].m_hoverStrength.Update(1.0f, curTime, ACTIVATION_SMOOTH_STRENGTH);
-        m_entries[hit].m_activationStrength.Update(radius/m_outerRadius, curTime, ACTIVATION_SMOOTH_STRENGTH);
+      if (hit >= 0 && m_activation.value > MIN_PARENT_ACTIVATION) {
+        m_entries[hit].m_hoverStrength.Update(1.0f, curTime, CHILD_SMOOTH_STRENGTH);
+        m_entries[hit].m_activationStrength.Update(radius/m_outerRadius, curTime, CHILD_SMOOTH_STRENGTH);
       }
 
       // check for center pad
       const float curRadius = m_activation.value*(m_outerRadius - m_innerRadius) + m_innerRadius;
       if (radius < curRadius) {
         // colliding with pad
-        m_activation.Update(1.0f, curTime, ACTIVATION_SMOOTH_STRENGTH);
+        m_activation.Update(1.0f, curTime, PARENT_SMOOTH_STRENGTH);
       }
     }
   }
@@ -79,7 +80,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
 
   if (m_activation.lastTimeSeconds < curTime) {
     // we weren't updated this frame
-    m_activation.Update(0.0f, curTime, ACTIVATION_SMOOTH_STRENGTH);
+    m_activation.Update(0.0f, curTime, PARENT_SMOOTH_STRENGTH);
 
     // finger left the area, so check whether to select the most activated entry
     if (maxActivation > 0.2f) {
@@ -92,8 +93,8 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   }
 
   if (m_curSelectedEntry != -1) {
-    m_entries[m_curSelectedEntry].m_hoverStrength.Update(1.0f, curTime, ACTIVATION_SMOOTH_STRENGTH);
-    m_entries[m_curSelectedEntry].m_activationStrength.Update(1.0f, curTime, ACTIVATION_SMOOTH_STRENGTH);
+    m_entries[m_curSelectedEntry].m_hoverStrength.Update(1.0f, curTime, CHILD_SMOOTH_STRENGTH);
+    m_entries[m_curSelectedEntry].m_activationStrength.Update(1.0f, curTime, CHILD_SMOOTH_STRENGTH);
     if (static_cast<float>(curTime - m_selectionTime) > SELECTION_COOLDOWN) {
       m_prevSelectedEntry = m_curSelectedEntry;
       m_curSelectedEntry = -1;
@@ -103,32 +104,40 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
 
   for (int i=0; i<numEntries; i++) {
     if (m_entries[i].m_hoverStrength.lastTimeSeconds < curTime) {
-      m_entries[i].m_hoverStrength.Update(0.0f, curTime, ACTIVATION_SMOOTH_STRENGTH);
-      m_entries[i].m_activationStrength.Update(0.0f, curTime, ACTIVATION_SMOOTH_STRENGTH);
+      m_entries[i].m_hoverStrength.Update(0.0f, curTime, CHILD_SMOOTH_STRENGTH);
+      m_entries[i].m_activationStrength.Update(0.0f, curTime, CHILD_SMOOTH_STRENGTH);
     }
   }
 
-  // update the positions of menu entries
-  const float activation = m_activation.value;
+  float parentCenter = relativeToAbsolute(m_activation.value * getRingRadius());
+  float parentThickness = relativeToAbsolute(RING_THICKNESS_RATIO * m_activation.value * m_outerRadius);
+  m_wedgeStart = parentCenter - parentThickness/2.0f;
+  m_wedgeEnd = parentCenter + parentThickness/2.0f;
+
+  const float parentActivation = m_activation.value;
   const float angleStart = getSweepStart();
   const float angleInc = m_sweepAngle / numEntries;
-  const float center = activation*getRingRadius();
-  const float thickness = RING_THICKNESS_RATIO*activation*m_outerRadius;
-  const float wedgeStart = center - thickness/2.0f;
-
   float curAngle = angleStart + angleInc/2.0f;
+  const ci::Vec2f absolute = relativeToAbsolute(m_position);
+  const Vector2 parentPosition(absolute.x, absolute.y);
+  
+  // update the positions of menu entries
   for (int i=0; i<numEntries; i++) {
     const Vector2 dir(std::sin(curAngle), std::cos(curAngle));
     const float entryActivation = m_entries[i].m_activationStrength.value;
-    const float entryRadius = std::max(m_activation.value, entryActivation) * getRingRadius();
-    const float highlightRadius = activation * m_outerRadius * entryActivation;
-    //const float fillRadius = m_outerRadius * entryActivation;
-    const float fillRadius = getRingRadius() * entryActivation;
+    const float maxActivation = std::max(parentActivation, entryActivation);
+    const float entryRadius = relativeToAbsolute(maxActivation * getRingRadius());
+    const float thickness = relativeToAbsolute(RING_THICKNESS_RATIO * maxActivation * m_outerRadius);
+    const float highlightRadius = relativeToAbsolute(parentActivation * m_outerRadius * entryActivation);
+    const float wedgeStart = entryRadius - thickness/2.0f;
     const float bonus = std::max(0.0f, highlightRadius - wedgeStart);
-    //const float bonus = std::max(0.0f, fillRadius - RING_THICKNESS_RATIO*m_outerRadius);
-    m_entries[i].m_position = m_position + (bonus+entryRadius) * dir;
+
+    m_entries[i].m_position = parentPosition + (bonus+entryRadius) * dir;
     m_entries[i].m_angleStart = curAngle - angleInc/2.0f;
     m_entries[i].m_angleWidth = angleInc;
+    m_entries[i].m_wedgeStart = entryRadius - thickness/2.0f + bonus;
+    m_entries[i].m_wedgeEnd = entryRadius + thickness/2.0f + bonus;
+
     curAngle += angleInc;
   }
 }
@@ -139,55 +148,68 @@ void Menu::setNumEntries(int num) {
 
 void Menu::draw() const {
   glPushMatrix();
+
+  static const float BASE_BRIGHTNESS = 0.2f;
   const float activation = m_activation.value;
   const float menuOpacity = getOpacity(activation);
-  ci::Vec2f pos = relativeToAbsolute(m_position);
-#if 0
-  if (activation > 0.01f) {
-    ci::ColorA circleColor(0.05f, 0.05f, 0.05f, activation);
-    gl::color(circleColor);
-    gl::drawSolidCircle(pos, relativeToAbsolute(m_innerRadius), 50);
-  }
-#endif
-  //const float inner = activation * m_innerRadius;
-  //const float outer = activation * m_outerRadius;
-  //gl::color(wedgeColor);
-  //Utilities::drawPartialDisk(pos, wedgeStart, wedgeEnd, Utilities::RADIANS_TO_DEGREES*getSweepStart(), Utilities::RADIANS_TO_DEGREES*m_sweepAngle);
-  //if (activation > 0.01f) {
-    for (size_t i=0; i<m_entries.size(); i++) {
-      const float entryActivation = m_entries[i].m_activationStrength.value;
-      const float maxActivation = std::max(activation, entryActivation);
-      const float center = maxActivation*getRingRadius();
-      const float thickness = RING_THICKNESS_RATIO*maxActivation*m_outerRadius;
-      const float wedgeStart = relativeToAbsolute(center - thickness/2.0f);
-      const float wedgeEnd = relativeToAbsolute(center + thickness/2.0f);
-      const float highlightRadius = relativeToAbsolute(activation * m_outerRadius * entryActivation);
-      const float entryOpacity = getOpacity(entryActivation);
-      //const float highlightRadius = relativeToAbsolute(wedgeStart + thickness * entryActivation);
+  const ci::Vec2f pos = relativeToAbsolute(m_position);
 
-      // draw wedge behind
-      const float brightness = 0.2f + 0.15f * m_entries[i].m_hoverStrength.value;
+  // complete the remainder of the ring
+  const float parentStart =  Utilities::RADIANS_TO_DEGREES*(getSweepStart() + m_sweepAngle);
+  const float parentSweep = 360.0f - Utilities::RADIANS_TO_DEGREES * m_sweepAngle;
+  glColor4f(BASE_BRIGHTNESS, BASE_BRIGHTNESS, BASE_BRIGHTNESS, getOpacity(0.0f));
+  Utilities::drawPartialDisk(pos, m_wedgeStart, m_wedgeEnd, parentStart, parentSweep);
+
+  // draw each entry
+  for (size_t i=0; i<m_entries.size(); i++) {
+    const float entryActivation = m_entries[i].m_activationStrength.value;
+    const float entryOpacity = getOpacity(entryActivation);
+    const float wedgeStart = m_entries[i].m_wedgeStart;
+    const float wedgeEnd = m_entries[i].m_wedgeEnd;
+    const float angleStart = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleStart;
+    const float angleWidth = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleWidth;
+    const bool isSelected = (i == m_prevSelectedEntry);
+
+    // draw wedge behind
+    if (m_entries[i].useColor) {
+      const ci::Color& origColor = m_entries[i].m_color;
+      ci::Vec3f color(origColor.r, origColor.g, origColor.b);
+      color *= (1.0f + 0.2f*m_entries[i].m_hoverStrength.value);
+      color *= (1.0f + 0.4f*(isSelected ? 1.0f : entryActivation));
+      color.x = ci::math<float>::clamp(color.x);
+      color.y = ci::math<float>::clamp(color.y);
+      color.z = ci::math<float>::clamp(color.z);
+      gl::color(ci::ColorA(color.x, color.y, color.z, entryOpacity));
+    } else {
+      const float brightness = BASE_BRIGHTNESS + 0.15f * (isSelected ? 1.0f : m_entries[i].m_hoverStrength.value);
       const float green = 0.65f * entryActivation;
       glColor4f(brightness, brightness + green, brightness, entryOpacity);
-      const float bonus = std::max(0.0f, highlightRadius - wedgeStart);
-      Utilities::drawPartialDisk(pos, wedgeStart + bonus, wedgeEnd + bonus, Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleStart, Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleWidth);
-
-      if (highlightRadius > wedgeStart) {
-        //glColor4f(0.3f, 1.0f, 0.3f, opacity);
-        //Utilities::drawPartialDisk(pos, wedgeStart, highlightRadius, Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleStart, Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleWidth);
-      }
-
-      m_entries[i].draw(this);
     }
-  //}
-#if 0
-  glColor3f(0.35f, 0.35f, 0.35f);
-  gl::drawSolidCircle(pos, relativeToAbsolute(m_innerRadius), 50);
-#endif
+    Utilities::drawPartialDisk(pos, wedgeStart, wedgeEnd, angleStart, angleWidth);
+
+    m_entries[i].draw(this, isSelected);
+  }
   
-  ci::ColorA textColor(0.95f, 0.95f, 0.95f, menuOpacity);
-  gl::drawStringCentered(m_name, pos - Vec2f(0, FONT_SIZE/2.0f), textColor, m_boldFont);
-  gl::drawStringCentered(m_activeName, pos + Vec2f(0, FONT_SIZE/2.0f), textColor, m_font);
+  // variables for string drawing
+  const ci::ColorA titleColor(1.0f, 1.0f, 1.0f, menuOpacity);
+  const ci::ColorA valueColor(0.75f, 0.75f, 0.75f, menuOpacity);
+  const ci::Vec2f textPos = pos - Vec2f(0.0f, FONT_SIZE/2.0f);
+  const ci::Vec2f offset = Vec2f(0.0f, FONT_SIZE/2.0f);
+  const float textScale = (0.25f * activation) + relativeToAbsolute(0.04f) / FONT_SIZE;
+
+  // draw menu title and value
+  glPushMatrix();
+  gl::translate(textPos);
+  gl::scale(textScale, textScale);
+  gl::drawStringCentered(m_name, -offset, titleColor, m_boldFont);
+  if (m_name == "Color") {
+    gl::color(ci::ColorA(m_activeColor.r, m_activeColor.g, m_activeColor.b, menuOpacity));
+    gl::drawSolidCircle(3.0f*offset, relativeToAbsolute(0.02f), 40);
+  } else {
+    gl::drawStringCentered(m_activeName, offset, valueColor, m_font);
+  }
+  glPopMatrix();
+
   glPopMatrix();
 }
 
@@ -229,12 +251,24 @@ void Menu::setWindowSize(const ci::Vec2i& size) {
 }
 
 void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const {
+#if 0
   const Vector2 diff = (pos - m_position);
   angle = std::atan2(diff.x(), diff.y());
   if (angle < 0) {
     angle += static_cast<float>(2.0 * M_PI);
   }
   radius = diff.norm();
+#else
+  const ci::Vec2f abs = relativeToAbsolute(pos);
+  const ci::Vec2f absMenu = relativeToAbsolute(m_position);
+  const ci::Vec2f diff = (abs - absMenu);
+  angle = std::atan2(diff.x, diff.y);
+  if (angle < 0) {
+    angle += static_cast<float>(2.0 * M_PI);
+  }
+  radius = absoluteToRelative(diff.length());
+
+#endif
 }
 
 UserInterface::UserInterface()
@@ -249,51 +283,81 @@ UserInterface::UserInterface()
   , _zoom_amount(1.0f)
   , _radius_mult(0.0f)
   , _draw_color_menu(false)
+  , _first_selection_check(true)
 {
+  static const int NUM_TOOL_ENTRIES = 7;
   _type_menu.m_name = "Tool";
-  _type_menu.m_position << 0.5f, 0.9f;
-  _type_menu.setNumEntries(7);
-
+  _type_menu.m_position << 0.5f, 0.925f;
+  _type_menu.m_angleOffset = M_PI;
+  _type_menu.setNumEntries(NUM_TOOL_ENTRIES);
   _type_menu.m_entries[0].m_iconType = Menu::TOOL_PAINT;
-  _type_menu.m_entries[0].useSvg = true;
   _type_menu.m_entries[1].m_iconType = Menu::TOOL_PUSH;
-  _type_menu.m_entries[1].useSvg = true;
   _type_menu.m_entries[2].m_iconType = Menu::TOOL_SWEEP;
-  _type_menu.m_entries[2].useSvg = true;
   _type_menu.m_entries[3].m_iconType = Menu::TOOL_FLATTEN;
-  _type_menu.m_entries[3].useSvg = true;
   _type_menu.m_entries[4].m_iconType = Menu::TOOL_SMOOTH;
-  _type_menu.m_entries[4].useSvg = true;
   _type_menu.m_entries[5].m_iconType = Menu::TOOL_SHRINK;
-  _type_menu.m_entries[5].useSvg = true;
   _type_menu.m_entries[6].m_iconType = Menu::TOOL_GROW;
-  _type_menu.m_entries[6].useSvg = true;
+  _type_menu.m_defaultEntry = 1;
+  for (int i=0; i<NUM_TOOL_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _type_menu.m_entries[i];
+    entry.useIcon = true;
+    entry.useColor = false;
+  }
   
-  static const int NUM_STRENGTH_ENTRIES = 8;
+  static const int NUM_STRENGTH_ENTRIES = 3;
   _strength_menu.m_name = "Strength";
-  _strength_menu.m_position << 0.025f, 0.9f;
+  _strength_menu.m_position << 0.2f, 0.925f;
   _strength_menu.setNumEntries(NUM_STRENGTH_ENTRIES);
+  _strength_menu.m_angleOffset = M_PI;
+  _strength_menu.m_defaultEntry = NUM_STRENGTH_ENTRIES/2;
+  _strength_menu.m_entries[0].m_iconType = Menu::STRENGTH_LOW;
+  _strength_menu.m_entries[1].m_iconType = Menu::STRENGTH_MEDIUM;
+  _strength_menu.m_entries[2].m_iconType = Menu::STRENGTH_HIGH;
   for (int i=0; i<NUM_STRENGTH_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_STRENGTH_ENTRIES);
     Menu::MenuEntry& entry = _strength_menu.m_entries[i];
-    entry.useSvg = false;
-    entry.m_radius = 0.005f + ratio*0.03f;
-    entry.m_value = ratio;
+    entry.useIcon = true;
+    entry.useColor = false;
+    //entry.m_radius = 0.005f + ratio*0.03f;
+    entry.m_value = Menu::STRENGTH_UI_MULT*ratio;
   }
     
   static const int NUM_SIZE_ENTRIES = 8;
   _size_menu.m_name = "Size";
-  _size_menu.m_position << 0.975f, 0.9f;
+  _size_menu.m_position << 0.8f, 0.925f;
   _size_menu.setNumEntries(NUM_SIZE_ENTRIES);
+  _size_menu.m_angleOffset = M_PI;
+  _size_menu.m_defaultEntry = NUM_SIZE_ENTRIES/2;
   for (int i=0; i<NUM_SIZE_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_SIZE_ENTRIES);
     Menu::MenuEntry& entry = _size_menu.m_entries[i];
-    entry.useSvg = false;
+    entry.useIcon = false;
+    entry.useColor = false;
     entry.m_radius = 0.005f + ratio*0.03f;
     entry.m_value = 40.0f*ratio;
   }
 
+  static const int NUM_COLOR_ENTRIES = 12;
   _color_menu.m_name = "Color";
+  _color_menu.m_position << 0.925f, 0.3f;
+  _color_menu.setNumEntries(NUM_COLOR_ENTRIES);
+  _color_menu.m_angleOffset = 3.0f*M_PI/2.0f;
+  _color_menu.m_defaultEntry = NUM_COLOR_ENTRIES/2;
+  for (int i=0; i<NUM_COLOR_ENTRIES; i++) {
+    const float ratio = static_cast<float>(i-3)/static_cast<float>(NUM_COLOR_ENTRIES-4);
+    Menu::MenuEntry& entry = _color_menu.m_entries[i];
+    entry.useIcon = false;
+    entry.useColor = true;
+    if (i == 0) {
+      entry.m_color = ci::Color::white();
+    } else if (i == 1) {
+      entry.m_color = ci::Color::gray(0.6f);
+    } else if (i == 2) {
+      entry.m_color = ci::Color::gray(0.15f);
+    } else {
+      entry.m_color = ci::hsvToRGB(ci::Vec3f(ratio, 0.75f, 0.75f));
+    }
+  }
 }
 
 void UserInterface::addElement(const UIElement& _Element, const std::string& _ParentName)
@@ -555,9 +619,7 @@ void UserInterface::setWindowSize(const Vec2i& _Size)
   _type_menu.setWindowSize(_Size);
   _strength_menu.setWindowSize(_Size);
   _size_menu.setWindowSize(_Size);
-  if (_draw_color_menu) {
-    _color_menu.setWindowSize(_Size);
-  }
+  _color_menu.setWindowSize(_Size);
 }
 
 void UserInterface::setShader(GlslProg* _Shader)
@@ -591,29 +653,56 @@ float UserInterface::maxActivation() const
 }
 
 void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap) {
+  if (_first_selection_check) {
+    const int defaultStrength = _strength_menu.m_defaultEntry;
+    _strength_menu.m_prevSelectedEntry = defaultStrength;
+    _strength_menu.m_actualName = _strength_menu.m_activeName = _strength_menu.m_entries[defaultStrength].toString();
+    leap->setBrushStrength(_strength_menu.m_entries[defaultStrength].m_value / Menu::STRENGTH_UI_MULT);
+
+    const int defaultSize = _size_menu.m_defaultEntry;
+    _size_menu.m_prevSelectedEntry = defaultSize;
+    _size_menu.m_actualName = _size_menu.m_activeName = _size_menu.m_entries[defaultSize].toString();
+    leap->setBrushRadius(_size_menu.m_entries[defaultSize].m_value);
+
+    const int defaultType = _type_menu.m_defaultEntry;
+    _type_menu.m_prevSelectedEntry = defaultType;
+    _type_menu.m_actualName = _type_menu.m_activeName = _type_menu.m_entries[defaultType].toString();
+    Sculpt::SculptMode mode = Menu::toolToSculptMode(_type_menu.m_entries[defaultType].m_iconType);
+    sculpt->setSculptMode(mode);
+
+    const int defaultColor = _color_menu.m_defaultEntry;
+    _color_menu.m_prevSelectedEntry = defaultColor;
+    _color_menu.m_activeColor = _color_menu.m_entries[defaultColor].m_color;
+    const ci::Color& desiredColor = _color_menu.m_entries[defaultColor].m_color;
+    _color_menu.m_activeColor = desiredColor;
+    Vector3 color(desiredColor.r, desiredColor.g, desiredColor.b);
+    sculpt->setMaterialColor(color);
+
+    _first_selection_check = false;
+  }
+
   if (_type_menu.m_curSelectedEntry != -1) {
     Menu::MenuEntry& entry = _type_menu.m_entries[_type_menu.m_curSelectedEntry];
-    switch (entry.m_iconType) {
-    case Menu::TOOL_GROW: sculpt->setSculptMode(Sculpt::INFLATE); break;
-    case Menu::TOOL_SHRINK: sculpt->setSculptMode(Sculpt::DEFLATE); break;
-    case Menu::TOOL_SMOOTH: sculpt->setSculptMode(Sculpt::SMOOTH); break;
-    case Menu::TOOL_FLATTEN: sculpt->setSculptMode(Sculpt::FLATTEN); break;
-    case Menu::TOOL_SWEEP: sculpt->setSculptMode(Sculpt::SWEEP); break;
-    case Menu::TOOL_PUSH: sculpt->setSculptMode(Sculpt::PUSH); break;
-    case Menu::TOOL_PAINT: sculpt->setSculptMode(Sculpt::PAINT); break;
-    }
+    Sculpt::SculptMode mode = Menu::toolToSculptMode(entry.m_iconType);
+    sculpt->setSculptMode(mode);
+    _draw_color_menu = (mode == Sculpt::PAINT);
   }
+
   if (_strength_menu.m_curSelectedEntry != -1) {
     Menu::MenuEntry& entry = _strength_menu.m_entries[_strength_menu.m_curSelectedEntry];
-    leap->setBrushStrength(entry.m_value);
+    leap->setBrushStrength(entry.m_value / Menu::STRENGTH_UI_MULT);
   }
+
   if (_size_menu.m_curSelectedEntry != -1) {
     Menu::MenuEntry& entry = _size_menu.m_entries[_size_menu.m_curSelectedEntry];
     leap->setBrushRadius(entry.m_value);
   }
 
-  if (_draw_color_menu) {
-    //_color_menu
+  if (_draw_color_menu && _color_menu.m_curSelectedEntry != -1) {
+    const ci::Color& desiredColor = _color_menu.m_entries[_color_menu.m_curSelectedEntry].m_color;
+    _color_menu.m_activeColor = desiredColor;
+    Vector3 color(desiredColor.r, desiredColor.g, desiredColor.b);
+    sculpt->setMaterialColor(color);
   }
 }
 
