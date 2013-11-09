@@ -363,7 +363,6 @@ void Sculpt::push(const std::vector<int> &iVerts, const Brush& brush)
 void Sculpt::paint(const std::vector<int> &iVerts, const Brush& brush, const Vector3& color) {
   VertexVector &vertices = mesh_->getVertices();
   int nbVerts = iVerts.size();
-  //const Vector3 newColor = sculptMode_ == PAINT ? Utilities::colorForIndex(material) : Vector3::Ones();
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {

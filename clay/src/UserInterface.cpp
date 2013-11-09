@@ -14,9 +14,9 @@ const float Menu::FONT_SIZE = 36.0f;
 const float Menu::RING_THICKNESS_RATIO = 0.3f;
 const float Menu::STRENGTH_UI_MULT = 10.0f;
 const float Menu::BASE_OUTER_RADIUS = 0.15f;
-const float Menu::OUTER_RADIUS_PER_ENTRY = 0.02f;
+const float Menu::OUTER_RADIUS_PER_ENTRY = 0.0175f;
 const float Menu::BASE_INNER_RADIUS = 0.05f;
-const float Menu::SWEEP_ANGLE = 3.3f;
+const float Menu::SWEEP_ANGLE = 3.5f;
 ci::Font Menu::g_font;
 ci::Font Menu::g_boldFont;
 ci::gl::TextureFontRef Menu::g_textureFont;
@@ -28,6 +28,7 @@ Vector2 Menu::g_windowCenter = Vector2::Constant(1.0f);
 std::vector<ci::gl::Texture> Menu::g_icons;
 ci::Vec2f Menu::g_shadowOffset = ci::Vec2f(1.5f, 2.0f);
 float Menu::g_zoomFactor = 1.0f;
+float Menu::g_maxMenuActivation = 0.0f;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
   m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(0.0), m_prevSelectedEntry(-1),
@@ -42,6 +43,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   static const float SELECTION_COOLDOWN = 1.0f;
   static const float MIN_TIME_SINCE_SCULPTING = 0.5f; // prevent interacting with menu if we're sculpting
   static const float MIN_PARENT_ACTIVATION = 0.75f; // amount of menu activation needed before children can be activated
+  static const float MAX_ACTIVATION_LIMIT = 0.9f; // how high the max activation can be before other menus can't be activated
   const double lastSculptTime = sculpt->getLastSculptTime();
   const double curTime = ci::app::getElapsedSeconds();
   const int numTips = tips.size();
@@ -66,7 +68,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
 
       // check for center pad
       const float curRadius = m_activation.value*(m_outerRadius - m_innerRadius) + m_innerRadius;
-      if (radius < curRadius) {
+      if (radius < curRadius && (g_maxMenuActivation == m_activation.value || g_maxMenuActivation < MAX_ACTIVATION_LIMIT)) {
         // colliding with pad
         m_activation.Update(1.0f, curTime, PARENT_SMOOTH_STRENGTH);
       }
@@ -159,7 +161,7 @@ void Menu::setNumEntries(int num) {
 void Menu::draw() const {
   glPushMatrix();
 
-  static const float BASE_BRIGHTNESS = 0.2f;
+  static const float BASE_BRIGHTNESS = 0.25f;
   const float activation = m_activation.value;
   const float menuOpacity = getOpacity(activation);
   const ci::Vec2f pos = relativeToAbsolute(m_position);
@@ -192,7 +194,7 @@ void Menu::draw() const {
       gl::color(ci::ColorA(color.x, color.y, color.z, entryOpacity));
     } else {
       const float brightness = BASE_BRIGHTNESS + 0.15f * (isSelected ? 1.0f : m_entries[i].m_hoverStrength.value);
-      const float green = 0.65f * entryActivation;
+      const float green = 0.6f * entryActivation;
       glColor4f(brightness, brightness + green, brightness, entryOpacity);
     }
     Utilities::drawPartialDisk(pos, wedgeStart, wedgeEnd, angleStart, angleWidth);
@@ -282,11 +284,12 @@ void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) 
 
 UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true)
 {
+  srand(static_cast<unsigned int>(time(0)));
   int entryType;
 
   const int NUM_STRENGTH_ENTRIES = 3;
   _strength_menu.setName("Strength");
-  _strength_menu.setPosition(Vector2(0.2f, 0.925f));
+  _strength_menu.setPosition(Vector2(0.25f, 0.925f));
   _strength_menu.setNumEntries(NUM_STRENGTH_ENTRIES);
   _strength_menu.setAngleOffset(angleOffsetForPosition(_strength_menu.getPosition()));
   _strength_menu.setDefaultEntry(NUM_STRENGTH_ENTRIES/2);
@@ -315,7 +318,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     
   const int NUM_SIZE_ENTRIES = 8;
   _size_menu.setName("Size");
-  _size_menu.setPosition(Vector2(0.8f, 0.925f));
+  _size_menu.setPosition(Vector2(0.75f, 0.925f));
   _size_menu.setNumEntries(NUM_SIZE_ENTRIES);
   _size_menu.setAngleOffset(angleOffsetForPosition(_size_menu.getPosition()));
   _size_menu.setDefaultEntry(NUM_SIZE_ENTRIES/2);
@@ -327,21 +330,19 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.m_value = 40.0f*ratio;
   }
 
-  const int NUM_COLOR_ENTRIES = 10;
+  const int NUM_COLOR_ENTRIES = 8;
   _color_menu.setName("Color");
-  _color_menu.setPosition(Vector2(0.925f, 0.2f));
+  _color_menu.setPosition(Vector2(0.925f, 0.7f));
   _color_menu.setNumEntries(NUM_COLOR_ENTRIES);
   _color_menu.setAngleOffset(angleOffsetForPosition(_color_menu.getPosition()));
   _color_menu.setDefaultEntry(NUM_COLOR_ENTRIES/2);
   for (int i=0; i<NUM_COLOR_ENTRIES; i++) {
-    const float ratio = static_cast<float>(i-3)/static_cast<float>(NUM_COLOR_ENTRIES-4);
+    const float ratio = static_cast<float>(i-2)/static_cast<float>(NUM_COLOR_ENTRIES-2);
     Menu::MenuEntry& entry = _color_menu.getEntry(i);
     entry.drawMethod = Menu::MenuEntry::COLOR;
     if (i == 0) {
       entry.m_color = ci::Color::white();
     } else if (i == 1) {
-      entry.m_color = ci::Color::gray(0.6f);
-    } else if (i == 2) {
       entry.m_color = ci::Color::gray(0.1f);
     } else {
       entry.m_color = ci::hsvToRGB(ci::Vec3f(ratio, 0.75f, 0.75f));
@@ -350,7 +351,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_MATERIAL_ENTRIES = 5;
   _material_menu.setName("Material");
-  _material_menu.setPosition(Vector2(0.075f, 0.3f));
+  _material_menu.setPosition(Vector2(0.925f, 0.25f));
   _material_menu.setNumEntries(NUM_MATERIAL_ENTRIES);
   entryType = Menu::MATERIAL_PORCELAIN;
   _material_menu.setAngleOffset(angleOffsetForPosition(_material_menu.getPosition()));
@@ -363,7 +364,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_SPIN_ENTRIES = 4;
   _spin_menu.setName("Spin");
-  _spin_menu.setPosition(Vector2(0.075f, 0.6f));
+  _spin_menu.setPosition(Vector2(0.075f, 0.7f));
   _spin_menu.setNumEntries(NUM_SPIN_ENTRIES);
   entryType = Menu::SPIN_OFF;
   _spin_menu.setAngleOffset(angleOffsetForPosition(_spin_menu.getPosition()));
@@ -376,7 +377,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   
   const int NUM_WIREFRAME_ENTRIES = 2;
   _wireframe_menu.setName("Wireframe");
-  _wireframe_menu.setPosition(Vector2(0.2f, 0.075f));
+  _wireframe_menu.setPosition(Vector2(0.075f, 0.25f));
   _wireframe_menu.setNumEntries(NUM_WIREFRAME_ENTRIES);
   entryType = Menu::WIREFRAME_OFF;
   _wireframe_menu.setAngleOffset(angleOffsetForPosition(_wireframe_menu.getPosition()));
@@ -389,7 +390,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_SYMMETRY_ENTRIES = 2;
   _symmetry_menu.setName("Symmetry");
-  _symmetry_menu.setPosition(Vector2(0.35f, 0.075f));
+  _symmetry_menu.setPosition(Vector2(0.0f, 1.05f));
   _symmetry_menu.setNumEntries(NUM_SYMMETRY_ENTRIES);
   entryType = Menu::SYMMETRY_OFF;
   _symmetry_menu.setAngleOffset(angleOffsetForPosition(_symmetry_menu.getPosition()));
@@ -416,7 +417,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_TIME_OF_DAY_ENTRIES = 2;
   _time_of_day_menu.setName("Time of Day");
-  _time_of_day_menu.setPosition(Vector2(0.65f, 0.075f));
+  _time_of_day_menu.setPosition(Vector2(1.0f, -0.05f));
   _time_of_day_menu.setNumEntries(NUM_TIME_OF_DAY_ENTRIES);
   entryType = Menu::TIME_DAWN;
   _time_of_day_menu.setAngleOffset(angleOffsetForPosition(_time_of_day_menu.getPosition()));
@@ -430,7 +431,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   const std::vector<Environment::EnvironmentInfo>& infos = Environment::getEnvironmentInfos();
   const int NUM_ENVIRONMENT_ENTRIES = infos.size();
   _environment_menu.setName("Scene");
-  _environment_menu.setPosition(Vector2(0.8f, 0.075f));
+  _environment_menu.setPosition(Vector2(0.7f, -0.075f));
   _environment_menu.setNumEntries(NUM_ENVIRONMENT_ENTRIES);
   entryType = Menu::ENVIRONMENT_ISLANDS;
   _environment_menu.setAngleOffset(angleOffsetForPosition(_environment_menu.getPosition()));
@@ -442,8 +443,8 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 
   const int NUM_MAIN_ENTRIES = 3;
-  _main_menu.setName("3Form");
-  _main_menu.setPosition(Vector2(0.075f, 0.075f));
+  _main_menu.setName("Main");
+  _main_menu.setPosition(Vector2(0.0f, -0.05f));
   _main_menu.setNumEntries(NUM_MAIN_ENTRIES);
   entryType = Menu::MAIN_ABOUT;
   _main_menu.setAngleOffset(angleOffsetForPosition(_main_menu.getPosition()));
@@ -457,7 +458,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_FILE_ENTRIES = 5;
   _file_menu.setName("File");
-  _file_menu.setPosition(Vector2(0.925f, 0.5f));
+  _file_menu.setPosition(Vector2(0.3f, -0.075f));
   _file_menu.setNumEntries(NUM_FILE_ENTRIES);
   entryType = Menu::FILE_LOAD;
   _file_menu.setAngleOffset(angleOffsetForPosition(_file_menu.getPosition()));
@@ -470,8 +471,8 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 
   const int NUM_SOUND_ENTRIES = 2;
-  _sound_menu.setName("Audio");
-  _sound_menu.setPosition(Vector2(0.925f, 0.8f));
+  _sound_menu.setName("Sound");
+  _sound_menu.setPosition(Vector2(1.0f, 1.05f));
   _sound_menu.setNumEntries(NUM_SOUND_ENTRIES);
   entryType = Menu::SOUND_ON;
   _sound_menu.setAngleOffset(angleOffsetForPosition(_sound_menu.getPosition()));
@@ -485,6 +486,8 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
 void UserInterface::update(const std::vector<Vec4f>& tips, Sculpt* sculpt)
 {
+  Menu::g_maxMenuActivation = maxActivation();
+
   // update the individual menus
   _type_menu.update(tips, sculpt);
   _strength_menu.update(tips, sculpt);
@@ -700,5 +703,6 @@ float UserInterface::angleOffsetForPosition(const Vector2& pos) {
   }
 
   //return 0.5f*(rotAngle + edgeAngle);
+  //return rotAngle;
   return edgeAngle;
 }

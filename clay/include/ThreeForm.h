@@ -113,6 +113,7 @@ private:
   bool _use_ao;
   bool _only_ao;
   std::string _last_loaded_file;
+  float _ui_zoom;
 
   UserInterface* _ui;
   bool _draw_ui;

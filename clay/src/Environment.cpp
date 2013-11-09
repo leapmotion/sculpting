@@ -22,16 +22,6 @@ std::string Environment::working_directory;
 Environment::Environment() : _cur_environment(""), _cur_time_of_day(TIME_DAWN),
   _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0)
 {
-  // set up filenames for the different supported environments
-  _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.6f, 1.0f, 4.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Arctic", 0.2f, 2.5f, 2.25f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.5f, 0.5f, 4.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.6f, 0.7f, 4.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.6f, 0.7f, 4.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Desert", 0.5f, 1.5f, 3.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("River", 0.5f, 0.75f, 3.5f, 1.01f));
-  _environment_infos.push_back(prepareEnvironmentInfo("Moonscape", 0.3f, 0.5f, 2.25f, 1.01f));
-
   createWorkingDirectory();
   createEnvironmentInfos();
 }

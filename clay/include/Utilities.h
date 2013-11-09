@@ -13,26 +13,22 @@
 
 namespace Utilities {
 
-  static inline float SmootherStep(float x)
-  {
+  static inline float SmootherStep(float x) {
     // x is blending parameter between 0 and 1
     return x*x*x*(x*(x*6 - 15) + 10);
   }
 
-  static void getRotation(const ci::Vec3f& _From, const ci::Vec3f& _To, ci::Vec3f& _Axis, float& _Angle)
-  {
+  static void getRotation(const ci::Vec3f& _From, const ci::Vec3f& _To, ci::Vec3f& _Axis, float& _Angle) {
     _Axis = _From.cross(_To);
     _Angle = std::acos(_From.dot(_To));
   }
 
-  static GLUquadric* quadric()
-  {
+  static GLUquadric* quadric() {
     static GLUquadric* gluQuadric = gluNewQuadric();
     return gluQuadric;
   }
 
-  static void drawDisk(const float _Inner, const float _Outer, const ci::Vec3f& _Center, const ci::Vec3f& _Normal)
-  {
+  static void drawDisk(const float _Inner, const float _Outer, const ci::Vec3f& _Center, const ci::Vec3f& _Normal) {
     float angle;
     ci::Vec3f axis;
     getRotation(ci::Vec3f::zAxis(), _Normal, axis, angle);
@@ -43,8 +39,7 @@ namespace Utilities {
     glPopMatrix();
   }
 
-  static void drawCapsule(const float _Radius, const float _Length, const ci::Vec3f& _Point, const ci::Vec3f& _Direction)
-  {
+  static void drawCapsule(const float _Radius, const float _Length, const ci::Vec3f& _Point, const ci::Vec3f& _Direction) {
     float angle;
     ci::Vec3f axis;
     getRotation(ci::Vec3f::zAxis(), _Direction, axis, angle);
@@ -166,19 +161,6 @@ namespace Utilities {
     ExponentialFilter<float> m_categories[N];
   };
 
-  static inline float DegreesToRadians(float deg) {
-    return static_cast<float>(M_PI)*deg/180.0f;
-  }
-  static inline double DegreesToRadians(double deg) {
-    return (M_PI/180.0)*deg;
-  }
-
-  static inline float RadiansToDegrees(float rad) {
-    return 180.0f*rad/static_cast<float>(M_PI);
-  }
-  static inline double RadiansToDegrees(double rad) {
-    return (180.0/M_PI)*rad;
-  }
   static inline Vector4 pointNormalToPlaneCoeffs(const Vector3& point, const Vector3& normal) {
     Vector4 plane;
     plane << normal, -normal.dot(point);

@@ -261,9 +261,9 @@ public:
     float toSpinVelocity() const {
       switch (m_entryType) {
       case Menu::SPIN_OFF: return 0.0f; break;
-      case Menu::SPIN_SLOW: return 0.63f; break;
-      case Menu::SPIN_MEDIUM: return 2.13f; break;
-      case Menu::SPIN_FAST: return 5.37f; break;
+      case Menu::SPIN_SLOW: return 0.37f; break;
+      case Menu::SPIN_MEDIUM: return 1.83f; break;
+      case Menu::SPIN_FAST: return 3.27f; break;
       }
       return 0.0f;
     }
@@ -325,6 +325,7 @@ public:
   static std::vector<ci::gl::Texture> g_icons;
   static ci::Vec2f g_shadowOffset;
   static float g_zoomFactor;
+  static float g_maxMenuActivation;
 
   Menu();
   void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
@@ -363,7 +364,7 @@ public:
 private:
 
   static float getOpacity(float activation) {
-    static const float NORMAL_OPACITY = 0.7f;//0.4f;
+    static const float NORMAL_OPACITY = 0.6f;
     static const float ACTIVATED_OPACITY = 1.0f;
     return NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation;
   }

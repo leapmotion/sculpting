@@ -65,7 +65,7 @@ void LeapInteraction::interact(double curTime)
   static const float ZOOM_SPEED = 100.0f;
   static const float AGE_WARMUP_TIME = 0.5f;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
-  static const float LOG_SCALE_SMOOTH_STRENGTH = 0.95f;
+  static const float LOG_SCALE_SMOOTH_STRENGTH = 0.9f;
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 200, 50);
@@ -155,27 +155,28 @@ void LeapInteraction::interact(double curTime)
             transPos.z = 1.0f;
 
             const float autoBrushScaleFactor = (scaledSize.x() / LEAP_SIZE.x);
-            if (transPos.x >= -0.1f && transPos.x <= 1.1f && transPos.y >= -0.1f && transPos.y <= 1.1f) {
-              float adjRadius = _desired_brush_radius;
-              if (_autoBrush) {
-                adjRadius *= autoBrushScaleFactor;
-              }
-              if (strengthMult > 0.25f) {
-                _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, strengthMult);
-              }
-            }
-
-            // compute a point on the surface of the sphere to use as the screen-space radius
-            radPos.x = (radPos.x + 1)/2;
-            radPos.y = (radPos.y + 1)/2;
-            radPos.z = 1.0f;
-            float rad = transPos.distance(radPos);
+            float adjRadius = _desired_brush_radius;
             if (_autoBrush) {
-              rad *= autoBrushScaleFactor;
+              adjRadius *= autoBrushScaleFactor;
             }
-            transPos.z = rad;
-            Vec4f tip(transPos.x, transPos.y, transPos.z, strengthMult);
-            _tips.push_back(tip);
+            if (transPos.x >= 0.025f && transPos.x <= 0.975f && transPos.y >= 0.025f && transPos.y <= 0.975f) {
+              // compute a point on the surface of the sphere to use as the screen-space radius
+              radPos.x = (radPos.x + 1)/2;
+              radPos.y = (radPos.y + 1)/2;
+              radPos.z = 1.0f;
+              float rad = transPos.distance(radPos);
+              if (_autoBrush) {
+                rad *= autoBrushScaleFactor;
+              }
+              transPos.z = rad;
+              Vec4f tip(transPos.x, transPos.y, transPos.z, strengthMult);
+              _tips.push_back(tip);
+            } else {
+              strength = 0.0f;
+            }
+            if (strengthMult > 0.25f) {
+              _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, strengthMult);
+            }
           }
         }
       }

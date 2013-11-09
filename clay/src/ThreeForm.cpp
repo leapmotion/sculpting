@@ -39,6 +39,7 @@ ThreeFormApp::ThreeFormApp()
   , _draw_background(true)
   , _focus_point(Vector3::Zero())
   , _fov_modifier(0.0f)
+  , _ui_zoom(1.0f)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = new DebugDrawUtil();
@@ -316,8 +317,14 @@ void ThreeFormApp::update()
   //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
   _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
-  _ui->setZoomFactor(ci::math<float>::clamp(_ui->getZoomFactor() + 1.0f*logScale, 0.5f, 2.0f));
-  _fov_modifier = -_ui->getZoomFactor() * 20.0f; //ci::math<float>::clamp(_fov_modifier - 25*logScale, -20.0f, 20.0f);
+  static const float LOWER_BOUND = 0.775f;
+  static const float UPPER_BOUND = 1.0f;
+
+  _ui_zoom = ci::math<float>::clamp(_ui_zoom + 0.75f*logScale, LOWER_BOUND, UPPER_BOUND);
+  const float ratio = (_ui_zoom - LOWER_BOUND) / (UPPER_BOUND - LOWER_BOUND);
+  _ui->setZoomFactor(Utilities::SmootherStep(ratio)*(UPPER_BOUND - LOWER_BOUND) + LOWER_BOUND);
+
+  _fov_modifier = -_ui->getZoomFactor() * 20.0f;
   _ui->update(_leap_interaction->getTips(), &sculpt_);
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
