@@ -6,6 +6,8 @@
 
 #if _WIN32
 #include <direct.h>
+#else
+#include "CoreFoundation/CoreFoundation.h"
 #endif
 
 using namespace ci::app;
@@ -33,11 +35,14 @@ Environment::Environment()
     }
   }
 #else
-  const size_t bufferSize = 1024;
-  char buffer[bufferSize];
-  if (getcwd(buffer, bufferSize) != NULL) {
-    working_directory = std::string(buffer);
+  CFBundleRef mainBundle = CFBundleGetMainBundle();
+  CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+  char path[PATH_MAX];
+  if (CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)path, PATH_MAX))
+  {
+    working_directory = std::string(path);
   }
+  CFRelease(resourcesURL);
 #endif
 
   // set up filenames for the different supported environments
