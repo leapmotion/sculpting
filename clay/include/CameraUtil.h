@@ -116,7 +116,7 @@ public:
       blendMaxDist = 200.0f;
 
       useSphereQuery = true;
-      sphereRadiusMultiplier = 0.25f;
+      sphereRadiusMultiplier = 0.35f;
       sphereCrawlMode = true;
       userFaultyTriangles = true;
 

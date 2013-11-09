@@ -35,9 +35,6 @@ public:
   void prepareSettings( Settings *settings );
   int loadFile();
   int saveFile();
-  void setBrushMode(const std::string& str);
-  void setBrushSize(const std::string& str);
-  void setBrushStrength(const std::string& str);
   void setEnvironment(const std::string& str);
   void setTimeOfDay(const std::string& str);
   void setMaterial(const std::string& str);
@@ -60,6 +57,7 @@ public:
   void renderSceneToFbo(Camera& _Camera);
   void createBloom();
   void draw();
+  void loadIcons();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

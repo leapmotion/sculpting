@@ -57,6 +57,13 @@ namespace Utilities {
     glPopMatrix();
   }
 
+  static void drawPartialDisk(const ci::Vec2f& center, float innerRadius, float outerRadius, float startAngle, float sweepAngle) {
+    glPushMatrix();
+    glTranslated(center.x, center.y, 0.0);
+    gluPartialDisk(quadric(), innerRadius, outerRadius, 50, 1, startAngle, sweepAngle);
+    glPopMatrix();
+  }
+
   static const Vector3& colorForIndex(int idx) {
     static const int NUM_COLORS = 256;
     static Vector3 colors[NUM_COLORS];
@@ -172,6 +179,12 @@ namespace Utilities {
   static inline double RadiansToDegrees(double rad) {
     return (180.0/M_PI)*rad;
   }
+  static inline Vector4 pointNormalToPlaneCoeffs(const Vector3& point, const Vector3& normal) {
+    Vector4 plane;
+    plane << normal, -normal.dot(point);
+    return plane;
+  }
+
   static const int TIME_STAMP_TICKS_PER_SEC = 1000000;
   static const double TIME_STAMP_SECS_TO_TICKS  = static_cast<double>(TIME_STAMP_TICKS_PER_SEC);
   static const double TIME_STAMP_TICKS_TO_SECS  = 1.0/TIME_STAMP_SECS_TO_TICKS;

@@ -7,7 +7,7 @@
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE),
   detail_(1.0f), d2Min_(0.f), d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0),
-  deltaTime_(0.0f), minDetailMult_(0.2f), prevSculpt_(false), material_(0), autoSmoothStrength_(0.25f)
+  deltaTime_(0.0f), minDetailMult_(0.1f), prevSculpt_(false), material_(0), autoSmoothStrength_(0.15f)
 {}
 
 /** Destructor */

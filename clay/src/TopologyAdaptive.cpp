@@ -494,6 +494,7 @@ void Topology::matchEdgesCommonVertices(std::vector<Edge> &edges1, std::vector<E
       break;
     }
   }
+  assert(match >= 0);
   std::rotate(edges1.begin(), edges1.begin()+match, edges1.end());
 
   int nbEdges2 = edges2.size();
@@ -506,6 +507,7 @@ void Topology::matchEdgesCommonVertices(std::vector<Edge> &edges1, std::vector<E
       break;
     }
   }
+  assert(match >= 0);
   std::rotate(edges2.begin(), edges2.begin()+match, edges2.end());
 }
 

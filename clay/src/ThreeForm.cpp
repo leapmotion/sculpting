@@ -147,86 +147,6 @@ int ClayDemoApp::saveFile()
   return err; // error
 }
 
-void ClayDemoApp::setBrushMode(const std::string& str) {
-  if (str == "Grow")
-  {
-    sculpt_.setSculptMode(Sculpt::INFLATE);
-    _brush_color = Color(0.1f, 1.0f, 0.2f);
-  }
-  else if (str == "Shrink")
-  {
-    sculpt_.setSculptMode(Sculpt::DEFLATE);
-    _brush_color = Color(1.0f, 0.8f, 0.1f);
-  }
-  else if (str == "Smooth")
-  {
-    sculpt_.setSculptMode(Sculpt::SMOOTH);
-    _brush_color = Color(0.1f, 0.4f, 1.0f);
-  }
-  else if (str == "Flatten")
-  {
-    sculpt_.setSculptMode(Sculpt::FLATTEN);
-    _brush_color = Color(0.5f, 0.5f, 0.5f);
-  } else if (str == "Sweep") {
-    sculpt_.setSculptMode(Sculpt::SWEEP);
-    _brush_color = Color(0.5f, 0.5f, 0.5f);
-  } else if (str == "Push") {
-    sculpt_.setSculptMode(Sculpt::PUSH);
-    _brush_color = Color(0.5f, 0.5f, 0.5f);
-  } else if (str == "Paint") {
-    sculpt_.setSculptMode(Sculpt::PAINT);
-    _brush_color = Color(0.5f, 0.5f, 0.5f);
-  }
-}
-
-void ClayDemoApp::setBrushSize(const std::string& str)
-{
-  if (!_leap_interaction)
-  {
-    return;
-  }
-  float size = 0.0f;
-  if (str == "X-Small")
-  {
-    size = 5.0f;
-  }
-  else if (str == "Small")
-  {
-    size = 15.0f;
-  }
-  else if (str == "Medium")
-  {
-    size = 25.0f;
-  }
-  else if (str == "Large")
-  {
-    size = 40.0f;
-  }
-  _leap_interaction->setBrushRadius(size);
-}
-
-void ClayDemoApp::setBrushStrength(const std::string& str)
-{
-  if (!_leap_interaction)
-  {
-    return;
-  }
-  float strength = 0.0f;
-  if (str == "Fine")
-  {
-    strength = 0.2f;
-  }
-  else if (str == "Medium")
-  {
-    strength = 0.6f;
-  }
-  else if (str == "Strong")
-  {
-    strength = 1.0f;
-  }
-  _leap_interaction->setBrushStrength(strength);
-}
-
 void ClayDemoApp::setEnvironment(const std::string& str)
 {
   if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE)
@@ -383,6 +303,7 @@ void ClayDemoApp::setup()
   _bloom_size = 1.f;
   _bloom_strength = 1.f;
   _bloom_light_threshold = 0.5f;
+  _brush_color = ci::Color(0.65f, 0.75f, 0.8f);
 
   _params = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( Vec2i( 200, 400 ) ) );
   _params->minimize();
@@ -458,41 +379,43 @@ void ClayDemoApp::setup()
 
   sculpt_.clearBrushes();
 
+  loadIcons();
+
   _ui = new UserInterface();
 
   // top level node
   _ui->addElement(UIElement("Menu"));
 
   // second level nodes
-  _ui->addElement(UIElement("Brush"), "Menu");
+  //_ui->addElement(UIElement("Brush"), "Menu");
   _ui->addElement(UIElement("Editing"), "Menu");
   _ui->addElement(UIElement("Environment"), "Menu");
   _ui->addElement(UIElement("Material"), "Menu");
 
   // Brush nodes
-  _ui->addElement(UIElement("Strength"), "Brush");
-  _ui->addElement(UIElement("Size"), "Brush");
-  _ui->addElement(UIElement("Type"), "Brush");
+  //_ui->addElement(UIElement("Strength"), "Brush");
+  //_ui->addElement(UIElement("Size"), "Brush");
+  //_ui->addElement(UIElement("Type"), "Brush");
 
   // Strength nodes
-  _ui->addElement(UIElement("Fine", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
-  _ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
-  _ui->addElement(UIElement("Strong", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
+  //_ui->addElement(UIElement("Fine", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
+  //_ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
+  //_ui->addElement(UIElement("Strong", boost::bind(&ClayDemoApp::setBrushStrength, this, ::_1)), "Strength");
 
   // Size nodes
-  _ui->addElement(UIElement("X-Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
-  _ui->addElement(UIElement("Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
-  _ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
-  _ui->addElement(UIElement("Large", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("X-Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("Small", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("Medium", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
+  //_ui->addElement(UIElement("Large", boost::bind(&ClayDemoApp::setBrushSize, this, ::_1)), "Size");
 
   // Type nodes
-  _ui->addElement(UIElement("Grow", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  _ui->addElement(UIElement("Shrink", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  _ui->addElement(UIElement("Smooth", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  _ui->addElement(UIElement("Flatten", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  _ui->addElement(UIElement("Sweep", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  _ui->addElement(UIElement("Push", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
-  _ui->addElement(UIElement("Paint", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Grow", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Shrink", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Smooth", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Flatten", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Sweep", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Push", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
+  //_ui->addElement(UIElement("Paint", boost::bind(&ClayDemoApp::setBrushMode, this, ::_1)), "Type");
 
   // Editing nodes
   _ui->addElement(UIElement("Fullscreen", boost::bind(&ClayDemoApp::toggleFullscreen, this, ::_1)), "Editing");
@@ -523,13 +446,13 @@ void ClayDemoApp::setup()
   _ui->addElement(UIElement("Noon", boost::bind(&ClayDemoApp::setTimeOfDay, this, ::_1)), "Time of Day");
 
   // Material nodes
-  _ui->addElement(UIElement("Amethyst", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Amethyst", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
   _ui->addElement(UIElement("Porcelain", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
   _ui->addElement(UIElement("Glass", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
   _ui->addElement(UIElement("Clay", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
   _ui->addElement(UIElement("Plastic", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  _ui->addElement(UIElement("Onyx", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
-  _ui->addElement(UIElement("Flubber", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Onyx", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
+  //_ui->addElement(UIElement("Flubber", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
   _ui->addElement(UIElement("Steel", boost::bind(&ClayDemoApp::setMaterial, this, ::_1)), "Material");
 
   _ui->setRootNode("Menu");
@@ -549,11 +472,14 @@ void ClayDemoApp::setup()
   _loading_thread = std::thread(&Environment::setEnvironment, _environment, randEnvString, time);
 #endif
 
-  setBrushMode("Sweep");
-  setBrushSize("Medium");
-  setBrushStrength("Medium");
+  sculpt_.setSculptMode(Sculpt::SWEEP);
+  _leap_interaction->setBrushRadius(10.0f);
+  _leap_interaction->setBrushStrength(0.5f);
 
   glEnable(GL_FRAMEBUFFER_SRGB);
+  
+  _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
+  _ui->setBoldFont(ci::Font(loadResource( RES_FONT_FREIGHTSANSBOLD_TTF ), Menu::FONT_SIZE));
 
   _mesh_thread = std::thread(&ClayDemoApp::updateLeapAndMesh, this);
 }
@@ -676,8 +602,6 @@ void ClayDemoApp::updateCamera(const float _DTheta,const float _DPhi,const float
   _fov = math<float>::clamp(_fov, 40.f, 110.f);
 }
 
-
-
 void ClayDemoApp::update()
 {
   const double curTime = ci::app::getElapsedSeconds();
@@ -705,7 +629,8 @@ void ClayDemoApp::update()
   //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
   _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
-  _ui->update(_leap_interaction->getTips());
+  _ui->update(_leap_interaction->getTips(), &sculpt_);
+  _ui->handleSelections(&sculpt_, _leap_interaction);
 
   float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
   _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
@@ -965,7 +890,10 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     _material_shader.uniform( "lightRadius", 3.0f);
 
     glPushMatrix();
+    glPolygonOffset(1.0f, 1.0f);
+    glEnable(GL_POLYGON_OFFSET_FILL);
     mesh_->draw(vertex, normal, color);
+    glDisable(GL_POLYGON_OFFSET_FILL);
     _material_shader.unbind();
 
     if (_draw_edges) {
@@ -974,8 +902,8 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
       _wireframe_shader.uniform( "transform", transform );
       _wireframe_shader.uniform( "transformit", transformit );
       _wireframe_shader.uniform( "surfaceColor", Color::black() );
-      glLineWidth(2.0f);
       glPolygonMode(GL_FRONT, GL_LINE);
+      glLineWidth(1.0f);
       mesh_->drawVerticesOnly(vertex);
       glPolygonMode(GL_FRONT, GL_FILL);
       _wireframe_shader.unbind();
@@ -1025,14 +953,16 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
   _brush_shader.uniform( "irradiance", 0 );
   _brush_shader.uniform( "radiance", 1 );
   _brush_shader.uniform( "useRefraction", false);
-  _brush_shader.uniform( "ambientFactor", 0.3f );
-  _brush_shader.uniform( "diffuseFactor", 0.15f );
+  _brush_shader.uniform( "ambientFactor", 0.25f );
+  _brush_shader.uniform( "diffuseFactor", 0.2f );
   _brush_shader.uniform( "reflectionFactor", 0.2f );
   _brush_shader.uniform( "surfaceColor", _brush_color );
-  _brush_shader.uniform( "reflectionBias", 2.0f );
+  _brush_shader.uniform( "reflectionBias", 1.0f );
   _brush_shader.uniform( "numLights", 0 );
   for (size_t i=0; i<brushes.size(); i++) {
-    _brush_shader.uniform("alphaMult", 0.6f*brushes[i]._activation);
+    const double lastSculptTime = sculpt_.getLastSculptTime();
+    const float mult = 0.3f*static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25)) + 0.3f;
+    _brush_shader.uniform("alphaMult", mult*brushes[i]._activation);
     brushes[i].draw();
   }
   _brush_shader.unbind();
@@ -1044,8 +974,7 @@ void ClayDemoApp::renderSceneToFbo(Camera& _Camera)
     mesh_->drawOctree();
   }
 
-  if (_draw_ui) 
-  {
+  if (_draw_ui) {
     glDisable(GL_CULL_FACE);
     disableDepthRead();
     disableDepthWrite();
@@ -1203,6 +1132,25 @@ void ClayDemoApp::draw()
   }
 
   _params->draw(); // draw the interface
+}
+
+void ClayDemoApp::loadIcons() {
+  std::vector<svg::DocRef>& icons = Menu::m_icons;
+  icons.resize(Menu::NUM_ICONS);
+  icons[Menu::STRENGTH] = ci::svg::Doc::create(loadResource(RES_STRENGTH_SVG));
+  icons[Menu::SIZE] = ci::svg::Doc::create(loadResource(RES_SIZE_SVG));
+  icons[Menu::TYPE] = ci::svg::Doc::create(loadResource(RES_SIZE_SVG));
+  //icons[Menu::COLOR] = ci::svg::Doc::create(loadResource(RES_COLOR_SVG));
+
+  icons[Menu::TOOL_PAINT] = ci::svg::Doc::create(loadResource(RES_PAINT_SVG));
+  icons[Menu::TOOL_PUSH] = ci::svg::Doc::create(loadResource(RES_PUSH_SVG));
+  icons[Menu::TOOL_SWEEP] = ci::svg::Doc::create(loadResource(RES_SWEEP_SVG));
+  icons[Menu::TOOL_FLATTEN] = ci::svg::Doc::create(loadResource(RES_FLATTEN_SVG));
+  icons[Menu::TOOL_SMOOTH] = ci::svg::Doc::create(loadResource(RES_SMOOTH_SVG));
+  icons[Menu::TOOL_SHRINK] = ci::svg::Doc::create(loadResource(RES_SHRINK_SVG));
+  icons[Menu::TOOL_GROW] = ci::svg::Doc::create(loadResource(RES_GROW_SVG));
+
+  icons[Menu::SIZE_AUTO] = ci::svg::Doc::create(loadResource(RES_SIZE_AUTO_SVG));
 }
 
 #if 1
