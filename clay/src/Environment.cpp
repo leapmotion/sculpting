@@ -3,6 +3,7 @@
 #include "Resources.h"
 #include "cinder/app/App.h"
 #include "CCubeMapProcessor.h"
+#include "Common.h"
 
 #if _WIN32
 #include <direct.h>
@@ -363,11 +364,18 @@ void Environment::saveImagesToCubemap(GLuint cubemap, GLint internal_format, int
 }
 
 Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure, float contrast) {
-#if _WIN32
+#if _WIN32  
+
+#if LM_PRODUCTION_BUILD
+  const std::string ASSETS_PATH = working_directory + "/assets/";
+#else
   const std::string ASSETS_PATH = working_directory + "/../../assets/";
+#endif
+
 #else
   const std::string ASSETS_PATH = working_directory + "/assets/";
 #endif
+
   EnvironmentInfo info;
   info._name = name;
   preparePaths(ASSETS_PATH + name + "/noon/", info._noon_images);

@@ -699,6 +699,7 @@ void ThreeFormApp::draw()
       _color_fbo.unbindTexture();
     }
 
+#if !LM_PRODUCTION_BUILD
     if (_draw_ui) {
       int tris = 0;
       int verts = 0;
@@ -713,6 +714,7 @@ void ThreeFormApp::draw()
       ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));
       glPopMatrix();
     }
+#endif
   }
   else
   {
@@ -866,7 +868,7 @@ int ThreeFormApp::saveFile(const std::string& extension)
   return err; // error
 }
 
-#if 1
+#if !LM_PRODUCTION_BUILD
 #pragma comment( linker, "/subsystem:\"console\" /entry:\"mainCRTStartup\"" )
 
 int main( int argc, char * const argv[] ) {
@@ -882,6 +884,6 @@ int main( int argc, char * const argv[] ) {
   return 0;
 }
 #else
-//CINDER_APP_NATIVE( ClayDemoApp, RendererGl )
-CINDER_APP_NATIVE( ClayDemoApp, RendererGl(RendererGl::AA_NONE) )
+//CINDER_APP_NATIVE( ThreeFormApp, RendererGl )
+CINDER_APP_NATIVE( ThreeFormApp, RendererGl(RendererGl::AA_NONE) )
 #endif

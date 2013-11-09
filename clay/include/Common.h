@@ -61,3 +61,4 @@ inline bool lmIsFinite(const Vector3& v) { return v.norm() < FLT_MAX; }
 
 #define LM_ASSERT(condition, message) if (!(condition)) LM_BREAK;
 
+#define LM_PRODUCTION_BUILD 0
