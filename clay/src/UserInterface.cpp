@@ -19,6 +19,8 @@ const float Menu::BASE_INNER_RADIUS = 0.05f;
 const float Menu::SWEEP_ANGLE = 3.3f;
 ci::Font Menu::g_font;
 ci::Font Menu::g_boldFont;
+ci::gl::TextureFontRef Menu::g_textureFont;
+ci::gl::TextureFontRef Menu::g_boldTextureFont;
 Vector2 Menu::g_windowSize = Vector2::Constant(2.0f);
 float Menu::g_windowDiagonal = 1.0f;
 float Menu::g_windowAspect = 1.0f;
@@ -210,8 +212,12 @@ void Menu::draw() const {
   glPushMatrix();
   gl::translate(textPos);
   gl::scale(textScale, textScale);
-  gl::drawStringCentered(m_name, -offset + g_shadowOffset, shadowColor, g_boldFont);
-  gl::drawStringCentered(m_name, -offset, titleColor, g_boldFont);
+  const ci::Vec2f nameSize = g_boldTextureFont->measureString(m_name);
+  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, 100.0f);
+  gl::color(shadowColor);
+  g_boldTextureFont->drawString(m_name, nameRect, g_shadowOffset);
+  gl::color(titleColor);
+  g_boldTextureFont->drawString(m_name, nameRect);
   if (!m_actionsOnly) {
     if (m_name == "Color") {
       gl::color(shadowColor);
@@ -219,8 +225,12 @@ void Menu::draw() const {
       gl::color(ci::ColorA(m_activeColor.r, m_activeColor.g, m_activeColor.b, menuOpacity));
       gl::drawSolidCircle(3.0f*offset, relativeToAbsolute(0.02f), 40);
     } else {
-      gl::drawStringCentered(m_activeName, offset + g_shadowOffset, shadowColor, g_font);
-      gl::drawStringCentered(m_activeName, offset, valueColor, g_font);
+      const ci::Vec2f size = g_textureFont->measureString(m_activeName);
+      const ci::Rectf rect(-size.x/2.0f, offset.y, size.x/2.0f, 100.0f);
+      gl::color(shadowColor);
+      g_textureFont->drawString(m_activeName, rect, g_shadowOffset);
+      gl::color(valueColor);
+      g_textureFont->drawString(m_activeName, rect);
     }
   }
   glPopMatrix();

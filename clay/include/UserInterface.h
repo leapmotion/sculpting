@@ -4,6 +4,7 @@
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
+#include "cinder/gl/TextureFont.h"
 #include "cinder/params/Params.h"
 #include "cinder/Thread.h"
 #include "cinder/gl/Texture.h"
@@ -140,8 +141,18 @@ public:
         gl::color(color);
         gl::drawSolidCircle(pos, parent->relativeToAbsolute(scale * m_radius), 40);
       } else if (drawMethod == STRING) {
-        gl::drawStringCentered(toString(), pos - Vec2f(0, Menu::FONT_SIZE/2.0f) + g_shadowOffset, shadowColor, Menu::g_font);
-        gl::drawStringCentered(toString(), pos - Vec2f(0, Menu::FONT_SIZE/2.0f), color, Menu::g_font);
+        glPushMatrix();
+        gl::translate(pos);
+        const float scale = (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.03f) / FONT_SIZE;
+        glScalef(scale, scale, scale);
+        const std::string str = toString();
+        const ci::Vec2f stringSize = g_textureFont->measureString(str);
+        const ci::Rectf stringRect(-stringSize.x/2.0f, -Menu::FONT_SIZE/2.0f, stringSize.x/2.0f, 100.0f);
+        gl::color(shadowColor);
+        g_textureFont->drawString(str, stringRect, g_shadowOffset);
+        gl::color(color);
+        g_textureFont->drawString(str, stringRect);
+        glPopMatrix();
       }
     }
     std::string toString() const {
@@ -309,8 +320,11 @@ public:
   static const float STRENGTH_UI_MULT;
   static ci::Font g_font;
   static ci::Font g_boldFont;
+  static ci::gl::TextureFontRef g_textureFont;
+  static ci::gl::TextureFontRef g_boldTextureFont;
   static std::vector<ci::gl::Texture> g_icons;
   static ci::Vec2f g_shadowOffset;
+  static float g_zoomFactor;
 
   Menu();
   void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
@@ -410,8 +424,14 @@ public:
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
   void handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh);
-  void setRegularFont(const ci::Font& font) { Menu::g_font = font; }
-  void setBoldFont(const ci::Font& font) { Menu::g_boldFont = font; }
+  void setRegularFont(const ci::Font& font) {
+    Menu::g_font = font;
+    Menu::g_textureFont = ci::gl::TextureFont::create(font);
+  }
+  void setBoldFont(const ci::Font& font) {
+    Menu::g_boldFont = font;
+    Menu::g_boldTextureFont = ci::gl::TextureFont::create(font);
+  }
   void drawCursor(const ci::Vec2f& position, float opacity) const;
   void setZoomFactor(float zoom) { Menu::g_zoomFactor = zoom; }
   float getZoomFactor() const { return Menu::g_zoomFactor; }
