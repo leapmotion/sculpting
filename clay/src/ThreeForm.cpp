@@ -38,6 +38,7 @@ ThreeFormApp::ThreeFormApp()
   , _shutdown(false)
   , _draw_background(true)
   , _focus_point(Vector3::Zero())
+  , _fov_modifier(0.0f)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = new DebugDrawUtil();
@@ -293,9 +294,10 @@ void ThreeFormApp::update()
   const double curTime = ci::app::getElapsedSeconds();
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
 
-  float dTheta = deltaTime*_leap_interaction->getDThetaVel();
-  float dPhi = deltaTime*_leap_interaction->getDPhiVel();
-  float dZoom = deltaTime*_leap_interaction->getDZoomVel();
+  const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
+  const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
+  const float dZoom = deltaTime*_leap_interaction->getDZoomVel();
+  const float logScale = _leap_interaction->getLogScale();
 
   updateCamera(dTheta, dPhi, dZoom);
 
@@ -311,10 +313,11 @@ void ThreeFormApp::update()
 
   float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
 
-
   //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
   _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
+  _ui->setZoomFactor(ci::math<float>::clamp(_ui->getZoomFactor() + 1.0f*logScale, 0.5f, 2.0f));
+  _fov_modifier = -_ui->getZoomFactor() * 20.0f; //ci::math<float>::clamp(_fov_modifier - 25*logScale, -20.0f, 20.0f);
   _ui->update(_leap_interaction->getTips(), &sculpt_);
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
@@ -360,7 +363,7 @@ void ThreeFormApp::update()
 
   // Update camera
   _camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
-  _camera.setPerspective( 60.0f/*_fov*/, getWindowAspectRatio(), 1.0f, 100000.f );
+  _camera.setPerspective( 80.0f + _fov_modifier, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
 #if 0

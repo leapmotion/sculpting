@@ -22,6 +22,7 @@ public:
   float getDPhiVel() const { return _dphi.value; }
   float getDThetaVel() const { return _dtheta.value; }
   float getDZoomVel() const { return _dzoom.value; }
+  float getLogScale() const { return _logScale.value; }
   Vec3f getPinchDeltaFromLastCall();
   bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
@@ -77,6 +78,7 @@ private:
   Utilities::ExponentialFilter<float> _dphi;
   Utilities::ExponentialFilter<float> _dtheta;
   Utilities::ExponentialFilter<float> _dzoom;
+  Utilities::ExponentialFilter<float> _logScale;
   std::mutex _tips_mutex;
   double _last_camera_update_time;
   float _reference_distance;
@@ -119,10 +121,10 @@ public:
   }
 
   void update(const Leap::Hand& hand, const Leap::Frame& sinceFrame, double curTime) {
-    static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.4f;
-    static const float TRANSLATION_SMOOTH_STRENGTH = 0.25f;
-    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.8f;
-    static const float NORMAL_Y_SMOOTH_STRENGTH = 0.4f;
+    static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.75f;
+    static const float TRANSLATION_SMOOTH_STRENGTH = 0.5f;
+    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.9f;
+    static const float NORMAL_Y_SMOOTH_STRENGTH = 0.75f;
     m_lastUpdateTime = curTime;
 
     // update number of fingers

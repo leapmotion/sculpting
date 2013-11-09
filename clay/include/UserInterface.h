@@ -317,7 +317,6 @@ public:
   void setNumEntries(int num);
   void draw() const;
   int checkCollision(const Vector2& pos) const;
-  bool checkPadCollision(const Vector2& pos) const;
   void toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const;
 
   float getActivation() const { return m_activation.value; }
@@ -358,7 +357,7 @@ private:
   ci::Vec2f relativeToAbsolute(const Vector2& pos, bool useZoom = true) const {
     Vector2 scaled = pos;
     if (useZoom) {
-      scaled = m_zoomFactor*(scaled - Vector2::Constant(0.5f)) + Vector2::Constant(0.5f);
+      scaled = g_zoomFactor*(scaled - Vector2::Constant(0.5f)) + Vector2::Constant(0.5f);
     }
     //scaled.x() = (scaled.x() - 0.5f)/m_windowAspect + 0.5f;
     //scaled.y() = (scaled.y() - 0.5f)*m_windowAspect + 0.5f;
@@ -386,7 +385,6 @@ private:
   std::string m_name;
   float m_wedgeStart;
   float m_wedgeEnd;
-  float m_zoomFactor;
 
   Menu::MenuEntryType iconType;
   std::string m_activeName;
@@ -407,14 +405,16 @@ class UserInterface {
 public:
 
   UserInterface();
-  void update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt);
+  void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
   void draw() const;
-  void setWindowSize(const Vec2i& _Size);
+  void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
   void handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh);
   void setRegularFont(const ci::Font& font) { Menu::g_font = font; }
   void setBoldFont(const ci::Font& font) { Menu::g_boldFont = font; }
   void drawCursor(const ci::Vec2f& position, float opacity) const;
+  void setZoomFactor(float zoom) { Menu::g_zoomFactor = zoom; }
+  float getZoomFactor() const { return Menu::g_zoomFactor; }
 
 private:
 

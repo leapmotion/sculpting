@@ -14,9 +14,9 @@ const float Menu::FONT_SIZE = 36.0f;
 const float Menu::RING_THICKNESS_RATIO = 0.3f;
 const float Menu::STRENGTH_UI_MULT = 10.0f;
 const float Menu::BASE_OUTER_RADIUS = 0.15f;
-const float Menu::OUTER_RADIUS_PER_ENTRY = 0.025f;
+const float Menu::OUTER_RADIUS_PER_ENTRY = 0.02f;
 const float Menu::BASE_INNER_RADIUS = 0.05f;
-const float Menu::SWEEP_ANGLE = 3.5f;
+const float Menu::SWEEP_ANGLE = 3.3f;
 ci::Font Menu::g_font;
 ci::Font Menu::g_boldFont;
 Vector2 Menu::g_windowSize = Vector2::Constant(2.0f);
@@ -25,10 +25,11 @@ float Menu::g_windowAspect = 1.0f;
 Vector2 Menu::g_windowCenter = Vector2::Constant(1.0f);
 std::vector<ci::gl::Texture> Menu::g_icons;
 ci::Vec2f Menu::g_shadowOffset = ci::Vec2f(1.5f, 2.0f);
+float Menu::g_zoomFactor = 1.0f;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
   m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(0.0), m_prevSelectedEntry(-1),
-  m_activeColor(Color::white()), m_defaultEntry(0), m_actionsOnly(false), m_zoomFactor(1.0f)
+  m_activeColor(Color::white()), m_defaultEntry(0), m_actionsOnly(false)
 {
   m_activation.value = 0.0f;
 }
@@ -246,11 +247,6 @@ int Menu::checkCollision(const Vector2& pos) const {
     const int entry = static_cast<int>(0.999999f * ratio * m_entries.size());
     return entry;
   }
-}
-
-bool Menu::checkPadCollision(const Vector2& pos) const {
-  const Vector2 diff = (pos - m_position);
-  return diff.squaredNorm() < (m_innerRadius * m_innerRadius);
 }
 
 void Menu::setWindowSize(const ci::Vec2i& size) {
@@ -477,28 +473,30 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 }
 
-void UserInterface::update(const std::vector<Vec4f>& _Tips, Sculpt* sculpt)
+void UserInterface::update(const std::vector<Vec4f>& tips, Sculpt* sculpt)
 {
-  _type_menu.update(_Tips, sculpt);
-  _strength_menu.update(_Tips, sculpt);
-  _size_menu.update(_Tips, sculpt);
+  // update the individual menus
+  _type_menu.update(tips, sculpt);
+  _strength_menu.update(tips, sculpt);
+  _size_menu.update(tips, sculpt);
   if (_draw_color_menu) {
-    _color_menu.update(_Tips, sculpt);
+    _color_menu.update(tips, sculpt);
   }
-  _material_menu.update(_Tips, sculpt);
-  _spin_menu.update(_Tips, sculpt);
-  _wireframe_menu.update(_Tips, sculpt);
-  _symmetry_menu.update(_Tips, sculpt);
-  _history_menu.update(_Tips, sculpt);
-  _environment_menu.update(_Tips, sculpt);
-  _time_of_day_menu.update(_Tips, sculpt);
-  _main_menu.update(_Tips, sculpt);
-  _file_menu.update(_Tips, sculpt);
-  _sound_menu.update(_Tips, sculpt);
+  _material_menu.update(tips, sculpt);
+  _spin_menu.update(tips, sculpt);
+  _wireframe_menu.update(tips, sculpt);
+  _symmetry_menu.update(tips, sculpt);
+  _history_menu.update(tips, sculpt);
+  _environment_menu.update(tips, sculpt);
+  _time_of_day_menu.update(tips, sculpt);
+  _main_menu.update(tips, sculpt);
+  _file_menu.update(tips, sculpt);
+  _sound_menu.update(tips, sculpt);
 
+  // add cursor positions
   _cursor_positions.clear();
-  for (size_t i=0; i<_Tips.size(); i++) {
-    const ci::Vec2f pos(_Tips[i].x, 1.0f - _Tips[i].y);
+  for (size_t i=0; i<tips.size(); i++) {
+    const ci::Vec2f pos(tips[i].x, 1.0f - tips[i].y);
     _cursor_positions.push_back(pos);
   }
 }
@@ -528,13 +526,7 @@ void UserInterface::draw() const {
   _sound_menu.draw();
 }
 
-void UserInterface::setWindowSize(const Vec2i& _Size)
-{
-  Menu::setWindowSize(_Size);
-}
-
-float UserInterface::maxActivation() const
-{
+float UserInterface::maxActivation() const {
   float result = 0.0f;
 
   result = std::max(result, _type_menu.getActivation());
