@@ -184,6 +184,13 @@ void ThreeFormApp::setup()
 
   glEnable(GL_FRAMEBUFFER_SRGB);
 
+#if __APPLE__
+  if (_mesh_thread.joinable())
+  {
+    _mesh_thread.detach();
+  }
+#endif
+
   _mesh_thread = std::thread(&ThreeFormApp::updateLeapAndMesh, this);
 
   loadShape(BALL);
@@ -811,6 +818,12 @@ void ThreeFormApp::setEnvironment(const std::string& str) {
   if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE) {
     return;
   }
+#if __APPLE__
+  if (_loading_thread.joinable())
+  {
+    _loading_thread.detach();
+  }
+#endif
   _loading_thread = std::thread(&Environment::setEnvironment, _environment, str);
 }
 
