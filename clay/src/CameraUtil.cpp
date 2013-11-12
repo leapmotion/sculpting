@@ -3,7 +3,6 @@
 #include "DebugDrawUtil.h"
 #include "Geometry.h"
 
-#define DRAW_SPHERE_QUERY_RESULTS 1
 #define DISABLE_LEAP 0
 
 #define PREFER_CLOSEST_NORMAL 0
@@ -66,10 +65,10 @@ void CameraUtil::GenerateRays(const lmTransform& transform, int castsPerRow, std
   }
   // TODO fix debug lines
   if (0 && debugDrawUtil) {
-    std::vector<Vector3>& dbgPoints = debugDrawUtil->GetDebugPoints();
     std::unique_lock<std::mutex> lock(debugDrawUtil->m_mutex);
-    dbgPoints.insert(dbgPoints.end(), rays.begin(), rays.end());
-    lock.unlock();
+    for (int ri = 0; ri < rays.size(); ri++) {
+      LM_DRAW_POINT(rays[ri], lmColor::CYAN);
+    }
   }
 }
 
@@ -134,10 +133,7 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
       std::unique_lock<std::mutex> lock(debugDrawUtil->m_mutex);
       for (size_t ti = 0; ti < triangles.size(); ti++) {
         const Triangle& tri = mesh->getTriangle(triangles[ti]);
-        std::vector<Vector3>& debugTris = debugDrawUtil->GetDebugTriangles();
-        for (int vi = 0; vi < 3; vi++) {
-          debugTris.push_back(mesh->getVertex(tri.vIndices_[vi]));
-        }
+        debugDrawUtil->DrawTriangle(mesh, tri);
       }
     }
   }
@@ -269,17 +265,16 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
             closestTriangleIdx = tris[ti];
           }
 
-#if DRAW_SPHERE_QUERY_RESULTS
-          if (debugDrawUtil && params.drawDebugLines) {
+          if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
             debugDrawUtil->DrawTriangle(mesh, tri);
           }
-#endif
         }
 
         // Calc point weight
         lmReal t = closestPoint.distance / radius;
         t = 1.0f - std::min(1.0f, t);
         t = t*t;
+        //t = std::sqrt(t);
         // Add weigth based on normal
         t = t * weight;
         // Average taking area into account
@@ -293,17 +288,6 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
     {
       avgSurfacePoint->position = position / area;
       avgSurfacePoint->normal = normal.normalized();
-
-//#if DRAW_SPHERE_QUERY_RESULTS
-//      if (debugDrawUtil && params.drawDebugLines) {
-//        std::vector<Vector3>& lines = debugDrawUtil->GetDebugLines();
-//        //lines.push_back(center);
-//        //lines.push_back(output.position);
-//        debugDrawUtil->DrawCross(position , 10.0f);
-//        debugDrawUtil->DrawArrow(position, position + 20.0f * normal);
-//      }
-//#endif
-
     }
 
   } else {
@@ -323,11 +307,9 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
         position += weight * vert;
         sumWeight += weight;
 
-#if DRAW_SPHERE_QUERY_RESULTS
-        if (debugDrawUtil && params.drawDebugLines) {
-          debugDrawUtil->DrawCross(vert, 5.0f);
+        if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
+          LM_DRAW_CROSS(vert, 5.0f, lmColor::WHITE);
         }
-#endif
       }
     }
     if (0.0f < sumWeight) {
@@ -496,7 +478,14 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
   this->params = *paramsInOut;
 
-  debugDrawUtil->SwitchBuffers();
+  if (debugDrawUtil) {
+    if (params.drawDebugLines) {
+      LM_DRAW_LINE(Vector3::Zero(), Vector3::UnitX() * 50.0f, lmColor::RED);
+      LM_DRAW_LINE(Vector3::Zero(), Vector3::UnitY() * 50.0f, lmColor::GREEN);
+      LM_DRAW_LINE(Vector3::Zero(), Vector3::UnitZ() * 50.0f, lmColor::BLUE);
+    }
+    debugDrawUtil->SwitchBuffers();
+  }
 
   // Check time
   lmReal dt = 0.0f;
@@ -885,7 +874,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   // Adjust translation to user input.
   if (rayHit) {
     if (debugDrawUtil && params.drawDebugLines) {
-      debugDrawUtil->DrawCross(referencePoint.position, 10.0f);
+      LM_DRAW_CROSS(referencePoint.position, 10.0f, lmColor::WHITE);
       debugDrawUtil->DrawArrow(referencePoint.position, referencePoint.position + referencePoint.normal * 20.0f);
     }
 

@@ -73,6 +73,7 @@ public:
     bool pinUpVector;
     lmReal smoothingFactor;
     bool drawDebugLines;
+    bool drawSphereQueryResults;
 
     // Orbiting vs detailed mode blending
     lmReal blendMinDist;
@@ -110,7 +111,8 @@ public:
       speedAtMaxDist = 2.5f;
       pinUpVector = true;
       smoothingFactor = 0.02f;
-      drawDebugLines = false;
+      drawDebugLines = true;
+      drawSphereQueryResults = false;
 
       blendMinDist = 100.0f;
       blendMaxDist = 200.0f;

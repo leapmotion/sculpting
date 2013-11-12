@@ -43,7 +43,7 @@ ThreeFormApp::ThreeFormApp()
   , _ui_zoom(1.0f)
 {
   _camera_util = new CameraUtil();
-  _debug_draw_util = new DebugDrawUtil();
+  _debug_draw_util = &DebugDrawUtil::getInstance();
 }
 
 ThreeFormApp::~ThreeFormApp()
@@ -54,7 +54,7 @@ ThreeFormApp::~ThreeFormApp()
   }
 
   delete _camera_util;
-  delete _debug_draw_util;
+  //delete _debug_draw_util;
 }
 
 void ThreeFormApp::prepareSettings( Settings *settings )
@@ -102,6 +102,7 @@ void ThreeFormApp::setup()
   _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
   _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
   _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
+  _params->addParam( "Draw sphere query", &_camera_params.drawSphereQueryResults, "" );
   _params->addParam( "Use Sphere Query", &_camera_params.useSphereQuery, "" );
   _params->addParam( "Sphere R Mult", &_camera_params.sphereRadiusMultiplier, "min=0.0125 max=0.75 step=0.0125" );
   _params->addParam( "Crawl mode.", &_camera_params.sphereCrawlMode, "" );
@@ -548,8 +549,7 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
     _wireframe_shader.bind();
     _wireframe_shader.uniform( "transform", transform );
     _wireframe_shader.uniform( "transformit", transformit );
-    _wireframe_shader.uniform( "surfaceColor", Color::white() );
-    _debug_draw_util->FlushDebugPrimitives();
+    _debug_draw_util->FlushDebugPrimitives(&_wireframe_shader);
     _wireframe_shader.unbind();
   }
 
