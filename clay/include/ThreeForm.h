@@ -53,11 +53,14 @@ public:
 
   void setMaterial(const Material& mat);
   void setWireframe(bool wireframe);
+  void toggleWireframe();
   void setSymmetry(bool symmetry);
+  void toggleSymmetry();
   void setEnvironment(const std::string& str);
   void setTimeOfDay(Environment::TimeOfDay time);
+  void toggleSound();
   int loadFile();
-  int saveFile(const std::string& extension);
+  int saveFile();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 

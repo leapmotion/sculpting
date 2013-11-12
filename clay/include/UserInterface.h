@@ -3,19 +3,14 @@
 
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
-#include "cinder/gl/GlslProg.h"
 #include "cinder/gl/TextureFont.h"
 #include "cinder/params/Params.h"
-#include "cinder/Thread.h"
 #include "cinder/gl/Texture.h"
 #include "Environment.h"
 #include "Utilities.h"
 #include "Resources.h"
 #include "Sculpt.h"
-#include <boost/function.hpp>
 #include <vector>
-using namespace ci;
-using namespace ci::gl;
 
 class LeapInteraction;
 class ThreeFormApp;
@@ -61,22 +56,6 @@ public:
     SPIN_MEDIUM,
     SPIN_FAST,
 
-    // wireframe
-    WIREFRAME_OFF,
-    WIREFRAME_ON,
-
-    // symmetry
-    SYMMETRY_OFF,
-    SYMMETRY_ON,
-
-    // history
-    HISTORY_UNDO,
-    HISTORY_REDO,
-
-    // time of day
-    TIME_DAWN,
-    TIME_NOON,
-
     // environment
     ENVIRONMENT_ISLANDS,
     ENVIRONMENT_MOONSCAPE,
@@ -87,21 +66,20 @@ public:
     ENVIRONMENT_JUNGLE,
     ENVIRONMENT_ARCTIC,
 
-    // main
-    MAIN_ABOUT,
-    MAIN_TUTORIAL,
-    MAIN_EXIT,
+    // general
+    GENERAL_ABOUT,
+    GENERAL_TUTORIAL,
+    GENERAL_TOGGLE_SOUND,
+    GENERAL_EXIT,
 
-    // file
-    FILE_LOAD,
-    FILE_SAVE_OBJ,
-    FILE_SAVE_PLY,
-    FILE_SAVE_STL,
-    FILE_RESET,
-
-    // sound
-    SOUND_ON,
-    SOUND_OFF,
+    // object
+    OBJECT_LOAD,
+    OBJECT_EXPORT,
+    OBJECT_TOGGLE_WIREFRAME,
+    OBJECT_TOGGLE_SYMMETRY,
+    OBJECT_UNDO,
+    OBJECT_REDO,
+    OBJECT_RESET,
 
     NUM_ICONS
   };
@@ -167,7 +145,7 @@ public:
         case Menu::TOOL_FLATTEN: return "Flatten"; break;
         case Menu::TOOL_SMOOTH: return "Smooth"; break;
         case Menu::TOOL_SHRINK: return "Repel"; break;
-        case Menu::TOOL_GROW: return "Inflate"; break;
+        case Menu::TOOL_GROW: return "Grow"; break;
         case Menu::TOOL_PAINT: return "Paint"; break;
         case Menu::SIZE_AUTO: return "Auto"; break;
         case Menu::STRENGTH_LOW: return "Low"; break;
@@ -182,14 +160,6 @@ public:
         case Menu::SPIN_SLOW: return "Slow"; break;
         case Menu::SPIN_MEDIUM: return "Medium"; break;
         case Menu::SPIN_FAST: return "Fast"; break;
-        case Menu::WIREFRAME_ON: return "On"; break;
-        case Menu::WIREFRAME_OFF: return "Off"; break;
-        case Menu::SYMMETRY_ON: return "On"; break;
-        case Menu::SYMMETRY_OFF: return "Off"; break;
-        case Menu::HISTORY_REDO: return "Redo"; break;
-        case Menu::HISTORY_UNDO: return "Undo"; break;
-        case Menu::TIME_DAWN: return "Dawn"; break;
-        case Menu::TIME_NOON: return "Noon"; break;
         case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
         case Menu::ENVIRONMENT_MOONSCAPE: return "Moonscape"; break;
         case Menu::ENVIRONMENT_RIVER: return "River"; break;
@@ -198,16 +168,17 @@ public:
         case Menu::ENVIRONMENT_JUNGLE_CLIFF: return "Jungle-Cliff"; break;
         case Menu::ENVIRONMENT_JUNGLE: return "Jungle"; break;
         case Menu::ENVIRONMENT_ARCTIC: return "Arctic"; break;
-        case Menu::MAIN_ABOUT: return "About"; break;
-        case Menu::MAIN_TUTORIAL: return "Tutorial"; break;
-        case Menu::MAIN_EXIT: return "Exit"; break;
-        case Menu::FILE_LOAD: return "Load"; break;
-        case Menu::FILE_SAVE_OBJ: return "Export OBJ"; break;
-        case Menu::FILE_SAVE_PLY: return "Export PLY"; break;
-        case Menu::FILE_SAVE_STL: return "Export STL"; break;
-        case Menu::FILE_RESET: return "Reload"; break;
-        case Menu::SOUND_ON: return "On"; break;
-        case Menu::SOUND_OFF: return "Off"; break;
+        case Menu::GENERAL_ABOUT: return "About"; break;
+        case Menu::GENERAL_TUTORIAL: return "Tutorial"; break;
+        case Menu::GENERAL_TOGGLE_SOUND: return "Toggle Sound"; break;
+        case Menu::GENERAL_EXIT: return "Exit"; break;
+        case Menu::OBJECT_LOAD: return "Load"; break;
+        case Menu::OBJECT_EXPORT: return "Export"; break;
+        case Menu::OBJECT_TOGGLE_SYMMETRY: return "Toggle Symmetry"; break;
+        case Menu::OBJECT_TOGGLE_WIREFRAME: return "Toggle Wireframe"; break;
+        case Menu::OBJECT_RESET: return "Reload"; break;
+        case Menu::OBJECT_REDO: return "Redo"; break;
+        case Menu::OBJECT_UNDO: return "Undo"; break;
         }
         return "";
       } else {
@@ -267,27 +238,6 @@ public:
       }
       return 0.0f;
     }
-    bool toWireframe() const {
-      switch (m_entryType) {
-      case Menu::WIREFRAME_ON: return true; break;
-      case Menu::WIREFRAME_OFF: return false; break;
-      }
-      return false;
-    }
-    bool toSymmetry() const {
-      switch (m_entryType) {
-      case Menu::SYMMETRY_ON: return true; break;
-      case Menu::SYMMETRY_OFF: return false; break;
-      }
-      return false;
-    }
-    Environment::TimeOfDay toTimeOfDay() const {
-      switch (m_entryType) {
-      case Menu::TIME_DAWN: return Environment::TIME_DAWN; break;
-      case Menu::TIME_NOON: return Environment::TIME_NOON; break;
-      }
-      return Environment::TIME_DAWN;
-    }
     std::string toEnvironmentName() const {
       switch (m_entryType) {
       case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
@@ -335,7 +285,8 @@ public:
   void toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const;
 
   float getActivation() const { return m_activation.value; }
-  bool hasSelectedEntry() const { return m_curSelectedEntry >= 0; }
+  bool hasSelectedEntry() const { return m_haveSelection; }
+  void clearSelection() { m_haveSelection = false; }
   static void setWindowSize(const ci::Vec2i& size);
   float getSweepStart() const { return static_cast<float>(-m_sweepAngle/2.0f + m_angleOffset); }
   float getSweepEnd() const { return getSweepStart() + m_sweepAngle; }
@@ -353,7 +304,7 @@ public:
   int getDefaultEntry() const { return m_defaultEntry; }
   void setActionsOnly(bool only) { m_actionsOnly = only; }
   bool getActionsOnly() const { return m_actionsOnly; }
-  void setCurSelectedEntry(int idx) { m_curSelectedEntry = idx; }
+  void setCurSelectedEntry(int idx) { m_curSelectedEntry = idx; m_haveSelection = (idx >= 0); }
   void setActualName(const std::string& name) { m_actualName = name; }
   void setActiveName(const std::string& name) { m_activeName = name; }
   void setActiveColor(const ci::Color& color) { m_activeColor = color; }
@@ -400,6 +351,7 @@ private:
   std::string m_name;
   float m_wedgeStart;
   float m_wedgeEnd;
+  bool m_haveSelection;
 
   Menu::MenuEntryType iconType;
   std::string m_activeName;
@@ -451,14 +403,9 @@ private:
   Menu _color_menu;
   Menu _material_menu;
   Menu _spin_menu;
-  Menu _wireframe_menu;
-  Menu _symmetry_menu;
-  Menu _history_menu;
   Menu _environment_menu;
-  Menu _time_of_day_menu;
-  Menu _main_menu;
-  Menu _file_menu;
-  Menu _sound_menu;
+  Menu _general_menu;
+  Menu _object_menu;
 
   bool _draw_color_menu;
   bool _first_selection_check;

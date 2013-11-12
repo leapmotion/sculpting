@@ -768,8 +768,16 @@ void ThreeFormApp::setWireframe(bool wireframe) {
   _draw_edges = wireframe;
 }
 
+void ThreeFormApp::toggleWireframe() {
+  _draw_edges = !_draw_edges;
+}
+
 void ThreeFormApp::setSymmetry(bool symmetry) {
   symmetry_ = symmetry;
+}
+
+void ThreeFormApp::toggleSymmetry() {
+  symmetry_ = !symmetry_;
 }
 
 void ThreeFormApp::setEnvironment(const std::string& str) {
@@ -784,6 +792,10 @@ void ThreeFormApp::setTimeOfDay(Environment::TimeOfDay time) {
     return;
   }
   _loading_thread = std::thread(&Environment::setEnvironment, _environment, _environment->getCurEnvironmentString(), time);
+}
+
+void ThreeFormApp::toggleSound() {
+
 }
 
 int ThreeFormApp::loadFile()
@@ -836,7 +848,7 @@ int ThreeFormApp::loadFile()
   return err; // error
 }
 
-int ThreeFormApp::saveFile(const std::string& extension)
+int ThreeFormApp::saveFile()
 {
   if (!mesh_) {
     return -1;
@@ -850,10 +862,9 @@ int ThreeFormApp::saveFile(const std::string& extension)
 
   Files files;
   std::vector<std::string> file_extensions;
-  file_extensions.push_back(extension);
-  /*file_extensions.push_back("stl");
+  file_extensions.push_back("stl");
   file_extensions.push_back("ply");
-  file_extensions.push_back("obj");*/
+  file_extensions.push_back("obj");
   fs::path path = getSaveFilePath("", file_extensions);
 
   int err = -1;

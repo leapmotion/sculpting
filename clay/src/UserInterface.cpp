@@ -31,8 +31,8 @@ float Menu::g_zoomFactor = 1.0f;
 float Menu::g_maxMenuActivation = 0.0f;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
-  m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(0.0), m_prevSelectedEntry(-1),
-  m_activeColor(Color::white()), m_defaultEntry(0), m_actionsOnly(false)
+  m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(-10.0), m_prevSelectedEntry(-1),
+  m_activeColor(Color::white()), m_defaultEntry(0), m_actionsOnly(false), m_haveSelection(false)
 {
   m_activation.value = 0.0f;
 }
@@ -76,6 +76,8 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   }
   float maxActivation = 0.0f;
   int maxIdx;
+
+  // find the max activation of all entries
   for (int i=0; i<numEntries; i++) {
     const float curActivation = m_entries[i].m_activationStrength.value;
     if (curActivation > maxActivation) {
@@ -84,6 +86,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
     }
   }
   if (maxActivation > 0.2f) {
+    // set this entry to be the current text of the menu
     m_activeName = m_entries[maxIdx].toString();
   } else {
     m_activeName = m_actualName;
@@ -99,11 +102,13 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
         m_curSelectedEntry = maxIdx;
         m_selectionTime = curTime;
         m_actualName = m_activeName = m_entries[m_curSelectedEntry].toString();
+        m_haveSelection = true;
       }
     }
   }
 
-  if (hasSelectedEntry()) {
+  // keep the currently selected entry sticking out for a bit longer
+  if (m_curSelectedEntry >= 0) {
     m_entries[m_curSelectedEntry].m_hoverStrength.Update(1.0f, curTime, CHILD_SMOOTH_STRENGTH);
     m_entries[m_curSelectedEntry].m_activationStrength.Update(1.0f, curTime, CHILD_SMOOTH_STRENGTH);
     if (static_cast<float>(curTime - m_selectionTime) > SELECTION_COOLDOWN) {
@@ -113,6 +118,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
     }
   }
 
+  // deactivate any entries which weren't updated this frame
   for (int i=0; i<numEntries; i++) {
     if (m_entries[i].m_hoverStrength.lastTimeSeconds < curTime) {
       m_entries[i].m_hoverStrength.Update(0.0f, curTime, CHILD_SMOOTH_STRENGTH);
@@ -166,42 +172,44 @@ void Menu::draw() const {
   const float menuOpacity = getOpacity(activation);
   const ci::Vec2f pos = relativeToAbsolute(m_position);
 
-  // complete the remainder of the ring
-  const float parentStart =  Utilities::RADIANS_TO_DEGREES*(getSweepStart() + m_sweepAngle);
-  const float parentSweep = 360.0f - Utilities::RADIANS_TO_DEGREES * m_sweepAngle;
-  glColor4f(BASE_BRIGHTNESS, BASE_BRIGHTNESS, BASE_BRIGHTNESS, getOpacity(0.0f));
-  Utilities::drawPartialDisk(pos, m_wedgeStart, m_wedgeEnd, parentStart, parentSweep);
+  if (activation > 0.01f) {
+    // complete the remainder of the ring
+    const float parentStart =  Utilities::RADIANS_TO_DEGREES*(getSweepStart() + m_sweepAngle);
+    const float parentSweep = 360.0f - Utilities::RADIANS_TO_DEGREES * m_sweepAngle;
+    glColor4f(BASE_BRIGHTNESS, BASE_BRIGHTNESS, BASE_BRIGHTNESS, getOpacity(0.0f));
+    Utilities::drawPartialDisk(pos, m_wedgeStart, m_wedgeEnd, parentStart, parentSweep);
 
-  // draw each entry
-  for (size_t i=0; i<m_entries.size(); i++) {
-    const float entryActivation = m_entries[i].m_activationStrength.value;
-    const float entryOpacity = getOpacity(entryActivation);
-    const float wedgeStart = m_entries[i].m_wedgeStart;
-    const float wedgeEnd = m_entries[i].m_wedgeEnd;
-    const float angleStart = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleStart;
-    const float angleWidth = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleWidth;
-    const bool isSelected = (!m_actionsOnly) && (i == m_prevSelectedEntry);
+    // draw each entry
+    for (size_t i=0; i<m_entries.size(); i++) {
+      const float entryActivation = m_entries[i].m_activationStrength.value;
+      const float entryOpacity = getOpacity(entryActivation);
+      const float wedgeStart = m_entries[i].m_wedgeStart;
+      const float wedgeEnd = m_entries[i].m_wedgeEnd;
+      const float angleStart = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleStart;
+      const float angleWidth = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleWidth;
+      const bool isSelected = (!m_actionsOnly) && (i == m_prevSelectedEntry);
 
-    // draw wedge behind
-    if (m_entries[i].drawMethod == MenuEntry::COLOR) {
-      const ci::Color& origColor = m_entries[i].m_color;
-      ci::Vec3f color(origColor.r, origColor.g, origColor.b);
-      color *= (1.0f + 0.2f*m_entries[i].m_hoverStrength.value);
-      color *= (1.0f + 0.4f*(isSelected ? 1.0f : entryActivation));
-      color.x = ci::math<float>::clamp(color.x);
-      color.y = ci::math<float>::clamp(color.y);
-      color.z = ci::math<float>::clamp(color.z);
-      gl::color(ci::ColorA(color.x, color.y, color.z, entryOpacity));
-    } else {
-      const float brightness = BASE_BRIGHTNESS + 0.15f * (isSelected ? 1.0f : m_entries[i].m_hoverStrength.value);
-      const float green = 0.6f * entryActivation;
-      glColor4f(brightness, brightness + green, brightness, entryOpacity);
+      // draw wedge behind
+      if (m_entries[i].drawMethod == MenuEntry::COLOR) {
+        const ci::Color& origColor = m_entries[i].m_color;
+        ci::Vec3f color(origColor.r, origColor.g, origColor.b);
+        color *= (1.0f + 0.2f*m_entries[i].m_hoverStrength.value);
+        color *= (1.0f + 0.4f*(isSelected ? 1.0f : entryActivation));
+        color.x = ci::math<float>::clamp(color.x);
+        color.y = ci::math<float>::clamp(color.y);
+        color.z = ci::math<float>::clamp(color.z);
+        gl::color(ci::ColorA(color.x, color.y, color.z, entryOpacity));
+      } else {
+        const float brightness = BASE_BRIGHTNESS + 0.15f * (isSelected ? 1.0f : m_entries[i].m_hoverStrength.value);
+        const float green = 0.6f * entryActivation;
+        glColor4f(brightness, brightness + green, brightness, entryOpacity);
+      }
+      Utilities::drawPartialDisk(pos, wedgeStart, wedgeEnd, angleStart, angleWidth);
+
+      m_entries[i].draw(this, isSelected);
     }
-    Utilities::drawPartialDisk(pos, wedgeStart, wedgeEnd, angleStart, angleWidth);
-
-    m_entries[i].draw(this, isSelected);
   }
-  
+
   // variables for string drawing
   const ci::ColorA titleColor(1.0f, 1.0f, 1.0f, menuOpacity);
   const ci::ColorA valueColor(0.75f, 0.75f, 0.75f, menuOpacity);
@@ -299,7 +307,6 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     Menu::MenuEntry& entry = _strength_menu.getEntry(i);
     entry.drawMethod = Menu::MenuEntry::ICON;
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    //entry.m_radius = 0.005f + ratio*0.03f;
     entry.m_value = Menu::STRENGTH_UI_MULT*ratio;
   }
 
@@ -374,64 +381,11 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
-  
-  const int NUM_WIREFRAME_ENTRIES = 2;
-  _wireframe_menu.setName("Wireframe");
-  _wireframe_menu.setPosition(Vector2(0.075f, 0.25f));
-  _wireframe_menu.setNumEntries(NUM_WIREFRAME_ENTRIES);
-  entryType = Menu::WIREFRAME_OFF;
-  _wireframe_menu.setAngleOffset(angleOffsetForPosition(_wireframe_menu.getPosition()));
-  _wireframe_menu.setDefaultEntry(0);
-  for (int i=0; i<NUM_WIREFRAME_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _wireframe_menu.getEntry(i);
-    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
-  }
-
-  const int NUM_SYMMETRY_ENTRIES = 2;
-  _symmetry_menu.setName("Symmetry");
-  _symmetry_menu.setPosition(Vector2(0.0f, 1.05f));
-  _symmetry_menu.setNumEntries(NUM_SYMMETRY_ENTRIES);
-  entryType = Menu::SYMMETRY_OFF;
-  _symmetry_menu.setAngleOffset(angleOffsetForPosition(_symmetry_menu.getPosition()));
-  _symmetry_menu.setDefaultEntry(0);
-  for (int i=0; i<NUM_SYMMETRY_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _symmetry_menu.getEntry(i);
-    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
-  }
-
-  const int NUM_HISTORY_ENTRIES = 2;
-  _history_menu.setName("History");
-  _history_menu.setPosition(Vector2(0.5f, 0.075f));
-  _history_menu.setNumEntries(NUM_HISTORY_ENTRIES);
-  entryType = Menu::HISTORY_UNDO;
-  _history_menu.setAngleOffset(angleOffsetForPosition(_history_menu.getPosition()));
-  _history_menu.setDefaultEntry(0);
-  _history_menu.setActionsOnly(true);
-  for (int i=0; i<NUM_HISTORY_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _history_menu.getEntry(i);
-    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
-  }
-
-  const int NUM_TIME_OF_DAY_ENTRIES = 2;
-  _time_of_day_menu.setName("Time of Day");
-  _time_of_day_menu.setPosition(Vector2(1.0f, -0.05f));
-  _time_of_day_menu.setNumEntries(NUM_TIME_OF_DAY_ENTRIES);
-  entryType = Menu::TIME_DAWN;
-  _time_of_day_menu.setAngleOffset(angleOffsetForPosition(_time_of_day_menu.getPosition()));
-  _time_of_day_menu.setDefaultEntry(rand() % 2);
-  for (int i=0; i<NUM_TIME_OF_DAY_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _time_of_day_menu.getEntry(i);
-    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
-  }
 
   const std::vector<Environment::EnvironmentInfo>& infos = Environment::getEnvironmentInfos();
   const int NUM_ENVIRONMENT_ENTRIES = infos.size();
   _environment_menu.setName("Scene");
-  _environment_menu.setPosition(Vector2(0.7f, -0.075f));
+  _environment_menu.setPosition(Vector2(0.7f, 0.075f));
   _environment_menu.setNumEntries(NUM_ENVIRONMENT_ENTRIES);
   entryType = Menu::ENVIRONMENT_ISLANDS;
   _environment_menu.setAngleOffset(angleOffsetForPosition(_environment_menu.getPosition()));
@@ -442,43 +396,30 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const int NUM_MAIN_ENTRIES = 3;
-  _main_menu.setName("Main");
-  _main_menu.setPosition(Vector2(0.0f, -0.05f));
-  _main_menu.setNumEntries(NUM_MAIN_ENTRIES);
-  entryType = Menu::MAIN_ABOUT;
-  _main_menu.setAngleOffset(angleOffsetForPosition(_main_menu.getPosition()));
-  _main_menu.setDefaultEntry(0);
-  _main_menu.setActionsOnly(true);
-  for (int i=0; i<NUM_MAIN_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _main_menu.getEntry(i);
+  const int NUM_GENERAL_ENTRIES = 4;
+  _general_menu.setName("General");
+  _general_menu.setPosition(Vector2(0.075f, 0.25f));
+  _general_menu.setNumEntries(NUM_GENERAL_ENTRIES);
+  entryType = Menu::GENERAL_ABOUT;
+  _general_menu.setAngleOffset(angleOffsetForPosition(_general_menu.getPosition()));
+  _general_menu.setDefaultEntry(0);
+  _general_menu.setActionsOnly(true);
+  for (int i=0; i<NUM_GENERAL_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _general_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const int NUM_FILE_ENTRIES = 5;
-  _file_menu.setName("File");
-  _file_menu.setPosition(Vector2(0.3f, -0.075f));
-  _file_menu.setNumEntries(NUM_FILE_ENTRIES);
-  entryType = Menu::FILE_LOAD;
-  _file_menu.setAngleOffset(angleOffsetForPosition(_file_menu.getPosition()));
-  _file_menu.setDefaultEntry(0);
-  _file_menu.setActionsOnly(true);
-  for (int i=0; i<NUM_FILE_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _file_menu.getEntry(i);
-    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
-  }
-
-  const int NUM_SOUND_ENTRIES = 2;
-  _sound_menu.setName("Sound");
-  _sound_menu.setPosition(Vector2(1.0f, 1.05f));
-  _sound_menu.setNumEntries(NUM_SOUND_ENTRIES);
-  entryType = Menu::SOUND_ON;
-  _sound_menu.setAngleOffset(angleOffsetForPosition(_sound_menu.getPosition()));
-  _sound_menu.setDefaultEntry(0);
-  for (int i=0; i<NUM_SOUND_ENTRIES; i++) {
-    Menu::MenuEntry& entry = _sound_menu.getEntry(i);
+  const int NUM_OBJECT_ENTRIES = 7;
+  _object_menu.setName("Object");
+  _object_menu.setPosition(Vector2(0.3f, 0.075f));
+  _object_menu.setNumEntries(NUM_OBJECT_ENTRIES);
+  entryType = Menu::OBJECT_LOAD;
+  _object_menu.setAngleOffset(angleOffsetForPosition(_object_menu.getPosition()));
+  _object_menu.setDefaultEntry(0);
+  _object_menu.setActionsOnly(true);
+  for (int i=0; i<NUM_OBJECT_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _object_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
@@ -497,14 +438,9 @@ void UserInterface::update(const std::vector<Vec4f>& tips, Sculpt* sculpt)
   }
   _material_menu.update(tips, sculpt);
   _spin_menu.update(tips, sculpt);
-  _wireframe_menu.update(tips, sculpt);
-  _symmetry_menu.update(tips, sculpt);
-  _history_menu.update(tips, sculpt);
   _environment_menu.update(tips, sculpt);
-  _time_of_day_menu.update(tips, sculpt);
-  _main_menu.update(tips, sculpt);
-  _file_menu.update(tips, sculpt);
-  _sound_menu.update(tips, sculpt);
+  _general_menu.update(tips, sculpt);
+  _object_menu.update(tips, sculpt);
 
   // add cursor positions
   _cursor_positions.clear();
@@ -529,14 +465,9 @@ void UserInterface::draw() const {
   }
   _material_menu.draw();
   _spin_menu.draw();
-  _wireframe_menu.draw();
-  _symmetry_menu.draw();
-  _history_menu.draw();
   _environment_menu.draw();
-  _time_of_day_menu.draw();
-  _main_menu.draw();
-  _file_menu.draw();
-  _sound_menu.draw();
+  _general_menu.draw();
+  _object_menu.draw();
 }
 
 float UserInterface::maxActivation() const {
@@ -548,14 +479,9 @@ float UserInterface::maxActivation() const {
   result = std::max(result, _color_menu.getActivation());
   result = std::max(result, _material_menu.getActivation());
   result = std::max(result, _spin_menu.getActivation());
-  result = std::max(result, _wireframe_menu.getActivation());
-  result = std::max(result, _symmetry_menu.getActivation());
-  result = std::max(result, _history_menu.getActivation());
   result = std::max(result, _environment_menu.getActivation());
-  result = std::max(result, _time_of_day_menu.getActivation());
-  result = std::max(result, _main_menu.getActivation());
-  result = std::max(result, _file_menu.getActivation());
-  result = std::max(result, _sound_menu.getActivation());
+  result = std::max(result, _general_menu.getActivation());
+  result = std::max(result, _object_menu.getActivation());
 
   return result;
 }
@@ -568,14 +494,9 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     initializeMenu(_color_menu);
     initializeMenu(_material_menu);
     initializeMenu(_spin_menu);
-    initializeMenu(_wireframe_menu);
-    initializeMenu(_symmetry_menu);
-    initializeMenu(_history_menu);
     initializeMenu(_environment_menu);
-    initializeMenu(_time_of_day_menu);
-    initializeMenu(_main_menu);
-    initializeMenu(_file_menu);
-    initializeMenu(_sound_menu);
+    initializeMenu(_general_menu);
+    initializeMenu(_object_menu);
     _first_selection_check = false;
   }
 
@@ -584,16 +505,19 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     Sculpt::SculptMode mode = entry.toSculptMode();
     sculpt->setSculptMode(mode);
     _draw_color_menu = (mode == Sculpt::PAINT);
+    _type_menu.clearSelection();
   }
 
   if (_strength_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _strength_menu.getSelectedEntry();
     leap->setBrushStrength(entry.m_value / Menu::STRENGTH_UI_MULT);
+    _strength_menu.clearSelection();
   }
 
   if (_size_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _size_menu.getSelectedEntry();
     leap->setBrushRadius(entry.m_value);
+    _size_menu.clearSelection();
   }
 
   if (_draw_color_menu && _color_menu.hasSelectedEntry()) {
@@ -602,64 +526,50 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     _color_menu.setActiveColor(desiredColor);
     Vector3 color(desiredColor.r, desiredColor.g, desiredColor.b);
     sculpt->setMaterialColor(color);
+    _color_menu.clearSelection();
   }
 
   if (_material_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _material_menu.getSelectedEntry();
     app->setMaterial(entry.toMaterial());
+    _material_menu.clearSelection();
   }
 
   if (_spin_menu.hasSelectedEntry() && mesh) {
     const Menu::MenuEntry& entry = _spin_menu.getSelectedEntry();
     mesh->setRotationVelocity(entry.toSpinVelocity());
+    _spin_menu.clearSelection();
   }
 
-  if (_wireframe_menu.hasSelectedEntry()) {
-    const Menu::MenuEntry& entry = _wireframe_menu.getSelectedEntry();
-    app->setWireframe(entry.toWireframe());
-  }
-
-  if (_symmetry_menu.hasSelectedEntry()) {
-    const Menu::MenuEntry& entry = _symmetry_menu.getSelectedEntry();
-    app->setSymmetry(entry.toSymmetry());
-  }
-
-  if (_history_menu.hasSelectedEntry()) {
-    const Menu::MenuEntry& entry = _history_menu.getSelectedEntry();
-  }
-  
   if (_environment_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _environment_menu.getSelectedEntry();
     app->setEnvironment(entry.toEnvironmentName());
+    _environment_menu.clearSelection();
   }
 
-  if (_time_of_day_menu.hasSelectedEntry()) {
-    const Menu::MenuEntry& entry = _time_of_day_menu.getSelectedEntry();
-    app->setTimeOfDay(entry.toTimeOfDay());
-  }
-
-  if (_main_menu.hasSelectedEntry()) {
-    const Menu::MenuEntry& entry = _main_menu.getSelectedEntry();
+  if (_general_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _general_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-    case Menu::MAIN_ABOUT: break;
-    case Menu::MAIN_TUTORIAL: break;
-    case Menu::MAIN_EXIT: app->quit(); break;
+    case Menu::GENERAL_ABOUT: break;
+    case Menu::GENERAL_TUTORIAL: break;
+    case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
+    case Menu::GENERAL_EXIT: app->quit(); break;
     }
+    _general_menu.clearSelection();
   }
 
-  if (_file_menu.hasSelectedEntry()) {
-    const Menu::MenuEntry& entry = _file_menu.getSelectedEntry();
+  if (_object_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _object_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-    case Menu::FILE_LOAD: app->loadFile(); break;
-    case Menu::FILE_RESET: break;
-    case Menu::FILE_SAVE_OBJ: app->saveFile("obj"); break;
-    case Menu::FILE_SAVE_PLY: app->saveFile("ply"); break;
-    case Menu::FILE_SAVE_STL: app->saveFile("stl"); break;
+    case Menu::OBJECT_LOAD: app->loadFile(); break;
+    case Menu::OBJECT_TOGGLE_WIREFRAME: app->toggleWireframe(); break;
+    case Menu::OBJECT_TOGGLE_SYMMETRY: app->toggleSymmetry(); break;
+    case Menu::OBJECT_EXPORT: app->saveFile(); break;
+    case Menu::OBJECT_UNDO: if (mesh) { mesh->undo(); } break;
+    case Menu::OBJECT_REDO: if (mesh) { mesh->redo(); } break;
+    case Menu::OBJECT_RESET: break;
     }
-  }
-
-  if (_sound_menu.hasSelectedEntry()) {
-    const Menu::MenuEntry& entry = _sound_menu.getSelectedEntry();
+    _object_menu.clearSelection();
   }
 }
 
