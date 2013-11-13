@@ -6,8 +6,8 @@
 
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), detail_(1.0f), d2Min_(0.f),
-  d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0), deltaTime_(0.0f),
-  minDetailMult_(0.1f), prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f)
+  d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0.0), minDetailMult_(0.1f),
+  prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f)
 {}
 
 /** Destructor */
@@ -392,20 +392,45 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
   if (sculptMode_ == INVALID) {
     return;
   }
+  static const float DESIRED_ANGLE_PER_SAMPLE = 0.01f;
 
   std::unique_lock<std::mutex> lock(brushMutex_);
   mesh_->handleUndoRedo();
-  const Matrix4x4 transformInv = mesh_->getInverseTransformation();
   const Vector3& origin = mesh_->getRotationOrigin();
   const Vector3& axis = mesh_->getRotationAxis();
-  float velocity = mesh_->getRotationVelocity();
+  const float velocity = mesh_->getRotationVelocity();
+  const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
+  const float angle = deltaTime * velocity;
+  const int numSamples = velocity > 0.001f ? static_cast<int>(std::ceil(angle / DESIRED_ANGLE_PER_SAMPLE)) : 1;
+  const float timePerSample = deltaTime / numSamples;
+  const float strengthMult = (1.0f + velocity) / numSamples;
 
   bool haveSculpt = false;
-  for(size_t b=0; b<_brushes.size(); ++b)
-  {
-    if (symmetry) {
+
+  double sampleTime = lastUpdateTime_;
+  for (int i=0; i<numSamples; i++) {
+    sampleTime += timePerSample;
+    const Matrix4x4 transformInv = mesh_->getTransformation(sampleTime).inverse();
+
+    for (size_t b=0; b<_brushes.size(); ++b) {
+      if (symmetry) {
+        brushVertices_.clear();
+        Brush brush = _brushes[b].reflected(0).transformed(transformInv).withSpinVelocity(origin, axis, velocity);
+        brush._strength *= strengthMult;
+
+        mesh_->getVerticesInsideBrush(brush, brushVertices_);
+        if (!brushVertices_.empty()) {
+          if (!haveSculpt && !prevSculpt_) {
+            mesh_->startPushState();
+          }
+          haveSculpt = true;
+          sculptMesh(brushVertices_, brush);
+        }
+      }
+
       brushVertices_.clear();
-      Brush brush = _brushes[b].reflected(0).transformed(transformInv).withSpinVelocity(origin, axis, velocity);
+      Brush brush = _brushes[b].transformed(transformInv).withSpinVelocity(origin, axis, velocity);
+      brush._strength *= strengthMult;
 
       mesh_->getVerticesInsideBrush(brush, brushVertices_);
       if (!brushVertices_.empty()) {
@@ -416,19 +441,8 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
         sculptMesh(brushVertices_, brush);
       }
     }
-
-    brushVertices_.clear();
-    Brush brush = _brushes[b].transformed(transformInv).withSpinVelocity(origin, axis, velocity);
-
-    mesh_->getVerticesInsideBrush(brush, brushVertices_);
-    if (!brushVertices_.empty()) {
-      if (!haveSculpt && !prevSculpt_) {
-        mesh_->startPushState();
-      }
-      haveSculpt = true;
-      sculptMesh(brushVertices_, brush);
-    }
   }
+
   if (!haveSculpt && prevSculpt_) {
     mesh_->checkLeavesUpdate();
     material_++;
@@ -436,6 +450,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
 
   prevSculpt_ = haveSculpt;
 
+  lastUpdateTime_ = curTime;
   if (haveSculpt) {
     lastSculptTime_ = curTime;
   }

@@ -48,7 +48,6 @@ public:
   float getScale() const;
   void setIsSelected(bool);
   Matrix4x4 getTransformation() const;
-  Matrix4x4 getInverseTransformation() const;
   Matrix4x4 getTransformation(double curTime) const;
   void setRotationVelocity(float vel);
   void updateRotation(double curTime);
@@ -137,6 +136,7 @@ private:
   Vector3 rotationAxis_;
   float rotationVelocity_;
   float curRotation_;
+  Utilities::ExponentialFilter<float> rotationVelocitySmoother_;
 
   struct IndexUpdate {
     int idx;

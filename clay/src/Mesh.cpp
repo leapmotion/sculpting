@@ -39,23 +39,23 @@ Matrix4x4 Mesh::getTransformation() const {
   Matrix4x4 transMat = Tools::translationMatrix(translation_);
   return transMat * rotationMatrix_;
 }
-Matrix4x4 Mesh::getInverseTransformation() const { return getTransformation().inverse(); }
 Matrix4x4 Mesh::getTransformation(double curTime) const {
   const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
   Matrix4x4 transMat = Tools::translationMatrix(translation_);
-  Matrix4x4 rotMat = Tools::rotationMatrix(rotationAxis_, curRotation_ + deltaTime*rotationVelocity_);
+  Matrix4x4 rotMat = Tools::rotationMatrix(rotationAxis_, curRotation_ + deltaTime*getRotationVelocity());
   return transMat * rotMat;
 }
 void Mesh::setRotationVelocity(float vel) { rotationVelocity_ = vel; }
 void Mesh::updateRotation(double curTime) {
+  rotationVelocitySmoother_.Update(rotationVelocity_, curTime, 0.95f);
   const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
-  curRotation_ += deltaTime*rotationVelocity_;
+  curRotation_ += deltaTime*getRotationVelocity();
   rotationMatrix_ = Tools::rotationMatrix(rotationAxis_, curRotation_);
   lastUpdateTime_ = curTime;
 }
 const Vector3& Mesh::getRotationOrigin() const { return rotationOrigin_; }
 const Vector3& Mesh::getRotationAxis() const { return rotationAxis_; }
-float Mesh::getRotationVelocity() const { return rotationVelocity_; }
+float Mesh::getRotationVelocity() const { return rotationVelocitySmoother_.value; }
 
 /** Return all the triangles linked to a group of vertices */
 std::vector<int> Mesh::getTrianglesFromVertices(const std::vector<int> &iVerts)

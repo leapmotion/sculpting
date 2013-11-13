@@ -72,7 +72,6 @@ private:
   float d2Max_; //uniform refinement of mesh (max edge length)
   float d2Thickness_; //distance between 2 vertices before split/merge
   float d2Move_; //max displacement of vertices per step
-  float deltaTime_;
   float minDetailMult_;
   bool prevSculpt_;
   int material_;
@@ -81,6 +80,7 @@ private:
   std::vector<int> brushVertices_;
   mutable std::mutex brushMutex_;
   double lastSculptTime_;
+  double lastUpdateTime_;
 
   BrushVector _brushes;
 };
