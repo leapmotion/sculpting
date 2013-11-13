@@ -49,6 +49,12 @@ Matrix4x4 Mesh::getTransformation(double curTime) const {
   Matrix4x4 rotMat = Tools::rotationMatrix(rotationAxis_, curRotation_ + deltaTime*getRotationVelocity());
   return transMat * rotMat;
 }
+const Matrix4x4& Mesh::getRotationMatrix() const {
+  return rotationMatrix_;
+}
+const Vector3& Mesh::getTranslation() const {
+  return translation_;
+}
 void Mesh::setRotationVelocity(float vel) { rotationVelocity_ = vel; }
 void Mesh::updateRotation(double curTime) {
   rotationVelocitySmoother_.Update(rotationVelocity_, curTime, 0.95f);

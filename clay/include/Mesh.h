@@ -49,6 +49,8 @@ public:
   void setIsSelected(bool);
   Matrix4x4 getTransformation() const;
   Matrix4x4 getTransformation(double curTime) const;
+  const Matrix4x4& getRotationMatrix() const;
+  const Vector3& getTranslation() const;
   void setRotationVelocity(float vel);
   void updateRotation(double curTime);
   const Vector3& getRotationOrigin() const;

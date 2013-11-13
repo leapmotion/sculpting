@@ -189,6 +189,8 @@ public:
 
 private:
 
+  void UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut );
+
   void ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut);
 
   void DebugDrawNormals(const Mesh* mesh, const Params& paramsIn);
@@ -234,6 +236,12 @@ private:
   // Gets blended camera view transforms
   lmTransform GetHybridCameraTransform();
 
+  // Rotate vectors to mesh's space
+  Vector3 ToWorldSpace(const Vector3& v);
+
+  // Rotate vectors to mesh's space
+  Vector3 ToMeshSpace(const Vector3& v);
+
   // For simplicity.
 public:
 
@@ -242,6 +250,9 @@ public:
 
   // Camera's smoothed transform.
   lmTransform smoothedTransform;
+
+  // Mesh's transform
+  lmTransform meshTransform;
 
   // Most recent reference point on the model (used to compute camera's movement).
   // Unused.

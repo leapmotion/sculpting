@@ -9,10 +9,9 @@
 
 
 CameraUtil::CameraUtil() {
-  transform.translation.setZero();
-  transform.rotation.setIdentity();
-  smoothedTransform.translation.setZero();
-  smoothedTransform.rotation.setIdentity();
+  transform.setIdentity();
+  meshTransform.setIdentity();
+  smoothedTransform.setIdentity();
   referencePoint.position.setZero();
   referencePoint.normal.setZero(); // invalid
   referenceDistance = 0.0f;
@@ -480,8 +479,6 @@ void CameraUtil::DebugDrawNormals(const Mesh* mesh, const Params& paramsIn) {
 
 }
 
-
-
 void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut) {
 
   lmReal pmin = FLT_MAX;
@@ -557,7 +554,46 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
   std::cout << "max potential " << pmax << std::endl;
 }
 
+static lmTransform lmTransformFromMatrix(const Matrix4x4& _r, const Vector3& t) {
+  lmTransform result;
+  result.translation = t;
+
+  Matrix3x3 r;
+  for (int i = 0; i < 9; i++) { r(i%3, i/3) = _r(i%3, i/3); }
+
+  Vector3 rotX = r * Vector3::UnitX();
+  lmQuat q0; q0.setFromTwoVectors(Vector3::UnitX(), rotX); q0.normalize();
+  Vector3 rotY = r * Vector3::UnitY();
+  Vector3 halfWayY = q0 * Vector3::UnitY();
+  lmQuat q1; q1.setFromTwoVectors(halfWayY, rotY);
+  result.rotation = q1 * q0;
+  result.rotation.normalize();
+
+  return result;
+}
+
+Vector3 CameraUtil::ToMeshSpace(const Vector3& v) { return meshTransform.rotation.inverse() * v; }
+
+Vector3 CameraUtil::ToWorldSpace(const Vector3& v) { return meshTransform.rotation * v; }
+
+void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
+  transform.rotation = meshTransform.rotation * transform.rotation;
+  transform.translation = ToWorldSpace(transform.translation);
+  referencePoint.position = ToWorldSpace(referencePoint.position);
+  referencePoint.normal = ToWorldSpace(referencePoint.normal);
+
+  // Get mesh's transformstion
+  meshTransform = lmTransformFromMatrix(mesh->getRotationMatrix(), mesh->getTranslation());
+
+  transform.rotation = meshTransform.rotation.inverse() * transform.rotation;
+  transform.translation = ToMeshSpace(transform.translation);
+  referencePoint.position = ToMeshSpace(referencePoint.position);
+  referencePoint.normal = ToMeshSpace(referencePoint.normal);
+}
+
 void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
+
+  UpdateMeshTransform(mesh, paramsInOut);
 
   //DebugDrawNormals(mesh, paramsIn);
 
@@ -579,9 +615,11 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
   if (debugDrawUtil) {
     if (params.drawDebugLines) {
-      LM_DRAW_LINE(Vector3::Zero(), Vector3::UnitX() * 50.0f, lmColor::RED);
-      LM_DRAW_LINE(Vector3::Zero(), Vector3::UnitY() * 50.0f, lmColor::GREEN);
-      LM_DRAW_LINE(Vector3::Zero(), Vector3::UnitZ() * 50.0f, lmColor::BLUE);
+      LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitX()), lmColor::RED );
+      LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitY()), lmColor::GREEN );
+      LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitZ()), lmColor::BLUE );
+
+      LM_DRAW_ARROW(transform.translation, referencePoint.position, lmColor::YELLOW );
     }
     debugDrawUtil->SwitchBuffers();
   }
@@ -1196,14 +1234,8 @@ lmTransform CameraUtil::GetHybridCameraTransform() {
 }
 
 lmTransform CameraUtil::GetSmoothedCamera(lmReal dt) {
-  return transform;
-
-  //lmReal smoothingRate = 0.9f;
-  //lmReal smoothingValue = std::pow(smoothingRate, dt);
-  //lmReal t = smoothingValue;
-
-  //smoothedTransform.translation = (1.0f-t)*transform.translation + t*smoothedTransform.translation;
-  //smoothedTransform.rotation = transform.rotation.slerp(t, smoothedTransform.rotation);
-
-  //return smoothedTransform;
+  lmTransform t;
+  t.translation = ToWorldSpace(transform.translation);
+  t.rotation = meshTransform.rotation * transform.rotation;
+  return t;
 }

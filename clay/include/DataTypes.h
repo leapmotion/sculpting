@@ -26,6 +26,11 @@ typedef float lmReal;
 struct lmTransform {
   Vector3 translation;
   lmQuat rotation;
+
+  void setIdentity() {
+    translation.setZero();
+    rotation.setIdentity();
+  }
 };
 
 struct Material {
