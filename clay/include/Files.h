@@ -18,16 +18,17 @@ class Files
 public:
   Files();
   ~Files();
-  Mesh* loadSTL(const std::string &filepath) const;
-  Mesh* loadPLY(const std::string& filepath) const;
+
+  Mesh* loadSTL(std::istream& stream) const;
+  Mesh* loadPLY(std::istream& stream) const;
+  Mesh* loadOBJ(std::istream& stream) const;
+  Mesh* load3DS(std::istream& stream) const;
   int detectNewVertex(const Vertex &v, int iTri, VertexSet &setVertices, VertexVector &vertices) const;
+
   void saveSTL(Mesh* mesh, const std::string& filename) const;
   void saveOBJ(Mesh* mesh, std::ostream& ss) const;
   void savePLY(Mesh* mesh, std::ostream& ss) const;
 
-  Mesh* loadOBJ(const std::string &filepath) const;
-
-  Mesh* load3DS(const std::string &filepath) const;
 };
 
 #endif /*__FILES_H__*/

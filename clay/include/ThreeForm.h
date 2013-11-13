@@ -30,6 +30,9 @@ class ThreeFormApp : public AppNative
 {
 public:
 
+  enum AAMode { NONE, FXAA, MSAA };
+  enum Shape { BALL, CAN, DONUT, SHEET, NUM_SHAPES };
+
   ThreeFormApp();
   ~ThreeFormApp();
   void prepareSettings(Settings *settings);
@@ -49,7 +52,6 @@ public:
   void renderSceneToFbo(Camera& camera);
   void createBloom();
   void draw();
-  void loadIcons();
 
   void setMaterial(const Material& mat);
   void setWireframe(bool wireframe);
@@ -60,10 +62,13 @@ public:
   void toggleSound();
   int loadFile();
   int saveFile();
+  int loadShape(Shape shape);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
+  void loadIcons();
+  void loadShapes();
 
   // *** camera stuff ***
   CameraPersp _camera;
@@ -81,6 +86,7 @@ private:
   bool _mouse_down;
 
   // *** scene stuff ***
+  AAMode _aa_mode;
   Environment* _environment;
   GlslProg _sky_shader;
   GlslProg _material_shader;
@@ -139,9 +145,8 @@ private:
   Mesh* mesh_;
   Sculpt sculpt_;
   bool symmetry_;
-  float sumDisplacement_;
-  bool sculptStart_;
   bool drawOctree_;
+  std::string shapes_[NUM_SHAPES];
 
   // camera control settings
   CameraUtil::Params _camera_params;

@@ -37,11 +37,19 @@
 #define RES_STRENGTH_MEDIUM_SELECTED_PNG      CINDER_RESOURCE( ../resources/menu-icons/, strength-medium-selected.png, 232, PNG )
 #define RES_STRENGTH_HIGH_SELECTED_PNG        CINDER_RESOURCE( ../resources/menu-icons/, strength-high-selected.png, 233, PNG )
 
+// material icons
 #define RES_PLASTIC_PNG                       CINDER_RESOURCE( ../resources/menu-icons/, plastic.png, 235, PNG )
 #define RES_PORCELAIN_PNG                     CINDER_RESOURCE( ../resources/menu-icons/, porcelain.png, 236, PNG )
 #define RES_STEEL_PNG                         CINDER_RESOURCE( ../resources/menu-icons/, steel.png, 237, PNG )
 #define RES_CLAY_PNG                          CINDER_RESOURCE( ../resources/menu-icons/, clay.png, 238, PNG )
 #define RES_GLASS_PNG                         CINDER_RESOURCE( ../resources/menu-icons/, glass.png, 239, PNG )
 
+// fonts
 #define RES_FONT_FREIGHTSANS_TTF              CINDER_RESOURCE( ../resources/, freigsanpromed-webfont.ttf, 212, TTF )
 #define RES_FONT_FREIGHTSANSBOLD_TTF          CINDER_RESOURCE( ../resources/, freigsanprobold-webfont.ttf, 213, TTF )
+
+// shapes
+#define RES_BALL_OBJ                          CINDER_RESOURCE( ../resources/shapes/, ball.obj, 250, OBJ )
+#define RES_CAN_OBJ                           CINDER_RESOURCE( ../resources/shapes/, can.obj, 251, OBJ )
+#define RES_DONUT_OBJ                         CINDER_RESOURCE( ../resources/shapes/, donut.obj, 252, OBJ )
+#define RES_SHEET_OBJ                         CINDER_RESOURCE( ../resources/shapes/, sheet.obj, 253, OBJ )

@@ -20,6 +20,7 @@ const float MAX_FOV = 90.0f;
 //*********************************************************
 ThreeFormApp::ThreeFormApp()
   : _environment(0)
+  , _aa_mode(MSAA)
   , _theta(100.f)
   , _phi(0.f)
   , _draw_ui(true)
@@ -34,7 +35,7 @@ ThreeFormApp::ThreeFormApp()
   , symmetry_(false)
   , _last_update_time(0.0)
   , drawOctree_(false)
-  , _use_fxaa(true)
+  , _use_fxaa(_aa_mode == FXAA)
   , _shutdown(false)
   , _draw_background(true)
   , _focus_point(Vector3::Zero())
@@ -58,10 +59,13 @@ ThreeFormApp::~ThreeFormApp()
 
 void ThreeFormApp::prepareSettings( Settings *settings )
 {
+  settings->setTitle("FreeForm");
+  ci::app::Window::Format fmt;
+  fmt.setTitle("FreeForm");
+  settings->prepareWindow(fmt);
+
   settings->setWindowSize(800, 600);
-  //settings->setFrameRate( 60.0f );
-  settings->setTitle("3Form");
-  //enableVerticalSync(true);
+  enableVerticalSync(true);
 }
 
 void ThreeFormApp::toggleFullscreen(const std::string& str)
@@ -157,6 +161,7 @@ void ThreeFormApp::setup()
   sculpt_.clearBrushes();
 
   loadIcons();
+  loadShapes();
 
   _ui = new UserInterface();
   _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
@@ -174,6 +179,8 @@ void ThreeFormApp::setup()
   glEnable(GL_FRAMEBUFFER_SRGB);
 
   _mesh_thread = std::thread(&ThreeFormApp::updateLeapAndMesh, this);
+
+  loadShape(BALL);
 }
 
 void ThreeFormApp::shutdown() {
@@ -214,6 +221,9 @@ void ThreeFormApp::resize()
 
   Fbo::Format formatWithDepth;
   formatWithDepth.setColorInternalFormat(GL_RGB32F_ARB);
+  if (_aa_mode == MSAA) {
+    formatWithDepth.setSamples(4);
+  }
 
   _screen_fbo = Fbo( width, height, formatWithDepth );
 
@@ -275,6 +285,7 @@ void ThreeFormApp::keyDown( KeyEvent event )
   case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
   case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
   case 's': symmetry_ = !symmetry_; break;
+  //case 'r': sculpt_.remesh(); break;
   }
 }
 
@@ -423,9 +434,8 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
   gl::disableDepthWrite();
   glDisable(GL_CULL_FACE);
 
+  _screen_fbo.bindFramebuffer();
   if (_draw_background) {
-    _screen_fbo.bindFramebuffer();
-
     // draw color pass of skybox
     _environment->bindCubeMap(Environment::CUBEMAP_SKY, 0);
     _sky_shader.bind();
@@ -437,7 +447,6 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
     _sky_shader.unbind();
     _environment->unbindCubeMap(0);
   } else {
-    _screen_fbo.bindFramebuffer();
     clear();
   }
 
@@ -671,7 +680,7 @@ void ThreeFormApp::draw()
 
     _screen_fbo.bindTexture(0);
     _vertical_blur_fbo.bindTexture(1);
-    _screen_fbo.getDepthTexture().bind(2);
+    //_screen_fbo.getDepthTexture().bind(2);
     if (_use_fxaa) {
       _color_fbo.bindFramebuffer();
     }
@@ -692,7 +701,7 @@ void ThreeFormApp::draw()
     _screen_shader.unbind();
     _screen_fbo.unbindTexture();
     _vertical_blur_fbo.unbindTexture();
-    _screen_fbo.getDepthTexture().unbind(2);
+    //_screen_fbo.getDepthTexture().unbind(2);
 
     if (_use_fxaa) {
       _color_fbo.unbindFramebuffer();
@@ -760,6 +769,21 @@ void ThreeFormApp::loadIcons() {
   icons[Menu::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
 }
 
+void ThreeFormApp::loadShapes() {
+  ci::DataSourceRef ball = loadResource(RES_BALL_OBJ);
+  ci::DataSourceRef can = loadResource(RES_CAN_OBJ);
+  ci::DataSourceRef donut = loadResource(RES_DONUT_OBJ);
+  ci::DataSourceRef sheet = loadResource(RES_SHEET_OBJ);
+  ci::Buffer& ballBuf = ball->getBuffer();
+  ci::Buffer& canBuf = can->getBuffer();
+  ci::Buffer& donutBuf = donut->getBuffer();
+  ci::Buffer& sheetBuf = sheet->getBuffer();
+  shapes_[BALL] = std::string((char*)ballBuf.getData(), ballBuf.getDataSize());
+  shapes_[CAN] = std::string((char*)canBuf.getData(), canBuf.getDataSize());
+  shapes_[DONUT] = std::string((char*)donutBuf.getData(), donutBuf.getDataSize());
+  shapes_[SHEET] = std::string((char*)sheetBuf.getData(), sheetBuf.getDataSize());
+}
+
 void ThreeFormApp::setMaterial(const Material& mat) {
   _material = mat;
 }
@@ -788,8 +812,32 @@ void ThreeFormApp::setEnvironment(const std::string& str) {
 }
 
 void ThreeFormApp::toggleSound() {
-
 }
+
+#if 0
+irrklang::ISound* ParticleDemoApp::createSoundResource(DataSourceRef ref, const char* name) {
+  // Obtain the buffer backing the loaded resource:
+  if ( m_soundEngine ) {
+    auto& buf = ref->getBuffer();
+
+    // Attempt to load the stream from the buffer on the data source:
+    auto ss = m_soundEngine->addSoundSourceFromMemory(
+                                                      buf.getData(),
+                                                      buf.getDataSize(),
+                                                      name,
+                                                      false
+                                                      );
+
+    m_audioSourceRefs.push_back(ref);
+    ss->setForcedStreamingThreshold(300000);
+
+    // Done loading the stream, return the source:
+    return m_soundEngine->play2D(ss, true, true, true, irrklang::ESM_NO_STREAMING);
+  }
+
+  return NULL;
+};
+#endif
 
 int ThreeFormApp::loadFile()
 {
@@ -814,14 +862,21 @@ int ThreeFormApp::loadFile()
       Files files;
       Mesh* mesh = 0;
       const std::string pathString = path.string();
-      if (ext == ".OBJ" || ext == ".obj") {
-        mesh = files.loadOBJ(pathString);
-      } else if (ext == ".STL" || ext == ".stl") {
-        mesh = files.loadSTL(pathString);
-      } else if (ext == ".3DS" || ext == ".3ds") {
-        mesh = files.load3DS(pathString);
-      } else if (ext == ".PLY" || ext == ".ply") {
-        mesh = files.loadPLY(pathString);
+      std::ifstream stream;
+      if (stream) {
+        if (ext == ".OBJ" || ext == ".obj") {
+          stream.open(pathString);
+          mesh = files.loadOBJ(stream);
+        } else if (ext == ".STL" || ext == ".stl") {
+          stream.open(pathString, std::ios::binary);
+          mesh = files.loadSTL(stream);
+        } else if (ext == ".3DS" || ext == ".3ds") {
+          stream.open(pathString, std::ios::binary);
+          mesh = files.load3DS(stream);
+        } else if (ext == ".PLY" || ext == ".ply") {
+          mesh = files.loadPLY(stream);
+        }
+        stream.close();
       }
       if (mesh_) {
         delete mesh_;
@@ -839,6 +894,25 @@ int ThreeFormApp::loadFile()
   }
 
   return err; // error
+}
+
+int ThreeFormApp::loadShape(Shape shape) {
+  std::stringstream ss(shapes_[shape]);
+  Files files;
+  Mesh* newMesh = files.loadOBJ(ss);
+  if (!newMesh) {
+    return 0;
+  }
+  if (mesh_) {
+    delete mesh_;
+  }
+  mesh_ = newMesh;
+  if (mesh_) {
+    mesh_->startPushState();
+  }
+  sculpt_.setMesh(mesh_);
+
+  return -1;
 }
 
 int ThreeFormApp::saveFile()
@@ -865,12 +939,12 @@ int ThreeFormApp::saveFile()
     const std::string ext = path.extension().string();
     if (!ext.empty()) {
       if (ext == ".OBJ" || ext == ".obj") {
-        std::ofstream file(path.c_str(), std::ios::binary);
+        std::ofstream file(path.c_str());
         files.saveOBJ(mesh_, file);
       } else if (ext == ".STL" || ext == ".stl") {
         files.saveSTL(mesh_, path.string());
       } else if (ext == ".PLY" || ext == ".ply") {
-        std::ofstream file(path.c_str(), std::ios::binary);
+        std::ofstream file(path.c_str());
         files.savePLY(mesh_, file);
       }
     }
@@ -887,9 +961,9 @@ int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic *app = new ThreeFormApp;
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
 #if _WIN32
-  cinder::app::AppBasic::executeLaunch( app, ren, "3Form");
+  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm");
 #else
-  cinder::app::AppBasic::executeLaunch( app, ren, "3Form", argc, argv);
+  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm", argc, argv);
 #endif
   cinder::app::AppBasic::cleanupLaunch();
   return 0;

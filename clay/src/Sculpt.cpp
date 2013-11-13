@@ -6,7 +6,7 @@
 
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), detail_(1.0f), d2Min_(0.f),
-  d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0.0), minDetailMult_(0.1f),
+  d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0.0), minDetailMult_(0.2f),
   prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f)
 {}
 
@@ -21,6 +21,38 @@ void Sculpt::setAdaptiveParameters(float radiusSquared)
   d2Min_ = d2Max_/4.2025f;
   d2Move_ = d2Min_*0.2375f;
   d2Thickness_ = (4.f*d2Move_ + d2Max_/3.f)*1.1f;
+}
+
+void Sculpt::remesh() {
+  const float radius_sq = 200.0f * 200.0f;
+  VertexVector &vertices = mesh_->getVertices();
+  const int numVertices = vertices.size();
+  std::vector<int> vertIndices;
+  vertIndices.reserve(numVertices);
+  for (int i=0; i<numVertices; i++) {
+    vertIndices.push_back(i);
+  }
+  std::vector<int> iTris = mesh_->getTrianglesFromVertices(vertIndices);
+
+  mesh_->pushState(iTris,vertIndices);
+
+  Topology topo(mesh_, radius_sq, Vector3::Zero());
+  setAdaptiveParameters(100.0f*100.0f);
+  switch(topoMode_)
+  {
+  case ADAPTIVE :
+  case UNIFORMISATION : topo.uniformisation(iTris, d2Min_, d2Max_); break;
+  case DECIMATION : topo.decimation(iTris, d2Min_); break;
+  case SUBDIVISION : topo.subdivision(iTris, d2Max_); break;
+  default : break;
+  }
+
+  if(topoMode_==ADAPTIVE) {
+    topo.adaptTopology(iTris, d2Thickness_);
+    vertIndices = mesh_->getVerticesFromTriangles(iTris);
+  }
+
+  mesh_->updateMesh(iTris, vertIndices);
 }
 
 /**
@@ -72,7 +104,7 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   default: break;
   }
 
-  if (sculptMode_ == DEFLATE || sculptMode_ == SWEEP || sculptMode_ == PUSH) {
+  if (sculptMode_ == DEFLATE || sculptMode_ == SWEEP || sculptMode_ == PUSH || sculptMode_ == INFLATE) {
     Brush autoSmoothBrush(brush);
     autoSmoothBrush._strength *= autoSmoothStrength_;
     smooth(iVertsSelected, autoSmoothBrush);

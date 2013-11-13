@@ -410,7 +410,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const int NUM_OBJECT_ENTRIES = 3;
+  const int NUM_OBJECT_ENTRIES = 6;
   _object_menu.setName("Object");
   _object_menu.setPosition(Vector2(0.25f, 0.075f));
   _object_menu.setNumEntries(NUM_OBJECT_ENTRIES);
@@ -602,7 +602,10 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     switch (entry.m_entryType) {
     case Menu::OBJECT_LOAD: app->loadFile(); break;
     case Menu::OBJECT_EXPORT: app->saveFile(); break;
-    case Menu::OBJECT_RESET: break;
+    case Menu::OBJECT_BALL: app->loadShape(ThreeFormApp::BALL); break;
+    case Menu::OBJECT_CAN: app->loadShape(ThreeFormApp::CAN); break;
+    case Menu::OBJECT_DONUT: app->loadShape(ThreeFormApp::DONUT); break;
+    case Menu::OBJECT_SHEET: app->loadShape(ThreeFormApp::SHEET); break;
     }
     _object_menu.clearSelection();
   }

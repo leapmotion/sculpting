@@ -26,6 +26,7 @@ public:
   bool isSweep() { return sculptMode_==SWEEP; }
   void setMaterialColor(const Vector3& color) { materialColor_ = color; }
 
+  void remesh();
   void sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush);
   void smooth(const std::vector<int> &iVerts, const Brush& brush);
   void smoothFlat(const std::vector<int> &iVerts);
