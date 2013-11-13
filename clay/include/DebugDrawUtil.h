@@ -10,17 +10,6 @@ class Triangle;
 
 class lmColor {
 public:
-  enum ColorName;
-
-  lmColor() { m_color.m_value = 0xffffffff; }
-  lmColor(ColorName value) { m_color.m_value = value; }
-  lmColor(lmReal red, lmReal green, lmReal blue, lmReal alpha = 1.0f) { m_color.m_red = unsigned __int8(255.0f * red); m_color.m_green = unsigned __int8(255.0f * green); m_color.m_blue = unsigned __int8(255.0f * blue); m_color.m_alpha = unsigned __int8(255.0f * alpha); }
-
-  lmReal red() const { return m_color.m_red / 255.0f; }
-  lmReal green() const { return m_color.m_green / 255.0f; }
-  lmReal blue() const { return m_color.m_blue / 255.0f; }
-  lmReal alpha() const { return m_color.m_alpha / 255.0f; }
-
   enum ColorName {
     WHITE = 0xffffffff,
     BLACK = 0xff000000,
@@ -32,15 +21,25 @@ public:
     MAGENTA = 0xffff00ff,
   };
 
+
+  lmColor() { m_color.m_value = 0xffffffff; }
+  lmColor(ColorName value) { m_color.m_value = value; }
+  lmColor(lmReal red, lmReal green, lmReal blue, lmReal alpha = 1.0f) { m_color.m_red = uint8(255.0f * red); m_color.m_green = uint8(255.0f * green); m_color.m_blue = uint8(255.0f * blue); m_color.m_alpha = uint8(255.0f * alpha); }
+
+  lmReal red() const { return m_color.m_red / 255.0f; }
+  lmReal green() const { return m_color.m_green / 255.0f; }
+  lmReal blue() const { return m_color.m_blue / 255.0f; }
+  lmReal alpha() const { return m_color.m_alpha / 255.0f; }
+
 private:
   union {
     struct {
-      unsigned __int8 m_blue;
-      unsigned __int8 m_green;
-      unsigned __int8 m_red;
-      unsigned __int8 m_alpha;
+      uint8 m_blue;
+      uint8 m_green;
+      uint8 m_red;
+      uint8 m_alpha;
     };
-    unsigned __int32 m_value;
+    uint32 m_value;
   } m_color;
 };
 
