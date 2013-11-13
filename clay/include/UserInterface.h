@@ -323,13 +323,14 @@ public:
   ci::Color getActiveColor() const { return m_activeColor; }
 
   static const Vector2& getWindowSize() { return g_windowSize; }
+  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985); }
 
 private:
 
   static float getOpacity(float activation) {
-    static const float NORMAL_OPACITY = 0.6f;
+    static const float NORMAL_OPACITY = 0.7f;
     static const float ACTIVATED_OPACITY = 1.0f;
-    return NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation;
+    return g_sculptMult.value * (NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation);
   }
 
   ci::Vec2f relativeToAbsolute(const Vector2& pos, bool useZoom = true) const {
@@ -376,6 +377,7 @@ private:
   static float g_windowDiagonal;
   static float g_windowAspect;
   static Vector2 g_windowCenter;
+  static Utilities::ExponentialFilter<float> g_sculptMult;
 
 };
 

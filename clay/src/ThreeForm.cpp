@@ -62,6 +62,7 @@ void ThreeFormApp::prepareSettings( Settings *settings )
   settings->setTitle("FreeForm");
   ci::app::Window::Format fmt;
   fmt.setTitle("FreeForm");
+  fmt.setSize(800, 600);
   settings->prepareWindow(fmt);
 
   settings->setWindowSize(800, 600);
@@ -552,6 +553,9 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
     _wireframe_shader.unbind();
   }
 
+  const double lastSculptTime = sculpt_.getLastSculptTime();
+  Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.5 ? 0.0f : 1.0f);
+
   // draw brushes
   _brush_shader.bind();
   _brush_shader.uniform( "campos", _Camera.getEyePoint() );
@@ -565,9 +569,8 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
   _brush_shader.uniform( "reflectionBias", 1.0f );
   _brush_shader.uniform( "numLights", 0 );
   for (size_t i=0; i<brushes.size(); i++) {
-    const double lastSculptTime = sculpt_.getLastSculptTime();
-    const float sculptMult = static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25));
     const float uiMult = (1.0f - _ui->maxActivation());
+    const float sculptMult = static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25));
     const float alphaMult = (0.3f*sculptMult*uiMult + 0.3f)*brushes[i]._activation;
     _brush_shader.uniform("alphaMult", alphaMult);
     brushes[i].draw(uiMult);

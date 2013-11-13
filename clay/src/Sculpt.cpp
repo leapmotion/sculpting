@@ -424,7 +424,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
   if (sculptMode_ == INVALID) {
     return;
   }
-  static const float DESIRED_ANGLE_PER_SAMPLE = 0.01f;
+  static const float DESIRED_ANGLE_PER_SAMPLE = 0.004f;
 
   std::unique_lock<std::mutex> lock(brushMutex_);
   mesh_->handleUndoRedo();

@@ -384,11 +384,11 @@ void Environment::createEnvironmentInfos() {
   static bool created = false;
   if (!created) {
     // set up filenames for the different supported environments
-    _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.6f, 1.0f, 4.5f, 1.01f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.5f, 1.0f, 4.5f, 1.01f));
     _environment_infos.push_back(prepareEnvironmentInfo("Arctic", 0.2f, 2.5f, 2.25f, 1.01f));
     _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.5f, 0.75f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.6f, 0.75f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.6f, 0.75f, 4.5f, 1.01f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.5f, 0.75f, 4.5f, 1.01f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.5f, 0.75f, 4.5f, 1.01f));
     _environment_infos.push_back(prepareEnvironmentInfo("Desert", 0.5f, 1.5f, 3.5f, 1.01f));
     _environment_infos.push_back(prepareEnvironmentInfo("River", 0.5f, 0.75f, 3.5f, 1.01f));
     created = true;

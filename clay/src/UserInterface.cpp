@@ -29,6 +29,7 @@ std::vector<ci::gl::Texture> Menu::g_icons;
 ci::Vec2f Menu::g_shadowOffset = ci::Vec2f(1.5f, 2.0f);
 float Menu::g_zoomFactor = 1.0f;
 float Menu::g_maxMenuActivation = 0.0f;
+Utilities::ExponentialFilter<float> Menu::g_sculptMult;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
   m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(-10.0), m_prevSelectedEntry(-1),
@@ -50,7 +51,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   const int numEntries = m_entries.size();
   const float timeSinceSculpting = static_cast<float>(curTime - lastSculptTime);
 
-  if (timeSinceSculpting > MIN_TIME_SINCE_SCULPTING) {
+  if (g_sculptMult.value > 0.5f) {
     float angle, radius;
     for (int i=0; i<numTips; i++) {
       //const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
@@ -170,6 +171,7 @@ void Menu::draw() const {
   static const float BASE_BRIGHTNESS = 0.25f;
   const float activation = m_activation.value;
   const float menuOpacity = getOpacity(activation);
+  const float opacityDiff = fabs(activation - g_maxMenuActivation);
   const ci::Vec2f pos = relativeToAbsolute(m_position);
 
   if (activation > 0.01f) {
@@ -236,11 +238,14 @@ void Menu::draw() const {
       gl::drawSolidCircle(3.0f*offset, relativeToAbsolute(0.02f), 40);
     } else {
       const ci::Vec2f size = g_textureFont->measureString(m_activeName);
-      const ci::Rectf rect(-size.x/2.0f, offset.y, size.x/2.0f, 100.0f);
+      const ci::Rectf rect(-size.x/2.0f, 2.0f*offset.y, size.x/2.0f, 100.0f);
       gl::color(shadowColor);
+      glPushMatrix();
+      glScalef(0.75f, 0.75f, 0.75f);
       g_textureFont->drawString(m_activeName, rect, g_shadowOffset);
       gl::color(valueColor);
       g_textureFont->drawString(m_activeName, rect);
+      glPopMatrix();
     }
   }
   glPopMatrix();
@@ -323,7 +328,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::ICON;
   }
     
-  const int NUM_SIZE_ENTRIES = 8;
+  const int NUM_SIZE_ENTRIES = 5;
   _size_menu.setName("Size");
   _size_menu.setPosition(Vector2(0.75f, 0.925f));
   _size_menu.setNumEntries(NUM_SIZE_ENTRIES);
@@ -333,8 +338,8 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_SIZE_ENTRIES);
     Menu::MenuEntry& entry = _size_menu.getEntry(i);
     entry.drawMethod = Menu::MenuEntry::CIRCLE;
-    entry.m_radius = 0.005f + ratio*0.03f;
-    entry.m_value = 40.0f*ratio;
+    entry.m_radius = 0.005f + ratio*0.02f;
+    entry.m_value = 50.0f*ratio;
   }
 
   const int NUM_COLOR_ENTRIES = 8;
