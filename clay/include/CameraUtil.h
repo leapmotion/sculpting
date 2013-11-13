@@ -66,6 +66,8 @@ struct lmSurfacePoint {
 class CameraUtil {
 public:
   struct Params {
+    lmReal isoMultiplier;
+
     lmReal minDist;
     lmReal maxDist;
     lmReal speedAtMinDist;
@@ -109,6 +111,7 @@ public:
 
 
     Params() {
+      isoMultiplier = 10.0f;
       minDist= 10.0f;
       maxDist = 350.0f;
       speedAtMinDist = 0.5f;
@@ -185,6 +188,8 @@ public:
   lmTransform GetSmoothedCamera(lmReal dt);
 
 private:
+
+  void ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut);
 
   void DebugDrawNormals(const Mesh* mesh, const Params& paramsIn);
 

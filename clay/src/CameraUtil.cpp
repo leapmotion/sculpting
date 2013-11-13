@@ -481,9 +481,87 @@ void CameraUtil::DebugDrawNormals(const Mesh* mesh, const Params& paramsIn) {
 }
 
 
+
+void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut) {
+
+  lmReal pmin = FLT_MAX;
+  lmReal pmax = 0.0f;
+
+  for (int i = 0; i < 1000; i++)
+  {
+    lmReal min = -200.0f;
+    lmReal max = 200.0f;
+
+    lmReal x = i/1%10 * 0.1f * (max-min) + min;
+    lmReal y = i/10%10 * 0.1f * (max-min) + min;
+    lmReal z = i/100%10 * 0.1f * (max-min) + min;
+
+    Vector3 p(x, y, z);
+    if (LM_EPSILON * LM_EPSILON < p.squaredNorm())
+    {
+      //LM_PERM_ARROW(p, p + p.normalized() * 20.0f, lmColor::CYAN);
+      LM_DRAW_CROSS(p, 3.0f, lmColor::YELLOW);
+    }
+
+    if (1)
+    {
+      std::vector<int> verts;
+      const_cast<Mesh*>(mesh)->getVerticesInsideSphere(p, 50.0f, verts);
+      std::vector<int> tris = const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts);
+
+      lmReal eps = 0.5f;
+      Vector3 epsXyz[] = { Vector3::Zero(), Vector3::UnitX() * eps, Vector3::UnitY() * eps, Vector3::UnitZ() * eps };
+      lmReal potentialXyz[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+      for (size_t ti = 0; ti < tris.size(); ti++)
+      {
+        const Triangle& tri = mesh->getTriangle(tris[ti]);
+        Geometry::GetClosestPointInput input;
+        input.mesh = mesh;
+        input.tri = &tri;
+
+        for (int ei = 0; ei < 4; ei++)
+        {
+          input.point = p + epsXyz[ei];
+          Geometry::GetClosestPointOutput output;
+          Geometry::getClosestPoint(input, &output);
+          lmReal d = output.distance / paramsInOut->isoMultiplier;
+          potentialXyz[ei] += 1.0f / (d*d) * TriArea(mesh, tri);
+          pmin = std::min(pmin, potentialXyz[ei]);
+          pmax = std::max(pmax, potentialXyz[ei]);
+        }
+      }
+
+      lmReal potential = potentialXyz[0];
+      lmReal x = potentialXyz[1] - potential;
+      lmReal y = potentialXyz[2] - potential;
+      lmReal z = potentialXyz[3] - potential;
+
+      if (tris.size()){
+        LM_DRAW_CROSS(p, 3.0f, lmColor::YELLOW);
+      }
+
+      Vector3 n(x, y, z);
+      if (LM_EPSILON * LM_EPSILON < n.squaredNorm()) {
+        n.normalize();
+        LM_DRAW_ARROW(p, p + n * 20.0f, lmColor::CYAN);
+      } else {
+        int hadTriangles = tris.size();
+        int i = 0;
+      }
+
+    }
+  }
+
+  std::cout << "min potential " << pmin << std::endl;
+  std::cout << "max potential " << pmax << std::endl;
+}
+
 void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
   //DebugDrawNormals(mesh, paramsIn);
+
+  //ExperimentWithIsosurfaces(mesh, paramsInOut);
 
   assert(mesh && "Mesh required");
   std::unique_lock<std::mutex> lock(mutex);
