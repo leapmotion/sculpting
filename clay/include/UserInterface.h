@@ -74,11 +74,17 @@ public:
     // object
     OBJECT_LOAD,
     OBJECT_EXPORT,
-    OBJECT_TOGGLE_WIREFRAME,
-    OBJECT_TOGGLE_SYMMETRY,
-    OBJECT_UNDO,
-    OBJECT_REDO,
     OBJECT_RESET,
+
+    // editing
+    EDITING_TOGGLE_WIREFRAME,
+    EDITING_TOGGLE_SYMMETRY,
+    EDITING_UNDO,
+    EDITING_REDO,
+
+    // confirm
+    CONFIRM_YES,
+    CONFIRM_NO,
 
     NUM_ICONS
   };
@@ -172,11 +178,13 @@ public:
         case Menu::GENERAL_EXIT: return "Exit"; break;
         case Menu::OBJECT_LOAD: return "Load"; break;
         case Menu::OBJECT_EXPORT: return "Export"; break;
-        case Menu::OBJECT_TOGGLE_SYMMETRY: return "Toggle Symmetry"; break;
-        case Menu::OBJECT_TOGGLE_WIREFRAME: return "Toggle Wireframe"; break;
         case Menu::OBJECT_RESET: return "Reload"; break;
-        case Menu::OBJECT_REDO: return "Redo"; break;
-        case Menu::OBJECT_UNDO: return "Undo"; break;
+        case Menu::EDITING_TOGGLE_SYMMETRY: return "Symmetry"; break;
+        case Menu::EDITING_TOGGLE_WIREFRAME: return "Wireframe"; break;
+        case Menu::EDITING_REDO: return "Redo"; break;
+        case Menu::EDITING_UNDO: return "Undo"; break;
+        case Menu::CONFIRM_YES: return "Yes"; break;
+        case Menu::CONFIRM_NO: return "No"; break;
         }
         return "";
       } else {
@@ -404,8 +412,11 @@ private:
   Menu _environment_menu;
   Menu _general_menu;
   Menu _object_menu;
+  Menu _editing_menu;
+  Menu _confirm_menu;
 
   bool _draw_color_menu;
+  bool _draw_confirm_menu;
   bool _first_selection_check;
 
 };

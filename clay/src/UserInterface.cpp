@@ -290,7 +290,7 @@ void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) 
   radius = absoluteToRelative(diff.length());
 }
 
-UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true)
+UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true), _draw_confirm_menu(false)
 {
   srand(static_cast<unsigned int>(time(0)));
   int entryType;
@@ -385,7 +385,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   const std::vector<Environment::EnvironmentInfo>& infos = Environment::getEnvironmentInfos();
   const int NUM_ENVIRONMENT_ENTRIES = infos.size();
   _environment_menu.setName("Scene");
-  _environment_menu.setPosition(Vector2(0.7f, 0.075f));
+  _environment_menu.setPosition(Vector2(0.75f, 0.075f));
   _environment_menu.setNumEntries(NUM_ENVIRONMENT_ENTRIES);
   entryType = Menu::ENVIRONMENT_ISLANDS;
   _environment_menu.setAngleOffset(angleOffsetForPosition(_environment_menu.getPosition()));
@@ -410,9 +410,9 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const int NUM_OBJECT_ENTRIES = 7;
+  const int NUM_OBJECT_ENTRIES = 3;
   _object_menu.setName("Object");
-  _object_menu.setPosition(Vector2(0.3f, 0.075f));
+  _object_menu.setPosition(Vector2(0.25f, 0.075f));
   _object_menu.setNumEntries(NUM_OBJECT_ENTRIES);
   entryType = Menu::OBJECT_LOAD;
   _object_menu.setAngleOffset(angleOffsetForPosition(_object_menu.getPosition()));
@@ -420,6 +420,34 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   _object_menu.setActionsOnly(true);
   for (int i=0; i<NUM_OBJECT_ENTRIES; i++) {
     Menu::MenuEntry& entry = _object_menu.getEntry(i);
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  const int NUM_EDITING_ENTRIES = 4;
+  _editing_menu.setName("Editing");
+  _editing_menu.setPosition(Vector2(0.5f, 0.075f));
+  _editing_menu.setNumEntries(NUM_EDITING_ENTRIES);
+  entryType = Menu::EDITING_TOGGLE_WIREFRAME;
+  _editing_menu.setAngleOffset(angleOffsetForPosition(_editing_menu.getPosition()));
+  _editing_menu.setDefaultEntry(0);
+  _editing_menu.setActionsOnly(true);
+  for (int i=0; i<NUM_EDITING_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _editing_menu.getEntry(i);
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
+
+  const int NUM_CONFIRM_ENTRIES = 2;
+  _confirm_menu.setName("Confirm");
+  _confirm_menu.setPosition(Vector2(0.5f, 0.45f));
+  _confirm_menu.setNumEntries(NUM_CONFIRM_ENTRIES);
+  entryType = Menu::CONFIRM_YES;
+  _confirm_menu.setAngleOffset(angleOffsetForPosition(_confirm_menu.getPosition()));
+  _confirm_menu.setDefaultEntry(0);
+  _confirm_menu.setActionsOnly(true);
+  for (int i=0; i<NUM_CONFIRM_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _confirm_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
@@ -441,6 +469,10 @@ void UserInterface::update(const std::vector<Vec4f>& tips, Sculpt* sculpt)
   _environment_menu.update(tips, sculpt);
   _general_menu.update(tips, sculpt);
   _object_menu.update(tips, sculpt);
+  _editing_menu.update(tips, sculpt);
+  if (_draw_confirm_menu) {
+    _confirm_menu.update(tips, sculpt);
+  }
 
   // add cursor positions
   _cursor_positions.clear();
@@ -468,6 +500,10 @@ void UserInterface::draw() const {
   _environment_menu.draw();
   _general_menu.draw();
   _object_menu.draw();
+  _editing_menu.draw();
+  if (_draw_confirm_menu) {
+    _confirm_menu.draw();
+  }
 }
 
 float UserInterface::maxActivation() const {
@@ -482,6 +518,7 @@ float UserInterface::maxActivation() const {
   result = std::max(result, _environment_menu.getActivation());
   result = std::max(result, _general_menu.getActivation());
   result = std::max(result, _object_menu.getActivation());
+  result = std::max(result, _editing_menu.getActivation());
 
   return result;
 }
@@ -497,6 +534,8 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     initializeMenu(_environment_menu);
     initializeMenu(_general_menu);
     initializeMenu(_object_menu);
+    initializeMenu(_editing_menu);
+    initializeMenu(_confirm_menu);
     _first_selection_check = false;
   }
 
@@ -562,14 +601,26 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     const Menu::MenuEntry& entry = _object_menu.getSelectedEntry();
     switch (entry.m_entryType) {
     case Menu::OBJECT_LOAD: app->loadFile(); break;
-    case Menu::OBJECT_TOGGLE_WIREFRAME: app->toggleWireframe(); break;
-    case Menu::OBJECT_TOGGLE_SYMMETRY: app->toggleSymmetry(); break;
     case Menu::OBJECT_EXPORT: app->saveFile(); break;
-    case Menu::OBJECT_UNDO: if (mesh) { mesh->undo(); } break;
-    case Menu::OBJECT_REDO: if (mesh) { mesh->redo(); } break;
     case Menu::OBJECT_RESET: break;
     }
     _object_menu.clearSelection();
+  }
+
+  if (_editing_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _editing_menu.getSelectedEntry();
+    switch (entry.m_entryType) {  
+      case Menu::EDITING_TOGGLE_WIREFRAME: app->toggleWireframe(); break;
+      case Menu::EDITING_TOGGLE_SYMMETRY: app->toggleSymmetry(); break;
+      case Menu::EDITING_UNDO: if (mesh) { mesh->undo(); } break;
+      case Menu::EDITING_REDO: if (mesh) { mesh->redo(); } break;
+    }
+    _editing_menu.clearSelection();
+  }
+
+  if (_draw_confirm_menu && _confirm_menu.hasSelectedEntry()) {
+
+    _confirm_menu.clearSelection();
   }
 }
 
