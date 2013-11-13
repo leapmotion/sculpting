@@ -24,6 +24,7 @@ CameraUtil::CameraUtil() {
   lastCameraUpdateTime = -1.0f;
   avgVertex.position.setZero();
   avgVertex.normal.setZero();
+  lastForwardVerticesDetected = false;
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
@@ -66,7 +67,7 @@ void CameraUtil::GenerateRays(const lmTransform& transform, int castsPerRow, std
   // TODO fix debug lines
   if (0 && debugDrawUtil) {
     std::unique_lock<std::mutex> lock(debugDrawUtil->m_mutex);
-    for (int ri = 0; ri < rays.size(); ri++) {
+    for (size_t ri = 0; ri < rays.size(); ri++) {
       LM_DRAW_POINT(rays[ri], lmColor::CYAN);
     }
   }
@@ -211,24 +212,29 @@ void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoin
     Vector3 dirToVert = translationToVert.normalized();
     lmReal dot = movementDir.dot(dirToVert);
     lmReal dotMixed = mixedDir.dot(dirToVert);
-    //if (0.707f < dot && 0.5f * radius < translationToVert.norm() ) {
-    if ((0.707f < dot || 0.707f < dotMixed) && 0.5f * radius < translationToVert.norm() ) {
+    lmReal dotNormal = referencePoint.normal.dot(dirToVert);
+    const lmReal dist = translationToVert.norm();
+    if ((0.707f < dot && 0.3f * radius < dist && -0.2f < dotNormal ) ||
+        (0.707f < dotMixed && 0.1f * radius < dist && dist < 0.3f * radius) ||
+        (0.25f < dotNormal && 0.1f * radius < dist && dist < 0.3f * radius)) {
       vertices->push_back(vi);
     }
   }
 }
 
-void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut) {
+void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, lmSurfacePoint* pureAvgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut) {
   avgSurfacePoint->position.setZero();
   avgSurfacePoint->normal.setZero();
 
   Vector3 normal = Vector3::Zero();
   Vector3 position = Vector3::Zero();
 
+  Vector3 pureNormal = Vector3::Zero();
+  Vector3 purePosition = Vector3::Zero();
+
   Geometry::GetClosestPointOutput closestPoint;
   closestPoint.distance = FLT_MAX;
   int closestTriangleIdx = -1;;
-
 
   std::vector<int> verts;
   const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
@@ -238,6 +244,7 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
     std::vector<int> tris;
     tris = const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts);
     lmReal area = 0.0f;
+    lmReal pureArea = 0.0f;
 
     for (size_t ti = 0; ti < tris.size(); ti++) {
       const Triangle& tri = mesh->getTriangle(tris[ti]);
@@ -276,11 +283,14 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
         t = t*t;
         //t = std::sqrt(t);
         // Add weigth based on normal
-        t = t * weight;
+        //t = t * weight;
         // Average taking area into account
-        normal += t * a * tri.normal_;
-        position += t * a * center;
-        area += t * a;
+        normal += t * weight * a * tri.normal_;
+        position += t * weight * a * center;
+        area += t * weight * a;
+        pureNormal += t * a * tri.normal_;
+        purePosition += t * a * center;
+        pureArea += t * a;
       }
     }
 
@@ -289,10 +299,17 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
       avgSurfacePoint->position = position / area;
       avgSurfacePoint->normal = normal.normalized();
     }
+    if (0.0f < pureArea)
+    {
+      pureAvgSurfacePoint->position = purePosition / pureArea;
+      pureAvgSurfacePoint->normal = pureNormal.normalized();
+    }
 
   } else {
 
     lmReal sumWeight = 0.0f;
+
+    // no pure implenetation
 
     for (size_t vi = 0; vi < verts.size(); vi++) {
       const Vertex& vert = mesh->getVertex(verts[vi]);
@@ -315,6 +332,9 @@ void CameraUtil::VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePo
     if (0.0f < sumWeight) {
       avgSurfacePoint->position = position / sumWeight;
       avgSurfacePoint->normal = normal.normalized();
+
+      // hack
+      *pureAvgSurfacePoint = *avgSurfacePoint;
     }
   }
 
@@ -412,11 +432,12 @@ void CameraUtil::GetSmoothedNormalAtPoint(const Mesh* mesh, int triIdx, const Ve
   const Vertex& v3 = mesh->getVertex(tri.vIndices_[2]);
 
   lmSurfacePoint avgSurfacePoint[3];
+  lmSurfacePoint pureAvgSurfacePoint[3];
   Geometry::GetClosestPointOutput closestPoint[3];
 //  Vector3 normals[3];
-  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v1, v1.normal_), radius, -1.0f * v1.normal_, true, avgSurfacePoint+0, closestPoint+0);
-  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v2, v2.normal_), radius, -1.0f * v2.normal_, true, avgSurfacePoint+1, closestPoint+1);
-  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v3, v3.normal_), radius, -1.0f * v3.normal_, true, avgSurfacePoint+2, closestPoint+2);
+  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v1, v1.normal_), radius, -1.0f * v1.normal_, true, avgSurfacePoint+0, pureAvgSurfacePoint+0, closestPoint+0);
+  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v2, v2.normal_), radius, -1.0f * v2.normal_, true, avgSurfacePoint+1, pureAvgSurfacePoint+1, closestPoint+1);
+  VecGetAveragedSurfaceNormal(mesh, lmSurfacePoint(v3, v3.normal_), radius, -1.0f * v3.normal_, true, avgSurfacePoint+2, pureAvgSurfacePoint+2, closestPoint+2);
 
   Vector3 normal = Vector3::Zero();
   //normal += coords[0] * v1.normal_;
@@ -441,12 +462,12 @@ void CameraUtil::DebugDrawNormals(const Mesh* mesh, const Params& paramsIn) {
 
     lmSurfacePoint refPoint(vert, vert.normal_);
     lmSurfacePoint newAvgVertex;
+    lmSurfacePoint pureNewAvgVertex;
     Geometry::GetClosestPointOutput newClosestPoint;
-    VecGetAveragedSurfaceNormal(mesh, refPoint, sphereRadius, -1.0f * vert.normal_, paramsIn.weightNormals, &newAvgVertex, &newClosestPoint);
+    VecGetAveragedSurfaceNormal(mesh, refPoint, sphereRadius, -1.0f * vert.normal_, paramsIn.weightNormals, &newAvgVertex, &pureNewAvgVertex, &newClosestPoint);
 
     if(debugDrawUtil) {
-      //debugDrawUtil->DrawArrow(vert, vert + vert.normal_ * 10.0f);
-      debugDrawUtil->DrawArrow(vert, vert + newAvgVertex.normal * 10.0f);
+      LM_DRAW_ARROW(vert, vert + newAvgVertex.normal * 10.0f, lmColor::WHITE);
     }
 
   }
@@ -518,11 +539,13 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
   // Process smoothed user input
   Vector3 deltaAngles = userInput * movementRatio; 
-  Vector3 movement = userInput * movementRatio; movement.z() = 0.0f;
-  movement = -1.0f * (GetFinalCamera().rotation * userInput);
+  Vector3 movementInCam = userInput * movementRatio; movementInCam.z() = 0.0f;
+  movementInCam = -1.0f * (GetFinalCamera().rotation * userInput);
   userInput.setZero();
 
-  LM_ASSERT(movement.squaredNorm() < 100000000.0f, "");
+  const Vector3 oldOldCameraNormal = GetFinalCamera().rotation * Vector3::UnitZ();
+
+  LM_ASSERT(movementInCam.squaredNorm() < 100000000.0f, "");
 
 
   // Attempt to calculate new refernce point and normal
@@ -541,17 +564,71 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
     lmSurfacePoint& newReferencePoint = this->referencePoint;
     const lmTransform oldCamera = this->transform;
     lmTransform& newCamera = this->transform;
+    const lmSurfacePoint oldAvgVertex = this->avgVertex;
+
 
     LM_ASSERT(oldReferencePoint.normal.squaredNorm() == 0.0f || lmIsNormalized(oldReferencePoint.normal), "");
     LM_ASSERT(lmIsNormalized(oldCamera.rotation * Vector3::UnitZ()), "");
 
     if (debugDrawUtil)
     {
-      debugDrawUtil->DrawArrow(oldReferencePoint.position, oldReferencePoint.position + oldReferencePoint.normal * 50.0f);
+      LM_DRAW_ARROW(oldReferencePoint.position, oldReferencePoint.position + oldReferencePoint.normal * 50.0f, lmColor::RED);
+    }
+
+    // backwards normal camera snapping.
+    bool backSnapped = false;
+    if (params.enableBackSnapping &&  LM_EPSILON * LM_EPSILON < oldClosestPoint.normal.squaredNorm() &&
+      LM_EPSILON * LM_EPSILON < movementInCam.squaredNorm() ) {
+      Vector3 oldCameraNormal = oldCamera.rotation * Vector3::UnitZ();
+
+      LM_DRAW_ARROW(oldClosestPoint.position, oldClosestPoint.position + oldClosestPoint.normal * 50.0f, lmColor::GREEN);
+
+      // take direction of movement & old contact normal
+      Vector3 movementDir = movementInCam.normalized();
+      Vector3 cross = oldClosestPoint.normal.cross(oldAvgVertex.normal);
+
+      if (LM_EPSILON * LM_EPSILON < cross.squaredNorm())
+      {
+        cross.normalize();
+        LM_DRAW_ARROW(oldClosestPoint.position, oldClosestPoint.position + cross * 50.0f, lmColor::GREEN);
+
+        Vector3 sideComponent = cross.dot(oldCameraNormal) * cross;
+        Vector3 parallelComponent = oldCameraNormal - sideComponent;
+        parallelComponent.normalize();
+
+
+        if (movementDir.dot(oldClosestPoint.normal) < -0.707f && parallelComponent.dot(oldClosestPoint.normal) < 0.707f) {
+          // pulling backwards
+
+          lmReal sphereRadius = params.sphereRadiusMultiplier * referenceDistance;
+          std::vector<int> vertices;
+          FindPointsAheadOfMovement(mesh, oldReferencePoint, sphereRadius, movementDir, &vertices);
+          bool forwardVerticesDetected = 0 < vertices.size();
+
+          if (!params.enableForwardCheckForBackSnapping || !forwardVerticesDetected)
+          {
+
+            // now go form contact normal forward 30 deg.
+            lmQuat r(AngleAxis( 3.1415f * 1.0/4.0f, cross));
+            Vector3 newN = r * oldClosestPoint.normal;
+            newN += sideComponent;
+            newN.normalize();
+            LM_DRAW_ARROW(oldClosestPoint.position, oldClosestPoint.position + newN * 50.0f, lmColor::BLUE);
+
+            CorrectCameraOrientation(dtZero, newN);
+            const_cast<lmTransform&>(oldCamera) = newCamera;
+
+#if LM_LOG_CAMERA_LOGIC
+            //std::cout << "Normal back-pulled." << std::endl;
+#endif
+            backSnapped = true;
+          }
+        }
+      }
     }
 
     // Correct camera back to normal orientation
-    if (params.enableNormalCorrection &&  LM_EPSILON * LM_EPSILON < oldReferencePoint.normal.squaredNorm())
+    if (!backSnapped && params.enableNormalCorrection &&  LM_EPSILON * LM_EPSILON < oldReferencePoint.normal.squaredNorm())
     {
       Vector3 oldCameraNormal = oldCamera.rotation * Vector3(0.0f, 0.0f, 1.0f);
 
@@ -565,9 +642,9 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
         // todo: project movement onto oldCamera's plane, jsut to make sure ?
 
         // Decompose motion along those directions (movement is done in oldCamera's plane)
-        LM_ASSERT(movement.squaredNorm() < 100000000.0f, "");
-        Vector3 sideComponent = cross.dot(movement) * cross;
-        Vector3 parallelComponent = movement - sideComponent;
+        LM_ASSERT(movementInCam.squaredNorm() < 100000000.0f, "");
+        Vector3 sideComponent = cross.dot(movementInCam) * cross;
+        Vector3 parallelComponent = movementInCam - sideComponent;
 
         // Subtract from the 'projected' direction as much as we need, or max.
         //
@@ -593,18 +670,46 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
             const_cast<lmTransform&>(oldCamera) = newCamera;
 
             // Leave the rest as it was.
-            movement = sideComponent + leftover * parallelComponent;
-            LM_ASSERT(movement.squaredNorm() < 100000000.0f, "");
+            movementInCam = sideComponent + leftover * parallelComponent;
+            LM_ASSERT(movementInCam.squaredNorm() < 100000000.0f, "");
 
-            // std::cout << "ORIENTATION corrected" << std::endl;
+#if LM_LOG_CAMERA_LOGIC
+            std::cout << "Corrected to normal. Leftover: " << leftover << std::endl;
+#endif
           }
         }
       }
     }
 
+    //
+    Vector3 movementInNml = movementInCam;
+    Vector3 movementInOrgCam = movementInCam;
+    lmQuat normToCamera = lmQuat::Identity();
+    if (params.moveInNormalPlane && oldReferencePoint.normal.squaredNorm() != 0.0f)
+    {
+      LM_ASSERT(lmIsNormalized(oldReferencePoint.normal), "");
+
+      // Revert to original movement
+      //Vector3 tmp = -1.0f * (GetFinalCamera().rotation.inverse() * movementInCam);
+      //Vector3 movementInNml = -1.0f * (GetFinalCamera().rotation.inverse() * tmp);
+
+
+      // Rotation from camera to surface normal
+      lmQuat toNmlPlane; toNmlPlane.setFromTwoVectors(oldOldCameraNormal, oldReferencePoint.normal);
+      movementInNml = toNmlPlane * movementInCam;
+
+      // Tmp: 
+      movementInCam = movementInNml;
+
+      normToCamera = toNmlPlane.inverse();
+
+      // Rotate to old reference normal
+    }
+
     lmReal sphereRadius = params.sphereRadiusMultiplier * referenceDistance;
 
     lmSurfacePoint newAvgVertex;
+    lmSurfacePoint pureNewAvgVertex;
     bool normalOkay = false;
     while(!normalOkay && attampts < 16)
     {
@@ -612,14 +717,39 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
       LM_ASSERT(lmIsNormalized(oldCamera.rotation * Vector3::UnitZ()), "");
 
       // Sphere sweep.
-      newReferencePoint.position += movement;
-      newCamera.translation += movement;
+      newReferencePoint.position += movementInCam;
+      newCamera.translation += movementInCam;
 
       // Attempt sphere query
       Vector3 cameraDirection = oldCamera.rotation * Vector3(0.0f, 0.0f, -1.0f);
-      VecGetAveragedSurfaceNormal(mesh, newReferencePoint, sphereRadius, cameraDirection, params.weightNormals, &newAvgVertex, &newClosestPoint);
+      //if (lmIsNormalized(oldClosestPoint.normal)) {
+      //  cameraDirection = -1.0f * oldClosestPoint.normal;
+      //}
+
+      VecGetAveragedSurfaceNormal(mesh, newReferencePoint, sphereRadius, cameraDirection, params.weightNormals, &newAvgVertex, &pureNewAvgVertex, &newClosestPoint);
       if (!lmIsNormalized(newClosestPoint.normal)) {
         GetClosestPoint(mesh, newReferencePoint, sphereRadius, cameraDirection, &newClosestPoint);
+      }
+
+      // doesn't work; newClosestPoint.normal = pureNewAvgVertex.normal;
+
+      if (0)
+      {
+        // Correct avgNormal if further away from closestPoint than 45 deg
+        pureNewAvgVertex.position = newClosestPoint.position;
+        pureNewAvgVertex.normal = newClosestPoint.normal;
+        lmReal dot = pureNewAvgVertex.normal.dot(newAvgVertex.normal);
+        LM_DRAW_ARROW(pureNewAvgVertex.position, pureNewAvgVertex.position + pureNewAvgVertex.normal * 50.0f, lmColor::GREEN);
+        if (dot < 0.500f) {
+        //if (dot < 0.707f) {
+        //if (dot < 0.866f) {
+          Vector3 projected = newAvgVertex.normal - dot*pureNewAvgVertex.normal;
+          projected.normalize();
+          Vector3 corrected = projected + pureNewAvgVertex.normal;
+          corrected.normalize();
+          newAvgVertex.normal = corrected;
+          LM_DRAW_ARROW(newClosestPoint.position, pureNewAvgVertex.position + newAvgVertex.normal * 50.0f, lmColor::BLUE);
+        }
       }
 
 
@@ -632,7 +762,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
         if (lmIsNormalized(oldClosestPoint.normal)) {
           lmReal rotDist = (oldClosestPoint.normal - newClosestPoint.normal).norm();// * referenceDistance;
           if (0.2f < rotDist) {
-            movement *= 0.2f / rotDist;
+            movementInCam *= 0.2f / rotDist;
             newCamera = oldCamera;
             newReferencePoint = oldReferencePoint;
 
@@ -653,7 +783,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
       attampts++;
       if (!normalOkay && attampts < 16)
       {
-        movement *= 0.5f;
+        movementInCam *= 0.5f;
         newCamera = oldCamera;
         newReferencePoint = oldReferencePoint;
       }
@@ -663,8 +793,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
     if (lmIsNormalized(newReferencePoint.normal)) {
 
-      bool backwardsNormalChange = false;
-      bool fowardVerticesDetected = false;
+      bool forwardVerticesDetected = false;
 
       // apply quaternion of averaged normals.
 
@@ -676,12 +805,11 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
       const lmSurfacePoint& newCalcPoint = newReferencePoint;
 #endif
 
-      if (params.suppresForwardRotation && lmIsNormalized(oldCalcPoint.normal) && LM_EPSILON * LM_EPSILON < movement.squaredNorm()) 
+      if (params.suppresForwardRotation && lmIsNormalized(oldCalcPoint.normal) && LM_EPSILON * LM_EPSILON < movementInCam.squaredNorm()) 
       {
-
         std::vector<int> vertices;
-        FindPointsAheadOfMovement(mesh, referencePoint, sphereRadius, movement.normalized(), &vertices);
-        fowardVerticesDetected = 0 < vertices.size();
+        FindPointsAheadOfMovement(mesh, oldReferencePoint, sphereRadius, movementInCam.normalized(), &vertices);
+        forwardVerticesDetected = 0 < vertices.size();
 
         lmQuat normalChange;
         normalChange.setFromTwoVectors(oldCalcPoint.normal, newCalcPoint.normal);
@@ -691,25 +819,20 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
         {
           Vector3 deltaNormal = newCalcPoint.normal - oldCalcPoint.normal;
           // Decompose: direction along & perp to motion
-          Vector3 movementDir = movement.normalized();
+          Vector3 movementDir = movementInCam.normalized();
           Vector3 deltaNormalAlongMotion = movementDir.dot(deltaNormal) * movementDir;
           Vector3 deltaNormalPerpMotion = deltaNormal - deltaNormalAlongMotion;
 
-//          lmReal movementDot = movementDir.dot(deltaNormalAlongMotion);
-          // std::cout << "Movement Dot: " << movementDot << std::endl;
           // Apply the normal delta along only if it's towards the back
-          //if (params.tmpSwitch || movementDot < 0.0f)
-          if (params.tmpSwitch || fowardVerticesDetected)
-          {
-            if (!params.tmpSwitch) {
-              backwardsNormalChange = true;
-            }
-            // std::cout << "ORIENTATION backward detected" << std::endl;
-          }
-          else
-          {
-            // std::cout << "ORIENTATION forward, clipped" << std::endl;
-
+          if (params.tmpSwitch || forwardVerticesDetected) {
+            forwardVerticesDetected = true;
+#if LM_LOG_CAMERA_LOGIC
+            std::cout << "ORIENTATION backward detected" << std::endl;
+#endif
+          } else {
+#if LM_LOG_CAMERA_LOGIC
+            std::cout << "ORIENTATION forward, clipped" << std::endl;
+#endif
             // forward normal change -- let the 'explicity camera movement' code handle that
             Vector3 clippedNormal = (oldCalcPoint.normal + deltaNormalPerpMotion).normalized();
             normalChange.setFromTwoVectors(oldCalcPoint.normal, clippedNormal);
@@ -719,7 +842,6 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
         // apply to camera transform
         Vector3 cameraNormal = newCamera.rotation * Vector3::UnitZ();
         Vector3 newNormal = normalChange * cameraNormal; //-- only have it for backward bending angles ?? or when the above rotation is not engaged...
-        //Vector3 newNormal = normalChange * CalcPoint.normal; //-- only have it for backward bending angles ?? or when the above rotation is not engaged...
         CorrectCameraOrientation(dtZero, newNormal);
 
         // check
@@ -728,14 +850,8 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
         int i = 0; i++;
       }
 
-      //
-      //
-      //
-
-
       // Cast reference point onto the plane(clostestPoint.position, newReferencePoint.normal))
       {
-        //Vector3 diff = newReferencePoint.position - newClosestPoint.position;
 #if PREFER_CLOSEST_NORMAL
         Vector3 diff = newReferencePoint.position - newClosestPoint.position;
 #else
@@ -748,8 +864,6 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
       if (params.freeRotationEnabled)
       {
-        // Method 2
-        //
         // Look at reference point movement and closest point movement
         Vector3 dRefPt;
         Vector3 dClosestPt;
@@ -768,44 +882,29 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
         // Project dCloestPt along dRefPt
         lmReal refDist = dRefPt.norm();
-        if (LM_EPSILON < refDist) { // && directionDot < 0.0f)
+        if (LM_EPSILON < refDist && params.clipTranslationOnFreeRotate && !forwardVerticesDetected) { // && directionDot < 0.0f)
           Vector3 projected = dRefPt.dot(dClosestPt) / dRefPt.squaredNorm() * dRefPt ;
           lmReal closestDist = projected.norm();
 
           // Add camera translation
           lmReal movedFraction = std::min((closestDist+LM_EPSILON)/(refDist+LM_EPSILON), 1.0f);
-          // std::cout << "MOVED FRACTION: " << movedFraction << std::endl;
-          if (backwardsNormalChange) {
-            movedFraction = 1.0f;
-          }
           lmReal rotationFraction = 1.0f - movedFraction;
 
           // Use the difference in magnitude to
-          //// Rotate camera to new position, at the same time: we need to stop updating the normal .....
-          if (params.clipTranslationOnFreeRotate && !backwardsNormalChange)
-          {
-            if (!params.useAvgNormal || params.useClosestPointForEdges)
-            {
-              Vector3 correction = newClosestPoint.position - referencePoint.position; // check that this is (1-rotationFraction) * dRefPt
-//              lmReal correctionDist = correction.norm();
-              referencePoint.position = newClosestPoint.position;
-              transform.translation += correction;
-            }
-            else
-            {
-              Vector3 correction = newAvgVertex.position - referencePoint.position; // check that this is (1-rotationFraction) * dRefPt
-//              lmReal correctionDist = correction.norm();
-              referencePoint.position = newAvgVertex.position;
-              transform.translation += correction;
-            }
-          }
-
-          Vector3 newCameraNormal = (transform.translation + params.freeRotationRatio * (rotationFraction*dRefPt) - referencePoint.position).normalized();
+          // Rotate camera to new position, at the same time: we need to stop updating the normal .....
+          //Vector3 correction = ((!params.useAvgNormal || params.useClosestPointForEdges) ? newClosestPoint.position : avgVertex.position) - referencePoint.position; // check that this is (1-rotationFraction) * dRefPt
+          Vector3 correction = (-1.0f + movedFraction) * dRefPt;
+          referencePoint.position += correction;;
+          transform.translation += correction;
+#if LM_LOG_CAMERA_LOGIC
+          std::cout << "Move fraction: " << movedFraction << std::endl;
+#endif
+          Vector3 newCameraNormal = (transform.translation + params.freeRotationRatio * (rotationFraction*(normToCamera*dRefPt)) - referencePoint.position).normalized();
           CorrectCameraOrientation(dtZero, newCameraNormal);
         } else {
           // Prevent snapping back to the original positon
           lmReal rotationFraction = 0.0f;
-          Vector3 newCameraNormal = (transform.translation + params.freeRotationRatio * (rotationFraction*dRefPt) - referencePoint.position).normalized();
+          Vector3 newCameraNormal = (transform.translation - referencePoint.position).normalized();
           CorrectCameraOrientation(dtZero, newCameraNormal);
         }
       }
@@ -820,6 +919,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
       rayHit = true;
       this->closestPoint = newClosestPoint; // remember closest point for the next frame.
       this->avgVertex = newAvgVertex;
+      this->lastForwardVerticesDetected = forwardVerticesDetected;
     }
   }
 
@@ -858,7 +958,8 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
 
       Geometry::GetClosestPointOutput closestPoint;
       lmSurfacePoint avgVertex;
-      VecGetAveragedSurfaceNormal(mesh, referencePoint, sphereRadius, cameraDirection, params.weightNormals, &avgVertex, &closestPoint);
+      lmSurfacePoint pureNewAvgVertex;
+      VecGetAveragedSurfaceNormal(mesh, referencePoint, sphereRadius, cameraDirection, params.weightNormals, &avgVertex, &pureNewAvgVertex, &closestPoint);
       if (!lmIsNormalized(closestPoint.normal)) {
         GetClosestPoint(mesh, referencePoint, sphereRadius, cameraDirection, &closestPoint);
       }
@@ -875,7 +976,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   if (rayHit) {
     if (debugDrawUtil && params.drawDebugLines) {
       LM_DRAW_CROSS(referencePoint.position, 10.0f, lmColor::WHITE);
-      debugDrawUtil->DrawArrow(referencePoint.position, referencePoint.position + referencePoint.normal * 20.0f);
+      LM_DRAW_ARROW(referencePoint.position, referencePoint.position + referencePoint.normal * 20.0f, lmColor::RED);
     }
 
     // clean up:

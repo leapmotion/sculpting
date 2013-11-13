@@ -7,11 +7,6 @@
 
 
 
-// Helper func
-void DebugDrawUtil::DrawArrow(const Vector3& from, const Vector3& to) {
-  LM_DRAW_LINE(from, to, lmColor::WHITE);
-}
-
 void DebugDrawUtil::DrawTriangle(const Mesh* mesh, const Triangle& tri) {
   LM_DRAW_TRIANGLE(
       mesh->getVertex(tri.vIndices_[0]),
@@ -48,8 +43,8 @@ void DebugDrawUtil::FlushDebugPrimitives( cinder::gl::GlslProg* shader ) {
   {
     Buffers& b = *buffers[bi];
 
-    const int primNames[] = { GL_POINTS, GL_LINES, GL_TRIANGLES, GL_TRIANGLES };
-    VectorWithColorVector* primBuffers[] = { &b.m_pointsCol, &b.m_linesCol, &b.m_trianglesCol, &b.m_facesCol };
+    const int primNames[] = { GL_TRIANGLES, GL_TRIANGLES, GL_LINES, GL_POINTS };
+    VectorWithColorVector* primBuffers[] = { &b.m_facesCol, &b.m_trianglesCol, &b.m_linesCol, &b.m_pointsCol };
     glDisable(GL_DEPTH_TEST);
     glPointSize(2.0f);
     glLineWidth(2.0f);
@@ -143,6 +138,30 @@ void DebugDrawUtil::DrawCross( const Vector3& position, lmReal size, lmColor col
   buffer.push_back(VertexAndColor(Vector3(position - Vector3::UnitZ() * size), color));
 }
 
+template<bool PERM>
+void DebugDrawUtil::DrawArrow(const Vector3& from, const Vector3& to, lmColor color /*= lmColor::WHITE*/ ) {
+  PERM ? LM_PERM_LINE(from, to, color) : LM_DRAW_LINE(from, to, color);
+
+  // Draw arrow head
+  lmQuat r; r.setFromTwoVectors(Vector3::UnitZ(), (to-from).normalized());
+
+  Vector3 lines[] = {
+    -Vector3::UnitZ() + Vector3::UnitX(),
+    -Vector3::UnitZ() - Vector3::UnitX(),
+    -Vector3::UnitZ() + Vector3::UnitY(),
+    -Vector3::UnitZ() - Vector3::UnitY()
+  };
+
+  const lmReal scale = (to-from).norm() * 0.1f;
+  for (int i = 0; i < 4; i++)
+  {
+    Vector3 line = r * lines[i] * scale;
+    PERM ? LM_PERM_LINE(to, to+line, color) : LM_DRAW_LINE(to, to+line, color);
+  }
+}
+
+
+
 // explicity instantiation without <>
 template void DebugDrawUtil::DrawPoint<true>(const Vector3& a, lmColor color);
 template void DebugDrawUtil::DrawPoint<false>(const Vector3& a, lmColor color);
@@ -154,6 +173,8 @@ template void DebugDrawUtil::DrawFace<true>( const Vector3& a, const Vector3& b,
 template void DebugDrawUtil::DrawFace<false>( const Vector3& a, const Vector3& b, const Vector3& c, lmColor color /*= lmColor::WHITE*/);
 template void DebugDrawUtil::DrawCross<true>( const Vector3& position, lmReal size, lmColor color /*= lmColor::WHITE*/ );
 template void DebugDrawUtil::DrawCross<false>( const Vector3& position, lmReal size, lmColor color /*= lmColor::WHITE*/ );
+template void DebugDrawUtil::DrawArrow<true>(const Vector3& a, const Vector3& b, lmColor color);
+template void DebugDrawUtil::DrawArrow<false>(const Vector3& a, const Vector3& b, lmColor color);
 
 
 

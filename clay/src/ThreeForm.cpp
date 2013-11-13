@@ -120,6 +120,10 @@ void ThreeFormApp::setup()
   _params->addParam( "Walk smoothed normals", &_camera_params.walkSmoothedNormals, "" );
   _params->addParam( "Override normal", &_camera_params.overrideNormal, "" );
   _params->addParam( "CP for edges", &_camera_params.useClosestPointForEdges, "" );
+  _params->addParam( "Move along normal", &_camera_params.moveInNormalPlane, "" );
+  _params->addParam( "Back snapping", &_camera_params.enableBackSnapping, "" );
+  _params->addParam( "Forward check", &_camera_params.enableForwardCheckForBackSnapping, "" );
+  
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_material.ambientFactor, "min=0.0 max=0.5 step=0.01" );

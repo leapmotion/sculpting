@@ -103,6 +103,10 @@ public:
     bool overrideNormal;
     bool useClosestPointForEdges;
 
+    bool moveInNormalPlane;
+    bool enableBackSnapping;
+    bool enableForwardCheckForBackSnapping;
+
 
     Params() {
       minDist= 10.0f;
@@ -138,6 +142,10 @@ public:
 
       overrideNormal = false;
       useClosestPointForEdges = true;
+
+      moveInNormalPlane = false;
+      enableBackSnapping = false;
+      enableForwardCheckForBackSnapping = false;
 
 // test new method
       ////freeRotationEnabled = false;
@@ -196,7 +204,7 @@ private:
   void FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices );
 
   // Performs a sphere query on the mesh, and returns average normal of the visible surface
-  void VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut);
+  void VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, lmSurfacePoint* pureAvgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut);
 
   // Helper functions.
 
@@ -260,6 +268,9 @@ public:
 
   // Time of last camera udpate
   lmReal lastCameraUpdateTime;
+
+  // Not used
+  bool lastForwardVerticesDetected;
 
   Params params;
 
