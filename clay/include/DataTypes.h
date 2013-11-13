@@ -57,4 +57,10 @@ struct Material {
   float refractionIndex;
 };
 
+
+#if _WIN32
+typedef uint8_t uint8;
+typedef uint32_t uint32;
+#endif
+
 #endif
