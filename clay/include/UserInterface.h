@@ -58,7 +58,6 @@ public:
 
     // environment
     ENVIRONMENT_ISLANDS,
-    ENVIRONMENT_MOONSCAPE,
     ENVIRONMENT_RIVER,
     ENVIRONMENT_DESERT,
     ENVIRONMENT_REDWOOD,
@@ -161,7 +160,6 @@ public:
         case Menu::SPIN_MEDIUM: return "Medium"; break;
         case Menu::SPIN_FAST: return "Fast"; break;
         case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
-        case Menu::ENVIRONMENT_MOONSCAPE: return "Moonscape"; break;
         case Menu::ENVIRONMENT_RIVER: return "River"; break;
         case Menu::ENVIRONMENT_DESERT: return "Desert"; break;
         case Menu::ENVIRONMENT_REDWOOD: return "Redwood"; break;
@@ -241,7 +239,6 @@ public:
     std::string toEnvironmentName() const {
       switch (m_entryType) {
       case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
-      case Menu::ENVIRONMENT_MOONSCAPE: return "Moonscape"; break;
       case Menu::ENVIRONMENT_RIVER: return "River"; break;
       case Menu::ENVIRONMENT_DESERT: return "Desert"; break;
       case Menu::ENVIRONMENT_REDWOOD: return "Redwood"; break;

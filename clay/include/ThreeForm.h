@@ -57,7 +57,6 @@ public:
   void setSymmetry(bool symmetry);
   void toggleSymmetry();
   void setEnvironment(const std::string& str);
-  void setTimeOfDay(Environment::TimeOfDay time);
   void toggleSound();
   int loadFile();
   int saveFile();

@@ -784,14 +784,7 @@ void ThreeFormApp::setEnvironment(const std::string& str) {
   if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE) {
     return;
   }
-  _loading_thread = std::thread(&Environment::setEnvironment, _environment, str, _environment->getCurTimeOfDay());
-}
-
-void ThreeFormApp::setTimeOfDay(Environment::TimeOfDay time) {
-  if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE) {
-    return;
-  }
-  _loading_thread = std::thread(&Environment::setEnvironment, _environment, _environment->getCurEnvironmentString(), time);
+  _loading_thread = std::thread(&Environment::setEnvironment, _environment, str);
 }
 
 void ThreeFormApp::toggleSound() {

@@ -19,8 +19,7 @@ CCubeMapProcessor* Environment::_cubemap_processor = new CCubeMapProcessor();
 std::vector<Environment::EnvironmentInfo> Environment::_environment_infos;
 std::string Environment::working_directory;
 
-Environment::Environment() : _cur_environment(""), _cur_time_of_day(TIME_DAWN),
-  _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0)
+Environment::Environment() : _cur_environment(""), _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0)
 {
   createWorkingDirectory();
   createEnvironmentInfos();
@@ -28,8 +27,8 @@ Environment::Environment() : _cur_environment(""), _cur_time_of_day(TIME_DAWN),
 
 Environment::~Environment() { }
 
-void Environment::setEnvironment(const std::string& name, TimeOfDay time) {
-  if (name == _cur_environment && time == _cur_time_of_day) {
+void Environment::setEnvironment(const std::string& name) {
+  if (name == _cur_environment) {
     return;
   }
 
@@ -44,7 +43,7 @@ void Environment::setEnvironment(const std::string& name, TimeOfDay time) {
   _loading_state_change_time = getElapsedSeconds();
   _loading_state = LOADING_STATE_LOADING;
 
-  std::string* filenames = (time == TIME_NOON) ? env->_noon_images : env->_dawn_images;
+  std::string* filenames = env->_dawn_images;
   if (!loadImageSet(filenames, bitmaps, bitmap_widths, bitmap_heights, internal_formats, formats) ||
     !loadImageSet(env->_depth_images, depth_bitmaps, depth_bitmap_widths, depth_bitmap_heights, depth_internal_formats, depth_formats))
   {
@@ -54,7 +53,6 @@ void Environment::setEnvironment(const std::string& name, TimeOfDay time) {
   }
 
   _cur_environment = name;
-  _cur_time_of_day = time;
 
   // wait for transition completion
   _loading_state = LOADING_STATE_DONE_LOADING;
@@ -161,10 +159,6 @@ float Environment::getTimeSinceLoadingStateChange() const {
 
 const std::string& Environment::getCurEnvironmentString() const {
   return _cur_environment;
-}
-
-Environment::TimeOfDay Environment::getCurTimeOfDay() const {
-  return _cur_time_of_day;
 }
 
 bool Environment::loadImageSet(std::string* filenames,
@@ -368,7 +362,6 @@ Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::stri
 
   EnvironmentInfo info;
   info._name = name;
-  preparePaths(ASSETS_PATH + name + "/noon/", info._noon_images);
   preparePaths(ASSETS_PATH + name + "/dawn/", info._dawn_images);
   preparePaths(ASSETS_PATH + name + "/depth/", info._depth_images);
   info._bloom_strength = strength;
@@ -393,12 +386,11 @@ void Environment::createEnvironmentInfos() {
     // set up filenames for the different supported environments
     _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.6f, 1.0f, 4.5f, 1.01f));
     _environment_infos.push_back(prepareEnvironmentInfo("Arctic", 0.2f, 2.5f, 2.25f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.5f, 0.5f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.6f, 0.7f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.6f, 0.7f, 4.5f, 1.01f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.5f, 0.75f, 4.5f, 1.01f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.6f, 0.75f, 4.5f, 1.01f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.6f, 0.75f, 4.5f, 1.01f));
     _environment_infos.push_back(prepareEnvironmentInfo("Desert", 0.5f, 1.5f, 3.5f, 1.01f));
     _environment_infos.push_back(prepareEnvironmentInfo("River", 0.5f, 0.75f, 3.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Moonscape", 0.3f, 0.5f, 2.25f, 1.01f));
     created = true;
   }
 }

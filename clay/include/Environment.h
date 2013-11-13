@@ -26,11 +26,6 @@ public:
     CUBEMAP_RADIANCE,
   };
 
-  enum TimeOfDay {
-    TIME_NOON,
-    TIME_DAWN
-  };
-
   enum LoadingState {
     LOADING_STATE_NONE,
     LOADING_STATE_LOADING,
@@ -41,7 +36,6 @@ public:
   struct EnvironmentInfo {
     // images must be arranged in the following order:
     // x-positive, x-negative, y-positive, y-negative, z-positive, z-negative
-    std::string _noon_images[6];
     std::string _dawn_images[6];
     std::string _depth_images[6];
     std::string _name;
@@ -54,11 +48,10 @@ public:
 
   Environment();
   virtual ~Environment();
-  void setEnvironment(const std::string& name, TimeOfDay time);
+  void setEnvironment(const std::string& name);
   void bindCubeMap(CubeMap map, int pos);
   void unbindCubeMap(int pos);
   const std::string& getCurEnvironmentString() const;
-  TimeOfDay getCurTimeOfDay() const;
   void transitionComplete();
   void processingComplete();
   LoadingState getLoadingState() const;
@@ -86,7 +79,6 @@ private:
   GLuint _cubemap_irradiance;
   GLuint _cubemap_radiance;
 
-  TimeOfDay _cur_time_of_day;
   std::string _cur_environment;
   std::condition_variable _loading_condition;
   std::mutex _loading_mutex;
