@@ -118,7 +118,7 @@ public:
       speedAtMaxDist = 2.5f;
       pinUpVector = true;
       smoothingFactor = 0.02f;
-      drawDebugLines = true;
+      drawDebugLines = false;
       drawSphereQueryResults = false;
 
       blendMinDist = 100.0f;
