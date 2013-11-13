@@ -47,7 +47,7 @@ public:
     MATERIAL_PORCELAIN,
     MATERIAL_PLASTIC,
     MATERIAL_GLASS,
-    MATERIAL_STEEL,
+    MATERIAL_METAL,
     MATERIAL_CLAY,
 
     // auto spin
@@ -153,7 +153,7 @@ public:
         case Menu::MATERIAL_PLASTIC: return "Plastic"; break;
         case Menu::MATERIAL_PORCELAIN: return "Porcelain"; break;
         case Menu::MATERIAL_GLASS: return "Glass"; break;
-        case Menu::MATERIAL_STEEL: return "Steel"; break;
+        case Menu::MATERIAL_METAL: return "Metal"; break;
         case Menu::MATERIAL_CLAY: return "Clay"; break;
         case Menu::SPIN_OFF: return "Off"; break;
         case Menu::SPIN_SLOW: return "Slow"; break;
@@ -203,7 +203,7 @@ public:
       switch (m_entryType) {
       case Menu::MATERIAL_PLASTIC:
         mat.reflectionFactor = 0.1f;
-        mat.surfaceColor << 0.0f, 0.4f, 1.0f;
+        mat.surfaceColor << 0.4f, 0.7f, 1.0f;
         mat.reflectionBias = 0.5f;
         break;
       case Menu::MATERIAL_PORCELAIN:
@@ -217,12 +217,13 @@ public:
         mat.surfaceColor << 0.4f, 0.45f, 0.5f;
         mat.refractionIndex = 0.45f;
         break;
-      case Menu::MATERIAL_STEEL:
+      case Menu::MATERIAL_METAL:
         mat.reflectionFactor = 0.5f;
         mat.surfaceColor << 0.2f, 0.25f, 0.275f;
+        mat.reflectionBias = 2.0f;
         break;
       case Menu::MATERIAL_CLAY:
-        mat.surfaceColor << 0.7f, 0.6f, 0.3f;
+        mat.surfaceColor << 0.7f, 0.675f, 0.6f;
         break;
       }
       return mat;
