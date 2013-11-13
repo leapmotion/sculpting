@@ -116,14 +116,13 @@ void ThreeFormApp::setup()
   _params->addParam( "Weight normals", &_camera_params.weightNormals, "" );
   _params->addParam( "Smoothing", &_camera_params.enableSmoothing, "" );
   _params->addParam( "Smooth factor", &_camera_params.smoothingFactor, "min=0.0 max=1.0 step=0.05" );
-  _params->addParam( "Tmp Switch", &_camera_params.tmpSwitch, "" );
   _params->addParam( "Clip translation", &_camera_params.clipTranslationOnFreeRotate, "" );
   _params->addParam( "Walk smoothed normals", &_camera_params.walkSmoothedNormals, "" );
-  _params->addParam( "Override normal", &_camera_params.overrideNormal, "" );
   _params->addParam( "CP for edges", &_camera_params.useClosestPointForEdges, "" );
   _params->addParam( "Move along normal", &_camera_params.moveInNormalPlane, "" );
   _params->addParam( "Back snapping", &_camera_params.enableBackSnapping, "" );
   _params->addParam( "Forward check", &_camera_params.enableForwardCheckForBackSnapping, "" );
+  _params->addParam( "Override normal", &_camera_params.overrideNormal, "" );
   
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
@@ -364,16 +363,10 @@ void ThreeFormApp::update()
     _camera_util->debugDrawUtil = _debug_draw_util;
   }
   
-  //TODO(adrian, this is not thread shafe);
-  //lmTransform tCamera = _camera_util->transform;
   std::unique_lock<std::mutex> lock(_camera_util->mutex);
-  static lmReal time = lmReal(ci::app::getElapsedSeconds());
-  lmReal prevTime = time;
-  time = lmReal(ci::app::getElapsedSeconds());
-
-  lmTransform tCamera = _camera_util->GetSmoothedCamera(time-prevTime);
-
+  lmTransform tCamera = _camera_util->GetCameraInWorldSpace();
   lock.unlock();
+
   campos = ToVec3f(tCamera.translation);
   Vector3 up = tCamera.rotation * Vector3::UnitY();
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;

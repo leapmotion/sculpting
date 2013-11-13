@@ -182,10 +182,7 @@ public:
   // Update camera position.
   void UpdateCamera(const Mesh* mesh, Params* paramsInOut);
 
-  // Gets final camera used for graphics.
-  lmTransform GetFinalCamera();
-
-  lmTransform GetSmoothedCamera(lmReal dt);
+  lmTransform GetCameraInWorldSpace();
 
 private:
 
@@ -233,9 +230,6 @@ private:
   // Correct up vector
   void CorrectCameraUpVector(lmReal dt, const Vector3& up);
 
-  // Gets blended camera view transforms
-  lmTransform GetHybridCameraTransform();
-
   // Rotate vectors to mesh's space
   Vector3 ToWorldSpace(const Vector3& v);
 
@@ -247,9 +241,6 @@ public:
 
   // Camera's current transform.
   lmTransform transform;
-
-  // Camera's smoothed transform.
-  lmTransform smoothedTransform;
 
   // Mesh's transform
   lmTransform meshTransform;
@@ -284,9 +275,6 @@ public:
 
   // Time of last camera udpate
   lmReal lastCameraUpdateTime;
-
-  // Not used
-  bool lastForwardVerticesDetected;
 
   Params params;
 
