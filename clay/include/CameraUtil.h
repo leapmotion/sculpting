@@ -126,8 +126,8 @@ public:
 
     Params() {
       isoMultiplier = 10.0f;
-      minDist= 10.0f;
-      maxDist = 350.0f;
+      minDist= 30.0f;
+      maxDist = 500.0f;
       speedAtMinDist = 0.5f;
       speedAtMaxDist = 2.5f;
       pinUpVector = true;
