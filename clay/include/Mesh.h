@@ -156,6 +156,10 @@ private:
   IndexUpdateVector indexUpdates_;
   VertexUpdateVector vertexUpdates_;
   std::mutex bufferMutex_;
+
+  // Adrian's
+ public:
+  void verifyMesh();
 };
 
 #endif /*__MESH_H__*/

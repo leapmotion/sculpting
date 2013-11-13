@@ -3,6 +3,10 @@
 #include "Octree.h"
 #include <iostream>
 
+// For meshVerify
+#include "DebugDrawUtil.h"
+#include <map>
+
 const float Mesh::globalScale_ = 500.f;
 int Mesh::stateMask_ = 1;
 const int undoLimit_ = 10;
@@ -932,4 +936,100 @@ void Mesh::recomputeOctree(const Aabb &aabbSplit)
   delete octree_;
   octree_ = new Octree();
   octree_->build(this, triangles, aabbSplit);
+}
+
+typedef std::pair<int, int> lmEdge;
+typedef std::map<lmEdge, int> lmEdgeMap;
+
+static lmEdge lmMakeEdge(int a, int b) { return a < b ? lmEdge(a, b) : lmEdge(b, a); }
+
+void Mesh::verifyMesh()
+{
+  std::unique_lock<std::mutex> lock(DebugDrawUtil::getInstance().m_mutex);
+
+  VertexVector& vertices = getVertices();
+  TriangleVector& triangles = getTriangles();
+
+  //
+  // Search overlapping vertices
+  //
+  // n^2
+  if (0)
+  {
+    int vertCount[] = {0,0};
+    for (size_t vi = 0; vi < vertices.size(); vi++) {
+      Vector3 v = getVertex(vi);
+      for (size_t vj = vi+1; vj < vertices.size(); vj++) {
+        Vector3 diff = v - getVertex(vj);
+        if (diff.squaredNorm() < 0.000001f * 0.000001f) {
+          vertCount[false]++;
+          LM_PERM_CROSS(v, 5.0f, lmColor::RED);
+        } else {
+          vertCount[true]++;
+        } } }
+
+    std::cout << "Unique checks     : " << vertCount[true] << std::endl;
+    std::cout << "Overlapping checks: " << vertCount[false] << std::endl;
+  }
+
+  //
+  // Search for double edges
+  //
+
+  lmEdgeMap edges;
+  for (size_t ti = 0; ti < triangles.size(); ti++) {
+    Triangle& tri = triangles[ti];
+    for (int i = 0; i < 3; i++)
+    {
+      lmEdge edge = lmMakeEdge(tri.vIndices_[i], tri.vIndices_[(i+1)%3]);
+      edges[edge]++; // assumes it initialized to zero
+  } }
+
+  int counts[] = {0,0};
+  for (lmEdgeMap::iterator it = edges.begin(); it != edges.end(); it++) {
+    if (it->second == 2) {
+      counts[true]++;
+    } else {
+      counts[false]++;
+      Vertex& v0 = getVertex(it->first.first);
+      Vertex& v1 = getVertex(it->first.second);
+      if (it->second == 1) {
+        LM_PERM_LINE(v0, v1, lmColor::RED);
+        LM_PERM_LINE(v0, v0 + v0.normal_ * 10.0f, lmColor::RED);
+        LM_PERM_LINE(v1, v1 + v1.normal_ * 10.0f, lmColor::RED);
+      } else {
+        LM_PERM_LINE(v0, v1, lmColor::CYAN);
+        LM_PERM_LINE(v0, v0 + v0.normal_ * 10.0f, lmColor::YELLOW);
+        LM_PERM_LINE(v1, v1 + v1.normal_ * 10.0f, lmColor::YELLOW);
+        std::cout << "Found edges with triangles# " << it->second << std::endl;
+  } } }
+
+  std::cout << "Good edges: " << counts[true] << std::endl;
+  std::cout << "Bad edges: " << counts[false] << std::endl;
+
+
+  //
+  // Search for disjoint parts
+  //
+
+  ///// wrong
+  //++Triangle::tagMask_;
+  //++Triangle::tagMask_;
+  //for (size_t vi = 0; vi < vertices.size(); vi++) {
+  //  int tmpFlag = vertices[vi].tagFlag_;
+  //  if (vertices[vi].tagFlag_ != Triangle::tagMask_) {
+  //    LM_PERM_POINT(vertices[vi], lmColor::WHITE);
+  //  } else {
+  //    int i = 0;
+  //  }
+  //}
+
+  // Find invalid edges (not 2 triangles attached)
+
+    // Find holes ..
+
+  // Find overlapping triangles & edges ?
+
+  // Find degenerate triangles ?
+
 }
