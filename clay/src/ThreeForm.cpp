@@ -405,7 +405,9 @@ void ThreeFormApp::update()
 void ThreeFormApp::updateLeapAndMesh() {
   while (!_shutdown) {
     bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
-    if (_leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress)) {
+    _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+ 
+    if (1) {
       const double curTime = ci::app::getElapsedSeconds();
       const double lastSculptTime = sculpt_.getLastSculptTime();
 
