@@ -124,7 +124,7 @@ void ThreeFormApp::setup()
   _params->addParam( "Forward check", &_camera_params.enableForwardCheckForBackSnapping, "" );
   _params->addParam( "Override normal", &_camera_params.overrideNormal, "" );
   _params->addParam( "Camera reset", &_camera_params.forceCameraReset, "" );
-  
+  _params->addParam( "Camera orbit", &_camera_params.forceCameraOrbit, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_material.ambientFactor, "min=0.0 max=0.5 step=0.01" );

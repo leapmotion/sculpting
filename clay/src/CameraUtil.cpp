@@ -596,11 +596,108 @@ void CameraUtil::EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* par
   }
 }
 
+static Vector3 lmProjectAlongVec(const Vector3& in, const Vector3& projectionDirection) {
+  return in - projectionDirection * in.dot(projectionDirection);
+}
+
+void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
+  // Horizontal rotate
+  static const lmReal ORBIT_RATE = LM_2PI / 40.0f;
+  lmQuat q(AngleAxis( - ORBIT_RATE * deltaTime, Vector3::UnitY()));
+  transform.mul(q);
+  referencePoint.mul(q);
+
+  if (0)
+  {
+    // Vertical correction & oscillation
+    static lmReal phase = 0.0f;
+    static lmReal oscillationRate = 1.0f / 20.0f;
+    phase += LM_2PI * oscillationRate * deltaTime;
+    lmReal angleFromYPlane = std::cos(phase);
+
+    {
+      Vector3 refPtDir = referencePoint.position.normalized(); refPtDir.y() = 0.0f;
+      if (lmIsZero(refPtDir)) { refPtDir = Vector3::UnitX(); }
+      refPtDir.normalize();
+      Vector3 newRefPtDir = std::cos(angleFromYPlane) * refPtDir + std::sin(angleFromYPlane) * Vector3::UnitY();
+      newRefPtDir.normalize();
+      newRefPtDir *= referencePoint.position.norm();
+      referencePoint.position = newRefPtDir;
+    }
+
+    Vector3 camDir = GetCameraDirection(); camDir.y() = 0.0f;
+    if (lmIsZero(camDir)) { camDir = Vector3::UnitX(); }
+    camDir.normalize();
+    Vector3 newCamDir = std::cos(angleFromYPlane) * camDir - std::sin(angleFromYPlane) * Vector3::UnitY();
+    newCamDir.normalize();
+
+    lmQuat correction; correction.setFromTwoVectors(GetCameraDirection(), newCamDir);
+    transform.rotation = correction * transform.rotation;
+    transform.translation = referencePoint.position - GetCameraDirection() * referenceDistance;
+    referencePoint.normal = correction * referencePoint.normal;
+  }
+
+  // Orbit camera with raycast
+  if (1) {
+    // Camera position in horizontal plane
+    Vector3 camXZ = lmProjectAlongVec(transform.translation, Vector3::UnitY());
+    // Rotation around Y
+    lmQuat q0 = lmQuat::Identity();
+    if (!lmIsZero(camXZ)) {
+      q0.setFromTwoVectors(Vector3::UnitZ(), camXZ.normalized()); q0.normalize();
+    }
+
+    // Oscillating vertical rotation
+    static lmReal phase = 0.0f;
+    static lmReal oscillationRate = 1.0f / 20.0f;
+    phase += LM_2PI * oscillationRate * deltaTime;
+    //lmReal angleFromYPlane = std::cos(phase);
+    lmQuat q1(AngleAxis(std::cos(phase) * 30.0f * LM_DEG, Vector3::UnitX()));
+
+    // Desired camera direction
+    lmQuat q = q0 * q1;
+
+    lmReal refPtDistFromOrigin = referencePoint.position.norm();
+    // Do raycast
+    if (mesh) {
+      Vector3 rayStart = (q * Vector3::UnitZ()) * params.maxDist;
+      std::vector<lmRay> rays; rays.push_back(lmRay(rayStart, Vector3::Zero()));
+      std::vector<lmRayCastOutput> hits;
+      CastRays(mesh, rays, &hits);
+      // if raycast hit (move last reference point, remember last point)
+      if (hits[0].isSuccess()) {
+        lmReal distFromOrigin = hits[0].position.norm();
+        if (distFromOrigin + params.minDist > refPtDistFromOrigin + referenceDistance ) {
+          referenceDistance = distFromOrigin + params.minDist - refPtDistFromOrigin;
+        }
+
+        //// Update reference point.
+        //refPtDistFromOrigin = hits[0].position.norm();
+      }
+    }
+
+    // Fix reference point
+    referencePoint.position = (q * Vector3::UnitZ()) * refPtDistFromOrigin;
+    referencePoint.normal = q * Vector3::UnitZ();
+    // Fix cameara direction & position
+    transform.rotation = q;
+    transform.translation = (q * Vector3::UnitZ()) * (refPtDistFromOrigin + referenceDistance);
+  }
+
+}
+
 void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   LM_ASSERT(mesh, "Can't upate the camera without a mesh");
   UpdateMeshTransform(mesh, paramsInOut);
 
+  if (params.forceCameraOrbit) {
+    const lmReal deltaTime = 1.0f / 60.0f;
+    OrbitCamera(mesh, deltaTime);
+  } else {
+    // Don't do this when orbiting.
     EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
+  }
+
   //DebugDrawNormals(mesh, paramsIn);
   //ExperimentWithIsosurfaces(mesh, paramsInOut);
 

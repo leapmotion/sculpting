@@ -76,6 +76,7 @@ struct lmSurfacePoint {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
+
 // Camera object. todo: rename.
 class CameraUtil {
 public:
@@ -121,6 +122,7 @@ public:
     bool enableForwardCheckForBackSnapping;
 
     bool forceCameraReset;
+    bool forceCameraOrbit;
 
     Params() {
       isoMultiplier = 10.0f;
@@ -160,6 +162,8 @@ public:
       enableForwardCheckForBackSnapping = false;
 
       forceCameraReset = false;
+      forceCameraOrbit = false;
+
 // test new method
       ////freeRotationEnabled = false;
       ////enableNormalCorrection = false;
@@ -183,6 +187,9 @@ public:
 
   // Checks if mesh vertices exist with in a query-sphere's radius from the reference point, and reinitializes camera otherwise.
   void EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* paramsInOut);
+
+  // Orbit camera around the mesh
+  void OrbitCamera(const Mesh* mesh, lmReal deltaTime);
 
   // Records user mouse input from mouse events.
   // 
