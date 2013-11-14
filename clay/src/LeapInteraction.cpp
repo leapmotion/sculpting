@@ -33,17 +33,18 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
   _window_size = viewport;
   _reference_distance = referenceDistance;
   _fov = fov;
-  if (suppress)
+  if (suppress || !listener.isConnected())
   {
     _cur_frame = Leap::Frame::invalid();
+    _last_frame = Leap::Frame::invalid();
   }
-  else if (listener.isConnected() && listener.waitForFrame(_cur_frame, 33))
+  else if (listener.waitForFrame(_cur_frame, 33))
   {
     std::unique_lock<std::mutex> brushLock(_sculpt->getBrushMutex());
     std::unique_lock<std::mutex> tipsLock(_tips_mutex);
     const double time = Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp());
     const double prevTime = Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_last_frame.timestamp());
-    if (_last_frame.isValid() && fabs(time - prevTime) > MIN_TIME_BETWEEN_FRAMES) {
+    if (_last_frame.isValid() && _cur_frame.isValid() && time - prevTime > MIN_TIME_BETWEEN_FRAMES) {
       _sculpt->clearBrushes();
       _tips.clear();
       updateHandInfos(time);
@@ -68,7 +69,7 @@ void LeapInteraction::interact(double curTime)
   static const float LOG_SCALE_SMOOTH_STRENGTH = 0.9f;
 
   // create brushes
-  static const Vec3f LEAP_OFFSET(0, 200, 50);
+  static const Vec3f LEAP_OFFSET(0, 200, 100);
   static const Vec3f LEAP_SIZE(300, 300, 300);
   Leap::HandList hands = _cur_frame.hands();
   const float ui_mult = 1.0f - _ui->maxActivation();
@@ -143,6 +144,8 @@ void LeapInteraction::interact(double curTime)
             Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
             Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
 
+            const float fromCameraMult = ci::math<float>::clamp((LEAP_OFFSET.z/2.0f - tip_pos.z)/50.0f);
+
             float strength = strengthMult*ui_mult*_desired_brush_strength;
             strength = std::min(1.0f, strength * dtMult);
 
@@ -175,7 +178,7 @@ void LeapInteraction::interact(double curTime)
               strength = 0.0f;
             }
             if (strengthMult > 0.25f) {
-              _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, strengthMult);
+              _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, fromCameraMult*strengthMult);
             }
           }
         }
