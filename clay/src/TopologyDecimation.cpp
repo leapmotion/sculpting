@@ -82,7 +82,8 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
     iVertsDecimated.push_back(iVert);
   }
 
-  std::vector<int> newTris = mesh_->getTrianglesFromVertices(iVertsDecimated);
+  std::vector<int> newTris;
+  mesh_->getTrianglesFromVertices(iVertsDecimated, newTris);
   iTris.insert(iTris.end(),newTris.begin(),newTris.end());
 
   std::vector<int> iTrisTemp;

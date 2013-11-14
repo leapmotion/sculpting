@@ -59,8 +59,8 @@ public:
   const Vector3& getRotationAxis() const;
   float getRotationVelocity() const;
 
-  std::vector<int> getTrianglesFromVertices(const std::vector<int> &iVerts);
-  std::vector<int> getVerticesFromTriangles(const std::vector<int> &iTris);
+  void getTrianglesFromVertices(const std::vector<int> &iVerts, std::vector<int>& triangles);
+  void getVerticesFromTriangles(const std::vector<int> &iTris, std::vector<int>& vertices);
   void expandTriangles(std::vector<int> &iTris, int nRing);
   void expandVertices(std::vector<int> &iVerts, int nRing);
   void computeRingVertices(int iVert);

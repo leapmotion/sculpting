@@ -35,7 +35,9 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
     mesh_->expandTriangles(iTrisSubd,3);
 
   //undo-redo
-  mesh_->pushState(iTrisSubd,mesh_->getVerticesFromTriangles(iTrisSubd));
+  std::vector<int> iVertsSubd;
+  mesh_->getVerticesFromTriangles(iTrisSubd, iVertsSubd);
+  mesh_->pushState(iTrisSubd, iVertsSubd);
 
   split.resize(iTrisSubd.size(),0);
   subdivideTriangles(iTrisSubd, split, detailMaxSquared);
@@ -49,7 +51,8 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
 
   //undo-redo
   iTrisSubd = std::vector<int>(newTriangle.begin() + (nbTriangles - nbTrisInit), newTriangle.end());
-  mesh_->pushState(iTrisSubd,mesh_->getVerticesFromTriangles(iTrisSubd));
+  mesh_->getVerticesFromTriangles(iTrisSubd, iVertsSubd);
+  mesh_->pushState(iTrisSubd, iVertsSubd);
 
   iTris.insert(iTris.end(),newTriangle.begin(),newTriangle.end());
 

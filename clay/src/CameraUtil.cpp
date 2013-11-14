@@ -187,7 +187,7 @@ void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referen
   std::vector<int> verts;
   std::vector<int> tris;
   const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
-  tris = const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts);
+  const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts, tris);
 
   Geometry::GetClosestPointOutput closestPoint;
   closestPoint.distance = FLT_MAX;
@@ -265,7 +265,7 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
 
   if (params.userFaultyTriangles) {
     std::vector<int> tris;
-    tris = const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts);
+    const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts, tris);
     lmReal area = 0.0f;
     lmReal pureArea = 0.0f;
 
@@ -501,7 +501,8 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
     if (1) {
       std::vector<int> verts;
       const_cast<Mesh*>(mesh)->getVerticesInsideSphere(p, 50.0f, verts);
-      std::vector<int> tris = const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts);
+      std::vector<int> tris;
+      const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts, tris);
 
       lmReal eps = 0.5f;
       Vector3 epsXyz[] = { Vector3::Zero(), Vector3::UnitX() * eps, Vector3::UnitY() * eps, Vector3::UnitZ() * eps };

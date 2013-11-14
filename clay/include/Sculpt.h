@@ -79,6 +79,7 @@ private:
   Vector3 materialColor_;
   float autoSmoothStrength_;
   std::vector<int> brushVertices_;
+  std::vector<int> iTris_;
   mutable std::mutex brushMutex_;
   double lastSculptTime_;
   double lastUpdateTime_;

@@ -70,10 +70,10 @@ const Vector3& Mesh::getRotationAxis() const { return rotationAxis_; }
 float Mesh::getRotationVelocity() const { return rotationVelocitySmoother_.value; }
 
 /** Return all the triangles linked to a group of vertices */
-std::vector<int> Mesh::getTrianglesFromVertices(const std::vector<int> &iVerts)
+void Mesh::getTrianglesFromVertices(const std::vector<int> &iVerts, std::vector<int>& triangles)
 {
   ++Triangle::tagMask_;
-  std::vector<int> triangles;
+  triangles.clear();
   const int nbVerts = iVerts.size();
   for(int i=0;i<nbVerts;++i)
   {
@@ -89,14 +89,13 @@ std::vector<int> Mesh::getTrianglesFromVertices(const std::vector<int> &iVerts)
       }
     }
   }
-  return triangles;
 }
 
 /** Return all the triangles linked to a group of vertices */
-std::vector<int> Mesh::getVerticesFromTriangles(const std::vector<int> &iTris)
+void Mesh::getVerticesFromTriangles(const std::vector<int> &iTris, std::vector<int>& vertices)
 {
   ++Vertex::tagMask_;
-  std::vector<int> vertices;
+  vertices.clear();
   const int nbTris = iTris.size();
   for(int i=0;i<nbTris;++i)
   {
@@ -109,7 +108,6 @@ std::vector<int> Mesh::getVerticesFromTriangles(const std::vector<int> &iTris)
       }
     }
   }
-  return vertices;
 }
 
 /** Get more triangles (n-ring) */
@@ -231,7 +229,8 @@ void Mesh::getVerticesInsideSphere(const Vector3& point, float radiusWorldSquare
   VertexVector &vertices = getVertices();
   std::vector<Octree*> &leavesHit = getLeavesUpdate();
   std::vector<int> iTrisInCells = getOctree()->intersectSphere(point,radiusWorldSquared,leavesHit);
-  std::vector<int> iVerts = getVerticesFromTriangles(iTrisInCells);
+  std::vector<int> iVerts;
+  getVerticesFromTriangles(iTrisInCells, iVerts);
   int nbVerts = iVerts.size();
   ++Vertex::sculptMask_;
   for (int i=0;i<nbVerts;++i)
@@ -250,7 +249,8 @@ void Mesh::getVerticesInsideBrush(const Brush& brush, std::vector<int>& result) 
   VertexVector &vertices = getVertices();
   std::vector<Octree*> &leavesHit = getLeavesUpdate();
   std::vector<int> iTrisInCells = getOctree()->intersectSphere(brush.boundingSphereCenter(),brush.boundingSphereRadiusSq(),leavesHit);
-  std::vector<int> iVerts = getVerticesFromTriangles(iTrisInCells);
+  std::vector<int> iVerts;
+  getVerticesFromTriangles(iTrisInCells, iVerts);
   int nbVerts = iVerts.size();
   ++Vertex::sculptMask_;
   for (int i=0;i<nbVerts;++i)

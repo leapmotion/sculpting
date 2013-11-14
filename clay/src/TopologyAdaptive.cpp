@@ -11,7 +11,8 @@ void Topology::uniformisation(std::vector<int> &iTris, float detailMinSquared, f
 /** Adapt topology */
 void Topology::adaptTopology(std::vector<int> &iTris, float d2Thickness)
 {
-  std::vector<int> iVerts = mesh_->getVerticesFromTriangles(iTris);
+  std::vector<int> iVerts;
+  mesh_->getVerticesFromTriangles(iTris, iVerts);
   int nbVerts = iVerts.size();
   std::vector<int> vec;
   int nbVertices = vertices_.size();
@@ -25,7 +26,8 @@ void Topology::adaptTopology(std::vector<int> &iTris, float d2Thickness)
       vec.push_back(iVert);
   }
   checkCollisions(vec, d2Thickness);
-  std::vector<int> newTris = mesh_->getTrianglesFromVertices(iVertsDecimated_);
+  std::vector<int> newTris;
+  mesh_->getTrianglesFromVertices(iVertsDecimated_, newTris);
   iTris.insert(iTris.end(), newTris.begin(), newTris.end());
 
   std::vector<int> iTrisTemp;

@@ -78,7 +78,8 @@ void Picking::setPickedVerticesInsideSphere(float radiusWorldSquared)
   VertexVector &vertices = mesh_->getVertices();
   std::vector<Octree*> &leavesHit = mesh_->getLeavesUpdate();
   std::vector<int> iTrisInCells = mesh_->getOctree()->intersectSphere(intersectionPoint_,radiusWorldSquared,leavesHit);
-  std::vector<int> iVerts = mesh_->getVerticesFromTriangles(iTrisInCells);
+  std::vector<int> iVerts;
+  mesh_->getVerticesFromTriangles(iTrisInCells, iVerts);
   int nbVerts = iVerts.size();
   ++Vertex::sculptMask_;
   for (int i=0;i<nbVerts;++i)

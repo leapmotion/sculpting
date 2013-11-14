@@ -34,7 +34,8 @@ void Sculpt::remesh() {
   for (int i=0; i<numVertices; i++) {
     vertIndices.push_back(i);
   }
-  std::vector<int> iTris = mesh_->getTrianglesFromVertices(vertIndices);
+  std::vector<int> iTris;
+  mesh_->getTrianglesFromVertices(vertIndices, iTris);
 
   mesh_->pushState(iTris,vertIndices);
 
@@ -51,7 +52,7 @@ void Sculpt::remesh() {
 
   if(topoMode_==ADAPTIVE) {
     topo.adaptTopology(iTris, d2Thickness_);
-    vertIndices = mesh_->getVerticesFromTriangles(iTris);
+    mesh_->getVerticesFromTriangles(iTris, vertIndices);
   }
 
   mesh_->updateMesh(iTris, vertIndices);
@@ -72,23 +73,23 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
 {
   VertexVector &vertices = mesh_->getVertices();
 
-  std::vector<int> iTris = mesh_->getTrianglesFromVertices(iVertsSelected);
+  mesh_->getTrianglesFromVertices(iVertsSelected, iTris_);
 
   //undo-redo
-  mesh_->pushState(iTris,iVertsSelected);
+  mesh_->pushState(iTris_,iVertsSelected);
 
   Topology topo(mesh_,brush._radius_squared,brush._position);
   setAdaptiveParameters(brush._radius_squared);
   switch(topoMode_)
   {
   case ADAPTIVE :
-  case UNIFORMISATION : topo.uniformisation(iTris, d2Min_, d2Max_); break;
-  case DECIMATION : topo.decimation(iTris, d2Min_); break;
-  case SUBDIVISION : topo.subdivision(iTris, d2Max_); break;
+  case UNIFORMISATION : topo.uniformisation(iTris_, d2Min_, d2Max_); break;
+  case DECIMATION : topo.decimation(iTris_, d2Min_); break;
+  case SUBDIVISION : topo.subdivision(iTris_, d2Max_); break;
   default : break;
   }
 
-  iVertsSelected = mesh_->getVerticesFromTriangles(iTris);
+  mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
 
   MaskMatch pred(vertices);
   std::vector<int>::iterator it = std::remove_if(iVertsSelected.begin(), iVertsSelected.end(), pred);
@@ -114,11 +115,11 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
 
   if(topoMode_==ADAPTIVE)
   {
-    topo.adaptTopology(iTris, d2Thickness_);
-    iVertsSelected = mesh_->getVerticesFromTriangles(iTris);
+    topo.adaptTopology(iTris_, d2Thickness_);
+    mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
   }
 
-  mesh_->updateMesh(iTris,iVertsSelected);
+  mesh_->updateMesh(iTris_,iVertsSelected);
 }
 
 /** Smooth a group of vertices. New position is given by simple averaging */
