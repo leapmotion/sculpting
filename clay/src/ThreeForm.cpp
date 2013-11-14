@@ -59,9 +59,9 @@ ThreeFormApp::~ThreeFormApp()
 
 void ThreeFormApp::prepareSettings( Settings *settings )
 {
-  settings->setTitle("FreeForm");
+  settings->setTitle("Freeform");
   ci::app::Window::Format fmt;
-  fmt.setTitle("FreeForm");
+  fmt.setTitle("Freeform");
   fmt.setSize(800, 600);
   settings->prepareWindow(fmt);
 
@@ -91,6 +91,7 @@ void ThreeFormApp::setup()
   _bloom_light_threshold = 0.5f;
   _brush_color = ci::Color(0.65f, 0.75f, 0.8f);
 
+#if !LM_PRODUCTION_BUILD
   _params = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( Vec2i( 200, 400 ) ) );
   _params->minimize();
 
@@ -149,6 +150,7 @@ void ThreeFormApp::setup()
   _params->addParam( "Bloom threshold", &_bloom_light_threshold, "min=0.0 max=2.0 step=0.01" );
   _params->addParam( "Use FXAA", &_use_fxaa, "" );
   _params->addParam( "Draw Background", &_draw_background, "" );
+#endif
 
   _environment = new Environment();
 
@@ -754,7 +756,9 @@ void ThreeFormApp::draw()
     glPopMatrix();
   }
 
+#if !LM_PRODUCTION_BUILD
   _params->draw(); // draw the interface
+#endif
 }
 
 void ThreeFormApp::loadIcons() {
