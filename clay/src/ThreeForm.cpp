@@ -28,8 +28,6 @@ ThreeFormApp::ThreeFormApp()
   , _fov(60.0f)
   , _cam_dist(MIN_CAMERA_DIST)
   , _exposure(1.0f)
-  , _use_ao(false)
-  , _only_ao(false)
   , _contrast(1.2f)
   , mesh_(0)
   , symmetry_(false)
@@ -141,8 +139,6 @@ void ThreeFormApp::setup()
   _params->addText( "text", "label=`Draw parameters:`" );
   _params->addParam( "Draw UI", &_draw_ui, "" );
   _params->addParam( "Draw edges", &_draw_edges, "" );
-  _params->addParam( "Draw AO", &_use_ao, "" );
-  _params->addParam( "Only AO", &_only_ao, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`HDR parameters:`" );
   _params->addParam( "Exposure", &_exposure, "min=0.05 max=8.0 step=0.01" );
@@ -712,8 +708,6 @@ void ThreeFormApp::draw()
     _screen_shader.uniform( "height", height );
     _screen_shader.uniform( "exposure", _exposure * exposure_mult);
     _screen_shader.uniform( "contrast", _contrast );
-    _screen_shader.uniform( "use_ao", _use_ao );
-    _screen_shader.uniform( "only_ao", _only_ao );
     _screen_shader.uniform( "bloom_strength", _bloom_strength * static_cast<float>(_bloom_visible) );
     _screen_shader.uniform( "vignette_radius", static_cast<float>(0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2))) );
     _screen_shader.uniform( "vignette_strength", 0.75f );

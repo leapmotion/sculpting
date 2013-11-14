@@ -119,8 +119,6 @@ private:
   Color _brush_color;
   bool _draw_edges;
   Material _material;
-  bool _use_ao;
-  bool _only_ao;
   std::string _last_loaded_file;
   float _ui_zoom;
 

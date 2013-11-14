@@ -181,7 +181,7 @@ public:
         case Menu::GENERAL_EXIT: return "Exit"; break;
         case Menu::OBJECT_LOAD: return "Load"; break;
         case Menu::OBJECT_EXPORT: return "Export"; break;
-        case Menu::OBJECT_BALL: return "Ball"; break;
+        case Menu::OBJECT_BALL: return "Sphere"; break;
         case Menu::OBJECT_CAN: return "Can"; break;
         case Menu::OBJECT_DONUT: return "Donut"; break;
         case Menu::OBJECT_SHEET: return "Sheet"; break;
