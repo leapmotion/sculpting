@@ -50,15 +50,27 @@ inline T lmInterpolate(lmReal t, const T& v0, const T& v1) {
   return (1-t)*v0+t*v1;
 }
 
+#define LM_EPSILON 0.00001f
+#define LM_EPSILON_SQR (LM_EPSILON * LM_EPSILON)
+#define LM_PI 3.14159265359f
+#define LM_2PI (2.0f * 3.14159265359f)
+#define LM_DEG (LM_PI / 180.0f) // deg to radians
+
 inline bool lmIsNormalized(const Vector3& v) { lmReal sqn = v.squaredNorm(); return 0.99f < sqn && sqn < 1.01f; }
+inline bool lmIsZero(const Vector3& v) { return v.squaredNorm() < LM_EPSILON_SQR; }
 inline bool lmIsFinite(const Vector3& v) { return v.norm() < FLT_MAX; }
+template <typename T>
+inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= v && v <= max; }
 
 #define TODO(owner, message) LM_LOG << #owner << ": " << #message << std::endl;
 
-#define LM_EPSILON 0.00001f
 
-#define LM_BREAK __asm { int 3 }
-
-#define LM_ASSERT(condition, message) if (!(condition)) LM_BREAK;
+#if 1 // defined _DEBUG
+# define LM_BREAK __asm { int 3 }
+# define LM_ASSERT(condition, message) if (!(condition)) LM_BREAK;
+#else
+# define LM_BREAK
+# define LM_ASSERT(condition, message)
+#endif
 
 #define LM_PRODUCTION_BUILD 0

@@ -123,6 +123,7 @@ void ThreeFormApp::setup()
   _params->addParam( "Back snapping", &_camera_params.enableBackSnapping, "" );
   _params->addParam( "Forward check", &_camera_params.enableForwardCheckForBackSnapping, "" );
   _params->addParam( "Override normal", &_camera_params.overrideNormal, "" );
+  _params->addParam( "Camera reset", &_camera_params.forceCameraReset, "" );
   
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
@@ -380,7 +381,7 @@ void ThreeFormApp::update()
 
   //_focus_point = to;
   _focus_point = _camera_util->referencePoint.position;
-  _focus_radius = _camera_params.sphereRadiusMultiplier * _camera_util->referenceDistance;
+  _focus_radius = _camera_util->GetSphereQueryRadius();
 
   _campos_smoother.Update(campos, curTime, 0.9f);
   _lookat_smoother.Update(ToVec3f(to), curTime, 0.9f);

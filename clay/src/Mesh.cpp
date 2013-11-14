@@ -28,7 +28,9 @@ Mesh::~Mesh()
 
 /** Setters/Getters */
 TriangleVector& Mesh::getTriangles() { return triangles_; }
+const TriangleVector& Mesh::getTriangles() const { return triangles_; }
 VertexVector& Mesh::getVertices() { return vertices_; }
+const VertexVector& Mesh::getVertices() const { return vertices_; }
 std::vector<Octree*>& Mesh::getLeavesUpdate() { return leavesUpdate_; }
 Triangle& Mesh::getTriangle(int i) { return triangles_[i]; }
 const Triangle& Mesh::getTriangle(int i) const { return triangles_[i]; }

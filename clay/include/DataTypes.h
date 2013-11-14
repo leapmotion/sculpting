@@ -31,6 +31,17 @@ struct lmTransform {
     translation.setZero();
     rotation.setIdentity();
   }
+
+  void mul(const lmQuat& q) {
+    translation = q * translation;
+    rotation = rotation * q;
+  }
+
+  void transformVec(const Vector3& in, Vector3* out) {
+    *out = rotation * in + translation;
+  }
+
+  Vector3 operator*(const Vector3& v) { return rotation * v + translation; }
 };
 
 struct Material {

@@ -35,7 +35,9 @@ public:
   Mesh();
   ~Mesh();
   TriangleVector& getTriangles();
+  const TriangleVector& getTriangles() const;
   VertexVector& getVertices();
+  const VertexVector& getVertices() const;
   std::vector<Octree*>& getLeavesUpdate();
   Triangle& getTriangle(int i);
   const Triangle& getTriangle(int i) const;

@@ -51,7 +51,9 @@ namespace Geometry {
     lmReal distance;
     int triIdx;
 
-    GetClosestPointOutput() : position(Vector3::Zero()), normal(Vector3::Zero()), distance(-1.0f), triIdx(-1) {}
+    GetClosestPointOutput() : position(Vector3::Zero()), normal(Vector3::Zero()), distance(FLT_MAX), triIdx(-1) {}
+    void setInvalid() { position.setZero(); normal.setZero(); distance = FLT_MAX; triIdx = -1; }
+    bool isValid() const { return distance < FLT_MAX; }
   };
 
   void getClosestPoint(const GetClosestPointInput& input, GetClosestPointOutput* output);

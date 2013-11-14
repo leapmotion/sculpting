@@ -59,6 +59,20 @@ struct lmSurfacePoint {
 
   lmSurfacePoint() {}
   lmSurfacePoint(const Vector3& p, const Vector3& n) : position(p), normal(n) {}
+  void set(const Vector3& p, const Vector3& n) { position = p; normal = n; }
+  void setZero() { position.setZero(); normal.setZero(); }
+
+  void mul(const lmQuat& q) {
+    position = q * position;
+    normal = q * normal;
+  }
+
+  void mul(const lmTransform& t) {
+    LM_ASSERT(false, "Never used.");
+    position = t.rotation * position + t.translation;
+    normal = t.rotation * normal;
+  }
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
@@ -77,9 +91,6 @@ public:
     bool drawDebugLines;
     bool drawSphereQueryResults;
 
-    // Orbiting vs detailed mode blending
-    lmReal blendMinDist;
-    lmReal blendMaxDist;
 
     // Detailed camera options
     bool useSphereQuery;
@@ -109,6 +120,7 @@ public:
     bool enableBackSnapping;
     bool enableForwardCheckForBackSnapping;
 
+    bool forceCameraReset;
 
     Params() {
       isoMultiplier = 10.0f;
@@ -120,9 +132,6 @@ public:
       smoothingFactor = 0.02f;
       drawDebugLines = false;
       drawSphereQueryResults = false;
-
-      blendMinDist = 100.0f;
-      blendMaxDist = 200.0f;
 
       useSphereQuery = true;
       sphereRadiusMultiplier = 0.35f;
@@ -150,6 +159,7 @@ public:
       enableBackSnapping = false;
       enableForwardCheckForBackSnapping = false;
 
+      forceCameraReset = false;
 // test new method
       ////freeRotationEnabled = false;
       ////enableNormalCorrection = false;
@@ -167,6 +177,13 @@ public:
   // Set camera from standard parameters: camera-from, camera-to, and up vector.
   void SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance);
 
+  // Reset camera on the model. 
+  // This finds the forwad-facing supporting vertex along the camera directino and relocates the reference point and camera translation.
+  void ResetCamera(const Mesh* mesh, const Vector3& cameraDirection);
+
+  // Checks if mesh vertices exist with in a query-sphere's radius from the reference point, and reinitializes camera otherwise.
+  void EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* paramsInOut);
+
   // Records user mouse input from mouse events.
   // 
   // Accumulates data for later processing in UpdateCamera.
@@ -183,6 +200,9 @@ public:
   void UpdateCamera(const Mesh* mesh, Params* paramsInOut);
 
   lmTransform GetCameraInWorldSpace();
+
+  // Get radius for mesh spehre queries.
+  inline lmReal GetSphereQueryRadius();
 
 private:
 
@@ -208,7 +228,7 @@ private:
   void FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices );
 
   // Performs a sphere query on the mesh, and returns average normal of the visible surface
-  void VecGetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, lmSurfacePoint* pureAvgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut);
+  void GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radiusSquared, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, lmSurfacePoint* pureAvgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut);
 
   // Helper functions.
 
@@ -231,10 +251,12 @@ private:
   void CorrectCameraUpVector(lmReal dt, const Vector3& up);
 
   // Rotate vectors to mesh's space
-  Vector3 ToWorldSpace(const Vector3& v);
+  inline Vector3 ToWorldSpace(const Vector3& v);
 
   // Rotate vectors to mesh's space
-  Vector3 ToMeshSpace(const Vector3& v);
+  inline Vector3 ToMeshSpace(const Vector3& v);
+
+  inline Vector3 GetCameraDirection() const;
 
   // For simplicity.
 public:
