@@ -1,5 +1,5 @@
-#ifndef __ThreeForm_h__
-#define __ThreeForm_h__
+#ifndef __Freeform_h__
+#define __Freeform_h__
 
 #include "cinder/app/AppNative.h"
 #include "cinder/params/Params.h"
@@ -26,15 +26,15 @@ using namespace ci::app;
 class CameraUtil;
 class DebugDrawUtil;
 
-class ThreeFormApp : public AppNative
+class FreeformApp : public AppNative
 {
 public:
 
   enum AAMode { NONE, FXAA, MSAA };
   enum Shape { BALL, CAN, DONUT, SHEET, NUM_SHAPES };
 
-  ThreeFormApp();
-  ~ThreeFormApp();
+  FreeformApp();
+  ~FreeformApp();
   void prepareSettings(Settings *settings);
   void toggleFullscreen(const std::string& str);
   void setup();

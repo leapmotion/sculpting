@@ -13,7 +13,7 @@
 #include <vector>
 
 class LeapInteraction;
-class ThreeFormApp;
+class FreeformApp;
 
 class Menu {
 public:
@@ -405,7 +405,7 @@ public:
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
   float maxActivation(Vector2& pos) const;
-  void handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh);
+  void handleSelections(Sculpt* sculpt, LeapInteraction* leap, FreeformApp* app, Mesh* mesh);
   void setRegularFont(const ci::Font& font) {
     Menu::g_font = font;
     Menu::g_textureFont = ci::gl::TextureFont::create(font);

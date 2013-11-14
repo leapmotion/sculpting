@@ -5,7 +5,7 @@
 #include "Sculpt.h"
 #include "LeapInteraction.h"
 #include "Environment.h"
-#include "ThreeForm.h"
+#include "Freeform.h"
 
 using namespace ci;
 using namespace ci::gl;
@@ -551,7 +551,7 @@ float UserInterface::maxActivation(Vector2& pos) const {
   return max;
 }
 
-void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh) {
+void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, FreeformApp* app, Mesh* mesh) {
   if (_first_selection_check) {
     initializeMenu(_type_menu);
     initializeMenu(_strength_menu);
@@ -630,10 +630,10 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Thre
     switch (entry.m_entryType) {
     case Menu::OBJECT_LOAD: app->loadFile(); break;
     case Menu::OBJECT_EXPORT: app->saveFile(); break;
-    case Menu::OBJECT_BALL: app->loadShape(ThreeFormApp::BALL); break;
-    case Menu::OBJECT_CAN: app->loadShape(ThreeFormApp::CAN); break;
-    case Menu::OBJECT_DONUT: app->loadShape(ThreeFormApp::DONUT); break;
-    case Menu::OBJECT_SHEET: app->loadShape(ThreeFormApp::SHEET); break;
+    case Menu::OBJECT_BALL: app->loadShape(FreeformApp::BALL); break;
+    case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
+    case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
+    case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
     }
     _object_menu.clearSelection();
   }

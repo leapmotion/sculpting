@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "ThreeForm.h"
+#include "Freeform.h"
 #include "Files.h"
 #include <time.h>
 
@@ -18,7 +18,7 @@ const float MAX_FOV = 90.0f;
 
 
 //*********************************************************
-ThreeFormApp::ThreeFormApp()
+FreeformApp::FreeformApp()
   : _environment(0)
   , _aa_mode(MSAA)
   , _theta(100.f)
@@ -44,7 +44,7 @@ ThreeFormApp::ThreeFormApp()
   _debug_draw_util = &DebugDrawUtil::getInstance();
 }
 
-ThreeFormApp::~ThreeFormApp()
+FreeformApp::~FreeformApp()
 {
 #if 0
   delete _environment;
@@ -58,7 +58,7 @@ ThreeFormApp::~ThreeFormApp()
 #endif
 }
 
-void ThreeFormApp::prepareSettings( Settings *settings )
+void FreeformApp::prepareSettings( Settings *settings )
 {
   settings->setTitle("Freeform");
   ci::app::Window::Format fmt;
@@ -70,13 +70,13 @@ void ThreeFormApp::prepareSettings( Settings *settings )
   enableVerticalSync(true);
 }
 
-void ThreeFormApp::toggleFullscreen(const std::string& str)
+void FreeformApp::toggleFullscreen(const std::string& str)
 {
   bool full = isFullScreen();
   setFullScreen(!full);
 }
 
-void ThreeFormApp::setup()
+void FreeformApp::setup()
 {
   FreeImage_Initialise();
   enableAlphaBlending();
@@ -193,17 +193,17 @@ void ThreeFormApp::setup()
   }
 #endif
 
-  _mesh_thread = std::thread(&ThreeFormApp::updateLeapAndMesh, this);
+  _mesh_thread = std::thread(&FreeformApp::updateLeapAndMesh, this);
 
   loadShape(BALL);
 }
 
-void ThreeFormApp::shutdown() {
+void FreeformApp::shutdown() {
   _shutdown = true;
   FreeImage_DeInitialise();
 }
 
-void ThreeFormApp::resize()
+void FreeformApp::resize()
 {
   static const int DOWNSCALE_FACTOR = 4;
 
@@ -254,19 +254,19 @@ void ThreeFormApp::resize()
   glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
-void ThreeFormApp::mouseDown( MouseEvent event )
+void FreeformApp::mouseDown( MouseEvent event )
 {
   _mouse_down = true;
 
   _current_mouse_pos = _previous_mouse_pos = _initial_mouse_pos = event.getPos();
 }
 
-void ThreeFormApp::mouseUp( MouseEvent event )
+void FreeformApp::mouseUp( MouseEvent event )
 {
   _mouse_down = false;
 }
 
-void ThreeFormApp::mouseDrag( MouseEvent event )
+void FreeformApp::mouseDrag( MouseEvent event )
 {
   _previous_mouse_pos = _current_mouse_pos;
   _current_mouse_pos = event.getPos();
@@ -277,20 +277,20 @@ void ThreeFormApp::mouseDrag( MouseEvent event )
   _camera_util->RecordUserInput(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
 }
 
-void ThreeFormApp::mouseWheel( MouseEvent event)
+void FreeformApp::mouseWheel( MouseEvent event)
 {
   //float off = event.getWheelIncrement();
   _cam_dist -= 0.1f*event.getWheelIncrement();
   _cam_dist = std::min(MAX_CAMERA_DIST, std::max(0.5f, _cam_dist));
 }
 
-void ThreeFormApp::mouseMove( MouseEvent event)
+void FreeformApp::mouseMove( MouseEvent event)
 {
   _previous_mouse_pos = _current_mouse_pos;
   _current_mouse_pos = event.getPos();
 }
 
-void ThreeFormApp::keyDown( KeyEvent event )
+void FreeformApp::keyDown( KeyEvent event )
 {
   switch( event.getChar() )
   {
@@ -304,7 +304,7 @@ void ThreeFormApp::keyDown( KeyEvent event )
   }
 }
 
-void ThreeFormApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
+void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
 {
   _theta -= dTheta;
   _phi += dPhi;
@@ -316,7 +316,7 @@ void ThreeFormApp::updateCamera(const float dTheta, const float dPhi, const floa
   _fov = math<float>::clamp(_fov, 40.f, 110.f);
 }
 
-void ThreeFormApp::update()
+void FreeformApp::update()
 {
   const double curTime = ci::app::getElapsedSeconds();
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
@@ -408,7 +408,7 @@ void ThreeFormApp::update()
   _last_update_time = curTime;
 }
 
-void ThreeFormApp::updateLeapAndMesh() {
+void FreeformApp::updateLeapAndMesh() {
   while (!_shutdown) {
     bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     bool haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
@@ -430,7 +430,7 @@ void ThreeFormApp::updateLeapAndMesh() {
   }
 }
 
-void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
+void FreeformApp::renderSceneToFbo(Camera& _Camera)
 {
   const double curTime = ci::app::getElapsedSeconds();
 
@@ -615,7 +615,7 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
   _screen_fbo.unbindFramebuffer();
 }
 
-void ThreeFormApp::createBloom()
+void FreeformApp::createBloom()
 {
   const float horizSize = _bloom_size / _horizontal_blur_fbo.getWidth();
   _horizontal_blur_fbo.bindFramebuffer();
@@ -648,7 +648,7 @@ void ThreeFormApp::createBloom()
   _vertical_blur_fbo.unbindFramebuffer();
 }
 
-void ThreeFormApp::draw()
+void FreeformApp::draw()
 {
   static const float LOADING_DARKEN_TIME = 2.0f;
   static const float LOADING_LIGHTEN_TIME = 2.0f;
@@ -762,7 +762,7 @@ void ThreeFormApp::draw()
 #endif
 }
 
-void ThreeFormApp::loadIcons() {
+void FreeformApp::loadIcons() {
   std::vector<ci::gl::Texture>& icons = Menu::g_icons;
   icons.resize(Menu::NUM_ICONS);
 
@@ -785,7 +785,7 @@ void ThreeFormApp::loadIcons() {
   icons[Menu::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
 }
 
-void ThreeFormApp::loadShapes() {
+void FreeformApp::loadShapes() {
   ci::DataSourceRef ball = loadResource(RES_BALL_OBJ);
   ci::DataSourceRef can = loadResource(RES_CAN_OBJ);
   ci::DataSourceRef donut = loadResource(RES_DONUT_OBJ);
@@ -800,27 +800,27 @@ void ThreeFormApp::loadShapes() {
   shapes_[SHEET] = std::string((char*)sheetBuf.getData(), sheetBuf.getDataSize());
 }
 
-void ThreeFormApp::setMaterial(const Material& mat) {
+void FreeformApp::setMaterial(const Material& mat) {
   _material = mat;
 }
 
-void ThreeFormApp::setWireframe(bool wireframe) {
+void FreeformApp::setWireframe(bool wireframe) {
   _draw_edges = wireframe;
 }
 
-void ThreeFormApp::toggleWireframe() {
+void FreeformApp::toggleWireframe() {
   _draw_edges = !_draw_edges;
 }
 
-void ThreeFormApp::setSymmetry(bool symmetry) {
+void FreeformApp::setSymmetry(bool symmetry) {
   symmetry_ = symmetry;
 }
 
-void ThreeFormApp::toggleSymmetry() {
+void FreeformApp::toggleSymmetry() {
   symmetry_ = !symmetry_;
 }
 
-void ThreeFormApp::setEnvironment(const std::string& str) {
+void FreeformApp::setEnvironment(const std::string& str) {
   if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE) {
     return;
   }
@@ -833,10 +833,10 @@ void ThreeFormApp::setEnvironment(const std::string& str) {
   _loading_thread = std::thread(&Environment::setEnvironment, _environment, str);
 }
 
-void ThreeFormApp::toggleSound() {
+void FreeformApp::toggleSound() {
 }
 
-int ThreeFormApp::loadFile()
+int FreeformApp::loadFile()
 {
   // *** open mesh file ***
   std::vector<std::string> file_extensions;
@@ -894,7 +894,7 @@ int ThreeFormApp::loadFile()
   return err; // error
 }
 
-int ThreeFormApp::loadShape(Shape shape) {
+int FreeformApp::loadShape(Shape shape) {
   std::stringstream ss(shapes_[shape]);
   Files files;
   Mesh* newMesh = files.loadOBJ(ss);
@@ -914,7 +914,7 @@ int ThreeFormApp::loadShape(Shape shape) {
   return -1;
 }
 
-int ThreeFormApp::saveFile()
+int FreeformApp::saveFile()
 {
   if (!mesh_) {
     return -1;
@@ -957,7 +957,7 @@ int ThreeFormApp::saveFile()
 
 int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic::prepareLaunch();
-  cinder::app::AppBasic *app = new ThreeFormApp;
+  cinder::app::AppBasic *app = new FreeformApp;
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
 #if _WIN32
   cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm");
@@ -968,6 +968,6 @@ int main( int argc, char * const argv[] ) {
   return 0;
 }
 #else
-//CINDER_APP_NATIVE( ThreeFormApp, RendererGl )
-CINDER_APP_NATIVE( ThreeFormApp, RendererGl(RendererGl::AA_NONE) )
+//CINDER_APP_NATIVE( FreeformApp, RendererGl )
+CINDER_APP_NATIVE( FreeformApp, RendererGl(RendererGl::AA_NONE) )
 #endif

@@ -14,7 +14,7 @@
     <ProjectGuid>{7CC1556F-90B6-4054-82AC-241DBD630142}</ProjectGuid>
     <RootNamespace>claydemo</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>3Form</ProjectName>
+    <ProjectName>Freeform</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -131,6 +131,7 @@
     <ClCompile Include="..\..\src\DebugDrawUtil.cpp" />
     <ClCompile Include="..\..\src\Environment.cpp" />
     <ClCompile Include="..\..\src\Files.cpp" />
+    <ClCompile Include="..\..\src\Freeform.cpp" />
     <ClCompile Include="..\..\src\Geometry.cpp" />
     <ClCompile Include="..\..\src\GLBuffer.cpp" />
     <ClCompile Include="..\..\src\Grid.cpp" />
@@ -145,7 +146,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\src\ThreeForm.cpp" />
     <ClCompile Include="..\..\src\Tools.cpp" />
     <ClCompile Include="..\..\src\TopologyAdaptive.cpp" />
     <ClCompile Include="..\..\src\TopologyDecimation.cpp" />
@@ -167,6 +167,7 @@
     <ClInclude Include="..\..\include\DebugDrawUtil.h" />
     <ClInclude Include="..\..\include\Environment.h" />
     <ClInclude Include="..\..\include\Files.h" />
+    <ClInclude Include="..\..\include\Freeform.h" />
     <ClInclude Include="..\..\include\Geometry.h" />
     <ClInclude Include="..\..\include\GLBuffer.h" />
     <ClInclude Include="..\..\include\Grid.h" />
@@ -179,7 +180,6 @@
     <ClInclude Include="..\..\include\Sculpt.h" />
     <ClInclude Include="..\..\include\State.h" />
     <ClInclude Include="..\..\include\StdAfx.h" />
-    <ClInclude Include="..\..\include\ThreeForm.h" />
     <ClInclude Include="..\..\include\Tools.h" />
     <ClInclude Include="..\..\include\Topology.h" />
     <ClInclude Include="..\..\include\Triangle.h" />
