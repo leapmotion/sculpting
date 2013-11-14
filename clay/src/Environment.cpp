@@ -44,9 +44,7 @@ void Environment::setEnvironment(const std::string& name) {
   _loading_state = LOADING_STATE_LOADING;
 
   std::string* filenames = env->_dawn_images;
-  if (!loadImageSet(filenames, bitmaps, bitmap_widths, bitmap_heights, internal_formats, formats) ||
-    !loadImageSet(env->_depth_images, depth_bitmaps, depth_bitmap_widths, depth_bitmap_heights, depth_internal_formats, depth_formats))
-  {
+  if (!loadImageSet(filenames, bitmaps, bitmap_widths, bitmap_heights, internal_formats, formats)) {
     _loading_state_change_time = getElapsedSeconds();
     _loading_state = LOADING_STATE_NONE;
     return;
@@ -96,14 +94,12 @@ void Environment::transitionComplete() {
   // free old textures
   if (!_cur_environment.empty()) {
     glDeleteTextures(1, &_cubemap_sky);
-    glDeleteTextures(1, &_cubemap_depth);
     glDeleteTextures(1, &_cubemap_irradiance);
     glDeleteTextures(1, &_cubemap_radiance);
   }
 
   // generate OpenGL cubemap textures
   prepareCubemap(&_cubemap_sky, 1);
-  prepareCubemap(&_cubemap_depth, 1);
   prepareCubemap(&_cubemap_irradiance, 1);
   prepareCubemap(&_cubemap_radiance, MIPMAP_LEVELS);
 
@@ -111,17 +107,6 @@ void Environment::transitionComplete() {
   int width, height;
   GLint internal_format;
   GLenum format;
-
-  // transfer depth images into OpenGL
-  for (int i=0; i<6; i++) {
-    images[i] = reinterpret_cast<float*>(FreeImage_GetBits(depth_bitmaps[i]));
-  }
-  width = depth_bitmap_widths[0];
-  height = depth_bitmap_heights[0];
-  internal_format = depth_internal_formats[0];
-  format = depth_formats[0];
-  saveImagesToCubemap(_cubemap_depth, internal_format, 0, width, height, format, images);
-  freeBitmaps(depth_bitmaps);
 
   // transfer sky images into OpenGL
   for (int i=0; i<6; i++) {
