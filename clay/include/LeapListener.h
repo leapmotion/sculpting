@@ -20,6 +20,7 @@ public:
 private:
 
   bool _is_connected;
+  double _last_frame_time;
   std::deque<Leap::Frame> _frameQueue;
   std::mutex _mutex;
   std::condition_variable _condition;

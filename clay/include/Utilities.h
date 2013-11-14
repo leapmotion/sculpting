@@ -116,12 +116,13 @@ namespace Utilities {
   struct ExponentialFilter {
     ExponentialFilter() : first(true), lastTimeSeconds(0), targetFramerate(100) { }
     void Update(const T& data, double timeSeconds, float smoothStrength) {
-      if (first) {
+      if (first || timeSeconds < lastTimeSeconds) {
         value = data;
         first = false;
       } else {
         const float dtExponent = static_cast<float>((timeSeconds - lastTimeSeconds) * targetFramerate);
         smoothStrength = std::pow(smoothStrength, dtExponent);
+        assert(smoothStrength >= 0.0f && smoothStrength <= 1.0f);
         value = smoothStrength*value + (1.0f-smoothStrength)*data;
       }
       lastTimeSeconds = timeSeconds;
