@@ -129,13 +129,14 @@ void Sculpt::smooth(const std::vector<int> &iVerts, const Brush& brush)
   Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
   Vector3Vector smoothColors(nbVerts, Vector3::Zero());
   laplacianSmooth(iVerts,smoothVerts, smoothColors);
+  float deformationIntensity = 0.5f;
 
   float dMove = sqrtf(d2Move_);
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
     Vertex &vert = vertices[iVerts[i]];
-    Vector3 displ = (smoothVerts[i]-vert)*brush._strength;
+    Vector3 displ = deformationIntensity*(smoothVerts[i]-vert)*brush._strength;
     vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
     float displLength = displ.squaredNorm();
     if(displLength<=d2Move_)
@@ -175,7 +176,7 @@ void Sculpt::draw(const std::vector<int> &iVerts, const Brush& brush)
   VertexVector &vertices = mesh_->getVertices();
   int nbVerts = iVerts.size();
   const float dMove = std::sqrt(d2Move_);
-  float deformationIntensity = brush._radius*0.1f;
+  float deformationIntensity = brush._radius*0.05f;
   if (sculptMode_== DEFLATE) {
     deformationIntensity = -deformationIntensity;
   }

@@ -48,6 +48,7 @@ ThreeFormApp::ThreeFormApp()
 
 ThreeFormApp::~ThreeFormApp()
 {
+#if 0
   delete _environment;
   std::unique_lock<std::mutex> lock(_mesh_mutex);
   if (mesh_) {
@@ -56,6 +57,7 @@ ThreeFormApp::~ThreeFormApp()
 
   delete _camera_util;
   //delete _debug_draw_util;
+#endif
 }
 
 void ThreeFormApp::prepareSettings( Settings *settings )
@@ -569,7 +571,7 @@ void ThreeFormApp::renderSceneToFbo(Camera& _Camera)
   }
 
   const double lastSculptTime = sculpt_.getLastSculptTime();
-  Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.5 ? 0.0f : 1.0f);
+  Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.5 ? 0.25f : 1.0f);
 
   // draw brushes
   _brush_shader.bind();
@@ -839,31 +841,6 @@ void ThreeFormApp::setEnvironment(const std::string& str) {
 
 void ThreeFormApp::toggleSound() {
 }
-
-#if 0
-irrklang::ISound* ParticleDemoApp::createSoundResource(DataSourceRef ref, const char* name) {
-  // Obtain the buffer backing the loaded resource:
-  if ( m_soundEngine ) {
-    auto& buf = ref->getBuffer();
-
-    // Attempt to load the stream from the buffer on the data source:
-    auto ss = m_soundEngine->addSoundSourceFromMemory(
-                                                      buf.getData(),
-                                                      buf.getDataSize(),
-                                                      name,
-                                                      false
-                                                      );
-
-    m_audioSourceRefs.push_back(ref);
-    ss->setForcedStreamingThreshold(300000);
-
-    // Done loading the stream, return the source:
-    return m_soundEngine->play2D(ss, true, true, true, irrklang::ESM_NO_STREAMING);
-  }
-
-  return NULL;
-};
-#endif
 
 int ThreeFormApp::loadFile()
 {

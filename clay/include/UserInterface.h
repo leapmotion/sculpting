@@ -129,7 +129,7 @@ public:
       } else if (drawMethod == STRING) {
         glPushMatrix();
         gl::translate(pos);
-        const float scale = (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.03f) / FONT_SIZE;
+        const float scale = (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.025f) / FONT_SIZE;
         glScalef(scale, scale, scale);
         const std::string str = toString();
         const ci::Vec2f stringSize = g_textureFont->measureString(str);
@@ -229,7 +229,7 @@ public:
         mat.diffuseFactor = 0.15f;
         mat.reflectionFactor = 0.7f;
         mat.surfaceColor << 0.4f, 0.45f, 0.5f;
-        mat.refractionIndex = 0.45f;
+        mat.refractionIndex = 0.5f;
         break;
       case Menu::MATERIAL_METAL:
         mat.reflectionFactor = 0.5f;
@@ -288,6 +288,8 @@ public:
   static ci::Vec2f g_shadowOffset;
   static float g_zoomFactor;
   static float g_maxMenuActivation;
+  static Utilities::ExponentialFilter<float> g_maxMenuActivationSmoother;
+  static Vector2 g_forceCenter;
 
   Menu();
   void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
@@ -323,12 +325,12 @@ public:
   ci::Color getActiveColor() const { return m_activeColor; }
 
   static const Vector2& getWindowSize() { return g_windowSize; }
-  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985f); }
+  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.975f); }
 
 private:
 
   static float getOpacity(float activation) {
-    static const float NORMAL_OPACITY = 0.7f;
+    static const float NORMAL_OPACITY = 0.5f;
     static const float ACTIVATED_OPACITY = 1.0f;
     return g_sculptMult.value * (NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation);
   }
@@ -344,18 +346,30 @@ private:
     return ci::Vec2f(scaled.data());
   }
 
+  static Vector2 forceAt(const Vector2& pos) {
+    static const float FORCE_STRENGTH = 0.05f;
+    const Vector2 diff = pos - g_forceCenter;
+    const float normSq = diff.squaredNorm();
+    if (normSq > 0.001f) {
+      return g_maxMenuActivationSmoother.value*FORCE_STRENGTH*(diff/normSq);
+    }
+    return Vector2::Zero();
+  }
+
   static const float RING_THICKNESS_RATIO;
   static const float BASE_OUTER_RADIUS;
   static const float BASE_INNER_RADIUS;
   static const float OUTER_RADIUS_PER_ENTRY;
   static const float SWEEP_ANGLE;
 
+  typedef std::vector<MenuEntry, Eigen::aligned_allocator<MenuEntry> > MenuEntryVector;
+
   Utilities::ExponentialFilter<float> m_activation;
   float m_outerRadius;
   float m_innerRadius;
   float m_angleOffset;
   float m_sweepAngle;
-  std::vector<MenuEntry> m_entries;
+  MenuEntryVector m_entries;
   int m_curSelectedEntry;
   int m_prevSelectedEntry;
   double m_selectionTime;
@@ -390,6 +404,7 @@ public:
   void draw() const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
+  float maxActivation(Vector2& pos) const;
   void handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh);
   void setRegularFont(const ci::Font& font) {
     Menu::g_font = font;

@@ -62,8 +62,8 @@ void LeapInteraction::interact(double curTime)
   float cur_dtheta = 0;
   float cur_dphi = 0;
   float cur_dzoom = 0;
-  static const float ORBIT_SPEED = 0.008f;
-  static const float ZOOM_SPEED = 100.0f;
+  static const float ORBIT_SPEED = 0.01f;
+  static const float ZOOM_SPEED = 90.0f;
   static const float AGE_WARMUP_TIME = 0.5f;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
   static const float LOG_SCALE_SMOOTH_STRENGTH = 0.9f;
@@ -162,7 +162,7 @@ void LeapInteraction::interact(double curTime)
             if (_autoBrush) {
               adjRadius *= autoBrushScaleFactor;
             }
-            if (transPos.x >= 0.025f && transPos.x <= 0.975f && transPos.y >= 0.025f && transPos.y <= 0.975f) {
+            if (fromCameraMult > 0.25f && transPos.x >= 0.025f && transPos.x <= 0.975f && transPos.y >= 0.025f && transPos.y <= 0.975f) {
               // compute a point on the surface of the sphere to use as the screen-space radius
               radPos.x = (radPos.x + 1)/2;
               radPos.y = (radPos.y + 1)/2;
@@ -172,7 +172,7 @@ void LeapInteraction::interact(double curTime)
                 rad *= autoBrushScaleFactor;
               }
               transPos.z = rad;
-              Vec4f tip(transPos.x, transPos.y, transPos.z, strengthMult);
+              Vec4f tip(transPos.x, transPos.y, transPos.z, fromCameraMult*strengthMult);
               _tips.push_back(tip);
             } else {
               strength = 0.0f;

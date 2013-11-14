@@ -15,7 +15,7 @@ const float Menu::RING_THICKNESS_RATIO = 0.3f;
 const float Menu::STRENGTH_UI_MULT = 10.0f;
 const float Menu::BASE_OUTER_RADIUS = 0.15f;
 const float Menu::OUTER_RADIUS_PER_ENTRY = 0.0175f;
-const float Menu::BASE_INNER_RADIUS = 0.05f;
+const float Menu::BASE_INNER_RADIUS = 0.065f;
 const float Menu::SWEEP_ANGLE = 3.5f;
 ci::Font Menu::g_font;
 ci::Font Menu::g_boldFont;
@@ -29,6 +29,8 @@ std::vector<ci::gl::Texture> Menu::g_icons;
 ci::Vec2f Menu::g_shadowOffset = ci::Vec2f(1.5f, 2.0f);
 float Menu::g_zoomFactor = 1.0f;
 float Menu::g_maxMenuActivation = 0.0f;
+Utilities::ExponentialFilter<float> Menu::g_maxMenuActivationSmoother;
+Vector2 Menu::g_forceCenter(Vector2(0.5f, 0.5f));
 Utilities::ExponentialFilter<float> Menu::g_sculptMult;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
@@ -136,7 +138,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   const float angleStart = getSweepStart();
   const float angleInc = m_sweepAngle / numEntries;
   float curAngle = angleStart + angleInc/2.0f;
-  const ci::Vec2f absolute = relativeToAbsolute(m_position);
+  const ci::Vec2f absolute = relativeToAbsolute(m_position + forceAt(m_position));
   const Vector2 parentPosition(absolute.x, absolute.y);
   
   // update the positions of menu entries
@@ -170,9 +172,9 @@ void Menu::draw() const {
 
   static const float BASE_BRIGHTNESS = 0.25f;
   const float activation = m_activation.value;
-  const float menuOpacity = getOpacity(activation);
-  const float opacityDiff = fabs(activation - g_maxMenuActivation);
-  const ci::Vec2f pos = relativeToAbsolute(m_position);
+  const float opacityDiff = std::max(0.0f, g_maxMenuActivationSmoother.value - activation);
+  const float menuOpacity = (1.0f - opacityDiff) * getOpacity(activation);
+  const ci::Vec2f pos = relativeToAbsolute(m_position + forceAt(m_position));
 
   if (activation > 0.01f) {
     // complete the remainder of the ring
@@ -180,10 +182,11 @@ void Menu::draw() const {
     const float parentSweep = 360.0f - Utilities::RADIANS_TO_DEGREES * m_sweepAngle;
     glColor4f(BASE_BRIGHTNESS, BASE_BRIGHTNESS, BASE_BRIGHTNESS, getOpacity(0.0f));
     Utilities::drawPartialDisk(pos, m_wedgeStart, m_wedgeEnd, parentStart, parentSweep);
+  }
 
-    // draw each entry
-    for (size_t i=0; i<m_entries.size(); i++) {
-      const float entryActivation = m_entries[i].m_activationStrength.value;
+  for (size_t i=0; i<m_entries.size(); i++) {
+    const float entryActivation = m_entries[i].m_activationStrength.value;
+    if (entryActivation > 0.01f || activation > 0.01f) {
       const float entryOpacity = getOpacity(entryActivation);
       const float wedgeStart = m_entries[i].m_wedgeStart;
       const float wedgeEnd = m_entries[i].m_wedgeEnd;
@@ -218,7 +221,7 @@ void Menu::draw() const {
   const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, menuOpacity);
   const ci::Vec2f textPos = pos - Vec2f(0.0f, FONT_SIZE/2.0f);
   const ci::Vec2f offset = Vec2f(0.0f, FONT_SIZE/2.0f);
-  const float textScale = (0.25f * activation) + relativeToAbsolute(0.04f) / FONT_SIZE;
+  const float textScale = (0.35f * activation) + relativeToAbsolute(0.04f) / FONT_SIZE;
 
   // draw menu title and value
   glPushMatrix();
@@ -286,7 +289,7 @@ void Menu::setWindowSize(const ci::Vec2i& size) {
 void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const {
   static const float TWO_PI = static_cast<float>(2.0*M_PI);
   const ci::Vec2f absPos = relativeToAbsolute(pos, false);
-  const ci::Vec2f absMenu = relativeToAbsolute(m_position);
+  const ci::Vec2f absMenu = relativeToAbsolute(m_position + forceAt(m_position));
   const ci::Vec2f diff = (absPos - absMenu);
   angle = std::atan2(diff.x, diff.y);
   if (angle < getSweepStart()) {
@@ -328,7 +331,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::ICON;
   }
     
-  const int NUM_SIZE_ENTRIES = 5;
+  const int NUM_SIZE_ENTRIES = 6;
   _size_menu.setName("Size");
   _size_menu.setPosition(Vector2(0.75f, 0.925f));
   _size_menu.setNumEntries(NUM_SIZE_ENTRIES);
@@ -339,7 +342,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     Menu::MenuEntry& entry = _size_menu.getEntry(i);
     entry.drawMethod = Menu::MenuEntry::CIRCLE;
     entry.m_radius = 0.005f + ratio*0.02f;
-    entry.m_value = 50.0f*ratio;
+    entry.m_value = 30.0f*ratio + 10.0f;
   }
 
   const int NUM_COLOR_ENTRIES = 8;
@@ -430,7 +433,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 
   const int NUM_EDITING_ENTRIES = 4;
-  _editing_menu.setName("Editing");
+  _editing_menu.setName("Edit");
   _editing_menu.setPosition(Vector2(0.5f, 0.075f));
   _editing_menu.setNumEntries(NUM_EDITING_ENTRIES);
   entryType = Menu::EDITING_TOGGLE_WIREFRAME;
@@ -460,7 +463,10 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
 void UserInterface::update(const std::vector<Vec4f>& tips, Sculpt* sculpt)
 {
-  Menu::g_maxMenuActivation = maxActivation();
+  static const float FORCE_SMOOTH_STRENGTH = 0.9f;
+  const double curTime = ci::app::getElapsedSeconds();
+  Menu::g_maxMenuActivation = maxActivation(Menu::g_forceCenter);
+  Menu::g_maxMenuActivationSmoother.Update(Menu::g_maxMenuActivation, curTime, FORCE_SMOOTH_STRENGTH);
 
   // update the individual menus
   _type_menu.update(tips, sculpt);
@@ -526,6 +532,23 @@ float UserInterface::maxActivation() const {
   result = std::max(result, _editing_menu.getActivation());
 
   return result;
+}
+
+float UserInterface::maxActivation(Vector2& pos) const {
+  float max = maxActivation();
+  if (max > 0.001f) {
+    if (_type_menu.getActivation() == max) { pos = _type_menu.getPosition(); }
+    if (_strength_menu.getActivation() == max) { pos = _strength_menu.getPosition(); }
+    if (_size_menu.getActivation() == max) { pos = _size_menu.getPosition(); }
+    if (_color_menu.getActivation() == max) { pos = _color_menu.getPosition(); }
+    if (_material_menu.getActivation() == max) { pos = _material_menu.getPosition(); }
+    if (_spin_menu.getActivation() == max) { pos = _spin_menu.getPosition(); }
+    if (_environment_menu.getActivation() == max) { pos = _environment_menu.getPosition(); }
+    if (_general_menu.getActivation() == max) { pos = _general_menu.getPosition(); }
+    if (_object_menu.getActivation() == max) { pos = _object_menu.getPosition(); }
+    if (_editing_menu.getActivation() == max) { pos = _editing_menu.getPosition(); }
+  }
+  return max;
 }
 
 void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, ThreeFormApp* app, Mesh* mesh) {
