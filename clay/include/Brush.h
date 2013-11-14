@@ -10,11 +10,7 @@ public:
   Brush();
 
   // point sampling
-#if _WIN32
-  inline float distance(const Vector3& point) const { return std::sqrtf(distanceSq(point)); }
-#else
   inline float distance(const Vector3& point) const { return std::sqrt(distanceSq(point)); }
-#endif
 #if 1
   inline float distanceSq(const Vector3& point) const { return (point - _position).squaredNorm(); }
 #else
@@ -32,8 +28,6 @@ public:
   }
 #endif
   inline float strengthAt(const Vector3& point) const { return _strength*Utilities::falloff(distance(point)/_radius); }
-  inline Vector3 velocityAt(const Vector3& point) const { return _velocity * strengthAt(point); }
-  inline Vector3 pushPullAt(const Vector3& point) const { return _direction * strengthAt(point); }
   inline bool contains(const Vector3& point) const { return distanceSq(point) < _radius_squared; }
 
   // bounding sphere

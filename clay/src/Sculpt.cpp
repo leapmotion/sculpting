@@ -17,6 +17,8 @@ Sculpt::~Sculpt()
 /** Set sculpting mode */
 void Sculpt::setAdaptiveParameters(float radiusSquared)
 {
+  static const float MAX_RADIUS_SQ_SUBDIVIDE = 25.0f * 25.0f; // to prevent detail loss
+  radiusSquared = std::min(radiusSquared, MAX_RADIUS_SQ_SUBDIVIDE);
   d2Max_ = radiusSquared*(1.0f-detail_+minDetailMult_)*0.2f;
   d2Min_ = d2Max_/4.2025f;
   d2Move_ = d2Min_*0.2375f;
@@ -127,31 +129,19 @@ void Sculpt::smooth(const std::vector<int> &iVerts, const Brush& brush)
   Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
   Vector3Vector smoothColors(nbVerts, Vector3::Zero());
   laplacianSmooth(iVerts,smoothVerts, smoothColors);
-  if(topoMode_!=ADAPTIVE)
-  {
+
+  float dMove = sqrtf(d2Move_);
 #pragma omp parallel for
-    for (int i = 0; i<nbVerts; ++i)
-    {
-      Vertex &vert = vertices[iVerts[i]];
-      vert += brush._strength*(smoothVerts[i]-vert);
-      vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
-    }
-  }
-  else
+  for (int i = 0; i<nbVerts; ++i)
   {
-    float dMove = sqrtf(d2Move_);
-#pragma omp parallel for
-    for (int i = 0; i<nbVerts; ++i)
-    {
-      Vertex &vert = vertices[iVerts[i]];
-      Vector3 displ = (smoothVerts[i]-vert)*brush._strength;
-      vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
-      float displLength = displ.squaredNorm();
-      if(displLength<=d2Move_)
-        vert+=displ;
-      else
-        vert+=displ.normalized()*dMove;
-    }
+    Vertex &vert = vertices[iVerts[i]];
+    Vector3 displ = (smoothVerts[i]-vert)*brush._strength;
+    vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
+    float displLength = displ.squaredNorm();
+    if(displLength<=d2Move_)
+      vert+=displ;
+    else
+      vert+=displ.normalized()*dMove;
   }
 }
 
@@ -184,16 +174,17 @@ void Sculpt::draw(const std::vector<int> &iVerts, const Brush& brush)
 {
   VertexVector &vertices = mesh_->getVertices();
   int nbVerts = iVerts.size();
+  const float dMove = std::sqrt(d2Move_);
   float deformationIntensity = brush._radius*0.1f;
-  if(topoMode_==ADAPTIVE)
-    deformationIntensity = std::min(sqrtf(d2Move_), deformationIntensity);
-  if(sculptMode_==DEFLATE)
+  if (sculptMode_== DEFLATE) {
     deformationIntensity = -deformationIntensity;
+  }
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
     Vertex &vert=vertices[iVerts[i]];
-    vert+=vert.normal_*deformationIntensity*brush.strengthAt(vert);
+    const float strength = brush.strengthAt(vert);
+    vert += vert.normal_ * std::min(dMove, deformationIntensity*strength);
   }
 }
 
@@ -251,13 +242,14 @@ void Sculpt::flatten(const std::vector<int> &iVerts, const Brush& brush)
   VertexVector &vertices = mesh_->getVertices();
   int nbVerts = iVerts.size();
   float deformationIntensity = 0.3f;
+  const float dMove = std::sqrt(d2Move_);
 
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
     Vertex &v = vertices[iVerts[i]];
     float distance = (v-areaPoint).dot(areaNorm);
-    v -= areaNorm*distance*deformationIntensity*brush.strengthAt(v);
+    v -= areaNorm * std::min(dMove, distance*deformationIntensity*brush.strengthAt(v));
   }
 }
 
@@ -370,12 +362,16 @@ void Sculpt::sweep(const std::vector<int> &iVerts, const Brush& brush)
   VertexVector &vertices = mesh_->getVertices();
   int nbVerts = iVerts.size();
   float deformationIntensity = brush._radius*0.0005f;
+  const float velMag = brush._velocity.norm();
+  const Vector3 normalizedVel = brush._velocity / velMag;
+  const float dMove = std::sqrt(d2Move_);
 
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
     Vertex &vert = vertices[iVerts[i]];
-    vert += deformationIntensity*brush.velocityAt(vert);
+    const float strength = brush.strengthAt(vert);
+    vert += std::min(dMove, deformationIntensity*strength*velMag)*normalizedVel;
   }
 }
 
@@ -383,12 +379,14 @@ void Sculpt::push(const std::vector<int> &iVerts, const Brush& brush)
 {
   VertexVector &vertices = mesh_->getVertices();
   int nbVerts = iVerts.size();
-  float deformationIntensity = brush._radius*0.25f;
+  const float dMove = std::sqrt(d2Move_);
+  const float deformationIntensity = brush._radius*0.25f;
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
     Vertex &vert = vertices[iVerts[i]];
-    vert -= deformationIntensity*brush.pushPullAt(vert);
+    const float strength = brush.strengthAt(vert);
+    vert -= std::min(dMove, deformationIntensity*strength)*brush._direction;
   }
 }
 
