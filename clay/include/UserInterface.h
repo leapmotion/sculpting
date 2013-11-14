@@ -323,7 +323,7 @@ public:
   ci::Color getActiveColor() const { return m_activeColor; }
 
   static const Vector2& getWindowSize() { return g_windowSize; }
-  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985); }
+  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985f); }
 
 private:
 

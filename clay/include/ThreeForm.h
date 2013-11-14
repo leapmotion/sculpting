@@ -104,6 +104,7 @@ private:
   float _focus_radius;
   double _last_update_time;
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
+  std::mutex _mesh_mutex;
 
   // *** Leap stuff ***
   LeapListener _listener;

@@ -49,6 +49,7 @@ ThreeFormApp::ThreeFormApp()
 ThreeFormApp::~ThreeFormApp()
 {
   delete _environment;
+  std::unique_lock<std::mutex> lock(_mesh_mutex);
   if (mesh_) {
     delete mesh_;
   }
@@ -382,7 +383,10 @@ void ThreeFormApp::update()
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
 
   //_focus_point = to;
-  _focus_point = _camera_util->referencePoint.position;
+  Matrix4x4 trans = mesh_->getTransformation();
+  Vector4 temp;
+  temp << _camera_util->referencePoint.position, 1.0;
+  _focus_point = (trans * temp).head<3>();
   _focus_radius = _camera_util->GetSphereQueryRadius();
 
   _campos_smoother.Update(campos, curTime, 0.9f);
@@ -415,6 +419,7 @@ void ThreeFormApp::updateLeapAndMesh() {
       const double curTime = ci::app::getElapsedSeconds();
       const double lastSculptTime = sculpt_.getLastSculptTime();
 
+      std::unique_lock<std::mutex> lock(_mesh_mutex);
       if (mesh_) {
         mesh_->updateRotation(curTime);
         if (fabs(curTime - lastSculptTime) > 0.25) {
@@ -899,6 +904,7 @@ int ThreeFormApp::loadFile()
         }
         stream.close();
       }
+      std::unique_lock<std::mutex> lock(_mesh_mutex);
       if (mesh_) {
         delete mesh_;
       }
@@ -924,6 +930,7 @@ int ThreeFormApp::loadShape(Shape shape) {
   if (!newMesh) {
     return 0;
   }
+  std::unique_lock<std::mutex> lock(_mesh_mutex);
   if (mesh_) {
     delete mesh_;
   }
