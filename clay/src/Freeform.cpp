@@ -46,7 +46,9 @@ FreeformApp::FreeformApp()
 
 FreeformApp::~FreeformApp()
 {
-#if 0
+  _shutdown = true;
+  _mesh_thread.join();
+
   delete _environment;
   std::unique_lock<std::mutex> lock(_mesh_mutex);
   if (mesh_) {
@@ -55,7 +57,6 @@ FreeformApp::~FreeformApp()
 
   delete _camera_util;
   //delete _debug_draw_util;
-#endif
 }
 
 void FreeformApp::prepareSettings( Settings *settings )
