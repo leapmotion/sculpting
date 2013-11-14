@@ -229,7 +229,7 @@ public:
         mat.diffuseFactor = 0.15f;
         mat.reflectionFactor = 0.7f;
         mat.surfaceColor << 0.4f, 0.45f, 0.5f;
-        mat.refractionIndex = 0.5f;
+        mat.refractionIndex = 0.45f;
         break;
       case Menu::MATERIAL_METAL:
         mat.reflectionFactor = 0.5f;
@@ -237,6 +237,8 @@ public:
         mat.reflectionBias = 2.0f;
         break;
       case Menu::MATERIAL_CLAY:
+        mat.reflectionFactor = 0.02f;
+        mat.reflectionBias = 3.0f;
         mat.surfaceColor << 0.7f, 0.675f, 0.6f;
         break;
       }

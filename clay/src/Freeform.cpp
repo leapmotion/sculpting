@@ -91,7 +91,7 @@ void FreeformApp::setup()
   _bloom_size = 1.f;
   _bloom_strength = 1.f;
   _bloom_light_threshold = 0.5f;
-  _brush_color = ci::Color(0.65f, 0.75f, 0.8f);
+  _brush_color = ci::Color(0.85f, 0.95f, 1.0f);
 
 #if !LM_PRODUCTION_BUILD
   _params = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( Vec2i( 200, 400 ) ) );
@@ -576,20 +576,38 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   _brush_shader.uniform( "irradiance", 0 );
   _brush_shader.uniform( "radiance", 1 );
   _brush_shader.uniform( "useRefraction", false);
-  _brush_shader.uniform( "ambientFactor", 0.25f );
-  _brush_shader.uniform( "diffuseFactor", 0.2f );
-  _brush_shader.uniform( "reflectionFactor", 0.2f );
-  _brush_shader.uniform( "surfaceColor", _brush_color );
-  _brush_shader.uniform( "reflectionBias", 1.0f );
+  _brush_shader.uniform( "reflectionBias", 0.5f );
   _brush_shader.uniform( "numLights", 0 );
   for (size_t i=0; i<brushes.size(); i++) {
     const float uiMult = (1.0f - _ui->maxActivation());
     const float sculptMult = static_cast<float>(std::min(1.0, (curTime - lastSculptTime)/0.25));
-    const float alphaMult = (0.3f*sculptMult*uiMult + 0.3f)*brushes[i]._activation;
-    _brush_shader.uniform("alphaMult", alphaMult);
+    const float alphaMult = (0.3f*sculptMult*uiMult + 0.4f)*brushes[i]._activation;
+
+    // draw "ghost" brush without depth testing
+    _brush_shader.uniform( "surfaceColor", 0.33f*_brush_color );
+    _brush_shader.uniform( "alphaMult", 0.6f*alphaMult );
+    _brush_shader.uniform( "ambientFactor", 0.3f );
+    _brush_shader.uniform( "diffuseFactor", 0.0f );
+    _brush_shader.uniform( "reflectionFactor", 0.0f );
+    glDisable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
     if (symmetry_) {
-      _brush_shader.uniform("alphaMult", 0.333f*alphaMult);
+      // draw "ghost" symmetry brush
+      _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
+      brushes[i].reflected(0).draw(uiMult);
+    }
+
+    // draw regular brush
+    _brush_shader.uniform( "surfaceColor", _brush_color );
+    _brush_shader.uniform( "alphaMult", alphaMult );
+    _brush_shader.uniform( "ambientFactor", 0.2f );
+    _brush_shader.uniform( "diffuseFactor", 0.4f );
+    _brush_shader.uniform( "reflectionFactor", 0.15f );
+    glEnable(GL_DEPTH_TEST);
+    brushes[i].draw(uiMult);
+    if (symmetry_) {
+      // draw regular symmetry brush
+      _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
       brushes[i].reflected(0).draw(uiMult);
     }
   }
