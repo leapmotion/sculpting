@@ -447,7 +447,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 
   const int NUM_CONFIRM_ENTRIES = 2;
-  _confirm_menu.setName("Confirm");
+  _confirm_menu.setName("Are you sure?");
   _confirm_menu.setPosition(Vector2(0.5f, 0.45f));
   _confirm_menu.setNumEntries(NUM_CONFIRM_ENTRIES);
   entryType = Menu::CONFIRM_YES;
@@ -468,21 +468,38 @@ void UserInterface::update(const std::vector<Vec4f>& tips, Sculpt* sculpt)
   Menu::g_maxMenuActivation = maxActivation(Menu::g_forceCenter);
   Menu::g_maxMenuActivationSmoother.Update(Menu::g_maxMenuActivation, curTime, FORCE_SMOOTH_STRENGTH);
 
-  // update the individual menus
-  _type_menu.update(tips, sculpt);
-  _strength_menu.update(tips, sculpt);
-  _size_menu.update(tips, sculpt);
-  if (_draw_color_menu) {
-    _color_menu.update(tips, sculpt);
-  }
-  _material_menu.update(tips, sculpt);
-  _spin_menu.update(tips, sculpt);
-  _environment_menu.update(tips, sculpt);
-  _general_menu.update(tips, sculpt);
-  _object_menu.update(tips, sculpt);
-  _editing_menu.update(tips, sculpt);
   if (_draw_confirm_menu) {
     _confirm_menu.update(tips, sculpt);
+
+    std::vector<Vec4f> empty;
+
+    // update the individual menus
+    _type_menu.update(empty, sculpt);
+    _strength_menu.update(empty, sculpt);
+    _size_menu.update(empty, sculpt);
+    if (_draw_color_menu) {
+      _color_menu.update(empty, sculpt);
+    }
+    _material_menu.update(empty, sculpt);
+    _spin_menu.update(empty, sculpt);
+    _environment_menu.update(empty, sculpt);
+    _general_menu.update(empty, sculpt);
+    _object_menu.update(empty, sculpt);
+    _editing_menu.update(empty, sculpt);
+  } else {
+    // update the individual menus
+    _type_menu.update(tips, sculpt);
+    _strength_menu.update(tips, sculpt);
+    _size_menu.update(tips, sculpt);
+    if (_draw_color_menu) {
+      _color_menu.update(tips, sculpt);
+    }
+    _material_menu.update(tips, sculpt);
+    _spin_menu.update(tips, sculpt);
+    _environment_menu.update(tips, sculpt);
+    _general_menu.update(tips, sculpt);
+    _object_menu.update(tips, sculpt);
+    _editing_menu.update(tips, sculpt);
   }
 
   // add cursor positions
@@ -500,20 +517,21 @@ void UserInterface::draw() const {
   }
 
   enableAlphaBlending();
-  _type_menu.draw();
-  _strength_menu.draw();
-  _size_menu.draw();
-  if (_draw_color_menu) {
-    _color_menu.draw();
-  }
-  _material_menu.draw();
-  _spin_menu.draw();
-  _environment_menu.draw();
-  _general_menu.draw();
-  _object_menu.draw();
-  _editing_menu.draw();
   if (_draw_confirm_menu) {
     _confirm_menu.draw();
+  } else {
+    _type_menu.draw();
+    _strength_menu.draw();
+    _size_menu.draw();
+    if (_draw_color_menu) {
+      _color_menu.draw();
+    }
+    _material_menu.draw();
+    _spin_menu.draw();
+    _environment_menu.draw();
+    _general_menu.draw();
+    _object_menu.draw();
+    _editing_menu.draw();
   }
 }
 
@@ -620,7 +638,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     case Menu::GENERAL_ABOUT: break;
     case Menu::GENERAL_TUTORIAL: break;
     case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
-    case Menu::GENERAL_EXIT: app->quit(); break;
+    case Menu::GENERAL_EXIT: _draw_confirm_menu = true; _pending_entry = Menu::GENERAL_EXIT; break;
     }
     _general_menu.clearSelection();
   }
@@ -628,12 +646,12 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_object_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _object_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-    case Menu::OBJECT_LOAD: app->loadFile(); break;
+    case Menu::OBJECT_LOAD: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_LOAD; break;
     case Menu::OBJECT_EXPORT: app->saveFile(); break;
-    case Menu::OBJECT_BALL: app->loadShape(FreeformApp::BALL); break;
-    case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
-    case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
-    case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
+    case Menu::OBJECT_BALL: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_BALL; break;
+    case Menu::OBJECT_CAN: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CAN; break;
+    case Menu::OBJECT_DONUT: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_DONUT; break;
+    case Menu::OBJECT_SHEET: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_SHEET; break;
     }
     _object_menu.clearSelection();
   }
@@ -650,8 +668,18 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   }
 
   if (_draw_confirm_menu && _confirm_menu.hasSelectedEntry()) {
-
+    if (_confirm_menu.getSelectedEntry().m_entryType == Menu::CONFIRM_YES) {
+      switch (_pending_entry) {
+        case Menu::GENERAL_EXIT: app->quit(); break;
+        case Menu::OBJECT_LOAD: app->loadFile(); break;
+        case Menu::OBJECT_BALL: app->loadShape(FreeformApp::BALL); break;
+        case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
+        case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
+        case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
+      }
+    }
     _confirm_menu.clearSelection();
+    _draw_confirm_menu = false;
   }
 }
 
