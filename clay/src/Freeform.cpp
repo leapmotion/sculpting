@@ -322,7 +322,7 @@ void FreeformApp::update()
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
 
   static const float TIME_UNTIL_AUTOMATIC_ORBIT = 10.0f;
-  static const float TIME_UNTIL_AUTOMATIC_FOV = 3.0f;
+  static const float TIME_UNTIL_AUTOMATIC_FOV = 5.0f;
   const float timeSinceActivity = static_cast<float>(curTime - _leap_interaction->getLastActivityTime());
   _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - TIME_UNTIL_AUTOMATIC_FOV, 0.0f, TIME_UNTIL_AUTOMATIC_FOV)/TIME_UNTIL_AUTOMATIC_FOV);

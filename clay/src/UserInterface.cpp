@@ -464,7 +464,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt)
 {
   static const float FORCE_SMOOTH_STRENGTH = 0.9f;
-  static const float UI_INACTIVITY_FADE_TIME = 3.0;
+  static const float UI_INACTIVITY_FADE_TIME = 5.0f;
 
   const std::vector<ci::Vec4f> tips = leap->getTips();
   const double curTime = ci::app::getElapsedSeconds();

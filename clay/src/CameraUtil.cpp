@@ -701,16 +701,6 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
     dt = time - prevTime;
   }
 
-  if (params.forceCameraOrbit) {
-    OrbitCamera(mesh, dt);
-  } else {
-    // Don't do this when orbiting.
-    EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
-  }
-
-  //DebugDrawNormals(mesh, paramsIn);
-  //ExperimentWithIsosurfaces(mesh, paramsInOut);
-
   std::unique_lock<std::mutex> lock(mutex);
   if (!this->params.walkSmoothedNormals && paramsInOut->walkSmoothedNormals)
   {
@@ -723,6 +713,17 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   }
 
   this->params = *paramsInOut;
+
+  if (params.forceCameraOrbit) {
+    OrbitCamera(mesh, dt);
+    return;
+  } else {
+    // Don't do this when orbiting.
+    EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
+  }
+
+  //DebugDrawNormals(mesh, paramsIn);
+  //ExperimentWithIsosurfaces(mesh, paramsInOut);
 
   if (debugDrawUtil) {
     if (params.drawDebugLines) {
