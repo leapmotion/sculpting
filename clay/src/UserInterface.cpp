@@ -142,7 +142,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   const Vector2 parentPosition(absolute.x, absolute.y);
   
   // update the positions of menu entries
-  for (int i=0; i<numEntries; i++) {
+  for (int i=numEntries-1; i>=0; i--) {
     const Vector2 dir(std::sin(curAngle), std::cos(curAngle));
     const float entryActivation = m_entries[i].m_activationStrength.value;
     const float maxActivation = std::max(parentActivation, entryActivation);
@@ -271,7 +271,7 @@ int Menu::checkCollision(const Vector2& pos) const {
     return -1;
   } else {
     // calculate which entry the point hits
-    const float ratio = (angle - sweepStart)/(sweepEnd - sweepStart);
+    const float ratio = 1.0f - (angle - sweepStart)/(sweepEnd - sweepStart);
     const int entry = static_cast<int>(0.999999f * ratio * m_entries.size());
     return entry;
   }
@@ -408,7 +408,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   _general_menu.setName("General");
   _general_menu.setPosition(Vector2(0.075f, 0.25f));
   _general_menu.setNumEntries(NUM_GENERAL_ENTRIES);
-  entryType = Menu::GENERAL_ABOUT;
+  entryType = Menu::GENERAL_EXIT;
   _general_menu.setAngleOffset(angleOffsetForPosition(_general_menu.getPosition()));
   _general_menu.setDefaultEntry(0);
   _general_menu.setActionsOnly(true);

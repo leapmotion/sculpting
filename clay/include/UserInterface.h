@@ -66,10 +66,10 @@ public:
     ENVIRONMENT_ARCTIC,
 
     // general
-    GENERAL_ABOUT,
     GENERAL_TUTORIAL,
     GENERAL_TOGGLE_SOUND,
     GENERAL_EXIT,
+    GENERAL_ABOUT,
 
     // object
     OBJECT_LOAD,
@@ -382,7 +382,6 @@ private:
   float m_wedgeEnd;
   bool m_haveSelection;
 
-  Menu::MenuEntryType iconType;
   std::string m_activeName;
   std::string m_actualName;
   ci::Color m_activeColor;
@@ -443,6 +442,8 @@ private:
   bool _draw_color_menu;
   bool _draw_confirm_menu;
   bool _first_selection_check;
+
+  Menu::MenuEntryType _pending_entry;
 
 };
 
