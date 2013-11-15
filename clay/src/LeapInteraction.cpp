@@ -11,13 +11,9 @@ using namespace ci;
 const float LeapInteraction::MIN_POINTABLE_LENGTH = 10.0f;
 const float LeapInteraction::MIN_POINTABLE_AGE = 0.05f;
 
-LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui)
-  : _sculpt(sculpt)
-  , _ui(ui)
-  , _desired_brush_radius(0.4f)
-  , _is_pinched(false)
-  , _last_camera_update_time(0.0)
-  , _autoBrush(true)
+LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sculpt), _ui(ui),
+  _desired_brush_radius(0.4f), _is_pinched(false), _last_camera_update_time(0.0), _autoBrush(true),
+  _last_activity_time(0.0)
 {
   _dphi.value = 0.0f;
   _dtheta.value = 0.0f;
@@ -77,6 +73,10 @@ void LeapInteraction::interact(double curTime)
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
   const Vector3 scaledSize = calcSize(_fov, _reference_distance);
   const float frameScale = _cur_frame.scaleFactor(_last_frame);
+
+  if (!_cur_frame.hands().isEmpty() || !_cur_frame.pointables().isEmpty()) {
+    _last_activity_time = ci::app::getElapsedSeconds();
+  }
 
   int numOpenHands = 0;
   for (HandInfoMap::iterator it = _hand_infos.begin(); it != _hand_infos.end(); ++it) {

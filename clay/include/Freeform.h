@@ -76,7 +76,7 @@ private:
   float _phi;
   float _fov;
   float _cam_dist;
-  float _fov_modifier;
+  Utilities::ExponentialFilter<float> _fov_modifier;
 
   // Free-floating camera utility.
   CameraUtil* _camera_util;

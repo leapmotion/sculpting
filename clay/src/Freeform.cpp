@@ -37,7 +37,6 @@ FreeformApp::FreeformApp()
   , _shutdown(false)
   , _draw_background(true)
   , _focus_point(Vector3::Zero())
-  , _fov_modifier(0.0f)
   , _ui_zoom(1.0f)
 {
   _camera_util = new CameraUtil();
@@ -322,6 +321,12 @@ void FreeformApp::update()
   const double curTime = ci::app::getElapsedSeconds();
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
 
+  static const float TIME_UNTIL_AUTOMATIC_ORBIT = 10.0f;
+  static const float TIME_UNTIL_AUTOMATIC_FOV = 3.0f;
+  const float timeSinceActivity = static_cast<float>(curTime - _leap_interaction->getLastActivityTime());
+  _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
+  const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - TIME_UNTIL_AUTOMATIC_FOV, 0.0f, TIME_UNTIL_AUTOMATIC_FOV)/TIME_UNTIL_AUTOMATIC_FOV);
+
   const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
   const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
   const float dZoom = deltaTime*_leap_interaction->getDZoomVel();
@@ -330,15 +335,6 @@ void FreeformApp::update()
   updateCamera(dTheta, dPhi, dZoom);
 
   const double lastSculptTime = sculpt_.getLastSculptTime();
-
-  //if (!detailMode_) {
-  //  const float activityMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/5.0f);
-  //  const float curSpeed = 0.1f * static_cast<float>(std::sin(curTime/6.0));
-  //  dTheta += activityMult * curSpeed * static_cast<float>(std::sin(curTime / 13.0)) * deltaTime;
-  //  dPhi += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 5.0)) * deltaTime;
-  //  dZoom += activityMult * curSpeed * static_cast<float>(std::cos(curTime / 7.0)) * deltaTime;
-  //}
-
   float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
 
   //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
@@ -351,8 +347,8 @@ void FreeformApp::update()
   const float ratio = (_ui_zoom - LOWER_BOUND) / (UPPER_BOUND - LOWER_BOUND);
   _ui->setZoomFactor(Utilities::SmootherStep(ratio)*(UPPER_BOUND - LOWER_BOUND) + LOWER_BOUND);
 
-  _fov_modifier = -_ui->getZoomFactor() * 20.0f;
-  _ui->update(_leap_interaction->getTips(), &sculpt_);
+  _fov_modifier.Update((-_ui->getZoomFactor() * 20.0f) + (-inactivityRatio * 5.0f), curTime, 0.95f);
+  _ui->update(_leap_interaction, &sculpt_);
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
   float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
@@ -388,13 +384,13 @@ void FreeformApp::update()
   _focus_point = (trans * temp).head<3>();
   _focus_radius = _camera_util->GetSphereQueryRadius();
 
-  _campos_smoother.Update(campos, curTime, 0.9f);
-  _lookat_smoother.Update(ToVec3f(to), curTime, 0.9f);
-  _up_smoother.Update(ToVec3f(up), curTime, 0.9f);
+  _campos_smoother.Update(campos, curTime, 0.95f);
+  _lookat_smoother.Update(ToVec3f(to), curTime, 0.95f);
+  _up_smoother.Update(ToVec3f(up), curTime, 0.95f);
 
   // Update camera
   _camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
-  _camera.setPerspective( 80.0f + _fov_modifier, getWindowAspectRatio(), 1.0f, 100000.f );
+  _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
 #if 0

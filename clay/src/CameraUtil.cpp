@@ -691,9 +691,18 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   LM_ASSERT(mesh, "Can't upate the camera without a mesh");
   UpdateMeshTransform(mesh, paramsInOut);
 
+  // Check time
+  lmReal dt = 0.0f;
+  {
+    lmReal prevTime = lastCameraUpdateTime;
+    lmReal time = lmReal(ci::app::getElapsedSeconds());
+    lastCameraUpdateTime = time;
+    if (prevTime < 0.0f) { prevTime = time; }
+    dt = time - prevTime;
+  }
+
   if (params.forceCameraOrbit) {
-    const lmReal deltaTime = 1.0f / 60.0f;
-    OrbitCamera(mesh, deltaTime);
+    OrbitCamera(mesh, dt);
   } else {
     // Don't do this when orbiting.
     EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
@@ -725,15 +734,6 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
     debugDrawUtil->SwitchBuffers();
   }
 
-  // Check time
-  lmReal dt = 0.0f;
-  {
-    lmReal prevTime = lastCameraUpdateTime;
-    lmReal time = lmReal(ci::app::getElapsedSeconds());
-    lastCameraUpdateTime = time;
-    if (prevTime < 0.0f) { prevTime = time; }
-    dt = time - prevTime;
-  }
   lmReal dtOne = 1.0f;
   lmReal dtZero = 0.0f;
   if(!params.enableSmoothing) {

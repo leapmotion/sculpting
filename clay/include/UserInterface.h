@@ -401,7 +401,7 @@ class UserInterface {
 public:
 
   UserInterface();
-  void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
+  void update(LeapInteraction* leap, Sculpt* sculpt);
   void draw() const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;

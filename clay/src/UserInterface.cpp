@@ -461,11 +461,21 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 }
 
-void UserInterface::update(const std::vector<Vec4f>& tips, Sculpt* sculpt)
+void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt)
 {
   static const float FORCE_SMOOTH_STRENGTH = 0.9f;
+  static const float UI_INACTIVITY_FADE_TIME = 3.0;
+
+  const std::vector<ci::Vec4f> tips = leap->getTips();
   const double curTime = ci::app::getElapsedSeconds();
-  Menu::g_maxMenuActivation = maxActivation(Menu::g_forceCenter);
+
+  const float timeSinceActivity = static_cast<float>(curTime - leap->getLastActivityTime());
+  const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - UI_INACTIVITY_FADE_TIME, 0.0f, UI_INACTIVITY_FADE_TIME)/UI_INACTIVITY_FADE_TIME);
+
+  Menu::g_maxMenuActivation = ci::math<float>::clamp(inactivityRatio + maxActivation(Menu::g_forceCenter));
+  if (inactivityRatio > 0.00001f) {
+    Menu::g_forceCenter = Vector2(0.5f, 0.5f);
+  }
   Menu::g_maxMenuActivationSmoother.Update(Menu::g_maxMenuActivation, curTime, FORCE_SMOOTH_STRENGTH);
 
   if (_draw_confirm_menu) {
