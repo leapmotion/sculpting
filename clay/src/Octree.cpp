@@ -38,39 +38,34 @@ void Octree::build(Mesh *mesh, const std::vector<int> &iTris, const Aabb &aabb)
   iTris_.clear();
   TriangleVector &triangles = mesh->getTriangles();
   int nbTriangles=iTris.size();
-  if(parent_ && parent_->child_[7]==this)
-    for(int i=0;i<nbTriangles;++i)
-    {
+  if(parent_ && parent_->child_[7]==this) {
+    for(int i=0;i<nbTriangles;++i) {
       Triangle &t = triangles[iTris[i]];
-      if(t.tagFlag_!=Triangle::tagMask_)
-      {
+      if(t.tagFlag_!=Triangle::tagMask_) {
         aabbLoose_.expand(t.aabb_);
         iTris_.push_back(iTris[i]);
       }
     }
-  else
-    for(int i=0;i<nbTriangles;++i)
-    {
+  } else {
+    for(int i=0;i<nbTriangles;++i) {
       Triangle &t = triangles[iTris[i]];
-      if(aabbSplit_.pointInside(t.aabb_.getCenter()) && t.tagFlag_!=Triangle::tagMask_)
-      {
+      if(aabbSplit_.pointInside(t.aabb_.getCenter()) && t.tagFlag_!=Triangle::tagMask_) {
         aabbLoose_.expand(t.aabb_);
         iTris_.push_back(iTris[i]);
       }
     }
-    int nbTrianglesCell=iTris_.size();
-    if (nbTrianglesCell > Octree::maxTriangles_ && depth_ < Octree::maxDepth_)
-      constructCells(mesh);
-    else
-    {
-      for(int i=0;i<nbTrianglesCell;++i)
-      {
-        Triangle &t = triangles[iTris_[i]];
-        t.tagFlag_ = Triangle::tagMask_;
-        t.leaf_ = this;
-        t.posInLeaf_ = i;
-      }
+  }
+  int nbTrianglesCell=iTris_.size();
+  if (nbTrianglesCell > Octree::maxTriangles_ && depth_ < Octree::maxDepth_) {
+    constructCells(mesh);
+  } else {
+    for(int i=0;i<nbTrianglesCell;++i) {
+      Triangle &t = triangles[iTris_[i]];
+      t.tagFlag_ = Triangle::tagMask_;
+      t.leaf_ = this;
+      t.posInLeaf_ = i;
     }
+  }
 }
 
 /** Construct cell */

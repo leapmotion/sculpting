@@ -408,7 +408,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   _general_menu.setName("General");
   _general_menu.setPosition(Vector2(0.075f, 0.25f));
   _general_menu.setNumEntries(NUM_GENERAL_ENTRIES);
-  entryType = Menu::GENERAL_EXIT;
+  entryType = Menu::GENERAL_TUTORIAL;
   _general_menu.setAngleOffset(angleOffsetForPosition(_general_menu.getPosition()));
   _general_menu.setDefaultEntry(0);
   _general_menu.setActionsOnly(true);
@@ -473,15 +473,15 @@ void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt)
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - UI_INACTIVITY_FADE_TIME, 0.0f, UI_INACTIVITY_FADE_TIME)/UI_INACTIVITY_FADE_TIME);
 
   Menu::g_maxMenuActivation = ci::math<float>::clamp(inactivityRatio + maxActivation(Menu::g_forceCenter));
-  if (inactivityRatio > 0.00001f) {
-    Menu::g_forceCenter = Vector2(0.5f, 0.5f);
+  if (inactivityRatio > 0.00001f || _draw_confirm_menu) {
+    Menu::g_forceCenter = _confirm_menu.getPosition();
   }
   Menu::g_maxMenuActivationSmoother.Update(Menu::g_maxMenuActivation, curTime, FORCE_SMOOTH_STRENGTH);
 
+  std::vector<Vec4f> empty;
+
   if (_draw_confirm_menu) {
     _confirm_menu.update(tips, sculpt);
-
-    std::vector<Vec4f> empty;
 
     // update the individual menus
     _type_menu.update(empty, sculpt);
@@ -497,6 +497,8 @@ void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt)
     _object_menu.update(empty, sculpt);
     _editing_menu.update(empty, sculpt);
   } else {
+    _confirm_menu.update(empty, sculpt);
+
     // update the individual menus
     _type_menu.update(tips, sculpt);
     _strength_menu.update(tips, sculpt);
@@ -646,7 +648,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     const Menu::MenuEntry& entry = _general_menu.getSelectedEntry();
     switch (entry.m_entryType) {
     case Menu::GENERAL_ABOUT: break;
-    case Menu::GENERAL_TUTORIAL: break;
+    case Menu::GENERAL_TUTORIAL: app->toggleTutorial(); break;
     case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
     case Menu::GENERAL_EXIT: _draw_confirm_menu = true; _pending_entry = Menu::GENERAL_EXIT; break;
     }

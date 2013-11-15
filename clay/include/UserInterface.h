@@ -218,7 +218,7 @@ public:
       case Menu::MATERIAL_PLASTIC:
         mat.reflectionFactor = 0.1f;
         mat.surfaceColor << 0.4f, 0.7f, 1.0f;
-        mat.reflectionBias = 0.5f;
+        mat.reflectionBias = 1.0f;
         break;
       case Menu::MATERIAL_PORCELAIN:
         mat.reflectionFactor = 0.1f;

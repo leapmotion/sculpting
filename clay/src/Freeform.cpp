@@ -18,26 +18,10 @@ const float MAX_FOV = 90.0f;
 
 
 //*********************************************************
-FreeformApp::FreeformApp()
-  : _environment(0)
-  , _aa_mode(MSAA)
-  , _theta(100.f)
-  , _phi(0.f)
-  , _draw_ui(true)
-  , _mouse_down(false)
-  , _fov(60.0f)
-  , _cam_dist(MIN_CAMERA_DIST)
-  , _exposure(1.0f)
-  , _contrast(1.2f)
-  , mesh_(0)
-  , symmetry_(false)
-  , _last_update_time(0.0)
-  , drawOctree_(false)
-  , _use_fxaa(_aa_mode == FXAA)
-  , _shutdown(false)
-  , _draw_background(true)
-  , _focus_point(Vector3::Zero())
-  , _ui_zoom(1.0f)
+FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
+  _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
+  drawOctree_(false), _use_fxaa(_aa_mode == FXAA), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()),
+  _ui_zoom(1.0f), _draw_tutorial(false), _tutorial_toggle_time(0.0)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = &DebugDrawUtil::getInstance();
@@ -665,9 +649,12 @@ void FreeformApp::createBloom()
 
 void FreeformApp::draw()
 {
-  static const float LOADING_DARKEN_TIME = 2.0f;
-  static const float LOADING_LIGHTEN_TIME = 2.0f;
+  static const float LOADING_DARKEN_TIME = 0.75f;
+  static const float LOADING_LIGHTEN_TIME = 1.5f;
   float exposure_mult = 1.0f;
+  if (_draw_tutorial) {
+    exposure_mult = 0.5f;
+  }
   const Environment::LoadingState loading_state = _environment->getLoadingState();
   const float loading_time = _environment->getTimeSinceLoadingStateChange();
   if (loading_state == Environment::LOADING_STATE_LOADING) {
@@ -771,6 +758,50 @@ void FreeformApp::draw()
     gl::drawStringCentered("Loading...", Vec2f(width/2.0f, -height/2.0f), ColorA::white(), font);
     glPopMatrix();
   }
+  
+  const ci::Vec2i size = getWindowSize();
+  const ci::Area bounds = getWindowBounds();
+  const ci::Vec2f center = getWindowCenter();
+
+  if (_draw_tutorial) {
+    static const float TUTORIAL_SCALE = 0.6f;
+    static const float TIME_PER_IMAGE = 10.0f;
+    static const float IMAGE_FADE_TIME = 0.5f;
+    glDisable(GL_CULL_FACE);
+    disableDepthRead();
+    disableDepthWrite();
+    setMatricesWindow( size );
+    setViewport( bounds );
+    const float aspect = _tutorial1.getAspectRatio();
+    float halfWidth = TUTORIAL_SCALE*size.x/2;
+    float halfHeight = halfWidth / aspect;
+    ci::Rectf area(center.x - halfWidth, center.y - halfHeight, center.x + halfWidth, center.y + halfHeight);
+
+    const float timeSinceToggle = static_cast<float>(ci::app::getElapsedSeconds() - _tutorial_toggle_time);
+    const float imageTime = std::fmod(timeSinceToggle, TIME_PER_IMAGE);
+    const float opacity = 0.75f*Utilities::SmootherStep(ci::math<float>::clamp(std::min(imageTime/IMAGE_FADE_TIME, (TIME_PER_IMAGE - imageTime)/IMAGE_FADE_TIME)));
+
+
+    // draw a rotating image depending on time since toggle
+    float rotTime = std::fmod(timeSinceToggle, 3.0f * TIME_PER_IMAGE);
+    gl::Texture* tex = 0;
+    if (rotTime < TIME_PER_IMAGE) {
+      tex = &_tutorial1;
+    } else if (rotTime >= TIME_PER_IMAGE && rotTime < 2.0f*TIME_PER_IMAGE) {
+      tex = &_tutorial2;
+    } else {
+      tex = &_tutorial3;
+    }
+    glColor4f(1.0f, 1.0f, 1.0f, opacity);
+    glEnable(GL_TEXTURE_2D);
+    tex->bind();
+    gl::drawSolidRect(area);
+    tex->unbind();
+    glDisable(GL_TEXTURE_2D);
+
+    enableDepthRead();
+    enableDepthWrite();
+  }
 
 #if !LM_PRODUCTION_BUILD
   _params->draw(); // draw the interface
@@ -798,6 +829,10 @@ void FreeformApp::loadIcons() {
   icons[Menu::MATERIAL_GLASS] = ci::gl::Texture(loadImage(loadResource(RES_GLASS_PNG)));
   icons[Menu::MATERIAL_METAL] = ci::gl::Texture(loadImage(loadResource(RES_STEEL_PNG)));
   icons[Menu::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
+
+  _tutorial1 = ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_1)));
+  _tutorial2 = ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2)));
+  _tutorial3 = ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3)));
 }
 
 void FreeformApp::loadShapes() {
@@ -849,6 +884,11 @@ void FreeformApp::setEnvironment(const std::string& str) {
 }
 
 void FreeformApp::toggleSound() {
+}
+
+void FreeformApp::toggleTutorial() {
+  _draw_tutorial = !_draw_tutorial;
+  _tutorial_toggle_time = ci::app::getElapsedSeconds();
 }
 
 int FreeformApp::loadFile()
