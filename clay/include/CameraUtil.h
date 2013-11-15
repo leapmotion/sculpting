@@ -136,7 +136,7 @@ public:
       drawSphereQueryResults = false;
 
       useSphereQuery = true;
-      sphereRadiusMultiplier = 0.35f;
+      sphereRadiusMultiplier = 0.2f;
       sphereCrawlMode = true;
       userFaultyTriangles = true;
 
