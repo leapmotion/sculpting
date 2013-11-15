@@ -886,6 +886,7 @@ int FreeformApp::loadFile()
           stream.open(pathString, std::ios::binary);
           mesh = files.load3DS(stream);
         } else if (ext == ".PLY" || ext == ".ply") {
+          stream.open(pathString);
           mesh = files.loadPLY(stream);
         }
         stream.close();
