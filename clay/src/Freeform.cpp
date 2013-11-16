@@ -24,8 +24,7 @@ const float MAX_FOV = 90.0f;
 //*********************************************************
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
-  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()),
-  _ui_zoom(1.0f), _draw_tutorial(false), _tutorial_toggle_time(0.0)
+  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = &DebugDrawUtil::getInstance();
@@ -154,9 +153,6 @@ void FreeformApp::setup()
 
   sculpt_.clearBrushes();
 
-  loadIcons();
-  loadShapes();
-
   _machine_speed = parseRenderString(std::string((char*)glGetString(GL_RENDERER)));
   _bloom_visible = _machine_speed > FreeformApp::LOW;
   _aa_mode = _machine_speed > FreeformApp::LOW ? FreeformApp::MSAA : FreeformApp::NONE;
@@ -197,6 +193,9 @@ void FreeformApp::setup()
 
   _mesh_thread = std::thread(&FreeformApp::updateLeapAndMesh, this);
 
+  loadIcons();
+  loadShapes();
+
   loadShape(BALL);
 }
 
@@ -218,7 +217,6 @@ void FreeformApp::resize()
 
   Fbo::Format formatNoDepthLinear;
   formatNoDepthLinear.setColorInternalFormat(GL_RGB32F_ARB);
-  formatNoDepthLinear.enableMipmapping(true);
   formatNoDepthLinear.setMinFilter(GL_LINEAR);
   formatNoDepthLinear.setMagFilter(GL_LINEAR);
   formatNoDepthLinear.enableDepthBuffer(false);
@@ -286,9 +284,9 @@ void FreeformApp::mouseMove( MouseEvent event)
 
 void FreeformApp::keyDown( KeyEvent event )
 {
+#if !LM_PRODUCTION_BUILD
   switch( event.getChar() )
   {
-#if !LM_PRODUCTION_BUILD
   case KeyEvent::KEY_ESCAPE: quit(); break;
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
@@ -296,8 +294,8 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
   case 's': symmetry_ = !symmetry_; break;
   //case 'r': sculpt_.remesh(); break;
-#endif
   }
+#endif
 }
 
 void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
@@ -653,8 +651,8 @@ void FreeformApp::draw()
   static const float LOADING_DARKEN_TIME = 0.75f;
   static const float LOADING_LIGHTEN_TIME = 1.5f;
   float exposure_mult = 1.0f;
-  if (_draw_tutorial) {
-    exposure_mult = 0.5f;
+  if (_ui->tutorialActive()) {
+    exposure_mult = 0.65f;
   }
   const Environment::LoadingState loading_state = _environment->getLoadingState();
   const float loading_time = _environment->getTimeSinceLoadingStateChange();
@@ -742,50 +740,6 @@ void FreeformApp::draw()
     gl::drawStringCentered("Loading...", Vec2f(width/2.0f, -height/2.0f), ColorA::white(), font);
     glPopMatrix();
   }
-  
-  const ci::Vec2i size = getWindowSize();
-  const ci::Area bounds = getWindowBounds();
-  const ci::Vec2f center = getWindowCenter();
-
-  if (_draw_tutorial) {
-    static const float TUTORIAL_SCALE = 0.6f;
-    static const float TIME_PER_IMAGE = 10.0f;
-    static const float IMAGE_FADE_TIME = 0.5f;
-    glDisable(GL_CULL_FACE);
-    disableDepthRead();
-    disableDepthWrite();
-    setMatricesWindow( size );
-    setViewport( bounds );
-    const float aspect = _tutorial1.getAspectRatio();
-    float halfWidth = TUTORIAL_SCALE*size.x/2;
-    float halfHeight = halfWidth / aspect;
-    ci::Rectf area(center.x - halfWidth, center.y - halfHeight, center.x + halfWidth, center.y + halfHeight);
-
-    const float timeSinceToggle = static_cast<float>(ci::app::getElapsedSeconds() - _tutorial_toggle_time);
-    const float imageTime = std::fmod(timeSinceToggle, TIME_PER_IMAGE);
-    const float opacity = 0.75f*Utilities::SmootherStep(ci::math<float>::clamp(std::min(imageTime/IMAGE_FADE_TIME, (TIME_PER_IMAGE - imageTime)/IMAGE_FADE_TIME)));
-
-
-    // draw a rotating image depending on time since toggle
-    float rotTime = std::fmod(timeSinceToggle, 3.0f * TIME_PER_IMAGE);
-    gl::Texture* tex = 0;
-    if (rotTime < TIME_PER_IMAGE) {
-      tex = &_tutorial1;
-    } else if (rotTime >= TIME_PER_IMAGE && rotTime < 2.0f*TIME_PER_IMAGE) {
-      tex = &_tutorial2;
-    } else {
-      tex = &_tutorial3;
-    }
-    glColor4f(1.0f, 1.0f, 1.0f, opacity);
-    glEnable(GL_TEXTURE_2D);
-    tex->bind();
-    gl::drawSolidRect(area);
-    tex->unbind();
-    glDisable(GL_TEXTURE_2D);
-
-    enableDepthRead();
-    enableDepthWrite();
-  }
 
   if (_draw_ui) {
     glDisable(GL_CULL_FACE);
@@ -797,6 +751,8 @@ void FreeformApp::draw()
     enableDepthRead();
     enableDepthWrite();
   }
+
+  _ui->drawTutorialSlides();
 
 #if !LM_PRODUCTION_BUILD
   _params->draw(); // draw the interface
@@ -825,9 +781,9 @@ void FreeformApp::loadIcons() {
   icons[Menu::MATERIAL_METAL] = ci::gl::Texture(loadImage(loadResource(RES_STEEL_PNG)));
   icons[Menu::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
 
-  _tutorial1 = ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_1)));
-  _tutorial2 = ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2)));
-  _tutorial3 = ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3)));
+  _ui->setTutorialTextures(ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_1))),
+                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2))),
+                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3))));
 }
 
 void FreeformApp::loadShapes() {
@@ -944,11 +900,6 @@ void FreeformApp::setEnvironment(const std::string& str) {
 }
 
 void FreeformApp::toggleSound() {
-}
-
-void FreeformApp::toggleTutorial() {
-  _draw_tutorial = !_draw_tutorial;
-  _tutorial_toggle_time = ci::app::getElapsedSeconds();
 }
 
 int FreeformApp::loadFile()

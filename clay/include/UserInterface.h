@@ -89,6 +89,11 @@ public:
     CONFIRM_YES,
     CONFIRM_NO,
 
+    // tutorial
+    TUTORIAL_NEXT,
+    TUTORIAL_CLOSE,
+    TUTORIAL_PREVIOUS,
+
     NUM_ICONS
   };
 
@@ -191,6 +196,9 @@ public:
         case Menu::EDITING_UNDO: return "Undo"; break;
         case Menu::CONFIRM_YES: return "Yes"; break;
         case Menu::CONFIRM_NO: return "No"; break;
+        case Menu::TUTORIAL_PREVIOUS: return "Previous"; break;
+        case Menu::TUTORIAL_CLOSE: return "Close"; break;
+        case Menu::TUTORIAL_NEXT: return "Next"; break;
         }
         return "";
       } else {
@@ -292,6 +300,7 @@ public:
   static float g_maxMenuActivation;
   static Utilities::ExponentialFilter<float> g_maxMenuActivationSmoother;
   static Vector2 g_forceCenter;
+  static float g_timeSinceSculpting;
 
   Menu();
   void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
@@ -403,6 +412,8 @@ public:
   UserInterface();
   void update(LeapInteraction* leap, Sculpt* sculpt);
   void draw() const;
+  void drawTutorialSlides() const;
+  void drawAbout() const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
   float maxActivation(Vector2& pos) const;
@@ -418,6 +429,12 @@ public:
   void drawCursor(const ci::Vec2f& position, float opacity) const;
   void setZoomFactor(float zoom) { Menu::g_zoomFactor = zoom; }
   float getZoomFactor() const { return Menu::g_zoomFactor; }
+  void setTutorialTextures(ci::gl::Texture tutorial1, ci::gl::Texture tutorial2, ci::gl::Texture tutorial3) {
+    _tutorial1 = tutorial1;
+    _tutorial2 = tutorial2;
+    _tutorial3 = tutorial3;
+  }
+  bool tutorialActive() const { return _draw_tutorial_menu; }
 
 private:
 
@@ -442,6 +459,15 @@ private:
   bool _draw_color_menu;
   bool _draw_confirm_menu;
   bool _first_selection_check;
+
+  ci::gl::Texture _tutorial1;
+  ci::gl::Texture _tutorial2;
+  ci::gl::Texture _tutorial3;
+  double _last_switch_time;
+  int _tutorial_slide;
+  bool _draw_tutorial_menu;
+  Menu _tutorial_menu;
+  mutable Utilities::ExponentialFilter<float> _tutorial_opacity;
 
   Menu::MenuEntryType _pending_entry;
 

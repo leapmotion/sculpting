@@ -31,6 +31,7 @@ float Menu::g_zoomFactor = 1.0f;
 float Menu::g_maxMenuActivation = 0.0f;
 Utilities::ExponentialFilter<float> Menu::g_maxMenuActivationSmoother;
 Vector2 Menu::g_forceCenter(Vector2(0.5f, 0.5f));
+float Menu::g_timeSinceSculpting = 0.0f;
 Utilities::ExponentialFilter<float> Menu::g_sculptMult;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
@@ -47,14 +48,17 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   static const float MIN_TIME_SINCE_SCULPTING = 0.5f; // prevent interacting with menu if we're sculpting
   static const float MIN_PARENT_ACTIVATION = 0.75f; // amount of menu activation needed before children can be activated
   static const float MAX_ACTIVATION_LIMIT = 0.9f; // how high the max activation can be before other menus can't be activated
+  static const float ACTIVATION_AMOUNT = 0.333f; // the amount to add when activating or deactivating
   const double lastSculptTime = sculpt->getLastSculptTime();
   const double curTime = ci::app::getElapsedSeconds();
   const int numTips = tips.size();
   const int numEntries = m_entries.size();
-  const float timeSinceSculpting = static_cast<float>(curTime - lastSculptTime);
+  g_timeSinceSculpting = static_cast<float>(curTime - lastSculptTime);
 
+  float angle = 0.0f;
+  float radius = 0.0f;
+  const float curRadius = m_activation.value*(m_outerRadius - m_innerRadius) + m_innerRadius;
   if (g_sculptMult.value > 0.5f) {
-    float angle, radius;
     for (int i=0; i<numTips; i++) {
       //const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
       const Vector2 pos(tips[i].x, 1.0f - tips[i].y);
@@ -70,10 +74,10 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
       }
 
       // check for center pad
-      const float curRadius = m_activation.value*(m_outerRadius - m_innerRadius) + m_innerRadius;
       if (radius < curRadius && (g_maxMenuActivation == m_activation.value || g_maxMenuActivation < MAX_ACTIVATION_LIMIT)) {
         // colliding with pad
-        m_activation.Update(1.0f, curTime, PARENT_SMOOTH_STRENGTH);
+        const float newValue = ci::math<float>::clamp(m_activation.value + ACTIVATION_AMOUNT);
+        m_activation.Update(newValue, curTime, PARENT_SMOOTH_STRENGTH);
       }
     }
   }
@@ -97,10 +101,11 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
 
   if (m_activation.lastTimeSeconds < curTime) {
     // we weren't updated this frame
-    m_activation.Update(0.0f, curTime, PARENT_SMOOTH_STRENGTH);
+    const float newValue = ci::math<float>::clamp(m_activation.value - ACTIVATION_AMOUNT);
+    m_activation.Update(newValue, curTime, PARENT_SMOOTH_STRENGTH);
 
     // finger left the area, so check whether to select the most activated entry
-    if (maxActivation > 0.2f) {
+    if (radius > curRadius && maxActivation > 0.25f) {
       if ((maxIdx != m_prevSelectedEntry && m_curSelectedEntry != maxIdx) || (m_curSelectedEntry == -1 && static_cast<float>(curTime - m_deselectTime) > SELECTION_COOLDOWN)) {
         m_curSelectedEntry = maxIdx;
         m_selectionTime = curTime;
@@ -298,7 +303,8 @@ void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) 
   radius = absoluteToRelative(diff.length());
 }
 
-UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true), _draw_confirm_menu(false)
+UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true),
+  _draw_confirm_menu(false), _draw_tutorial_menu(false), _last_switch_time(0.0), _tutorial_slide(0)
 {
   srand(static_cast<unsigned int>(time(0)));
   int entryType;
@@ -459,14 +465,27 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
+
+  const int NUM_TUTORIAL_ENTRIES = 3;
+  _tutorial_menu.setName("Navigation");
+  _tutorial_menu.setPosition(Vector2(0.65f, 0.75f));
+  _tutorial_menu.setNumEntries(NUM_TUTORIAL_ENTRIES);
+  entryType = Menu::TUTORIAL_NEXT;
+  _tutorial_menu.setAngleOffset(static_cast<float>(M_PI) + angleOffsetForPosition(_tutorial_menu.getPosition()));
+  _tutorial_menu.setDefaultEntry(0);
+  _tutorial_menu.setActionsOnly(true);
+  for (int i=0; i<NUM_TUTORIAL_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _tutorial_menu.getEntry(i);
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
 }
 
-void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt)
-{
+void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt) {
   static const float FORCE_SMOOTH_STRENGTH = 0.9f;
   static const float UI_INACTIVITY_FADE_TIME = 10.0f;
 
-  const std::vector<ci::Vec4f> tips = leap->getTips();
+  std::vector<ci::Vec4f> tips = leap->getTips();
   const double curTime = ci::app::getElapsedSeconds();
 
   const float timeSinceActivity = static_cast<float>(curTime - leap->getLastActivityTime());
@@ -479,40 +498,38 @@ void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt)
   Menu::g_maxMenuActivationSmoother.Update(Menu::g_maxMenuActivation, curTime, FORCE_SMOOTH_STRENGTH);
 
   std::vector<Vec4f> empty;
+  std::vector<Vec4f>* tipsForConfirm;
+  std::vector<Vec4f>* tipsForTutorial;
+  std::vector<Vec4f>* tipsForTools;
+  std::vector<Vec4f>* tipsForAll;
 
   if (_draw_confirm_menu) {
-    _confirm_menu.update(tips, sculpt);
-
-    // update the individual menus
-    _type_menu.update(empty, sculpt);
-    _strength_menu.update(empty, sculpt);
-    _size_menu.update(empty, sculpt);
-    if (_draw_color_menu) {
-      _color_menu.update(empty, sculpt);
-    }
-    _material_menu.update(empty, sculpt);
-    _spin_menu.update(empty, sculpt);
-    _environment_menu.update(empty, sculpt);
-    _general_menu.update(empty, sculpt);
-    _object_menu.update(empty, sculpt);
-    _editing_menu.update(empty, sculpt);
+    tipsForConfirm = &tips;
+    tipsForTools = tipsForTutorial = tipsForAll = &empty;
+  } else if (_draw_tutorial_menu) {
+    tipsForTutorial = &tips;
+    tipsForTools = _tutorial_slide == 2 ? &tips : &empty;
+    tipsForConfirm = tipsForAll = &empty;
   } else {
-    _confirm_menu.update(empty, sculpt);
-
-    // update the individual menus
-    _type_menu.update(tips, sculpt);
-    _strength_menu.update(tips, sculpt);
-    _size_menu.update(tips, sculpt);
-    if (_draw_color_menu) {
-      _color_menu.update(tips, sculpt);
-    }
-    _material_menu.update(tips, sculpt);
-    _spin_menu.update(tips, sculpt);
-    _environment_menu.update(tips, sculpt);
-    _general_menu.update(tips, sculpt);
-    _object_menu.update(tips, sculpt);
-    _editing_menu.update(tips, sculpt);
+    tipsForTools = tipsForAll = &tips;
+    tipsForTutorial = tipsForConfirm = &empty;
   }
+
+  // update the individual menus
+  _type_menu.update(*tipsForTools, sculpt);
+  _strength_menu.update(*tipsForAll, sculpt);
+  _size_menu.update(*tipsForAll, sculpt);
+  if (_draw_color_menu) {
+    _color_menu.update(*tipsForAll, sculpt);
+  }
+  _material_menu.update(*tipsForAll, sculpt);
+  _spin_menu.update(*tipsForAll, sculpt);
+  _environment_menu.update(*tipsForAll, sculpt);
+  _general_menu.update(*tipsForAll, sculpt);
+  _object_menu.update(*tipsForAll, sculpt);
+  _editing_menu.update(*tipsForAll, sculpt);
+  _confirm_menu.update(*tipsForConfirm, sculpt);
+  _tutorial_menu.update(*tipsForTutorial, sculpt);
 
   // add cursor positions
   _cursor_positions.clear();
@@ -531,6 +548,11 @@ void UserInterface::draw() const {
   enableAlphaBlending();
   if (_draw_confirm_menu) {
     _confirm_menu.draw();
+  } else if (_draw_tutorial_menu) {
+    _tutorial_menu.draw();
+    if (_tutorial_slide == 2) {
+      _type_menu.draw();
+    }
   } else {
     _type_menu.draw();
     _strength_menu.draw();
@@ -545,6 +567,49 @@ void UserInterface::draw() const {
     _object_menu.draw();
     _editing_menu.draw();
   }
+}
+
+void UserInterface::drawTutorialSlides() const {
+  if (!_draw_tutorial_menu) {
+    return;
+  }
+  static const float TUTORIAL_SCALE = 0.6f;
+  static const float IMAGE_FADE_TIME = 0.5f;
+  glDisable(GL_CULL_FACE);
+  disableDepthRead();
+  disableDepthWrite();
+
+  const ci::Vec2i size = getWindowSize();
+  const ci::Area bounds = getWindowBounds();
+  const ci::Vec2f center = getWindowCenter();
+  const float yOffset = -size.y / 8.0f;
+
+  setMatricesWindow( size );
+  setViewport( bounds );
+  const float aspect = _tutorial1.getAspectRatio();
+  float halfWidth = TUTORIAL_SCALE*size.x/2;
+  float halfHeight = halfWidth / aspect;
+  ci::Rectf area(center.x - halfWidth, center.y - halfHeight + yOffset, center.x + halfWidth, center.y + halfHeight + yOffset);
+
+  const double curTime = ci::app::getElapsedSeconds();
+  const float timeSinceToggle = static_cast<float>(ci::app::getElapsedSeconds() - _last_switch_time);
+  const float sculptMult = 0.1f + 0.5f * Utilities::SmootherStep(ci::math<float>::clamp(Menu::g_timeSinceSculpting/IMAGE_FADE_TIME));
+  _tutorial_opacity.Update(sculptMult, curTime, 0.9f);
+  const float opacity = _tutorial_opacity.value * Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/IMAGE_FADE_TIME));
+
+  const gl::Texture* tex = 0;
+  if (_tutorial_slide == 0) {
+    tex = &_tutorial1;
+  } else if (_tutorial_slide == 1) {
+    tex = &_tutorial2;
+  } else {
+    tex = &_tutorial3;
+  }
+  glColor4f(1.0f, 1.0f, 1.0f, opacity);
+  ci::gl::draw(*tex, area);
+
+  enableDepthRead();
+  enableDepthWrite();
 }
 
 float UserInterface::maxActivation() const {
@@ -594,6 +659,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     initializeMenu(_object_menu);
     initializeMenu(_editing_menu);
     initializeMenu(_confirm_menu);
+    initializeMenu(_tutorial_menu);
     _first_selection_check = false;
   }
 
@@ -648,7 +714,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     const Menu::MenuEntry& entry = _general_menu.getSelectedEntry();
     switch (entry.m_entryType) {
     case Menu::GENERAL_ABOUT: break;
-    case Menu::GENERAL_TUTORIAL: app->toggleTutorial(); break;
+    case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); break;
     case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
     case Menu::GENERAL_EXIT: _draw_confirm_menu = true; _pending_entry = Menu::GENERAL_EXIT; break;
     }
@@ -692,6 +758,23 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     }
     _confirm_menu.clearSelection();
     _draw_confirm_menu = false;
+  }
+
+  if (_draw_tutorial_menu && _tutorial_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _tutorial_menu.getSelectedEntry();
+    const double curTime = ci::app::getElapsedSeconds();
+    switch (entry.m_entryType) {
+    case Menu::TUTORIAL_CLOSE: _draw_tutorial_menu = false; break;
+    case Menu::TUTORIAL_NEXT:
+      _tutorial_slide = (_tutorial_slide + 1)%3;
+      _last_switch_time = curTime;
+      break;
+    case Menu::TUTORIAL_PREVIOUS:
+      _tutorial_slide = (_tutorial_slide == 0 ? 2 : _tutorial_slide-1);
+      _last_switch_time = curTime;
+      break;
+    }
+    _tutorial_menu.clearSelection();
   }
 }
 

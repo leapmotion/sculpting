@@ -60,7 +60,6 @@ public:
   void toggleSymmetry();
   void setEnvironment(const std::string& str);
   void toggleSound();
-  void toggleTutorial();
   int loadFile();
   int saveFile();
   int loadShape(Shape shape);
@@ -139,13 +138,6 @@ private:
   float _bloom_strength;
   float _bloom_light_threshold;
   bool _draw_background;
-
-  // tutorial
-  gl::Texture _tutorial1;
-  gl::Texture _tutorial2;
-  gl::Texture _tutorial3;
-  bool _draw_tutorial;
-  double _tutorial_toggle_time;
 
   // new mesh
   Mesh* mesh_;
