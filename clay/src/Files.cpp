@@ -155,11 +155,6 @@ Mesh* Files::loadPLY(std::istream& stream) const {
   return mesh;
 }
 
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable : 4996) // 'scanf': This function or variable may be unsafe. Consider using scanf_s instead
-#endif
-
 Mesh* Files::loadOBJ(std::istream& stream) const
 {
   Mesh *mesh = new Mesh();
@@ -233,10 +228,6 @@ Mesh* Files::loadOBJ(std::istream& stream) const
   mesh->initMesh();
   return mesh;
 }
-
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
 
 /** Load 3DS file */
 Mesh* Files::load3DS(std::istream& stream) const

@@ -74,3 +74,7 @@ inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= 
 #endif
 
 #define LM_PRODUCTION_BUILD 0
+
+#if _WIN32
+#pragma warning(disable : 4996) // 'scanf': This function or variable may be unsafe. Consider using scanf_s instead
+#endif

@@ -8,6 +8,10 @@
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
 
+#if _WIN32
+#include <CommDlg.h>
+#endif
+
 const float CAMERA_SPEED = 0.005f;
 
 const float MIN_CAMERA_DIST = 250.0f;
@@ -972,6 +976,67 @@ int FreeformApp::loadShape(Shape shape) {
   return -1;
 }
 
+#if _WIN32
+fs::path getSaveFilePathCustom( const fs::path &initialPath, const std::vector<std::string>& extensions )
+{
+	OPENFILENAMEA ofn;       // common dialog box structure
+	char szFile[260];       // buffer for file name
+
+	// Initialize OPENFILENAME
+	ZeroMemory( &ofn, sizeof(ofn) );
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = App::get()->getRenderer()->getHwnd();
+	ofn.lpstrFile = szFile;
+
+	ofn.lpstrFile[0] = '\0';
+	ofn.nMaxFile = sizeof( szFile );
+
+	if( extensions.empty() ) {
+		ofn.lpstrFilter = "All\0*.*\0";
+	} else {
+		char extensionStr[10000];
+		size_t offset = 0;
+
+		for( std::vector<std::string>::const_iterator strIt = extensions.begin(); strIt != extensions.end(); ++strIt ) {
+      strcpy( extensionStr + offset, strIt->c_str() );
+      offset += strIt->length();
+      extensionStr[offset++] = '\0';
+      extensionStr[offset++] = '*';
+      extensionStr[offset++] = '.';
+			strcpy( extensionStr + offset, strIt->c_str() );
+			offset += strIt->length();
+      extensionStr[offset++] = '\0';
+		}
+
+		extensionStr[offset++] = '\0';
+		ofn.lpstrFilter = extensionStr;
+	}
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	if( initialPath.empty() ) {
+		ofn.lpstrInitialDir = NULL;
+  } else {
+		char initialPathStr[MAX_PATH];
+		strcpy( initialPathStr, initialPath.string().c_str() );
+		ofn.lpstrInitialDir = initialPathStr;
+	}
+	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
+
+	// Display the Open dialog box.
+	std::string result;
+	if( GetSaveFileNameA( &ofn ) == TRUE ) {
+    std::string ext = "." + extensions[ofn.nFilterIndex-1];
+		result = std::string( ofn.lpstrFile );
+    if (result.find(ext) == std::string::npos) {
+      result += ext;
+    }
+	}
+
+	return result;
+}
+#endif
+
 int FreeformApp::saveFile()
 {
   if (!mesh_) {
@@ -986,10 +1051,15 @@ int FreeformApp::saveFile()
 
   Files files;
   std::vector<std::string> file_extensions;
-  file_extensions.push_back("stl");
   file_extensions.push_back("ply");
+  file_extensions.push_back("stl");
   file_extensions.push_back("obj");
+
+#if _WIN32
+  fs::path path = getSaveFilePathCustom("", file_extensions);
+#else
   fs::path path = getSaveFilePath("", file_extensions);
+#endif
 
   int err = -1;
   if (!path.empty()) {
