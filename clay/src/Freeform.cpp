@@ -305,8 +305,8 @@ void FreeformApp::update()
   const double curTime = ci::app::getElapsedSeconds();
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
 
-  static const float TIME_UNTIL_AUTOMATIC_ORBIT = 10.0f;
-  static const float TIME_UNTIL_AUTOMATIC_FOV = 5.0f;
+  static const float TIME_UNTIL_AUTOMATIC_ORBIT = 20.0f;
+  static const float TIME_UNTIL_AUTOMATIC_FOV = 10.0f;
   const float timeSinceActivity = static_cast<float>(curTime - _leap_interaction->getLastActivityTime());
   _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - TIME_UNTIL_AUTOMATIC_FOV, 0.0f, TIME_UNTIL_AUTOMATIC_FOV)/TIME_UNTIL_AUTOMATIC_FOV);
@@ -600,17 +600,6 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     mesh_->drawOctree();
   }
 
-  if (_draw_ui) {
-    glDisable(GL_CULL_FACE);
-    disableDepthRead();
-    disableDepthWrite();
-    setMatricesWindow( getWindowSize() );
-    setViewport( getWindowBounds() );
-    _ui->draw();
-    enableDepthRead();
-    enableDepthWrite();
-  }
-
   _screen_fbo.unbindFramebuffer();
 }
 
@@ -782,6 +771,17 @@ void FreeformApp::draw()
     tex->unbind();
     glDisable(GL_TEXTURE_2D);
 
+    enableDepthRead();
+    enableDepthWrite();
+  }
+
+  if (_draw_ui) {
+    glDisable(GL_CULL_FACE);
+    disableDepthRead();
+    disableDepthWrite();
+    setMatricesWindow( getWindowSize() );
+    setViewport( getWindowBounds() );
+    _ui->draw();
     enableDepthRead();
     enableDepthWrite();
   }
