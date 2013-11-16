@@ -334,8 +334,8 @@ void FreeformApp::update()
   //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
   _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
-  static const float LOWER_BOUND = 0.775f;
-  static const float UPPER_BOUND = 1.0f;
+  static const float LOWER_BOUND = 1.0f;
+  static const float UPPER_BOUND = 1.3f;
 
   _ui_zoom = ci::math<float>::clamp(_ui_zoom + 0.75f*logScale, LOWER_BOUND, UPPER_BOUND);
   const float ratio = (_ui_zoom - LOWER_BOUND) / (UPPER_BOUND - LOWER_BOUND);
