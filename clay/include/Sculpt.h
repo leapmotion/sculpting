@@ -29,6 +29,7 @@ public:
   void remesh();
   void sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush);
 
+  static void setMinDetailMult(float minDetailMult) { minDetailMult_ = minDetailMult; }
   static void smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void smoothFlat(Mesh* mesh, const std::vector<int> &iVerts);
   static void draw(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool negate = false);

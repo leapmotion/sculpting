@@ -161,6 +161,18 @@ void FreeformApp::setup()
   _bloom_visible = _machine_speed > FreeformApp::LOW;
   _aa_mode = _machine_speed > FreeformApp::LOW ? FreeformApp::MSAA : FreeformApp::NONE;
 
+  // set mesh detail depending on machine specs
+  static const float LOW_DETAIL_LEVEL = 0.2f;
+  static const float MEDIUM_DETAIL_LEVEL = 0.17f;
+  static const float HIGH_DETAIL_LEVEL = 0.14f;
+  float detailMult = LOW_DETAIL_LEVEL;
+  if (_machine_speed == FreeformApp::MID) {
+    detailMult = MEDIUM_DETAIL_LEVEL;
+  } else if (_machine_speed == FreeformApp::HIGH) {
+    detailMult = HIGH_DETAIL_LEVEL;
+  }
+  Sculpt::setMinDetailMult(detailMult);
+
   _ui = new UserInterface();
   _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
   _ui->setBoldFont(ci::Font(loadResource( RES_FONT_FREIGHTSANSBOLD_TTF ), Menu::FONT_SIZE));
@@ -895,7 +907,7 @@ FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& rend
     return FreeformApp::HIGH;
   }
   // unrecognized video card, err on the middle
-  return FreeformApp::HIGH;
+  return FreeformApp::MID;
 }
 
 void FreeformApp::setMaterial(const Material& mat) {
