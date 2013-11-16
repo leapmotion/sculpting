@@ -16,9 +16,9 @@
 class Grid
 {
 public:
-  Grid(const Aabb &aabb);
+  Grid();
   ~Grid();
-  void init(float cellSize);
+  void init(const Aabb& aabb, float cellSize);
   void build(Mesh *mesh, const std::vector<int> &iVerts);
   void getNeighborhood(const Vector3& v, std::vector<int>& iNearVerts);
   inline int getIndex(int x, int y, int z) { return (x + y*dimX_ + z*dimXY_); }
@@ -31,7 +31,7 @@ private:
   int dimXY_; //width*height (useless optimisation)
   float cellSize_; //size of cell
   int size_; //total size of array
-  std::vector<int> *iVerts_; //3D grid as a 1-dimensional array
+  std::vector< std::vector<int> > iVerts_; //3D grid as a 1-dimensional array
 };
 
 #endif /*__OCTREE_H__*/

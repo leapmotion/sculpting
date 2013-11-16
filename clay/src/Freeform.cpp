@@ -278,6 +278,7 @@ void FreeformApp::keyDown( KeyEvent event )
 {
   switch( event.getChar() )
   {
+#if !LM_PRODUCTION_BUILD
   case KeyEvent::KEY_ESCAPE: quit(); break;
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
@@ -285,6 +286,7 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
   case 's': symmetry_ = !symmetry_; break;
   //case 'r': sculpt_.remesh(); break;
+#endif
   }
 }
 

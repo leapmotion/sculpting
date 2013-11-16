@@ -21,10 +21,16 @@ public:
   void expand(const Vector3& vert);
   void expand(const Aabb &aabb);
   bool intersectRay(const Vector3& vert, const Vector3& dir) const;
-  bool intersectSphere(const Vector3& vert, float radiusSquared) const;
   void checkFlat(float offset);
   void draw() const;
-  Vector3 closestPoint(const Vector3& vert) const;
+
+  inline Vector3 closestPoint(const Vector3& vert) const {
+    return vert.cwiseMax(min_).cwiseMin(max_);
+  }
+
+  inline bool intersectSphere(const Vector3& vert, float radiusSquared) const {
+    return (vert - closestPoint(vert)).squaredNorm() < radiusSquared;
+  }
 
 public :
   Vector3 min_; //min vertex

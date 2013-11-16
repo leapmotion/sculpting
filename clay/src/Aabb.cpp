@@ -82,12 +82,6 @@ bool Aabb::intersectRay(const Vector3& vert, const Vector3& dir) const
   return (tmax >=0 && tmin<tmax);
 }
 
-/** Return true if a sphere intersect with the box */
-bool Aabb::intersectSphere(const Vector3& vert, float radiusSquared) const
-{
-  return (vert - closestPoint(vert)).squaredNorm() < radiusSquared;
-}
-
 /** Check if the aabb is a plane */
 void Aabb::checkFlat(float offset)
 {
@@ -125,8 +119,4 @@ void Aabb::draw() const
   glVertex3f(min_.x(), max_.y(), max_.z());glVertex3f(min_.x(), max_.y(), min_.z());
   glVertex3f(min_.x(), max_.y(), max_.z());glVertex3f(min_.x(), min_.y(), max_.z());
   glEnd();
-}
-
-Vector3 Aabb::closestPoint(const Vector3& vert) const {
-  return vert.cwiseMax(min_).cwiseMin(max_);
 }

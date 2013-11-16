@@ -522,14 +522,28 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 
   if (getNbVertices() < verticesBufferCount_) {
     // within storage bounds, so it's OK to only update part of the buffer
+#if 1
     for (int i=0; i<nbVerts; i++) {
       VertexUpdate update;
       update.idx = iVerts[i];
       update.color = vertices_[update.idx].material_;
       update.normal = vertices_[update.idx].normal_;
       update.pos = vertices_[update.idx];
+      //LM_ASSERT(update.pos.squaredNorm() > 0.0001f, "zero vertex");
       vertexUpdates_.push_back(update);
     }
+#else
+    const int num = getNbVertices();
+    for (int i=0; i<num; i++) {
+      VertexUpdate update;
+      update.idx = i;
+      update.color = vertices_[update.idx].material_;
+      update.normal = vertices_[update.idx].normal_;
+      update.pos = vertices_[update.idx];
+      //LM_ASSERT(update.pos.squaredNorm() > 0.0001f, "zero vertex");
+      vertexUpdates_.push_back(update);
+    }
+#endif
   } else {
     // not enough space, reallocate
     reinitVerticesBuffer();

@@ -11,16 +11,16 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
   for(int i = 0; i<(int)iTris.size(); ++i)
   {
     int iTri = iTris[i];
-    Triangle &t = triangles_[iTri];
+    Triangle &t = triangles()[iTri];
     if(t.tagFlag_<0)
       continue;
     int iv1 = t.vIndices_[0];
     int iv2 = t.vIndices_[1];
     int iv3 = t.vIndices_[2];
 
-    Vertex &v1 = vertices_[iv1];
-    Vertex &v2 = vertices_[iv2];
-    Vertex &v3 = vertices_[iv3];
+    Vertex &v1 = vertices()[iv1];
+    Vertex &v2 = vertices()[iv2];
+    Vertex &v3 = vertices()[iv3];
 
     float fallOff = ((v1+v2+v3)/3.f-centerPoint_).squaredNorm();
     if(fallOff<radiusSquared_) {
@@ -66,7 +66,7 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
 
   std::vector<int> iVertsDecimated;
   int nbVertsDecimated = iVertsDecimated_.size();
-  int nbVertices = vertices_.size();
+  int nbVertices = vertices().size();
   ++Vertex::tagMask_;
   for(int i=0;i<nbVertsDecimated;++i)
   {
@@ -74,7 +74,7 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
     if(iVert>=nbVertices) {
       continue;
     }
-    Vertex &v = vertices_[iVert];
+    Vertex &v = vertices()[iVert];
     if(v.tagFlag_==Vertex::tagMask_) {
       continue;
     }
@@ -88,7 +88,7 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
 
   std::vector<int> iTrisTemp;
   int nbTris = iTris.size();
-  int nbTriangles = triangles_.size();
+  int nbTriangles = triangles().size();
   ++Triangle::tagMask_;
   for(int i = 0; i<nbTris; ++i)
   {
@@ -96,7 +96,7 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
     if(iTri>=nbTriangles) {
       continue;
     }
-    Triangle &t = triangles_[iTri];
+    Triangle &t = triangles()[iTri];
     if(t.tagFlag_==Triangle::tagMask_) {
       continue;
     }
@@ -109,8 +109,8 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
 /** Find opposite triangle */
 int Topology::findOppositeTriangle(int iTri, int iv1, int iv2)
 {
-  Vertex &v1 = vertices_[iv1];
-  Vertex &v2 = vertices_[iv2];
+  Vertex &v1 = vertices()[iv1];
+  Vertex &v2 = vertices()[iv2];
   std::vector<int> &iTris1 = v1.tIndices_;
   std::vector<int> &iTris2 = v2.tIndices_;
   std::sort(iTris1.begin(),iTris1.end());
@@ -132,8 +132,8 @@ void Topology::decimateTriangles(int iTri1, int iTri2, std::vector<int> &iTris)
 {
   if(iTri2==-1)
     return;
-  Triangle &t1 = triangles_[iTri1];
-  Triangle &t2 = triangles_[iTri2];
+  Triangle &t1 = triangles()[iTri1];
+  Triangle &t2 = triangles()[iTri2];
   int iv11 = t1.vIndices_[0];
   int iv21 = t1.vIndices_[1];
   int iv31 = t1.vIndices_[2];
@@ -179,13 +179,13 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
   iVertsDecimated_.push_back(iv1);
   iVertsDecimated_.push_back(iv2);
 
-  Triangle &t1 = triangles_[iTri1];
-  Triangle &t2 = triangles_[iTri2];
-  Vertex &v1 = vertices_[iv1];
-  Vertex &v2 = vertices_[iv2];
+  Triangle &t1 = triangles()[iTri1];
+  Triangle &t2 = triangles()[iTri2];
+  Vertex &v1 = vertices()[iv1];
+  Vertex &v2 = vertices()[iv2];
   Vector3& n1 = v1.normal_;
-  Vertex &vOpp1 = vertices_[ivOpp1];
-  Vertex &vOpp2 = vertices_[ivOpp2];
+  Vertex &vOpp1 = vertices()[ivOpp1];
+  Vertex &vOpp2 = vertices()[ivOpp2];
   std::vector<int> &tris1 = v1.tIndices_;
   std::vector<int> &tris2 = v2.tIndices_;
   std::vector<int> &ring1 = v1.ringVertices_;
@@ -234,7 +234,7 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
 
   int nbTris2 = tris2.size();
   for(int i = 0; i<nbTris2; ++i) {
-    triangles_[tris2[i]].replaceVertex(iv2,iv1);
+    triangles()[tris2[i]].replaceVertex(iv2,iv1);
   }
 
   mesh_->computeRingVertices(iv1);
@@ -244,7 +244,7 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
   for(int i = 0; i<nbRing1; ++i)
   {
     mesh_->computeRingVertices(ring1[i]);
-    laplacianPos+=vertices_[ring1[i]];
+    laplacianPos+=vertices()[ring1[i]];
   }
   assert(nbRing1 > 0);
   laplacianPos/=static_cast<float>(nbRing1);
@@ -264,24 +264,24 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
 /** Update last triangle of array and move its position */
 void Topology::deleteTriangle(int iTri)
 {
-  Triangle &t = triangles_[iTri];
+  Triangle &t = triangles()[iTri];
   int oldPos = t.posInLeaf_;
   std::vector<int> &iTrisLeaf = t.leaf_->getTriangles();
   int lastTri = iTrisLeaf.back();
   if(iTri!=lastTri)
   {
     iTrisLeaf[oldPos] = lastTri;
-    triangles_[lastTri].posInLeaf_ = oldPos;
+    triangles()[lastTri].posInLeaf_ = oldPos;
   }
   iTrisLeaf.pop_back();
 
-  int lastPos = triangles_.size()-1;
+  int lastPos = triangles().size()-1;
   if(lastPos==iTri)
   {
-    triangles_.pop_back();
+    triangles().pop_back();
     return;
   }
-  Triangle &last = triangles_[lastPos];
+  Triangle &last = triangles()[lastPos];
 
   //undo-redo
   if(last.stateFlag_!=Mesh::stateMask_) { last.stateFlag_ = Mesh::stateMask_; mesh_->getTrianglesState().push_back(last); }
@@ -292,9 +292,9 @@ void Topology::deleteTriangle(int iTri)
   int iv1 = last.vIndices_[0];
   int iv2 = last.vIndices_[1];
   int iv3 = last.vIndices_[2];
-  Vertex &v1 = vertices_[iv1];
-  Vertex &v2 = vertices_[iv2];
-  Vertex &v3 = vertices_[iv3];
+  Vertex &v1 = vertices()[iv1];
+  Vertex &v2 = vertices()[iv2];
+  Vertex &v3 = vertices()[iv3];
 
   //undo-redo
   if(v1.stateFlag_!=Mesh::stateMask_) { v1.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v1); }
@@ -307,21 +307,21 @@ void Topology::deleteTriangle(int iTri)
   iVertsDecimated_.push_back(iv1);
   iVertsDecimated_.push_back(iv2);
   iVertsDecimated_.push_back(iv3);
-  triangles_[iTri] = last;
+  triangles()[iTri] = last;
 
-  triangles_.pop_back();
+  triangles().pop_back();
 }
 
 /** Update last vertex of array and move its position */
 void Topology::deleteVertex(int iVert)
 {
-  int lastPos = vertices_.size()-1;
+  int lastPos = vertices().size()-1;
   if(iVert==lastPos)
   {
-    vertices_.pop_back();
+    vertices().pop_back();
     return;
   }
-  Vertex &last = vertices_[lastPos];
+  Vertex &last = vertices()[lastPos];
 
   //undo-redo
   if(last.stateFlag_!=Mesh::stateMask_) { last.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(last); }
@@ -333,7 +333,7 @@ void Topology::deleteVertex(int iVert)
   int nbRing = ring.size();
   for(int i=0;i<nbTris;++i)
   {
-    Triangle &t = triangles_[iTris[i]];
+    Triangle &t = triangles()[iTris[i]];
 
     //undo-redo
     if(t.stateFlag_!=Mesh::stateMask_) { t.stateFlag_ = Mesh::stateMask_; mesh_->getTrianglesState().push_back(t); }
@@ -342,14 +342,14 @@ void Topology::deleteVertex(int iVert)
   }
   for(int i=0;i<nbRing;++i)
   {
-    Vertex &v = vertices_[ring[i]];
+    Vertex &v = vertices()[ring[i]];
 
     //undo-redo
     if(v.stateFlag_!=Mesh::stateMask_) { v.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v); }
 
     v.replaceRingVertex(lastPos,iVert);
   }
-  vertices_[iVert] = last;
+  vertices()[iVert] = last;
 
-  vertices_.pop_back();
+  vertices().pop_back();
 }

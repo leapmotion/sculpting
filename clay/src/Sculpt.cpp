@@ -4,9 +4,15 @@
 #include <algorithm>
 #include <cinder/gl/gl.h>
 
+float Sculpt::detail_ = 1.0f;
+float Sculpt::d2Min_ = 0.0f;
+float Sculpt::d2Max_ = 0.0f;
+float Sculpt::d2Thickness_ = 0.0f;
+float Sculpt::d2Move_ = 0.0f;
+float Sculpt::minDetailMult_ = 0.2f;
+
 /** Constructor */
-Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), detail_(1.0f), d2Min_(0.f),
-  d2Max_(0.f), d2Thickness_(0.f), d2Move_(0.f), lastSculptTime_(0.0), minDetailMult_(0.2f),
+Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), lastSculptTime_(0.0),
   prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f)
 {}
 
@@ -39,22 +45,22 @@ void Sculpt::remesh() {
 
   mesh_->pushState(iTris,vertIndices);
 
-  Topology topo(mesh_, radius_sq, Vector3::Zero());
+  topo_.init(mesh_, radius_sq, Vector3::Zero());
   setAdaptiveParameters(100.0f*100.0f);
-  switch(topoMode_)
-  {
+
+  switch(topoMode_) {
   case ADAPTIVE :
-  case UNIFORMISATION : topo.uniformisation(iTris, d2Min_, d2Max_); break;
-  case DECIMATION : topo.decimation(iTris, d2Min_); break;
-  case SUBDIVISION : topo.subdivision(iTris, d2Max_); break;
+  case UNIFORMISATION : topo_.uniformisation(iTris, d2Min_, d2Max_); break;
+  case DECIMATION : topo_.decimation(iTris, d2Min_); break;
+  case SUBDIVISION : topo_.subdivision(iTris, d2Max_); break;
   default : break;
   }
 
   if(topoMode_==ADAPTIVE) {
-    topo.adaptTopology(iTris, d2Thickness_);
-    mesh_->getVerticesFromTriangles(iTris, vertIndices);
+    topo_.adaptTopology(iTris, d2Thickness_);
   }
 
+  mesh_->getVerticesFromTriangles(iTris, vertIndices);
   mesh_->updateMesh(iTris, vertIndices);
 }
 
@@ -78,14 +84,14 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   //undo-redo
   mesh_->pushState(iTris_,iVertsSelected);
 
-  Topology topo(mesh_,brush._radius_squared,brush._position);
+  topo_.init(mesh_, brush._radius_squared, brush._position);
   setAdaptiveParameters(brush._radius_squared);
-  switch(topoMode_)
-  {
+
+  switch(topoMode_) {
   case ADAPTIVE :
-  case UNIFORMISATION : topo.uniformisation(iTris_, d2Min_, d2Max_); break;
-  case DECIMATION : topo.decimation(iTris_, d2Min_); break;
-  case SUBDIVISION : topo.subdivision(iTris_, d2Max_); break;
+  case UNIFORMISATION : topo_.uniformisation(iTris_, d2Min_, d2Max_); break;
+  case DECIMATION : topo_.decimation(iTris_, d2Min_); break;
+  case SUBDIVISION : topo_.subdivision(iTris_, d2Max_); break;
   default : break;
   }
 
@@ -95,41 +101,39 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   std::vector<int>::iterator it = std::remove_if(iVertsSelected.begin(), iVertsSelected.end(), pred);
   iVertsSelected.resize(it - iVertsSelected.begin());
 
-  switch(sculptMode_)
-  {
-  case INFLATE :
-  case DEFLATE : draw(iVertsSelected, brush); break;
-  case SMOOTH : smooth(iVertsSelected, brush); break;
-  case FLATTEN : flatten(iVertsSelected, brush); break;
-  case SWEEP : sweep(iVertsSelected, brush); break;
-  case PUSH : push(iVertsSelected, brush); break;
-  case PAINT : paint(iVertsSelected, brush, materialColor_); break;
+  switch(sculptMode_) {
+  case INFLATE: draw(mesh_, iVertsSelected, brush, false); break;
+  case DEFLATE: draw(mesh_, iVertsSelected, brush, true); break;
+  case SMOOTH: smooth(mesh_, iVertsSelected, brush); break;
+  case FLATTEN: flatten(mesh_, iVertsSelected, brush); break;
+  case SWEEP: sweep(mesh_, iVertsSelected, brush); break;
+  case PUSH: push(mesh_, iVertsSelected, brush); break;
+  case PAINT: paint(mesh_, iVertsSelected, brush, materialColor_); break;
   default: break;
   }
 
   if (sculptMode_ == DEFLATE || sculptMode_ == SWEEP || sculptMode_ == PUSH || sculptMode_ == INFLATE) {
     Brush autoSmoothBrush(brush);
     autoSmoothBrush._strength *= autoSmoothStrength_;
-    smooth(iVertsSelected, autoSmoothBrush);
+    smooth(mesh_, iVertsSelected, autoSmoothBrush);
   }
 
-  if(topoMode_==ADAPTIVE)
-  {
-    topo.adaptTopology(iTris_, d2Thickness_);
-    mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
+  if(topoMode_==ADAPTIVE) {
+    topo_.adaptTopology(iTris_, d2Thickness_);
   }
 
+  mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
   mesh_->updateMesh(iTris_,iVertsSelected);
 }
 
 /** Smooth a group of vertices. New position is given by simple averaging */
-void Sculpt::smooth(const std::vector<int> &iVerts, const Brush& brush)
+void Sculpt::smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
   Vector3Vector smoothColors(nbVerts, Vector3::Zero());
-  laplacianSmooth(iVerts,smoothVerts, smoothColors);
+  laplacianSmooth(mesh, iVerts,smoothVerts, smoothColors);
   float deformationIntensity = 0.5f;
 
   float dMove = sqrtf(d2Move_);
@@ -148,13 +152,13 @@ void Sculpt::smooth(const std::vector<int> &iVerts, const Brush& brush)
 }
 
 /** Smooth a group of vertices along the plane defined by the normal of the vertex */
-void Sculpt::smoothFlat(const std::vector<int> &iVerts)
+void Sculpt::smoothFlat(Mesh* mesh, const std::vector<int> &iVerts)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
   Vector3Vector smoothColors(nbVerts, Vector3::Zero());
-  laplacianSmooth(iVerts,smoothVerts, smoothColors);
+  laplacianSmooth(mesh, iVerts,smoothVerts, smoothColors);
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
@@ -172,13 +176,13 @@ void Sculpt::smoothFlat(const std::vector<int> &iVerts)
 * representative of all the sculpting vertices. I couldn't come up with a good
 * falloff function, so it's just something that fall off strongly at the border of brush radius
 */
-void Sculpt::draw(const std::vector<int> &iVerts, const Brush& brush)
+void Sculpt::draw(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool negate)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   const float dMove = std::sqrt(d2Move_);
   float deformationIntensity = brush._radius*0.05f;
-  if (sculptMode_== DEFLATE) {
+  if (negate) {
     deformationIntensity = -deformationIntensity;
   }
 #pragma omp parallel for
@@ -191,9 +195,9 @@ void Sculpt::draw(const std::vector<int> &iVerts, const Brush& brush)
 }
 
 /** Compute average normal of a group of vertices with culling */
-Vector3 Sculpt::areaNormal(const std::vector<int> &iVerts)
+Vector3 Sculpt::areaNormal(Mesh* mesh, const std::vector<int> &iVerts)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   float areaX=0.f,areaY=0.f,areaZ=0.f;
 #pragma omp parallel for reduction(+:areaX,areaY,areaZ)
@@ -214,9 +218,9 @@ Vector3 Sculpt::areaNormal(const std::vector<int> &iVerts)
 }
 
 /** Compute average center of a group of vertices with culling */
-Vector3 Sculpt::areaCenter(const std::vector<int> &iVerts)
+Vector3 Sculpt::areaCenter(Mesh* mesh, const std::vector<int> &iVerts)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   float areaX=0.f,areaY=0.f,areaZ=0.f;
 #pragma omp parallel for reduction(+:areaX,areaY,areaZ)
@@ -235,13 +239,13 @@ Vector3 Sculpt::areaCenter(const std::vector<int> &iVerts)
 * Flattening, projection of the sculpting vertex onto a plane
 * defined by the barycenter and normals of all the sculpting vertices
 */
-void Sculpt::flatten(const std::vector<int> &iVerts, const Brush& brush)
+void Sculpt::flatten(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush)
 {
-  Vector3 areaNorm = areaNormal(iVerts);
+  Vector3 areaNorm = areaNormal(mesh, iVerts);
   if(areaNorm.squaredNorm()<0.0001f)
     return;
-  Vector3 areaPoint = areaCenter(iVerts);
-  VertexVector &vertices = mesh_->getVertices();
+  Vector3 areaPoint = areaCenter(mesh, iVerts);
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   float deformationIntensity = 0.3f;
   const float dMove = std::sqrt(d2Move_);
@@ -256,9 +260,9 @@ void Sculpt::flatten(const std::vector<int> &iVerts, const Brush& brush)
 }
 
 /** Laplacian smooth. Special rule for vertex on the edge of the mesh. */
-void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors)
+void Sculpt::laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
@@ -303,9 +307,9 @@ void Sculpt::laplacianSmooth(const std::vector<int> &iVerts, Vector3Vector &smoo
 }
 
 /** Smooth a group of vertices along the plane defined by the normal of the vertex (no openMP) */
-void Sculpt::smoothNoMp(const std::vector<int> &iVerts, bool flat)
+void Sculpt::smoothNoMp(Mesh* mesh, const std::vector<int> &iVerts, bool flat)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
   for (int i = 0; i<nbVerts; ++i)
@@ -359,9 +363,9 @@ void Sculpt::smoothNoMp(const std::vector<int> &iVerts, bool flat)
 }
 
 /** Sweep deformation */
-void Sculpt::sweep(const std::vector<int> &iVerts, const Brush& brush)
+void Sculpt::sweep(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   float deformationIntensity = brush._radius*0.0005f;
   const float velMag = brush._velocity.norm();
@@ -377,9 +381,9 @@ void Sculpt::sweep(const std::vector<int> &iVerts, const Brush& brush)
   }
 }
 
-void Sculpt::push(const std::vector<int> &iVerts, const Brush& brush)
+void Sculpt::push(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   const float dMove = std::sqrt(d2Move_);
   const float deformationIntensity = brush._radius*0.25f;
@@ -392,8 +396,8 @@ void Sculpt::push(const std::vector<int> &iVerts, const Brush& brush)
   }
 }
 
-void Sculpt::paint(const std::vector<int> &iVerts, const Brush& brush, const Vector3& color) {
-  VertexVector &vertices = mesh_->getVertices();
+void Sculpt::paint(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, const Vector3& color) {
+  VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)

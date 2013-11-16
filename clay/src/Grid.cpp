@@ -2,22 +2,21 @@
 #include "Grid.h"
 
 /** Constructor */
-Grid::Grid(const Aabb &aabb) : aabb_(aabb)
-{
-  Vector3 vecShift = (aabb_.max_-aabb_.min_)*0.1f; //slightly bigger aabb
-  aabb_.min_-=vecShift;
-  aabb_.max_+=vecShift;
-}
+Grid::Grid()
+{ }
 
 /** Destructor */
 Grid::~Grid()
-{
-  delete[] iVerts_;
-}
+{ }
 
 /** Initialize grid */
-void Grid::init(float cellSize)
+void Grid::init(const Aabb& aabb, float cellSize)
 {
+  aabb_ = aabb;
+  Vector3 vecShift = (aabb_.max_-aabb_.min_)*0.1f; //slightly bigger aabb
+  aabb_.min_-=vecShift;
+  aabb_.max_+=vecShift;
+
   cellSize_ = cellSize;
   Vector3 diff(aabb_.max_-aabb_.min_);
   dimX_ = static_cast<int>(ceil(diff.x()/cellSize_));
@@ -27,7 +26,12 @@ void Grid::init(float cellSize)
   if(dimY_<=0) dimY_ = 1;
   if(dimZ_<=0) dimZ_ = 1;
   size_ = 1+(dimX_*dimY_*dimZ_);
-  iVerts_ = new std::vector<int>[size_];
+  if (size_ > static_cast<int>(iVerts_.size())) {
+    iVerts_.resize(size_);
+  }
+  for (int i=0; i<size_; i++) {
+    iVerts_[i].clear();
+  }
   dimXY_ = dimX_*dimY_;
 }
 

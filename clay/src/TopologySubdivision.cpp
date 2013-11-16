@@ -1,16 +1,17 @@
 #include "StdAfx.h"
 #include "Topology.h"
+#include "Sculpt.h"
 
 /** Subdivide until the detail every selected triangles comply with a detail level */
 void Topology::subdivision(std::vector<int> &iTris, float detailMaxSquared)
 {
-  int nbTriangles = triangles_.size();
+  int nbTriangles = triangles().size();
   do
   {
-    nbTriangles = triangles_.size();
+    nbTriangles = triangles().size();
     subdivide(iTris, detailMaxSquared);
   }
-  while(nbTriangles!=(int)triangles_.size());
+  while(nbTriangles!=(int)triangles().size());
 }
 
 /**
@@ -25,8 +26,8 @@ void Topology::subdivision(std::vector<int> &iTris, float detailMaxSquared)
 void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
 {
   verticesMap_.clear();
-  int nbVertsInit = vertices_.size();
-  int nbTrisInit = triangles_.size();
+  int nbVertsInit = vertices().size();
+  int nbTrisInit = triangles().size();
 
   std::vector<int> iTrisSubd, split;
 
@@ -43,7 +44,7 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
   subdivideTriangles(iTrisSubd, split, detailMaxSquared);
 
   std::vector<int> newTriangle;
-  int nbTriangles = triangles_.size();
+  int nbTriangles = triangles().size();
   for(int i = nbTrisInit; i<nbTriangles; ++i)
     newTriangle.push_back(i);
 
@@ -62,7 +63,7 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
   for(int i=0;i<nbTrisTemp;++i)
   {
     int iTri = iTris[i];
-    Triangle &t = triangles_[iTri];
+    Triangle &t = triangles()[iTri];
     if(t.tagFlag_==Triangle::tagMask_)
       continue;
     t.tagFlag_ = Triangle::tagMask_;
@@ -70,33 +71,31 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
   }
   iTris = iTrisTemp;
 
-  int nbTrianglesOld = triangles_.size();
+  int nbTrianglesOld = triangles().size();
   while(newTriangle.size()>0)
     fillTriangles(newTriangle);
 
-  nbTriangles = triangles_.size();
+  nbTriangles = triangles().size();
   for(int i = nbTrianglesOld; i<nbTriangles; ++i)
     iTris.push_back(i);
 
   std::vector<int> vNew;
-  int nbVertices = vertices_.size();
+  int nbVertices = vertices().size();
   for(int i = nbVertsInit; i<nbVertices; ++i)
     vNew.push_back(i);
 
   int nbVNew = vNew.size();
   mesh_->expandVertices(vNew,1);
-  Sculpt sc;
-  sc.setMesh(mesh_);
-  sc.smoothFlat(std::vector<int>(vNew.begin() + nbVNew, vNew.end()));
+  Sculpt::smoothFlat(mesh_, std::vector<int>(vNew.begin() + nbVNew, vNew.end()));
 
   nbVNew = vNew.size();
 #pragma omp parallel for
-  for(int i=0;i<nbVNew;++i)
-  {
-    if((vertices_[vNew[i]]-centerPoint_).squaredNorm()<radiusSquared_)
-      vertices_[vNew[i]].sculptFlag_ = Vertex::sculptMask_;
-    else
-      vertices_[vNew[i]].sculptFlag_ = Vertex::sculptMask_-1;
+  for(int i=0;i<nbVNew;++i) {
+    if ((vertices()[vNew[i]]-centerPoint_).squaredNorm()<radiusSquared_) {
+      vertices()[vNew[i]].sculptFlag_ = Vertex::sculptMask_;
+    } else {
+      vertices()[vNew[i]].sculptFlag_ = Vertex::sculptMask_-1;
+    }
   }
 }
 
@@ -117,10 +116,10 @@ void Topology::initSplit(std::vector<int> &iTris, std::vector<int> &iTrisSubd, s
 /** Find the edge to be split (0 otherwise) */
 int Topology::findSplit(int iTri, float detailMaxSquared, bool checkInsideSphere)
 {
-  const Triangle &t = triangles_[iTri];
-  const Vertex &v1 = vertices_[t.vIndices_[0]];
-  const Vertex &v2 = vertices_[t.vIndices_[1]];
-  const Vertex &v3 = vertices_[t.vIndices_[2]];
+  const Triangle &t = triangles()[iTri];
+  const Vertex &v1 = vertices()[t.vIndices_[0]];
+  const Vertex &v2 = vertices()[t.vIndices_[1]];
+  const Vertex &v3 = vertices()[t.vIndices_[2]];
 
   if(checkInsideSphere)
     if(!Geometry::sphereIntersectTriangle(centerPoint_, radiusSquared_*2.f, v1, v2, v3))
@@ -150,7 +149,7 @@ void Topology::subdivideTriangles(std::vector<int> &iTrisSubd, std::vector<int> 
   int nbTris = iTrisSubd.size();
   for(int i=0; i<nbTris;++i)
   {
-    Triangle &t = triangles_[iTrisSubd[i]];
+    Triangle &t = triangles()[iTrisSubd[i]];
     int iv1 = t.vIndices_[0];
     int iv2 = t.vIndices_[1];
     int iv3 = t.vIndices_[2];
@@ -187,23 +186,23 @@ void Topology::subdivideTriangles(std::vector<int> &iTrisSubd, std::vector<int> 
 */
 void Topology::halfEdgeSplit(int iTri, int iv1, int iv2, int iv3)
 {
-  Triangle &t = triangles_[iTri];
+  Triangle &t = triangles()[iTri];
   Octree *leaf = t.leaf_;
   std::vector<int> &iTrisLeaf = leaf->getTriangles();
-  Vertex &v1 = vertices_[iv1];
-  Vertex &v2 = vertices_[iv2];
-  Vertex &v3 = vertices_[iv3];
+  Vertex &v1 = vertices()[iv1];
+  Vertex &v2 = vertices()[iv2];
+  Vertex &v3 = vertices()[iv3];
 
   std::pair<std::map<std::pair<int,int>,int>::iterator, bool> pair;
   std::pair<std::pair<int,int>,int> entry;
   entry.first.first = std::min(iv1,iv2);
   entry.first.second = std::max(iv1,iv2);
-  entry.second = vertices_.size();
+  entry.second = vertices().size();
   pair = verticesMap_.insert(entry);
   int ivMid=(*pair.first).second;
 
   v3.addRingVertex(ivMid);
-  int iNewTri = triangles_.size();
+  int iNewTri = triangles().size();
   t.vIndices_[0] = iv1;
   t.vIndices_[1] = ivMid;
   t.vIndices_[2] = iv3;
@@ -215,7 +214,7 @@ void Topology::halfEdgeSplit(int iTri, int iv1, int iv2, int iv3)
   newTri.posInLeaf_ = iTrisLeaf.size();
   if(pair.second) //new vertex
   {
-    Vertex vMidTest((v1+v2)*0.5f,vertices_.size());
+    Vertex vMidTest((v1+v2)*0.5f,vertices().size());
     vMidTest.material_ = 0.5f*(v1.material_+v2.material_);
     float dot = v1.normal_.dot(v2.normal_);
     float angle;
@@ -237,17 +236,17 @@ void Topology::halfEdgeSplit(int iTri, int iv1, int iv2, int iv3)
     v2.replaceRingVertex(iv1,ivMid);
     vMidTest.addTriangle(iTri);
     vMidTest.addTriangle(iNewTri);
-    vertices_.push_back(vMidTest);
+    vertices().push_back(vMidTest);
   }
   else
   {
-    Vertex &vm = vertices_[ivMid];
+    Vertex &vm = vertices()[ivMid];
     vm.addRingVertex(iv3);
     vm.addTriangle(iTri);
     vm.addTriangle(iNewTri);
   }
   iTrisLeaf.push_back(iNewTri);
-  triangles_.push_back(newTri);
+  triangles().push_back(newTri);
 }
 
 /**
@@ -262,13 +261,13 @@ void Topology::fillTriangles(std::vector<int> &iTris)
   for(int i=0; i<nbTris;++i)
   {
     int iTri = iTris[i];
-    Triangle &t = triangles_[iTri];
+    Triangle &t = triangles()[iTri];
     int iv1 = t.vIndices_[0];
     int iv2 = t.vIndices_[1];
     int iv3 = t.vIndices_[2];
-    Vertex &v1 = vertices_[iv1];
-    Vertex &v2 = vertices_[iv2];
-    Vertex &v3 = vertices_[iv3];
+    Vertex &v1 = vertices()[iv1];
+    Vertex &v2 = vertices()[iv2];
+    Vertex &v3 = vertices()[iv3];
     bool find1 = false;
     bool find2 = false;
     bool find3 = false;
@@ -329,7 +328,7 @@ void Topology::fillTriangles(std::vector<int> &iTris)
       fillTriangle(iTri,iv3,iv1,iv2,it3->second);
     else continue;
     iTrisNext.push_back(iTri);
-    iTrisNext.push_back(triangles_.size()-1);
+    iTrisNext.push_back(triangles().size()-1);
   }
   iTris = iTrisNext;
 }
@@ -337,15 +336,15 @@ void Topology::fillTriangles(std::vector<int> &iTris)
 /** Fill crack on one triangle */
 void Topology::fillTriangle(int iTri, int iv1, int iv2, int iv3, int ivMid)
 {
-  Triangle &t = triangles_[iTri];
+  Triangle &t = triangles()[iTri];
   Octree *leaf = t.leaf_;
   std::vector<int> &iTrisLeaf = leaf->getTriangles();
-  Vertex &v2 = vertices_[iv2];
-  Vertex &v3 = vertices_[iv3];
-  Vertex &vMid = vertices_[ivMid];
+  Vertex &v2 = vertices()[iv2];
+  Vertex &v3 = vertices()[iv3];
+  Vertex &vMid = vertices()[ivMid];
   vMid.addRingVertex(iv3);
   v3.addRingVertex(ivMid);
-  int iNewTri = triangles_.size();
+  int iNewTri = triangles().size();
   vMid.addTriangle(iTri);
   vMid.addTriangle(iNewTri);
   t.vIndices_[0] = iv1;
@@ -358,5 +357,5 @@ void Topology::fillTriangle(int iTri, int iv1, int iv2, int iv3, int ivMid)
   newTri.leaf_ = leaf;
   newTri.posInLeaf_ = iTrisLeaf.size();
   iTrisLeaf.push_back(iNewTri);
-  triangles_.push_back(newTri);
+  triangles().push_back(newTri);
 }

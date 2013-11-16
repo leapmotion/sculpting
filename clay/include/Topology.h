@@ -8,7 +8,6 @@
 #include <algorithm>
 #include "DataTypes.h"
 #include "Mesh.h"
-#include "Sculpt.h"
 #include "Grid.h"
 #include "Octree.h"
 
@@ -32,9 +31,19 @@ private:
   };
 
 public :
-  Topology(Mesh *mesh, float radiusSquared,const Vector3& centerPoint) : mesh_(mesh), triangles_(mesh->getTriangles()),
-    vertices_(mesh->getVertices()), centerPoint_(centerPoint), radiusSquared_(radiusSquared) {}
+  Topology() : mesh_(0), triangles_(0), vertices_(0), centerPoint_(Vector3::Zero()), radiusSquared_(0.0f) {}
   ~Topology() {}
+  void init(Mesh *mesh, float radiusSquared, const Vector3& centerPoint) {
+    mesh_ = mesh;
+    triangles_ = &mesh->getTriangles();
+    vertices_ = &mesh->getVertices();
+    centerPoint_ = centerPoint;
+    radiusSquared_ = radiusSquared;
+    verticesMap_.clear();
+    iVertsDecimated_.clear();
+    iTrisToDelete_.clear();
+    iVertsToDelete_.clear();
+  }
   void subdivision(std::vector<int> &iTris, float detailMaxSquared);
   void decimation(std::vector<int> &iTris, float detailMinSquared);
   void uniformisation(std::vector<int> &iTris, float detailMinSquared, float detailMaxSquared);
@@ -73,15 +82,19 @@ private :
   void connectLinkedEdges(std::vector<Edge> &edges1, std::vector<Edge> &edges2);
 
 private:
+  inline TriangleVector& triangles() { return *triangles_; }
+  inline VertexVector& vertices() { return *vertices_; }
+
   Mesh *mesh_; //mesh
-  TriangleVector &triangles_; //reference to mesh triangles
-  VertexVector &vertices_; //reference to mesh vertices
+  TriangleVector* triangles_; //reference to mesh triangles
+  VertexVector* vertices_; //reference to mesh vertices
   Vector3 centerPoint_; //center of brush
   std::map<std::pair<int,int>,int> verticesMap_; //to detect new vertices at the middle of edge (for subdivision)
   float radiusSquared_; //radius squared
   std::vector<int> iVertsDecimated_; //vertices to be updated (mainly for the VBO's, used in decimation and adaptive topo)
   std::vector<int> iTrisToDelete_; //triangles to be deleted
   std::vector<int> iVertsToDelete_; //vertices to be deleted
+  Grid grid_;
 };
 
 #endif /*__TOPOLOGY_H__*/
