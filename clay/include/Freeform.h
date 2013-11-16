@@ -30,7 +30,7 @@ class FreeformApp : public AppNative
 {
 public:
 
-  enum AAMode { NONE, FXAA, MSAA };
+  enum AAMode { NONE, MSAA };
   enum Shape { BALL, CAN, DONUT, SHEET, NUM_SHAPES };
 
   FreeformApp();
@@ -71,6 +71,9 @@ private:
   void loadIcons();
   void loadShapes();
 
+  enum MachineSpeed { LOW, MID, HIGH };
+  MachineSpeed parseRenderString(const std::string& render_string);
+
   // *** camera stuff ***
   CameraPersp _camera;
   float _theta;
@@ -94,9 +97,6 @@ private:
   GlslProg _brush_shader;
   GlslProg _blur_shader;
   GlslProg _wireframe_shader;
-  Fbo _color_fbo;
-  Fbo _depth_fbo;
-  Fbo _blur_fbo;
   std::thread _loading_thread;
   std::thread _mesh_thread;
   bool _shutdown;
@@ -106,6 +106,7 @@ private:
   double _last_update_time;
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
   std::mutex _mesh_mutex;
+  MachineSpeed _machine_speed;
 
   // *** Leap stuff ***
   LeapListener _listener;
@@ -130,9 +131,7 @@ private:
   Fbo _horizontal_blur_fbo;
   Fbo _vertical_blur_fbo;
   GlslProg _screen_shader;
-  GlslProg _fxaa_shader;
   GlslProg _bloom_shader;
-  bool _use_fxaa;
   float _exposure; // hdr exposure
   float _contrast;
   bool _bloom_visible;

@@ -24,7 +24,7 @@ const float MAX_FOV = 90.0f;
 //*********************************************************
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
-  drawOctree_(false), _use_fxaa(_aa_mode == FXAA), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()),
+  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()),
   _ui_zoom(1.0f), _draw_tutorial(false), _tutorial_toggle_time(0.0)
 {
   _camera_util = new CameraUtil();
@@ -135,7 +135,6 @@ void FreeformApp::setup()
   _params->addParam( "Bloom size", &_bloom_size, "min=0.0 max=4.0 step=0.01" );
   _params->addParam( "Bloom strength", &_bloom_strength, "min=0.0 max=1.0 step=0.01" );
   _params->addParam( "Bloom threshold", &_bloom_light_threshold, "min=0.0 max=2.0 step=0.01" );
-  _params->addParam( "Use FXAA", &_use_fxaa, "" );
   _params->addParam( "Draw Background", &_draw_background, "" );
 #endif
 
@@ -147,7 +146,6 @@ void FreeformApp::setup()
     _brush_shader = gl::GlslProg( loadResource( RES_BRUSH_VERT_GLSL ), loadResource( RES_MATERIAL_FRAG_GLSL ) );
     _wireframe_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_WIREFRAME_FRAG_GLSL ) );
     _sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
-    _fxaa_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_FXAA_FRAG_GLSL ) );
     _bloom_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLOOM_FRAG_GLSL ) );
   } catch (gl::GlslProgCompileExc e) {
     std::cout << e.what() << std::endl;
@@ -158,6 +156,10 @@ void FreeformApp::setup()
 
   loadIcons();
   loadShapes();
+
+  _machine_speed = parseRenderString(std::string((char*)glGetString(GL_RENDERER)));
+  _bloom_visible = _machine_speed > FreeformApp::LOW;
+  _aa_mode = _machine_speed > FreeformApp::LOW ? FreeformApp::MSAA : FreeformApp::NONE;
 
   _ui = new UserInterface();
   _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
@@ -199,14 +201,6 @@ void FreeformApp::resize()
   int height = getWindowHeight();
   width = std::max(DOWNSCALE_FACTOR, width);
   height = std::max(DOWNSCALE_FACTOR, height);
-
-  // FBOs with no depth buffer
-
-  Fbo::Format formatNoDepth;
-  formatNoDepth.setColorInternalFormat(GL_RGB32F_ARB);
-  formatNoDepth.enableDepthBuffer(false);
-
-  _color_fbo = Fbo( width, height, formatNoDepth );
 
   // FBOs with no depth buffer and bilinear sampling
 
@@ -519,9 +513,9 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _material_shader.uniform( "brushPositions", brushPositions.data(), numBrushes );
     _material_shader.uniform( "brushWeights", brushWeights.data(), numBrushes );
     _material_shader.uniform( "brushRadii", brushRadii.data(), numBrushes );
-    _material_shader.uniform( "lightColor", 0.15f*_brush_color );
+    _material_shader.uniform( "lightColor", 0.1f*_brush_color );
     _material_shader.uniform( "lightExponent", 30.0f);
-    _material_shader.uniform( "lightRadius", 75.0f);
+    _material_shader.uniform( "lightRadius", 50.0f);
 
     glPushMatrix();
     glPolygonOffset(1.0f, 1.0f);
@@ -704,10 +698,6 @@ void FreeformApp::draw()
 
     _screen_fbo.bindTexture(0);
     _vertical_blur_fbo.bindTexture(1);
-    //_screen_fbo.getDepthTexture().bind(2);
-    if (_use_fxaa) {
-      _color_fbo.bindFramebuffer();
-    }
     _screen_shader.bind();
     _screen_shader.uniform( "color_texture", 0 );
     _screen_shader.uniform( "bloom_texture", 1 );
@@ -723,19 +713,6 @@ void FreeformApp::draw()
     _screen_shader.unbind();
     _screen_fbo.unbindTexture();
     _vertical_blur_fbo.unbindTexture();
-    //_screen_fbo.getDepthTexture().unbind(2);
-
-    if (_use_fxaa) {
-      _color_fbo.unbindFramebuffer();
-
-      _color_fbo.bindTexture(0);
-      _fxaa_shader.bind();
-      _fxaa_shader.uniform( "textureSampler", 0 );
-      _fxaa_shader.uniform( "texcoordOffset", Vec2f(1.0f/width, 1.0f/height) );
-      gl::drawSolidRect(Rectf(0,0,width,height));
-      _fxaa_shader.unbind();
-      _color_fbo.unbindTexture();
-    }
 
 #if !LM_PRODUCTION_BUILD
     if (_draw_ui) {
@@ -854,6 +831,71 @@ void FreeformApp::loadShapes() {
   shapes_[CAN] = std::string((char*)canBuf.getData(), canBuf.getDataSize());
   shapes_[DONUT] = std::string((char*)donutBuf.getData(), donutBuf.getDataSize());
   shapes_[SHEET] = std::string((char*)sheetBuf.getData(), sheetBuf.getDataSize());
+}
+
+FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& render_string) {
+  // would be cleaner if I used Boost.Spirit
+  std::string::const_iterator it = render_string.begin();
+  for (; it != render_string.end(); it++) {
+    if (isdigit(*it)) {
+      break;
+    }
+  }
+  assert(it != render_string.end());
+  int model_number = atoi(render_string.substr(it - render_string.begin()).c_str());
+  if (render_string.find("Intel HD") != std::string::npos) {
+    return FreeformApp::LOW;
+  }
+  if (render_string.find("Intel") != std::string::npos) {
+    // Intel GMA or older
+    return FreeformApp::LOW;
+  }
+
+  if (render_string.find("FireGL") != std::string::npos ||
+    render_string.find("FirePro") != std::string::npos ||
+    render_string.find("Quadro") != std::string::npos) {
+      // workstation card, give them a shot at full resolution regardless of the model #
+      return FreeformApp::HIGH;
+  }
+  if (render_string.find("GeForce") != std::string::npos) {
+    if (model_number > 1000) {
+      if (render_string.find("M OpenGL") != std::string::npos) {
+        // mobile GPU
+        if (model_number < 9000) {
+          return FreeformApp::LOW;
+        }
+      }
+      if (model_number < 6000) {
+        // GeForce FX (5000) series or older, DirectX 8
+        return FreeformApp::LOW;
+      }
+      // GeForce 6000, 7000 series
+      if (model_number < 8000) {
+        // GeForce 6000 series first to support DirectX 9
+        return FreeformApp::MID;
+      }
+    }
+    // GeForce 8000 == 9000, 200, 300 (GT200), 400 (Fermi)... 600 or higher series
+    return FreeformApp::HIGH;
+  }
+  if (render_string.find("Radeon X") != std::string::npos) {
+    // Radeon X300, X600, X700, X800, X1000, wide range of all DirectX 9
+    return FreeformApp::MID;
+  }
+  if (render_string.find("Radeon") != std::string::npos) {
+    if (model_number >= 8000 && model_number < 10000) {
+      // R200 series has big numbers like 8500LE, 9200SE, 9200, 9250, DirectX 8.1
+      return FreeformApp::LOW;
+    }
+    if (model_number < 5000) {
+      // R600 (HD2000) series through HD4000 series
+      return FreeformApp::MID;
+    }
+    // HD5000 and higher
+    return FreeformApp::HIGH;
+  }
+  // unrecognized video card, err on the middle
+  return FreeformApp::HIGH;
 }
 
 void FreeformApp::setMaterial(const Material& mat) {
@@ -1086,6 +1128,7 @@ int FreeformApp::saveFile()
 int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic::prepareLaunch();
   cinder::app::AppBasic *app = new FreeformApp;
+  //cinder::app::RendererRef ren(new RendererGl());
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
 #if _WIN32
   cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm");
