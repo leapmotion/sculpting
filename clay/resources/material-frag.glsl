@@ -26,7 +26,7 @@ uniform float lightExponent;
 uniform float lightRadius;
 uniform float alphaMult;
 
-const float HIGHLIGHT_INTENSITY = 0.4f;
+const float HIGHLIGHT_INTENSITY = 0.4;
 
 void main()
 {
@@ -40,7 +40,7 @@ void main()
   vec3 diffusecolor = (vertexColor * textureCube(irradiance, normal).rgb) * diffuseFactor;
   vec3 reflectcolor = textureCube(radiance, reflectray, reflectionBias).rgb * reflectionFactor;
 
-  float highlightMult = 1.0f;
+  float highlightMult = 1.0;
 
   for (int i=0; i<numLights && i<MAX_LIGHTS; i++) {
     float lightdist = length(brushPositions[i] - worldPosition);

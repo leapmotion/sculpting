@@ -21,6 +21,10 @@ std::string Environment::working_directory;
 
 Environment::Environment() : _cur_environment(""), _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0)
 {
+  for (int i = 0; i < 6; ++i)
+  {
+    bitmaps[i] = nullptr;
+  }
   createWorkingDirectory();
   createEnvironmentInfos();
 }
