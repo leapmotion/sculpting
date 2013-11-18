@@ -424,7 +424,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const int NUM_OBJECT_ENTRIES = 6;
+  const int NUM_OBJECT_ENTRIES = 7;
   _object_menu.setName("Object");
   _object_menu.setPosition(Vector2(0.25f, 0.075f));
   _object_menu.setNumEntries(NUM_OBJECT_ENTRIES);
@@ -730,6 +730,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     case Menu::OBJECT_CAN: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CAN; break;
     case Menu::OBJECT_DONUT: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_DONUT; break;
     case Menu::OBJECT_SHEET: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_SHEET; break;
+    case Menu::OBJECT_CUBE: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CUBE; break;
     }
     _object_menu.clearSelection();
   }
@@ -754,6 +755,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
         case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
         case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
         case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
+        case Menu::OBJECT_CUBE: app->loadShape(FreeformApp::CUBE); break;
       }
     }
     _confirm_menu.clearSelection();

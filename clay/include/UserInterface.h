@@ -78,6 +78,7 @@ public:
     OBJECT_CAN,
     OBJECT_DONUT,
     OBJECT_SHEET,
+    OBJECT_CUBE,
 
     // editing
     EDITING_TOGGLE_WIREFRAME,
@@ -187,9 +188,10 @@ public:
         case Menu::OBJECT_LOAD: return "Load"; break;
         case Menu::OBJECT_EXPORT: return "Export"; break;
         case Menu::OBJECT_BALL: return "Sphere"; break;
-        case Menu::OBJECT_CAN: return "Can"; break;
-        case Menu::OBJECT_DONUT: return "Donut"; break;
+        case Menu::OBJECT_CAN: return "Cylinder"; break;
+        case Menu::OBJECT_DONUT: return "Torus"; break;
         case Menu::OBJECT_SHEET: return "Sheet"; break;
+        case Menu::OBJECT_CUBE: return "Cube"; break;
         case Menu::EDITING_TOGGLE_SYMMETRY: return "Symmetry"; break;
         case Menu::EDITING_TOGGLE_WIREFRAME: return "Wireframe"; break;
         case Menu::EDITING_REDO: return "Redo"; break;

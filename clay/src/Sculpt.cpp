@@ -13,7 +13,8 @@ float Sculpt::minDetailMult_ = 0.2f;
 
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), lastSculptTime_(0.0),
-  prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f)
+  prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f),
+  remeshRadius_(-1.0f)
 {}
 
 /** Destructor */
@@ -21,17 +22,19 @@ Sculpt::~Sculpt()
 {}
 
 /** Set sculpting mode */
-void Sculpt::setAdaptiveParameters(float radiusSquared)
+void Sculpt::setAdaptiveParameters(float radiusSquared, bool clamp)
 {
   static const float MAX_RADIUS_SQ_SUBDIVIDE = 25.0f * 25.0f; // to prevent detail loss
-  radiusSquared = std::min(radiusSquared, MAX_RADIUS_SQ_SUBDIVIDE);
+  if (clamp) {
+    radiusSquared = std::min(radiusSquared, MAX_RADIUS_SQ_SUBDIVIDE);
+  }
   d2Max_ = radiusSquared*(1.0f-detail_+minDetailMult_)*0.2f;
   d2Min_ = d2Max_/4.2025f;
   d2Move_ = d2Min_*0.2375f;
   d2Thickness_ = (4.f*d2Move_ + d2Max_/3.f)*1.1f;
 }
 
-void Sculpt::remesh() {
+void Sculpt::remesh(float remeshRadius) {
   const float radius_sq = 200.0f * 200.0f;
   VertexVector &vertices = mesh_->getVertices();
   const int numVertices = vertices.size();
@@ -46,7 +49,7 @@ void Sculpt::remesh() {
   mesh_->pushState(iTris,vertIndices);
 
   topo_.init(mesh_, radius_sq, Vector3::Zero());
-  setAdaptiveParameters(100.0f*100.0f);
+  setAdaptiveParameters(remeshRadius*remeshRadius, false);
 
   switch(topoMode_) {
   case ADAPTIVE :
@@ -431,6 +434,11 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
   static const float DESIRED_ANGLE_PER_SAMPLE = 0.03f;
 
   std::unique_lock<std::mutex> lock(brushMutex_);
+  if (remeshRadius_ > 0) {
+    remesh(remeshRadius_);
+    remeshRadius_ = -1.0f;
+  }
+
   mesh_->handleUndoRedo();
   const Vector3& origin = mesh_->getRotationOrigin();
   const Vector3& axis = mesh_->getRotationAxis();

@@ -26,7 +26,7 @@ public:
   bool isSweep() { return sculptMode_==SWEEP; }
   void setMaterialColor(const Vector3& color) { materialColor_ = color; }
 
-  void remesh();
+  void setRemeshRadius(float remeshRadius) { remeshRadius_ = remeshRadius; }
   void sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush);
 
   static void setMinDetailMult(float minDetailMult) { minDetailMult_ = minDetailMult; }
@@ -51,10 +51,11 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
-  static void setAdaptiveParameters(float radiusSquared);
+  static void setAdaptiveParameters(float radiusSquared, bool clamp = true);
   static Vector3 areaNormal(Mesh* mesh, const std::vector<int> &iVerts);
   static Vector3 areaCenter(Mesh* mesh, const std::vector<int> &iVerts);
   static void laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors);
+  void remesh(float remeshRadius);
 
 private:
 
@@ -87,6 +88,7 @@ private:
   double lastSculptTime_;
   double lastUpdateTime_;
   Topology topo_;
+  float remeshRadius_;
 
   BrushVector _brushes;
 };

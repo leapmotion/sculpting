@@ -52,6 +52,7 @@
 #define RES_CAN_OBJ                           CINDER_RESOURCE( ../resources/shapes/, can.obj, 251, OBJ )
 #define RES_DONUT_OBJ                         CINDER_RESOURCE( ../resources/shapes/, donut.obj, 252, OBJ )
 #define RES_SHEET_OBJ                         CINDER_RESOURCE( ../resources/shapes/, sheet.obj, 253, OBJ )
+#define RES_CUBE_OBJ                          CINDER_RESOURCE( ../resources/shapes/, cube.obj, 254, OBJ )
 
 // tutorial images
 #define RES_TUTORIAL_1                        CINDER_RESOURCE( ../resources/tutorial/, tutorial-menu.png, 260, PNG )

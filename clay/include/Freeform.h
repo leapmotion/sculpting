@@ -31,7 +31,7 @@ class FreeformApp : public AppNative
 public:
 
   enum AAMode { NONE, MSAA };
-  enum Shape { BALL, CAN, DONUT, SHEET, NUM_SHAPES };
+  enum Shape { BALL, CAN, DONUT, SHEET, CUBE, NUM_SHAPES };
 
   FreeformApp();
   ~FreeformApp();
@@ -145,6 +145,7 @@ private:
   bool symmetry_;
   bool drawOctree_;
   std::string shapes_[NUM_SHAPES];
+  float remeshRadius_;
 
   // camera control settings
   CameraUtil::Params _camera_params;
