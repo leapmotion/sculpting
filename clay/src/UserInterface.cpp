@@ -15,7 +15,7 @@ const float Menu::RING_THICKNESS_RATIO = 0.3f;
 const float Menu::STRENGTH_UI_MULT = 10.0f;
 const float Menu::BASE_OUTER_RADIUS = 0.15f;
 const float Menu::OUTER_RADIUS_PER_ENTRY = 0.0175f;
-const float Menu::BASE_INNER_RADIUS = 0.065f;
+const float Menu::BASE_INNER_RADIUS = 0.075f;
 const float Menu::SWEEP_ANGLE = 3.5f;
 ci::Font Menu::g_font;
 ci::Font Menu::g_boldFont;
@@ -353,7 +353,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_COLOR_ENTRIES = 8;
   _color_menu.setName("Color");
-  _color_menu.setPosition(Vector2(0.925f, 0.7f));
+  _color_menu.setPosition(Vector2(0.925f, 0.65f));
   _color_menu.setNumEntries(NUM_COLOR_ENTRIES);
   _color_menu.setAngleOffset(angleOffsetForPosition(_color_menu.getPosition()));
   _color_menu.setDefaultEntry(NUM_COLOR_ENTRIES/2);
@@ -372,7 +372,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_MATERIAL_ENTRIES = 5;
   _material_menu.setName("Material");
-  _material_menu.setPosition(Vector2(0.925f, 0.25f));
+  _material_menu.setPosition(Vector2(0.925f, 0.3f));
   _material_menu.setNumEntries(NUM_MATERIAL_ENTRIES);
   entryType = Menu::MATERIAL_PORCELAIN;
   _material_menu.setAngleOffset(angleOffsetForPosition(_material_menu.getPosition()));
@@ -385,7 +385,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_SPIN_ENTRIES = 4;
   _spin_menu.setName("Spin");
-  _spin_menu.setPosition(Vector2(0.075f, 0.7f));
+  _spin_menu.setPosition(Vector2(0.075f, 0.65f));
   _spin_menu.setNumEntries(NUM_SPIN_ENTRIES);
   entryType = Menu::SPIN_OFF;
   _spin_menu.setAngleOffset(angleOffsetForPosition(_spin_menu.getPosition()));
@@ -412,7 +412,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
 
   const int NUM_GENERAL_ENTRIES = 4;
   _general_menu.setName("General");
-  _general_menu.setPosition(Vector2(0.075f, 0.25f));
+  _general_menu.setPosition(Vector2(0.075f, 0.3f));
   _general_menu.setNumEntries(NUM_GENERAL_ENTRIES);
   entryType = Menu::GENERAL_TUTORIAL;
   _general_menu.setAngleOffset(angleOffsetForPosition(_general_menu.getPosition()));
