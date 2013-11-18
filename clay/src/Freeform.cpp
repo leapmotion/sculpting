@@ -173,7 +173,6 @@ void FreeformApp::setup()
   _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));
   _ui->setBoldFont(ci::Font(loadResource( RES_FONT_FREIGHTSANSBOLD_TTF ), Menu::FONT_SIZE));
 
-  _controller.setPolicyFlags(Leap::Controller::POLICY_BACKGROUND_FRAMES);
   _controller.addListener(_listener);
 
   _leap_interaction = new LeapInteraction(&sculpt_, _ui);
