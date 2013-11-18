@@ -24,7 +24,8 @@ const float MAX_FOV = 90.0f;
 //*********************************************************
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
-  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f)
+  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
+  _lock_camera(false)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = &DebugDrawUtil::getInstance();
@@ -295,6 +296,7 @@ void FreeformApp::keyDown( KeyEvent event )
 #endif
   case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
   case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
+  case 'c': _lock_camera = !_lock_camera; break;
   }
 }
 
@@ -411,7 +413,7 @@ void FreeformApp::updateLeapAndMesh() {
       std::unique_lock<std::mutex> lock(_mesh_mutex);
       if (mesh_) {
         mesh_->updateRotation(curTime);
-        if (fabs(curTime - lastSculptTime) > 0.25) {
+        if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
           _camera_util->UpdateCamera(mesh_, &_camera_params);
         }
         sculpt_.applyBrushes(curTime, symmetry_);

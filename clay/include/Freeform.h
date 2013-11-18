@@ -106,6 +106,7 @@ private:
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
   std::mutex _mesh_mutex;
   MachineSpeed _machine_speed;
+  bool _lock_camera;
 
   // *** Leap stuff ***
   LeapListener _listener;
