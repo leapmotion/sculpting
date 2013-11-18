@@ -341,7 +341,7 @@ public:
 private:
 
   static float getOpacity(float activation) {
-    static const float NORMAL_OPACITY = 0.4f;
+    static const float NORMAL_OPACITY = 0.6f;
     static const float ACTIVATED_OPACITY = 1.0f;
     return g_sculptMult.value * (NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation);
   }
