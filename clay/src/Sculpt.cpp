@@ -147,10 +147,11 @@ void Sculpt::smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& bru
     Vector3 displ = deformationIntensity*(smoothVerts[i]-vert)*brush._strength;
     vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
     float displLength = displ.squaredNorm();
-    if(displLength<=d2Move_)
-      vert+=displ;
-    else
-      vert+=displ.normalized()*dMove;
+    if(displLength<=d2Move_) {
+      vert += displ;
+    } else {
+      vert += displ.normalized()*dMove;
+    }
   }
 }
 
@@ -162,6 +163,8 @@ void Sculpt::smoothFlat(Mesh* mesh, const std::vector<int> &iVerts)
   Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
   Vector3Vector smoothColors(nbVerts, Vector3::Zero());
   laplacianSmooth(mesh, iVerts,smoothVerts, smoothColors);
+
+  float dMove = sqrtf(d2Move_);
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
@@ -169,7 +172,13 @@ void Sculpt::smoothFlat(Mesh* mesh, const std::vector<int> &iVerts)
     Vector3& vertSmo = smoothVerts[i];
     Vector3& n = vert.normal_;
     vertSmo-=n*n.dot(vertSmo-vert);
-    vert+=(vertSmo-vert);
+    Vector3 displ = (vertSmo-vert);
+    float displLength = displ.squaredNorm();
+    if (displLength<=d2Move_) {
+      vert += displ;
+    } else {
+      vert += displ.normalized()*dMove;
+    }
     vert.material_ = smoothColors[i];
   }
 }
@@ -305,62 +314,6 @@ void Sculpt::laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3
         smoothVerts[i]=center/static_cast<float>(nbVRing);
         smoothColors[i]=color/static_cast<float>(nbVRing);
       }
-    }
-  }
-}
-
-/** Smooth a group of vertices along the plane defined by the normal of the vertex (no openMP) */
-void Sculpt::smoothNoMp(Mesh* mesh, const std::vector<int> &iVerts, bool flat)
-{
-  VertexVector &vertices = mesh->getVertices();
-  int nbVerts = iVerts.size();
-  Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
-  for (int i = 0; i<nbVerts; ++i)
-  {
-    Vertex &vert = vertices[iVerts[i]];
-    const std::vector<int> &ivRing = vert.ringVertices_;
-    int nbVRing=ivRing.size();
-    if(nbVRing!=(int)vert.tIndices_.size())
-    {
-      Vector3 center(Vector3::Zero());
-      int nbVertEdge = 0;
-      for(int j=0;j<nbVRing;++j)
-      {
-        Vertex &ivr = vertices[ivRing[j]];
-        if(ivr.tIndices_.size()!=ivr.ringVertices_.size())
-        {
-          center+=ivr;
-          ++nbVertEdge;
-        }
-      }
-      assert(nbVertEdge > 0);
-      smoothVerts[i]=center/static_cast<float>(nbVertEdge);
-    }
-    else
-    {
-      Vector3 center(Vector3::Zero());
-      for (int j=0;j<nbVRing;++j) {
-        center+=vertices[ivRing[j]];
-      }
-      assert(nbVRing > 0);
-      smoothVerts[i]=center/static_cast<float>(nbVRing);
-    }
-  }
-  if(!flat)
-  {
-    for (int i = 0; i<nbVerts; ++i) {
-      vertices[iVerts[i]] = smoothVerts[i];
-    }
-  }
-  else
-  {
-    for (int i = 0; i<nbVerts; ++i)
-    {
-      Vertex &vert = vertices[iVerts[i]];
-      Vector3& vertSmo = smoothVerts[i];
-      Vector3& n = vert.normal_;
-      vertSmo -= n*n.dot(vertSmo-vert);
-      vert = vertSmo;
     }
   }
 }

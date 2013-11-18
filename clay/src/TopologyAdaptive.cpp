@@ -143,7 +143,7 @@ void Topology::checkCollisions(std::vector<int> &iVerts, float d2Thickness)
   }
   mesh_->expandVertices(vSmooth,1);
   Brush brush;
-  brush._strength = 1.0f;
+  brush._strength = 0.25f;
   Sculpt::smooth(mesh_, vSmooth, brush);
 }
 
@@ -612,7 +612,9 @@ void Topology::cleanUpSingularVertex(int iv)
   vSmooth.push_back(iv);
   vSmooth.push_back(ivNew);
 
-  Sculpt::smoothNoMp(mesh_, vSmooth);
+  Brush brush;
+  brush._strength = 0.25f;
+  Sculpt::smooth(mesh_, vSmooth, brush);
 
   cleanUpSingularVertex(iv);
   cleanUpSingularVertex(ivNew);

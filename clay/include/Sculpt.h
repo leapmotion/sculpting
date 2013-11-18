@@ -34,7 +34,6 @@ public:
   static void smoothFlat(Mesh* mesh, const std::vector<int> &iVerts);
   static void draw(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool negate = false);
   static void flatten(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
-  static void smoothNoMp(Mesh* mesh, const std::vector<int> &iVerts, bool flat = false);
   static void sweep(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void push(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void paint(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, const Vector3& color);
