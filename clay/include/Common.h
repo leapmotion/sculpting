@@ -64,16 +64,15 @@ inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= 
 
 #define TODO(owner, message) LM_LOG << #owner << ": " << #message << std::endl;
 
+#define LM_PRODUCTION_BUILD 0
 
-#if 1 // defined _DEBUG
+#if !LM_PRODUCTION_BUILD
 # define LM_BREAK __asm { int 3 }
 # define LM_ASSERT(condition, message) if (!(condition)) LM_BREAK;
 #else
 # define LM_BREAK
 # define LM_ASSERT(condition, message)
 #endif
-
-#define LM_PRODUCTION_BUILD 0
 
 #if _WIN32
 #pragma warning(disable : 4996) // 'scanf': This function or variable may be unsafe. Consider using scanf_s instead
