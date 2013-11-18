@@ -258,8 +258,8 @@ public:
       switch (m_entryType) {
       case Menu::SPIN_OFF: return 0.0f; break;
       case Menu::SPIN_SLOW: return 0.37f; break;
-      case Menu::SPIN_MEDIUM: return 1.83f; break;
-      case Menu::SPIN_FAST: return 3.27f; break;
+      case Menu::SPIN_MEDIUM: return 1.43f; break;
+      case Menu::SPIN_FAST: return 2.57f; break;
       }
       return 0.0f;
     }
