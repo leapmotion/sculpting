@@ -943,10 +943,13 @@ int FreeformApp::loadFile()
         stream.close();
       }
       std::unique_lock<std::mutex> lock(_mesh_mutex);
+      float rotationVel = 0.0f;
       if (mesh_) {
+        rotationVel = mesh_->getRotationVelocity();
         delete mesh_;
       }
       mesh_ = mesh;
+      mesh_->setRotationVelocity(rotationVel);
       if (mesh_) {
         mesh_->startPushState();
         _last_loaded_file = pathString;
@@ -969,10 +972,13 @@ int FreeformApp::loadShape(Shape shape) {
     return 0;
   }
   std::unique_lock<std::mutex> lock(_mesh_mutex);
+  float rotationVel = 0.0f;
   if (mesh_) {
+    rotationVel = mesh_->getRotationVelocity();
     delete mesh_;
   }
   mesh_ = newMesh;
+  mesh_->setRotationVelocity(rotationVel);
   if (mesh_) {
     mesh_->startPushState();
   }
