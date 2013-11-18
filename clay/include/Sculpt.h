@@ -6,6 +6,8 @@
 #include "Topology.h"
 #include <vector>
 
+class AutoSave;
+
 /**
 * Sculpt
 * @author Stéphane GINIER
@@ -41,7 +43,7 @@ public:
   int getNumBrushes() const { return (int)_brushes.size(); }
   void addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3& dir, const Vector3& vel, float radius, float strength, float activation);
   void clearBrushes() { _brushes.clear(); }
-  void applyBrushes(double curTime, bool symmetry);
+  void applyBrushes(double curTime, bool symmetry, AutoSave* autoSave);
   BrushVector getBrushes() const;
   double getLastSculptTime() const { return lastSculptTime_; }
 

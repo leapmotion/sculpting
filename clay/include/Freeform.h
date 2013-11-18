@@ -18,6 +18,7 @@
 #include "Mesh.h"
 #include "Sculpt.h"
 #include "CameraUtil.h"
+#include "AutoSave.h"
 
 using namespace ci;
 using namespace ci::gl;
@@ -69,6 +70,7 @@ public:
 private:
   void loadIcons();
   void loadShapes();
+  void loadLogos();
 
   enum MachineSpeed { LOW, MID, HIGH };
   MachineSpeed parseRenderString(const std::string& render_string);
@@ -107,6 +109,7 @@ private:
   std::mutex _mesh_mutex;
   MachineSpeed _machine_speed;
   bool _lock_camera;
+  AutoSave _auto_save;
 
   // *** Leap stuff ***
   LeapListener _listener;
@@ -123,6 +126,8 @@ private:
   Material _material;
   std::string _last_loaded_file;
   float _ui_zoom;
+  ci::gl::Texture _logo_on_black;
+  ci::gl::Texture _logo_on_image;
 
   UserInterface* _ui;
   bool _draw_ui;

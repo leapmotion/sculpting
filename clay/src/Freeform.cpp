@@ -8,10 +8,6 @@
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
 
-#if _WIN32
-#include <CommDlg.h>
-#endif
-
 const float CAMERA_SPEED = 0.005f;
 
 const float MIN_CAMERA_DIST = 250.0f;
@@ -29,6 +25,7 @@ FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _ph
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = &DebugDrawUtil::getInstance();
+  Menu::updateSculptMult(0.0, 0.0f);
 }
 
 FreeformApp::~FreeformApp()
@@ -51,11 +48,12 @@ void FreeformApp::prepareSettings( Settings *settings )
   settings->setTitle("Freeform");
   ci::app::Window::Format fmt;
   fmt.setTitle("Freeform");
-  fmt.setSize(800, 600);
+  fmt.setSize(1280, 960);
   settings->prepareWindow(fmt);
 
-  settings->setWindowSize(800, 600);
-  enableVerticalSync(true);
+  settings->setWindowSize(1280, 960);
+  //settings->disableFrameRate();
+  //enableVerticalSync(false);
 }
 
 void FreeformApp::toggleFullscreen(const std::string& str)
@@ -192,12 +190,31 @@ void FreeformApp::setup()
   }
 #endif
 
+  if (AutoSave::isFirstRun()) {
+    _ui->forceDrawTutorialMenu();
+  }
+
   _mesh_thread = std::thread(&FreeformApp::updateLeapAndMesh, this);
+
+  _auto_save.start();
 
   loadIcons();
   loadShapes();
+  loadLogos();
 
-  loadShape(BALL);
+  if (_auto_save.haveAutoSave()) {
+    std::ifstream file(_auto_save.getAutoSavePath());
+    Files files;
+    Mesh* mesh = files.loadPLY(file);
+    std::unique_lock<std::mutex> lock(_mesh_mutex);
+    mesh_ = mesh;
+    if (mesh_) {
+      mesh_->startPushState();
+    }
+    sculpt_.setMesh(mesh_);
+  } else {
+    loadShape(BALL);
+  }
 }
 
 void FreeformApp::shutdown() {
@@ -416,7 +433,7 @@ void FreeformApp::updateLeapAndMesh() {
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
           _camera_util->UpdateCamera(mesh_, &_camera_params);
         }
-        sculpt_.applyBrushes(curTime, symmetry_);
+        sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     }
@@ -498,6 +515,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   }
   ci::Matrix44f transformit = transform.inverted().transposed();
 
+  const double lastSculptTime = sculpt_.getLastSculptTime();
+
   if (mesh_) {
     mesh_->updateGPUBuffers();
     _material_shader.bind();
@@ -549,6 +568,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
       _wireframe_shader.unbind();
     }
     glPopMatrix();
+    Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.5 ? 0.25f : 1.0f);
   }
 
   if (_camera_util->params.drawDebugLines) {
@@ -558,9 +578,6 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _debug_draw_util->FlushDebugPrimitives(&_wireframe_shader);
     _wireframe_shader.unbind();
   }
-
-  const double lastSculptTime = sculpt_.getLastSculptTime();
-  Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.5 ? 0.25f : 1.0f);
 
   // draw brushes
   _brush_shader.bind();
@@ -653,12 +670,12 @@ void FreeformApp::draw()
   static const float LOADING_DARKEN_TIME = 0.75f;
   static const float LOADING_LIGHTEN_TIME = 1.5f;
   float exposure_mult = 1.0f;
-  if (_ui->tutorialActive()) {
-    exposure_mult = 0.65f;
-  }
   const Environment::LoadingState loading_state = _environment->getLoadingState();
   const float loading_time = _environment->getTimeSinceLoadingStateChange();
-  if (loading_state == Environment::LOADING_STATE_LOADING) {
+  if (!_environment->haveEnvironment()) {
+    exposure_mult = 0.0f;
+    Menu::updateSculptMult(ci::app::getElapsedSeconds(), 0.0f);
+  } else if (loading_state == Environment::LOADING_STATE_LOADING) {
     float mult = 1.0f - math<float>::clamp(loading_time/LOADING_DARKEN_TIME);
     exposure_mult *= mult;
   } else if (loading_state == Environment::LOADING_STATE_DONE_LOADING && loading_time > LOADING_DARKEN_TIME) {
@@ -696,6 +713,7 @@ void FreeformApp::draw()
 
     setViewport( _screen_fbo.getBounds() );
     setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
+    const float tutorialMult = _ui->tutorialActive() ? 0.65f : 1.0f;
 
     _screen_fbo.bindTexture(0);
     _vertical_blur_fbo.bindTexture(1);
@@ -705,7 +723,7 @@ void FreeformApp::draw()
     _screen_shader.uniform( "depth_texture", 2 );
     _screen_shader.uniform( "width", width );
     _screen_shader.uniform( "height", height );
-    _screen_shader.uniform( "exposure", _exposure * exposure_mult);
+    _screen_shader.uniform( "exposure", _exposure * exposure_mult * tutorialMult);
     _screen_shader.uniform( "contrast", _contrast );
     _screen_shader.uniform( "bloom_strength", _bloom_strength * static_cast<float>(_bloom_visible) );
     _screen_shader.uniform( "vignette_radius", static_cast<float>(0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2))) );
@@ -731,30 +749,39 @@ void FreeformApp::draw()
       glPopMatrix();
     }
 #endif
-  }
-  else
-  {
-    setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
-    static const float FONT_SIZE = 24.0f;
-    Font font("Arial", FONT_SIZE);
-    glPushMatrix();
-    gl::scale(1, -1);
-    gl::drawStringCentered("Loading...", Vec2f(width/2.0f, -height/2.0f), ColorA::white(), font);
-    glPopMatrix();
+
+    if (_draw_ui) {
+      glDisable(GL_CULL_FACE);
+      disableDepthRead();
+      disableDepthWrite();
+      setMatricesWindow( getWindowSize() );
+      setViewport( getWindowBounds() );
+      _ui->draw();
+      enableDepthRead();
+      enableDepthWrite();
+    }
+
+    if (_environment->haveEnvironment()) {
+      _ui->drawTutorialSlides(exposure_mult);
+    }
   }
 
-  if (_draw_ui) {
-    glDisable(GL_CULL_FACE);
-    disableDepthRead();
-    disableDepthWrite();
-    setMatricesWindow( getWindowSize() );
-    setViewport( getWindowBounds() );
-    _ui->draw();
-    enableDepthRead();
-    enableDepthWrite();
-  }
-
-  _ui->drawTutorialSlides();
+  glPushMatrix();
+  const ci::Vec2i size = getWindowSize();
+  const ci::Area bounds = getWindowBounds();
+  const ci::Vec2f center = getWindowCenter();
+  setMatricesWindow( size );
+  setViewport( bounds );
+  const float aspect = _logo_on_black.getAspectRatio();
+  const float yOffset = 0.0f;
+  static const float LOGO_SCALE = 0.8f;
+  float halfWidth = LOGO_SCALE*size.x/2;
+  float halfHeight = halfWidth / aspect;
+  ci::Rectf area(center.x - halfWidth, center.y - halfHeight + yOffset, center.x + halfWidth, center.y + halfHeight + yOffset);
+  ci::ColorA color(1.0f, 1.0f, 1.0f, 1.0f - exposure_mult);
+  ci::gl::color(color);
+  ci::gl::draw(_logo_on_black, area);
+  glPopMatrix();
 
 #if !LM_PRODUCTION_BUILD
   _params->draw(); // draw the interface
@@ -804,6 +831,11 @@ void FreeformApp::loadShapes() {
   shapes_[DONUT] = std::string((char*)donutBuf.getData(), donutBuf.getDataSize());
   shapes_[SHEET] = std::string((char*)sheetBuf.getData(), sheetBuf.getDataSize());
   shapes_[CUBE] = std::string((char*)cubeBuf.getData(), cubeBuf.getDataSize());
+}
+
+void FreeformApp::loadLogos() {
+  _logo_on_black = ci::gl::Texture(loadImage(loadResource(RES_LOGO_ON_BLACK)));
+  _logo_on_image = ci::gl::Texture(loadImage(loadResource(RES_LOGO_ON_IMAGE)));
 }
 
 FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& render_string) {
@@ -921,7 +953,6 @@ int FreeformApp::loadFile()
   if (!path.empty()) {
     const std::string ext = path.extension().string();
     if (!ext.empty()) {
-      //reset flags... not necessary
       Mesh::stateMask_= 1;
       Vertex::tagMask_ = 1;
       Vertex::sculptMask_ = 1;
@@ -977,6 +1008,10 @@ int FreeformApp::loadShape(Shape shape) {
     return 0;
   }
   std::unique_lock<std::mutex> lock(_mesh_mutex);
+  Mesh::stateMask_= 1;
+  Vertex::tagMask_ = 1;
+  Vertex::sculptMask_ = 1;
+  Triangle::tagMask_ = 1;
   float rotationVel = 0.0f;
   if (mesh_) {
     rotationVel = mesh_->getRotationVelocity();

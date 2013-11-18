@@ -28,6 +28,7 @@ public:
   void saveSTL(Mesh* mesh, const std::string& filename) const;
   void saveOBJ(Mesh* mesh, std::ostream& ss) const;
   void savePLY(Mesh* mesh, std::ostream& ss) const;
+  void savePLY(const VertexVector& vertices, const TriangleVector& triangles, float scale, std::ostream& ss) const;
 
 };
 

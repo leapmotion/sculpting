@@ -414,7 +414,7 @@ public:
   UserInterface();
   void update(LeapInteraction* leap, Sculpt* sculpt);
   void draw() const;
-  void drawTutorialSlides() const;
+  void drawTutorialSlides(float opacityMult) const;
   void drawAbout() const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
@@ -437,6 +437,7 @@ public:
     _tutorial3 = tutorial3;
   }
   bool tutorialActive() const { return _draw_tutorial_menu; }
+  void forceDrawTutorialMenu() { _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); }
 
 private:
 

@@ -569,7 +569,7 @@ void UserInterface::draw() const {
   }
 }
 
-void UserInterface::drawTutorialSlides() const {
+void UserInterface::drawTutorialSlides(float opacityMult) const {
   if (!_draw_tutorial_menu) {
     return;
   }
@@ -595,7 +595,7 @@ void UserInterface::drawTutorialSlides() const {
   const float timeSinceToggle = static_cast<float>(ci::app::getElapsedSeconds() - _last_switch_time);
   const float sculptMult = 0.1f + 0.5f * Utilities::SmootherStep(ci::math<float>::clamp(Menu::g_timeSinceSculpting/IMAGE_FADE_TIME));
   _tutorial_opacity.Update(sculptMult, curTime, 0.9f);
-  const float opacity = _tutorial_opacity.value * Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/IMAGE_FADE_TIME));
+  const float opacity = opacityMult * _tutorial_opacity.value * Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/IMAGE_FADE_TIME));
 
   const gl::Texture* tex = 0;
   if (_tutorial_slide == 0) {

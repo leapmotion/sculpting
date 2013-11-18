@@ -11,6 +11,17 @@
 #include "Leap.h"
 #include "cinder/Thread.h"
 
+#if _WIN32
+#include <Windows.h>
+#include <Shellapi.h>
+#include <direct.h>
+#include <WinTrust.h>
+#include <SoftPub.h>
+#include <CommDlg.h>
+#include <UserEnv.h>
+#endif
+
+#include <boost/filesystem.hpp>
 
 #define FREEIMAGE_LIB
 #include "FreeImage.h"

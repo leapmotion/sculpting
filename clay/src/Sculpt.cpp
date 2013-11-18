@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "Sculpt.h"
 #include "Utilities.h"
+#include "AutoSave.h"
 #include <algorithm>
 #include <cinder/gl/gl.h>
 
@@ -379,7 +380,7 @@ void Sculpt::addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3
   brush._activation = activation;
 }
 
-void Sculpt::applyBrushes(double curTime, bool symmetry)
+void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
 {
   if (sculptMode_ == INVALID) {
     return;
@@ -441,6 +442,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry)
   }
 
   if (!haveSculpt && prevSculpt_) {
+    autoSave->triggerAutoSave(mesh_);
     mesh_->checkLeavesUpdate();
     material_++;
   }

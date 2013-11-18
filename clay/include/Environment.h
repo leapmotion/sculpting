@@ -48,6 +48,7 @@ public:
 
   Environment();
   virtual ~Environment();
+  bool haveEnvironment() const { return !_cur_environment.empty(); }
   void setEnvironment(const std::string& name);
   void bindCubeMap(CubeMap map, int pos);
   void unbindCubeMap(int pos);

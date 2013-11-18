@@ -122,6 +122,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Aabb.cpp" />
+    <ClCompile Include="..\..\src\AutoSave.cpp" />
     <ClCompile Include="..\..\src\Brush.cpp" />
     <ClCompile Include="..\..\src\Camera.cpp" />
     <ClCompile Include="..\..\src\CameraUtil.cpp" />
@@ -156,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Aabb.h" />
+    <ClInclude Include="..\..\include\AutoSave.h" />
     <ClInclude Include="..\..\include\Brush.h" />
     <ClInclude Include="..\..\include\Camera.h" />
     <ClInclude Include="..\..\include\CameraUtil.h" />

@@ -404,6 +404,13 @@ void Files::savePLY(Mesh* mesh, std::ostream& ss) const {
   const TriangleVector &triangles = mesh->getTriangles();
   const VertexVector &vertices = mesh->getVertices();
   const float scale = 1/mesh->getScale();
+  savePLY(vertices, triangles, scale, ss);
+}
+
+void Files::savePLY(const VertexVector& vertices, const TriangleVector& triangles, float scale, std::ostream& ss) const {
+  if (!ss) {
+    return;
+  }
   const int nbTriangles = triangles.size();
   const int nbVertices = vertices.size();
 
