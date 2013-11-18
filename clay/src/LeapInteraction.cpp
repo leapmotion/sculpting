@@ -114,19 +114,14 @@ void LeapInteraction::interact(double curTime)
         // sculpting interaction
         const Leap::Hand hand = _cur_frame.hand(id);
         if (hand.isValid()) {
-          const Leap::PointableList pointables = hand.pointables();
-          const int num_pointables = pointables.count();
-          for (int j=0; j<num_pointables; j++) {
-            if (pointables[j].length() < MIN_POINTABLE_LENGTH || pointables[j].timeVisible() < MIN_POINTABLE_AGE) {
-              continue;
-            }
+          const Leap::Pointable pointable = hand.pointables().frontmost();
+          if (pointable.isValid() && pointable.length() >= MIN_POINTABLE_LENGTH && pointable.timeVisible() >= MIN_POINTABLE_AGE) {
+            // add brush
+            const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointable.timeVisible()/AGE_WARMUP_TIME));
 
-            // add brushes
-            const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointables[j].timeVisible()/AGE_WARMUP_TIME));
-
-            Leap::Vector tip_pos = pointables[j].tipPosition();
-            Leap::Vector tip_dir = pointables[j].direction();
-            Leap::Vector tip_vel = pointables[j].tipVelocity();
+            Leap::Vector tip_pos = pointable.tipPosition();
+            Leap::Vector tip_dir = pointable.direction();
+            Leap::Vector tip_vel = pointable.tipVelocity();
 
             Vec3f pos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
             Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
@@ -162,7 +157,7 @@ void LeapInteraction::interact(double curTime)
             if (_autoBrush) {
               adjRadius *= autoBrushScaleFactor;
             }
-            if (fromCameraMult > 0.25f && transPos.x >= 0.025f && transPos.x <= 0.975f && transPos.y >= 0.025f && transPos.y <= 0.975f) {
+            if (transPos.x >= -0.025f && transPos.x <= 1.025f && transPos.y >= -0.025f && transPos.y <= 1.025f) {
               // compute a point on the surface of the sphere to use as the screen-space radius
               radPos.x = (radPos.x + 1)/2;
               radPos.y = (radPos.y + 1)/2;
