@@ -283,18 +283,18 @@ void FreeformApp::mouseMove( MouseEvent event)
 
 void FreeformApp::keyDown( KeyEvent event )
 {
-#if !LM_PRODUCTION_BUILD
   switch( event.getChar() )
   {
+#if !LM_PRODUCTION_BUILD
   case KeyEvent::KEY_ESCAPE: quit(); break;
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
-  case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
-  case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
   case 's': symmetry_ = !symmetry_; break;
-  //case 'r': sculpt_.remesh(); break;
-  }
+  case 'r': sculpt_.remesh(remeshRadius_); break;
 #endif
+  case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
+  case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
+  }
 }
 
 void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
