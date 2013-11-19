@@ -1023,6 +1023,11 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
       newReferencePoint.normal = params.useAvgNormal ? newAvgVertex.normal : newClosestPoint.normal;
 
+      if (params.useIsoNormal) {
+        Vector3 queryPosition = (referencePoint.position + transform.translation) * 0.5f;
+        Vector3 normal = IsoNormal(mesh, queryPosition, GetSphereQueryRadius());
+      }
+
       normalOkay = lmIsNormalized(newReferencePoint.normal);
 
       if (normalOkay && params.walkSmoothedNormals) {
@@ -1377,6 +1382,73 @@ bool CameraUtil::VerifyCameraMovement( Mesh* mesh, const Vector3& from, const Ve
   }
 
   return validMovement;
+}
+
+double CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal queryRadius )
+{
+  //lmReal radius = Get
+  double potential = 0.0;
+
+  // process every n-th point
+  const int striding = 1;
+
+  if (params.userFaultyTriangles) {
+    const TriangleVector& triangles = mesh->getTriangles();
+
+    for (unsigned ti = 0; ti < triangles.size(); ti+= striding)
+    {
+      const Triangle& tri = triangles[ti];
+
+      Geometry::GetClosestPointInput input(mesh, &tri, position);
+      Geometry::GetClosestPointOutput output;
+      Geometry::getClosestPoint(input, &output);
+
+      double dist = output.distance;
+      dist = lmClip(dist, 0.001, 1000000.0);
+      potential += 1.0 / (dist*dist);
+    }
+  } else {
+    const VertexVector& vertices = mesh->getVertices();
+
+    for (unsigned vi = 0; vi < vertices.size(); vi+= striding)
+    {
+      const Vertex& vert = vertices[vi];
+
+      double distSqr = (position-vert).squaredNorm();
+      //static const double K = 0.0001f;
+      distSqr = lmClip(distSqr, (double)params.grav_k*params.grav_k, 1000000.0*1000000.0);
+      //static const double N = 6.0f;
+      potential += 1.0 / std::pow(distSqr, (double)params.grav_n);
+
+      if (params.drawSphereQueryResults) {
+        LM_DRAW_CROSS(vert, 5.0f, lmColor::WHITE);
+      }
+    }
+  }
+
+  return potential;
+}
+
+Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius )
+{
+  lmReal epsilon = 0.1f;
+  const Vector3& pos = position;
+  double potential = IsoPotential(mesh, pos, queryRadius);
+  Vector3 posX = pos; posX.x() += epsilon;
+  Vector3 posY = pos; posY.y() += epsilon;
+  Vector3 posZ = pos; posZ.z() += epsilon;
+  double dPotentialX = IsoPotential(mesh, posX, queryRadius) - potential;
+  double dPotentialY = IsoPotential(mesh, posY, queryRadius) - potential;
+  double dPotentialZ = IsoPotential(mesh, posZ, queryRadius) - potential;
+
+  typedef Eigen::Matrix<double, 3, 1> Vector3d;
+  Vector3d negNormal(dPotentialX, dPotentialY, dPotentialZ);
+  negNormal.normalize();
+
+  //std::cout << "Iso potential: " << potential << std::endl;
+
+  Vector3 normal((float)-negNormal.x(), (float)-negNormal.y(), (float)-negNormal.z());
+  return normal;
 }
 
 void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
