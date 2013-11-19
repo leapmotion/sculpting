@@ -336,6 +336,7 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
   case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
   case 'c': _lock_camera = !_lock_camera; break;
+  case 'f': { std::string dummyString; toggleFullscreen(dummyString); } break;
   }
 }
 
