@@ -4,7 +4,8 @@
 #include "Geometry.h"
 
 #define LM_LOG_CAMERA_LOGIC 0
-#define LM_LOG_CAMERA_LOGIC_2 1
+#define LM_LOG_CAMERA_LOGIC_2 0
+#define LM_LOG_CAMERA_LOGIC_3 0
 
 CameraUtil::CameraUtil() {
   transform.setIdentity();
@@ -576,8 +577,10 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
     }
   }
 
+#if LM_LOG_CAMERA_LOGIC_3
   std::cout << "min potential " << pmin << std::endl;
   std::cout << "max potential " << pmax << std::endl;
+#endif
 }
 
 // Used to collide the camera sphere. Figure out what radius we need ?? maybe same as refence sphere
@@ -1481,6 +1484,33 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
 
 void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& movement )
 {
+  // Check if current refPosition is inside the mesh (which may happen sculpting) and correct it.
+  {
+    int attemptCount = 0;
+    lmRayCastOutput raycastOutput;
+    CastOneRay(mesh, lmRay(transform.translation, state->refPosition), &raycastOutput);
+    while (raycastOutput.isSuccess()) {
+      //state->refPosition = raycastOutput.position + (-1.0f / std::min(raycastOutput.normal.dot(-GetCameraDirection()), 0.2f)) * GetCameraDirection();
+      if (GetCameraDirection().dot(raycastOutput.normal) < 0) {
+        state->refPosition = raycastOutput.position + params.minDist * raycastOutput.normal;
+      } else {
+        state->refPosition = raycastOutput.position - params.minDist * GetCameraDirection();
+      }
+#if LM_LOG_CAMERA_LOGIC_3
+      std::cout << "Fixed ref point in the mesh" << std::endl;
+#endif
+
+      if (++attemptCount > 10 ||  (state->refPosition - transform.translation).dot(GetCameraDirection()) < 0.0f ) {
+        ResetCamera(mesh, GetCameraDirection());
+        state->refPosition = referencePoint.position + params.minDist * referencePoint.normal;
+        break;
+      }
+
+      raycastOutput.invalidate();
+      CastOneRay(mesh, lmRay(transform.translation, state->refPosition), &raycastOutput);
+    }
+  }
+
   Vector3 oldRefPosition = state->refPosition;
   lmReal oldRefDist = state->refDist;
 
@@ -1519,7 +1549,9 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
       lmReal scale = clippedMovement.norm() / surfaceDist;
       clippedMovement *= scale;
       newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+#if LM_LOG_CAMERA_LOGIC_3
       std::cout << "Movement scaling: " << scale << std::endl;
+#endif
       if (!lmIsNormalized(newNormal)) {
         return;
       }
