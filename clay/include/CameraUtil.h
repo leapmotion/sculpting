@@ -124,6 +124,7 @@ public:
     bool forceCameraReset;
     bool forceCameraOrbit;
 
+    bool preventCameraInMesh;
     Params() {
       isoMultiplier = 10.0f;
       minDist= 30.0f;
@@ -164,6 +165,7 @@ public:
       forceCameraReset = false;
       forceCameraOrbit = false;
 
+      preventCameraInMesh = false;
 // test new method
       ////freeRotationEnabled = false;
       ////enableNormalCorrection = false;
@@ -216,6 +218,11 @@ private:
   void UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut );
 
   void ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut);
+
+  // Returns true if sphere collides mesh.
+  bool CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal radius);
+
+  bool VerifyCameraMovement(Mesh* mesh, const Vector3& from, const Vector3& to, lmReal radius);
 
   // Helper functions:
   void CastOneRay(const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result);

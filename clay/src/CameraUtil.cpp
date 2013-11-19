@@ -576,6 +576,34 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
   std::cout << "max potential " << pmax << std::endl;
 }
 
+// Used to collide the camera sphere. Figure out what radius we need ?? maybe same as refence sphere
+// Returns true if the sphere collides with the mesh
+bool CameraUtil::CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal radius )
+{
+  // Get potential triangles from the aabb octree.
+  std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
+  std::vector<int> iTrisInCells = mesh->getOctree()->intersectSphere(position,radius*radius,leavesHit);
+
+  // Collide each potential triangle; find real collisions.
+  std::vector<Geometry::GetClosestPointOutput> collidingTriangles;
+  for (unsigned ti = 0; ti < iTrisInCells.size(); ti++) {
+    int triIdx = iTrisInCells[ti];
+    const Triangle& tri = mesh->getTriangle(triIdx);
+
+    Geometry::GetClosestPointInput input(mesh, &tri, position);
+    Geometry::GetClosestPointOutput output;
+    Geometry::getClosestPoint(input, &output);
+
+    if (output.distance < radius) {
+      collidingTriangles.push_back(output);
+      // Cutting things short -- only return if collision happened
+      break;
+    }
+  }
+
+  return collidingTriangles.size() > 0;
+}
+
 static lmTransform lmTransformFromMatrix(const Matrix4x4& _r, const Vector3& t) {
   lmTransform result;
   result.translation = t;
@@ -1185,6 +1213,19 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   // don't update transform when there's no successful raycast
   if (params.pinUpVector) { CorrectCameraUpVector(dt, Vector3::UnitY()); }
 
+  if (params.preventCameraInMesh) {
+    bool validMovement = VerifyCameraMovement(mesh, oldCamera.translation, transform.translation, GetSphereQueryRadius());
+    if (!validMovement) {
+#if LM_LOG_CAMERA_LOGIC_2
+      std::cout << "Camera movement clipped." << std::endl;
+#endif
+      // Disallow camera orientation movement, but allow reference point movement.
+      transform.translation = oldCamera.translation;
+      UpdateCameraOrientationFromPositions();
+
+      framesFromLastCollisions = 0;
+    }
+  }
   // Sync reference point & camera transform
   lmReal dist = (transform.translation - referencePoint.position).norm();
   Vector3 cameraNormal = transform.rotation * Vector3::UnitZ();
@@ -1315,5 +1356,25 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
   if (!collectall && minDist < FLT_MAX) {
     results->push_back(rayCastOutput);
   }
+}
+
+bool CameraUtil::VerifyCameraMovement( Mesh* mesh, const Vector3& from, const Vector3& to, lmReal radius )
+{
+  bool validMovement = false;
+
+  bool cameraCollidesMesh = CollideCameraSphere(mesh, to, radius);
+
+  if (!cameraCollidesMesh) {
+
+    // Cast a ray between old & new points -- if it crosses the mesh, prevent the movement
+    lmRayCastOutput rayCastOutput;
+    CastOneRay(mesh, lmRay(from, to), &rayCastOutput);
+
+    if (!rayCastOutput.isSuccess()) {
+      validMovement = true;
+    }
+  }
+
+  return validMovement;
 }
 
