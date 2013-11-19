@@ -1451,11 +1451,78 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
   return normal;
 }
 
+lmReal CameraUtil::IsoQueryRadius(IsoCameraState* state) const {
+  return std::min(state->refDist + 50.0f, 50.0f);
+}
+
+void CameraUtil::IsoUpdateCameraDirection(const Vector3& newDirection, IsoCameraState* state ) {
+  lmQuat qCorrection; qCorrection.setFromTwoVectors(GetCameraDirection(), newDirection);
+
+  transform.rotation = qCorrection * transform.rotation;
+  transform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
+}
+
 void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
 {
+  // get field potential from current position
+  lmReal t = 0.5f;
+  state->refPosition = lmInterpolate(t, referencePoint.position, transform.translation);
+  //state->refPotential = IsoPotential(mesh, state->refPosition);
+  state->cameraOffsetMultiplier = 1.0f;
+
+  lmReal queryRadius = 10000.0f; // everything
+  state->closestPointOnMesh = GetClosestSurfacePoint(mesh, state->refPosition, queryRadius);
+  state->refDist = (state->closestPointOnMesh.position - state->refPosition).norm();
+
+  state->refPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(state));
+
+  // Remember closest point distance
 }
 
 void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& movement )
 {
+  Vector3 oldRefPosition = state->refPosition;
+  lmReal oldRefDist = state->refDist;
+
+  // Dummy & temp: clip z movement
+  Vector3 clippedMovement = movement * std::sqrt(std::sqrt(state->refDist / params.refDistForMovemement));
+
+  if (params.clipCameraMovement && !lmIsZero(clippedMovement)) {
+
+  clippedMovement = transform.rotation * clippedMovement;
+
+  // Verify movement
+  //lmReal radius = std::max(state->refDist, oldRefDist);
+  bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, params.minDist/2.0f);
+  if (!validMovement) {
+    return;
+  }
+  Vector3 newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+  // Update closest distance: last check
+  lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, state->refDist + clippedMovement.norm());
+  if (!lmIsNormalized(state->closestPointOnMesh.normal)) {
+    return;
+  }
+
+  state->refPosition += clippedMovement;
+  state->refNormal = newNormal;
+  state->closestPointOnMesh = closestPoint;
+  state->refDist = (state->closestPointOnMesh.position - state->refPosition).norm();
+
+  LM_ASSERT(lmIsNormalized(state->refNormal), "Iso normal failed.")
+
+  // Update camera
+  IsoUpdateCameraDirection(-state->refNormal, state);
+
+  LM_DRAW_CROSS(state->refPosition, 20.0f, lmColor::GREEN);
+  LM_DRAW_CROSS(state->closestPointOnMesh.position, 20.0f, lmColor::RED);
+  LM_DRAW_ARROW(state->closestPointOnMesh.position, state->closestPointOnMesh.position + state->closestPointOnMesh.normal * 40.0f, lmColor::RED);
+
+  LM_ASSERT(state->refDist < 10000, "Reference distance exploded.")
+
+  // Display reference sphere (updating point & radius):
+  referencePoint.position = state->refPosition - state->refNormal * state->refDist;
+  referencePoint.normal = state->refNormal;
+  referenceDistance = state->refDist * (1 + params.isoRefDistMultiplier);
 }
 

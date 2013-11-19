@@ -248,6 +248,10 @@ public:
 
   Vector3 IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
+  lmReal IsoQueryRadius(IsoCameraState* state) const;
+
+  void IsoUpdateCameraDirection(const Vector3& newDirection, IsoCameraState* state );
+
   void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
 
   void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement);
