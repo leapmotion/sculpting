@@ -1492,7 +1492,6 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   clippedMovement = transform.rotation * clippedMovement;
 
   // Verify movement
-  //lmReal radius = std::max(state->refDist, oldRefDist);
   bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, params.minDist/2.0f);
   if (!validMovement) {
     return;
@@ -1507,6 +1506,26 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   }
 
   Vector3 newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+  if (!lmIsNormalized(newNormal)) {
+    return;
+  } else {
+    // clip movement based on normal change.
+    Vector3 oldSurfacePosition = state->refPosition - state->refDist * state->refNormal;
+    Vector3 newSurfacePosition = state->refPosition + clippedMovement - state->refDist * newNormal;
+    lmReal surfaceDist = (newSurfacePosition - oldSurfacePosition).norm();
+
+    if (surfaceDist > clippedMovement.norm()) {
+      // Scale movement
+      lmReal scale = clippedMovement.norm() / surfaceDist;
+      clippedMovement *= scale;
+      newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+      std::cout << "Movement scaling: " << scale << std::endl;
+      if (!lmIsNormalized(newNormal)) {
+        return;
+      }
+    }
+  }
+
   // Update closest distance: last check
   lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, state->refDist + clippedMovement.norm());
   if (!lmIsNormalized(state->closestPointOnMesh.normal)) {
