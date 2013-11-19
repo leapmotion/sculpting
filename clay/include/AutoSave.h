@@ -18,6 +18,7 @@ public:
   void triggerAutoSave(Mesh* mesh);
   bool haveAutoSave() const;
   std::string getAutoSavePath() const;
+  void deleteAutoSave();
 
   static bool isFirstRun();
 

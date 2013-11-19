@@ -69,6 +69,10 @@ std::string AutoSave::getAutoSavePath() const {
   return getUserPath("autosave.ply");
 }
 
+void AutoSave::deleteAutoSave() {
+  boost::filesystem::remove(getAutoSavePath());
+}
+
 bool AutoSave::isFirstRun() {
   std::stringstream ss;
   ss << getUserAppDirectory() << PATH_SEPARATOR << APPLICATION_DIRECTORY;

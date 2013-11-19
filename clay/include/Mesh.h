@@ -73,7 +73,7 @@ public:
   void draw(GLint vertex, GLint normal, GLint color);
   void drawVerticesOnly(GLint vertex);
   void drawOctree() const;
-  void initMesh();
+  bool initMesh();
 
   void updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVerts);
   void updateGPUBuffers();

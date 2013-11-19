@@ -50,8 +50,17 @@ Mesh* Files::loadSTL(std::istream& stream) const
     stream.read((char*)&x, 2); //attribute
     triangles.push_back(Triangle((v2-v1).cross(v3-v1).normalized(), iVer1, iVer2, iVer3, i));
   }
-  mesh->initMesh();
-  mesh->moveTo(Vector3::Zero());
+  try {
+    if (mesh->initMesh()) {
+      mesh->moveTo(Vector3::Zero());
+    } else {
+      delete mesh;
+      mesh = 0;
+    }
+  } catch (...) {
+    delete mesh;
+    mesh = 0;
+  }
   return mesh;
 }
 
@@ -150,8 +159,17 @@ Mesh* Files::loadPLY(std::istream& stream) const {
     i++;
   }
 
-  mesh->initMesh();
-  mesh->moveTo(Vector3::Zero());
+  try {
+    if (mesh->initMesh()) {
+      mesh->moveTo(Vector3::Zero());
+    } else {
+      delete mesh;
+      mesh = 0;
+    }
+  } catch (...) {
+    delete mesh;
+    mesh = 0;
+  }
   return mesh;
 }
 
@@ -225,7 +243,17 @@ Mesh* Files::loadOBJ(std::istream& stream) const
       }
     }
   }
-  mesh->initMesh();
+  try {
+    if (mesh->initMesh()) {
+      mesh->moveTo(Vector3::Zero());
+    } else {
+      delete mesh;
+      mesh = 0;
+    }
+  } catch (...) {
+    delete mesh;
+    mesh = 0;
+  }
   return mesh;
 }
 
@@ -304,8 +332,17 @@ Mesh* Files::load3DS(std::istream& stream) const
     }
   }
 
-  mesh->initMesh();
-  mesh->moveTo(Vector3::Zero());
+  try {
+    if (mesh->initMesh()) {
+      mesh->moveTo(Vector3::Zero());
+    } else {
+      delete mesh;
+      mesh = 0;
+    }
+  } catch (...) {
+    delete mesh;
+    mesh = 0;
+  }
   return mesh;
 }
 

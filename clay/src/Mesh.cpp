@@ -408,7 +408,7 @@ void Mesh::reinitIndicesBuffer() {
 }
 
 /** Initialize the mesh information : center, octree, scale ... */
-void Mesh::initMesh()
+bool Mesh::initMesh()
 {
   int nbVertices = getNbVertices();
   int nbTriangles = getNbTriangles();
@@ -462,17 +462,20 @@ void Mesh::initMesh()
     float length = normal.norm();
     if (length < 0.0001f) {
       // normals added up to zero length, so just pick one
+      return false;
+      LM_ASSERT(false, "Bad normal");
       normal = triangles_[iTri[0]].normal_;
     } else {
       normal = normal/length;
     }
-    assert(fabs(normal.squaredNorm() - 1.0f) < 0.001f);
+    LM_ASSERT(fabs(normal.squaredNorm() - 1.0f) < 0.001f, "Bad normal");
     ver.normal_=normal;
   }
 
   reinitIndicesBuffer();
   reinitVerticesBuffer();
   pendingGPUTriangles = getNbTriangles();
+  return true;
 }
 
 /** Update geometry  */
@@ -490,17 +493,18 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
     Vector3 normal = (v2-v1).cross(v3-v1);
     float length = normal.norm();
     if (length < 0.001f) {
+      LM_ASSERT(false, "Bad normal");
       t.normal_ = Vector3::UnitY();
     } else {
       t.normal_ = normal/length;
     }
-    assert(fabs(t.normal_.norm() - 1.0f) < 0.001f);
+    LM_ASSERT(fabs(t.normal_.norm() - 1.0f) < 0.001f, "Bad normal");
     t.aabb_ = Geometry::computeTriangleAabb(v1,v2,v3);
   }
   updateOctree(iTris);
   updateNormals(iVerts);
 #if _WIN32
-  assert(_CrtCheckMemory());
+  LM_ASSERT(_CrtCheckMemory(), "Bad heap");
 #endif
 
   std::unique_lock<std::mutex> lock(bufferMutex_);
@@ -522,28 +526,14 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 
   if (getNbVertices() < verticesBufferCount_) {
     // within storage bounds, so it's OK to only update part of the buffer
-#if 1
     for (int i=0; i<nbVerts; i++) {
       VertexUpdate update;
       update.idx = iVerts[i];
       update.color = vertices_[update.idx].material_;
       update.normal = vertices_[update.idx].normal_;
       update.pos = vertices_[update.idx];
-      //LM_ASSERT(update.pos.squaredNorm() > 0.0001f, "zero vertex");
       vertexUpdates_.push_back(update);
     }
-#else
-    const int num = getNbVertices();
-    for (int i=0; i<num; i++) {
-      VertexUpdate update;
-      update.idx = i;
-      update.color = vertices_[update.idx].material_;
-      update.normal = vertices_[update.idx].normal_;
-      update.pos = vertices_[update.idx];
-      //LM_ASSERT(update.pos.squaredNorm() > 0.0001f, "zero vertex");
-      vertexUpdates_.push_back(update);
-    }
-#endif
   } else {
     // not enough space, reallocate
     reinitVerticesBuffer();
@@ -687,12 +677,13 @@ void Mesh::updateNormals(const std::vector<int> &iVerts)
     if (nbTri != 0) {
       if (length < 0.0001f && nbTri > 0) {
         // normals added up to zero length, so just pick one
+        LM_ASSERT(false, "Bad normal");
         normal = triangles_[iTri[0]].normal_;
       } else {
         normal = normal/length;
       }
       vert.normal_ = normal;
-      assert(fabs(vert.normal_.squaredNorm() - 1.0f) < 0.001f);
+      LM_ASSERT(fabs(vert.normal_.squaredNorm() - 1.0f) < 0.001f, "Bad normal");
     }
   }
 }
