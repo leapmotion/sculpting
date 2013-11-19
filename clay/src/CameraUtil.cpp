@@ -1487,7 +1487,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   // Dummy & temp: clip z movement
   Vector3 clippedMovement = movement * std::sqrt(std::sqrt(state->refDist / params.refDistForMovemement));
 
-  if (params.clipCameraMovement && !lmIsZero(clippedMovement)) {
+  clippedMovement.z() *= params.scaleZMovement;
 
   clippedMovement = transform.rotation * clippedMovement;
 
