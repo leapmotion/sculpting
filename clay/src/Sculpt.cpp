@@ -393,7 +393,6 @@ void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
     remeshRadius_ = -1.0f;
   }
 
-  mesh_->handleUndoRedo();
   const Vector3& origin = mesh_->getRotationOrigin();
   const Vector3& axis = mesh_->getRotationAxis();
   const float velocity = mesh_->getRotationVelocity();
@@ -446,6 +445,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
     mesh_->checkLeavesUpdate();
     material_++;
   }
+  mesh_->handleUndoRedo();
 
   prevSculpt_ = haveSculpt;
 
