@@ -744,7 +744,17 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
 
 }
 
-void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
+void CameraUtil::UpdateParamsToWalkSmoothedNormals(Params* paramsInOut) {
+  paramsInOut->freeRotationEnabled = false;
+  paramsInOut->enableNormalCorrection = false;
+  paramsInOut->useAvgNormal = false;
+  paramsInOut->suppresForwardRotation = false;
+  paramsInOut->tmpSwitch = false;
+  paramsInOut->walkSmoothedNormals = true;
+}
+
+void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
+
   LM_ASSERT(mesh, "Can't upate the camera without a mesh");
   UpdateMeshTransform(mesh, paramsInOut);
 
@@ -761,12 +771,7 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
   std::unique_lock<std::mutex> lock(mutex);
   if (!this->params.walkSmoothedNormals && paramsInOut->walkSmoothedNormals)
   {
-    paramsInOut->freeRotationEnabled = false;
-    paramsInOut->enableNormalCorrection = false;
-    paramsInOut->useAvgNormal = false;
-    paramsInOut->suppresForwardRotation = false;
-    paramsInOut->tmpSwitch = false;
-    paramsInOut->walkSmoothedNormals = true;
+    UpdateParamsToWalkSmoothedNormals(paramsInOut);
   }
 
   this->params = *paramsInOut;
@@ -1228,12 +1233,10 @@ void CameraUtil::UpdateCamera(const Mesh* mesh, Params* paramsInOut) {
       framesFromLastCollisions = 0;
     }
   }
-  // Sync reference point & camera transform
-  lmReal dist = (transform.translation - referencePoint.position).norm();
-  Vector3 cameraNormal = transform.rotation * Vector3::UnitZ();
-  transform.translation = referencePoint.position + dist * cameraNormal;
 
-  return;
+
+  // Sync reference point & camera transform
+  RealignRefPtAndCamera();
 }
 
 
@@ -1260,9 +1263,11 @@ void CameraUtil::CorrectCameraOrientation(lmReal dt, const Vector3& newNormal) {
   transform.translation = referencePoint.position + dQ * cameraFromRefPoint;
 }
 
-void CameraUtil::CorrectCameraDistance(lmReal dt, lmReal currentDistance) {
+void CameraUtil::CorrectCameraDistance( lmReal dt )
+{
+  lmReal currentDist = (referencePoint.position - transform.translation).norm();
   lmReal smoothingValue = std::pow(0.8f, dt);
-  lmReal deltaDist = referenceDistance - currentDistance;
+  lmReal deltaDist = referenceDistance - currentDist;
   Vector3 deltaTranslation = (1.0f-smoothingValue) * deltaDist * (transform.rotation * Vector3::UnitZ());
   transform.translation += deltaTranslation;
 }
@@ -1302,6 +1307,29 @@ lmReal CameraUtil::GetSphereQueryRadius()
 {
   return params.sphereRadiusMultiplier * referenceDistance;
 }
+void CameraUtil::RealignRefPtAndCamera()
+{
+  lmReal dist = (transform.translation - referencePoint.position).norm();
+  Vector3 cameraNormal = transform.rotation * Vector3::UnitZ();
+  transform.translation = referencePoint.position + dist * cameraNormal;
+}
+
+void CameraUtil::UpdateCameraOrientationFromPositions()
+{
+  Vector3 newCameraNormal = transform.translation - referencePoint.position;
+  if (!lmIsZero(newCameraNormal)) {
+    newCameraNormal.normalize();
+    Vector3 oldCameraNormal = transform.rotation * Vector3::UnitZ();
+    lmQuat correction; correction.setFromTwoVectors(oldCameraNormal, newCameraNormal);
+    transform.rotation = correction * transform.rotation;
+
+    referenceDistance = (transform.translation - referencePoint.position).norm();
+
+    // Need to clip it though..
+    lmClip(referenceDistance, params.minDist, params.maxDist);
+  }
+}
+
 void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result )
 {
   std::vector<lmRayCastOutput> results;

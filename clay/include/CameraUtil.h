@@ -202,15 +202,17 @@ public:
   // Accumulates data for later processing in UpdateCamera.
   void RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov);
 
+#if 0
   // Records user Leap's pinching drag events.
   // 
   // Accumulates data for later processing in UpdateCamera.
   // 
   // todo: record velocity, for inertial movement too?
   void RecordUserInput(const Vector3& deltaPosition, bool controlOn);
+#endif
 
   // Update camera position.
-  void UpdateCamera(const Mesh* mesh, Params* paramsInOut);
+  void UpdateCamera(Mesh* mesh, Params* paramsInOut);
 
   lmTransform GetCameraInWorldSpace();
 
@@ -234,6 +236,8 @@ private:
   void CastOneRay(const Mesh* mesh, const lmRay& ray, std::vector<lmRayCastOutput>* results, bool collectall = false);
 
   void DebugDrawNormals(const Mesh* mesh, const Params& paramsIn);
+
+  void UpdateParamsToWalkSmoothedNormals(Params* paramsInOut);
 
   // Compute camera transform from standard camera vectors: from, to, & assumed up along y-axis.
   static void GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut);
@@ -270,10 +274,14 @@ private:
   // Correct distance from the mesh.
   //
   // todo: remove param.
-  void CorrectCameraDistance(lmReal dt, lmReal currentDistance);
+  void CorrectCameraDistance(lmReal dt);
 
   // Correct up vector
   void CorrectCameraUpVector(lmReal dt, const Vector3& up);
+
+  void RealignRefPtAndCamera();
+
+  void UpdateCameraOrientationFromPositions();
 
   // Rotate vectors to mesh's space
   inline Vector3 ToWorldSpace(const Vector3& v);
