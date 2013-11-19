@@ -441,6 +441,7 @@ void FreeformApp::updateLeapAndMesh() {
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     } else if (mesh_) {
       // Allow camera movement when leap is disconnected
+      std::unique_lock<std::mutex> lock(_mesh_mutex);
       _camera_util->UpdateCamera(mesh_, &_camera_params);
     }
   }
