@@ -43,6 +43,7 @@ namespace Geometry {
     Vector3 point;
 
     GetClosestPointInput() : mesh(NULL), tri(NULL), point(Vector3::Zero()) {}
+    GetClosestPointInput(const Mesh* m, const Triangle* t, const Vector3& p) : mesh(m), tri(t), point(p) {}
   };
 
   struct GetClosestPointOutput {

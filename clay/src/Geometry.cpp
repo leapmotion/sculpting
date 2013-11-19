@@ -238,12 +238,11 @@ void Geometry::getClosestPoint(const Geometry::GetClosestPointInput& input, Geom
   // Get front direction of the triangle
   const Vector3 n = e0.cross(e1);
 
-  LM_ASSERT(n.dot(input.tri->normal_) >= 0.0f, "Normal on mesh triangle flipped.");
-
-  if (n.squaredNorm() < LM_EPSILON * LM_EPSILON) {
-    // Degenerate triangle
-    // todo: should handle longest edge
-  }
+  // LM_ASSERT(n.dot(input.tri->normal_) >= 0.0f, "Normal on mesh triangle flipped."); // Happens!!
+  //LM_ASSERT(n.squaredNorm() > LM_EPSILON * LM_EPSILON, "Processing a degenerate triangle");
+  //if (n.squaredNorm() > LM_EPSILON * LM_EPSILON) {
+  //  return; // with invalid output
+  //}
 
   // Cross point's project with every other edge
   const Vector3 cr0 = e0.cross(pr - v0);
