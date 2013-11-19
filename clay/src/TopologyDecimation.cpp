@@ -200,7 +200,7 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
   std::vector<int> res(ring1.size(),-1);
   std::set_intersection(ring1.begin(),ring1.end(),ring2.begin(),ring2.end(),res.begin());
 
-  assert(res.size() >= 2);
+  LM_ASSERT(res.size() >= 2, "Not enough res");
   if(res[2]!=-1) //edge flip
   {
     v1.removeTriangle(iTri2);
@@ -221,7 +221,7 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
   }
 
   n1 = (v1.normal_+v2.normal_).normalized();
-  assert(fabs(n1.squaredNorm() - 1.0f) < 0.0001f); // crash n1 coords set to -1.#IND0000
+  LM_ASSERT(fabs(n1.squaredNorm() - 1.0f) < 0.0001f, "Bad normal"); // crash n1 coords set to -1.#IND0000
   ring1.insert(ring1.end(),ring2.begin(),ring2.end());
 
   v1.removeTriangle(iTri1);
@@ -246,7 +246,7 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
     mesh_->computeRingVertices(ring1[i]);
     laplacianPos+=vertices()[ring1[i]];
   }
-  assert(nbRing1 > 0);
+  LM_ASSERT(nbRing1 > 0, "Not enough points");
   laplacianPos/=static_cast<float>(nbRing1);
   v1 = laplacianPos - n1*n1.dot(laplacianPos-v1);
 

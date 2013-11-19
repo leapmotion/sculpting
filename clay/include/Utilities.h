@@ -5,6 +5,7 @@
 #include <cinder/gl/gl.h>
 #include <cinder/Vector.h>
 #include <cinder/Rand.h>
+#include "Common.h"
 #ifdef __APPLE__
 #include <OpenGL/GLU.h>
 #else
@@ -122,7 +123,7 @@ namespace Utilities {
       } else {
         const float dtExponent = static_cast<float>((timeSeconds - lastTimeSeconds) * targetFramerate);
         smoothStrength = std::pow(smoothStrength, dtExponent);
-        assert(smoothStrength >= 0.0f && smoothStrength <= 1.0f);
+        LM_ASSERT(smoothStrength >= 0.0f && smoothStrength <= 1.0f, "Bad smooth strength");
         value = smoothStrength*value + (1.0f-smoothStrength)*data;
       }
       lastTimeSeconds = timeSeconds;

@@ -222,7 +222,7 @@ void Topology::halfEdgeSplit(int iTri, int iv1, int iv2, int iv3)
     else if(dot>=1.f) angle = 0.f;
     else angle = acosf(dot);
     vMidTest.normal_ = (v1.normal_+v2.normal_).normalized();
-    assert(fabs(vMidTest.normal_.squaredNorm() - 1.0f) < 0.001f);
+    LM_ASSERT(fabs(vMidTest.normal_.squaredNorm() - 1.0f) < 0.001f, "Bad normal");
     Vector3 edge = v1-v2;
     if((edge.dot(v1.normal_)-edge.dot(v2.normal_))>=0.f)
       vMidTest+=vMidTest.normal_*edge.norm()*angle*0.12f;

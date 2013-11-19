@@ -15,7 +15,7 @@ float Sculpt::minDetailMult_ = 0.2f;
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), lastSculptTime_(0.0),
   prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f),
-  remeshRadius_(-1.0f)
+  remeshRadius_(-1.0f), lastUpdateTime_(0.0)
 {}
 
 /** Destructor */
@@ -221,7 +221,7 @@ Vector3 Sculpt::areaNormal(Mesh* mesh, const std::vector<int> &iVerts)
     areaY+=normal.y();
     areaZ+=normal.z();
   }
-  assert(nbVerts > 0);
+  LM_ASSERT(nbVerts > 0, "Not enough points");
   Vector3 result(areaX, areaY, areaZ);
   float length = result.norm();
   if (length == 0.0f) {
@@ -244,7 +244,7 @@ Vector3 Sculpt::areaCenter(Mesh* mesh, const std::vector<int> &iVerts)
     areaY+=v.y();
     areaZ+=v.z();
   }
-  assert(nbVerts > 0);
+  LM_ASSERT(nbVerts > 0, "Not enough points");
   return Vector3(areaX,areaY,areaZ)/static_cast<float>(nbVerts);
 }
 

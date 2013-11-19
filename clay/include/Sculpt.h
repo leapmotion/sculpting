@@ -61,12 +61,11 @@ private:
 private:
 
   struct MaskMatch {
-    MaskMatch(const VertexVector& vertices) : verticesPtr(&vertices) { }
+    MaskMatch(const VertexVector& verts) : vertices(verts) { }
     bool operator()(const int& idx) {
-      const VertexVector& vertices = *verticesPtr;
       return vertices[idx].sculptFlag_ != Vertex::sculptMask_;
     }
-    const VertexVector* verticesPtr;
+    const VertexVector& vertices;
   };
 
   static float detail_; //intensity of details

@@ -494,7 +494,7 @@ void Topology::matchEdgesCommonVertices(std::vector<Edge> &edges1, std::vector<E
       break;
     }
   }
-  assert(match >= 0);
+  LM_ASSERT(match >= 0, "no match");
   std::rotate(edges1.begin(), edges1.begin()+match, edges1.end());
 
   int nbEdges2 = edges2.size();
@@ -507,7 +507,7 @@ void Topology::matchEdgesCommonVertices(std::vector<Edge> &edges1, std::vector<E
       break;
     }
   }
-  assert(match >= 0);
+  LM_ASSERT(match >= 0, "no match");
   std::rotate(edges2.begin(), edges2.begin()+match, edges2.end());
 }
 
@@ -579,7 +579,7 @@ void Topology::cleanUpSingularVertex(int iv)
   int ivNew = vertices().size();
   Vertex vNew(v,ivNew);
   vNew.material_ = v.material_;
-  assert(fabs(v.normal_.squaredNorm() - 1.0f) < 0.001f);
+  LM_ASSERT(fabs(v.normal_.squaredNorm() - 1.0f) < 0.001f, "Bad normal");
   vNew.normal_ = -v.normal_;
   vNew.stateFlag_ = Mesh::stateMask_;
 
