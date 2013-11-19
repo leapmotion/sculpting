@@ -49,7 +49,7 @@ struct lmRayCastOutput {
   lmReal fraction;
 
   inline bool isSuccess() const { return 0 <= triangleIdx; }
-  inline void invalidate() { triangleIdx = -1.0; dist = -1.0; fraction = -1.0f; }
+  inline void invalidate() { triangleIdx = -1; dist = -1.0f; fraction = -1.0f; }
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
