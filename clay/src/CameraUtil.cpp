@@ -3,7 +3,8 @@
 #include "DebugDrawUtil.h"
 #include "Geometry.h"
 
-
+#define LM_LOG_CAMERA_LOGIC 0
+#define LM_LOG_CAMERA_LOGIC_2 1
 
 CameraUtil::CameraUtil() {
   transform.setIdentity();
@@ -659,13 +660,14 @@ static Vector3 lmProjectAlongVec(const Vector3& in, const Vector3& projectionDir
 }
 
 void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
+
   // Horizontal rotate
   static const lmReal ORBIT_RATE = LM_2PI / 40.0f;
   lmQuat q(AngleAxis( - ORBIT_RATE * deltaTime, Vector3::UnitY()));
   transform.mul(q);
   referencePoint.mul(q);
 
-  if (0)
+#if 0
   {
     // Vertical correction & oscillation
     static lmReal phase = 0.0f;
@@ -694,6 +696,7 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
     transform.translation = referencePoint.position - GetCameraDirection() * referenceDistance;
     referencePoint.normal = correction * referencePoint.normal;
   }
+#endif
 
   // Orbit camera with raycast
   if (1) {
@@ -783,7 +786,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   this->params = *paramsInOut;
 
-  if (params.forceCameraOrbit) {
 
   if (params.forceCameraOrbit && params.enableCameraOrbit) {
     OrbitCamera(mesh, dt);
@@ -904,7 +906,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
             const_cast<lmTransform&>(oldCamera) = newCamera;
 
 #if LM_LOG_CAMERA_LOGIC
-            //std::cout << "Normal back-pulled." << std::endl;
+            std::cout << "Normal back-pulled." << std::endl;
 #endif
             backSnapped = true;
           }
@@ -939,7 +941,9 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
             lmReal translationRatio = std::min(1.0f, maxCameraTranslation / parallelNorm);
             lmReal leftover = 1.0f - translationRatio;
 
-            Vector3 newNormal = (transform.translation + translationRatio * parallelComponent * params.freeRotationRatio /* correction*/ - oldReferencePoint.position).normalized();
+            Vector3 newCameraTransform = transform.translation + translationRatio * parallelComponent * params.freeRotationRatio ;
+
+            Vector3 newNormal = (newCameraTransform - oldReferencePoint.position).normalized();
             CorrectCameraOrientation(dtZero, newNormal);
 
             // !! if we have more than 1 attempts.
@@ -1015,8 +1019,10 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
         newReferencePoint.normal = smoothedNormal;
       }
 
+      bool retryMovement = !normalOkay;
+
       attampts++;
-      if (!normalOkay && attampts < 16) {
+      if (retryMovement && attampts < 4) {
         movementInCam *= 0.5f;
         newCamera = oldCamera;
         newReferencePoint = oldReferencePoint;
