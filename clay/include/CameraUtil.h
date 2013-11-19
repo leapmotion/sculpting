@@ -123,9 +123,10 @@ public:
     bool enableBackSnapping;
     bool enableForwardCheckForBackSnapping;
 
-    bool forceCameraReset;
     bool forceCameraOrbit;
 
+    bool enableCameraReset;
+    bool enableCameraOrbit;
     bool preventCameraInMesh;
     Params() {
       isoMultiplier = 10.0f;
@@ -166,8 +167,10 @@ public:
       enableBackSnapping = false;
       enableForwardCheckForBackSnapping = false;
 
-      forceCameraReset = false;
       forceCameraOrbit = false;
+
+      enableCameraReset = true;
+      enableCameraOrbit = true;
 
       preventCameraInMesh = false;
 // test new method

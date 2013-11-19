@@ -649,7 +649,7 @@ void CameraUtil::EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* par
   const lmReal radius = GetSphereQueryRadius();
   std::vector<int> verts;
   const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
-  if (!verts.size() || params.forceCameraReset) {
+  if (!verts.size() && params.enableCameraReset) {
     ResetCamera(mesh, GetCameraDirection());
   }
 }
@@ -705,15 +705,22 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
       q0.setFromTwoVectors(Vector3::UnitZ(), camXZ.normalized()); q0.normalize();
     }
 
+    // Rotation around X
+    Vector3 camInYZ = q0.inverse() * transform.translation; camInYZ.normalize();
+    lmQuat q1Ref; q1Ref.setFromTwoVectors(Vector3::UnitZ(), camInYZ);
+
     // Oscillating vertical rotation
     static lmReal phase = 0.0f;
-    static lmReal oscillationRate = 1.0f / 20.0f;
-    phase += LM_2PI * oscillationRate * deltaTime;
+    const static lmReal OSCILLATION_RATE = 1.0f / 20.0f;
+    phase += LM_2PI * OSCILLATION_RATE * deltaTime;
     //lmReal angleFromYPlane = std::cos(phase);
     lmQuat q1(AngleAxis(std::cos(phase) * 30.0f * LM_DEG, Vector3::UnitX()));
 
+    //// Blend vertical camera movemnt
+    //q1.slerp(1.0f - (0.1f * deltaTime), q1Ref);q1.normalize();
+
     // Desired camera direction
-    lmQuat q = q0 * q1;
+    lmQuat q = q0 * q1; q.normalize();
 
     lmReal refPtDistFromOrigin = referencePoint.position.norm();
     // Do raycast
@@ -777,9 +784,11 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   this->params = *paramsInOut;
 
   if (params.forceCameraOrbit) {
+
+  if (params.forceCameraOrbit && params.enableCameraOrbit) {
     OrbitCamera(mesh, dt);
     return;
-  } else {
+  } else if (params.enableCameraReset) {
     // Don't do this when orbiting.
     EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
   }

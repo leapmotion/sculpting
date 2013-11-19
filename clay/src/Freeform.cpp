@@ -87,6 +87,8 @@ void FreeformApp::setup()
   _params->addParam( "Iso Mult", &_camera_params.isoMultiplier, "min=1.0 max=1000.0 step=1.0" );
   _params->addParam( "Min Dist", &_camera_params.minDist, "min=1.0 max=10.0 step=1.0" );
   _params->addParam( "Collide cam", &_camera_params.preventCameraInMesh, "" );
+  _params->addParam( "Enable Cam Reset", &_camera_params.enableCameraReset, "" );
+  _params->addParam( "Enable Cam Orbit", &_camera_params.enableCameraOrbit, "" );
   _params->addParam( "Max Dist", &_camera_params.maxDist, "min=100.0 max=1000.0 step=20.0" );
   _params->addParam( "Speed @ Min Dist", &_camera_params.speedAtMinDist, "min=0.01 max=1.0 step=0.1" );
   _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
@@ -114,8 +116,6 @@ void FreeformApp::setup()
   _params->addParam( "Back snapping", &_camera_params.enableBackSnapping, "" );
   _params->addParam( "Forward check", &_camera_params.enableForwardCheckForBackSnapping, "" );
   _params->addParam( "Override normal", &_camera_params.overrideNormal, "" );
-  _params->addParam( "Camera reset", &_camera_params.forceCameraReset, "" );
-  _params->addParam( "Camera orbit", &_camera_params.forceCameraOrbit, "" );
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_material.ambientFactor, "min=0.0 max=0.5 step=0.01" );
