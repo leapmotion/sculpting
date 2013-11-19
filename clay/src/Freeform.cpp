@@ -436,6 +436,9 @@ void FreeformApp::updateLeapAndMesh() {
         sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
+    } else if (mesh_) {
+      // Allow camera movement when leap is disconnected
+      _camera_util->UpdateCamera(mesh_, &_camera_params);
     }
   }
 }
