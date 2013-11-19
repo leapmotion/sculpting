@@ -1497,6 +1497,15 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   if (!validMovement) {
     return;
   }
+
+  // Saftey clip movement so that the camera doesn't go past the safety distance.
+  if ((state->refPosition + clippedMovement).norm() > params.maxDist) {
+    Vector3 newPos = state->refPosition + clippedMovement;
+    newPos.normalize();
+    newPos *= params.maxDist;
+    clippedMovement = newPos - state->refPosition;
+  }
+
   Vector3 newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
   // Update closest distance: last check
   lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, state->refDist + clippedMovement.norm());
