@@ -1232,3 +1232,61 @@ lmReal CameraUtil::GetSphereQueryRadius()
 {
   return params.sphereRadiusMultiplier * referenceDistance;
 }
+void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result )
+{
+  std::vector<lmRayCastOutput> results;
+  const bool dontCollectAll = false;
+  CastOneRay(mesh, ray, &results, dontCollectAll);
+  if (results.size()) {
+    *result = results[0];
+  } else {
+    lmRayCastOutput invalidResult;
+    *result = invalidResult;
+  }
+}
+
+void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmRayCastOutput>* results, bool collectall /*= false*/ )
+{
+  std::vector<int> triangles = mesh->getOctree()->intersectRay(ray.start, ray.GetDirection());
+  std::vector<int> hits;
+  lmReal minDist = FLT_MAX;
+
+  lmRayCastOutput rayCastOutput;
+
+  // Cast ray for each triangle's aabb
+  for (size_t ti = 0; ti < triangles.size(); ti++) {
+    const Triangle& tri = mesh->getTriangle(triangles[ti]);
+    Vector3 hitPoint;
+    bool rayHit = tri.aabb_.intersectRay(ray.start, ray.GetDirection());
+    if (rayHit) {
+      rayHit = Geometry::intersectionRayTriangle(
+        ray.start, ray.end,
+        mesh->getVertex(tri.vIndices_[0]),
+        mesh->getVertex(tri.vIndices_[1]),
+        mesh->getVertex(tri.vIndices_[2]),
+        tri.normal_, hitPoint);
+    }
+    if (rayHit) {
+      hits.push_back(triangles[ti]);
+      lmReal dist = (hitPoint-ray.start).dot(ray.GetDirection());
+      if (dist < minDist || collectall) {
+        minDist = dist;
+
+        rayCastOutput.triangleIdx = triangles[ti];
+        rayCastOutput.position = hitPoint;
+        rayCastOutput.normal = tri.normal_;
+        rayCastOutput.dist = dist;
+        rayCastOutput.fraction = dist / ray.GetLength();
+
+        if (collectall) {
+          results->push_back(rayCastOutput);
+        }
+      }
+    }
+  }
+
+  if (!collectall && minDist < FLT_MAX) {
+    results->push_back(rayCastOutput);
+  }
+}
+

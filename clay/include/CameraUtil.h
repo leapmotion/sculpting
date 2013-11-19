@@ -217,6 +217,11 @@ private:
 
   void ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut);
 
+  // Helper functions:
+  void CastOneRay(const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result);
+
+  void CastOneRay(const Mesh* mesh, const lmRay& ray, std::vector<lmRayCastOutput>* results, bool collectall = false);
+
   void DebugDrawNormals(const Mesh* mesh, const Params& paramsIn);
 
   // Compute camera transform from standard camera vectors: from, to, & assumed up along y-axis.
