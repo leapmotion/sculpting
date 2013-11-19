@@ -237,6 +237,8 @@ private:
   // the triangle containing the cloest point has at least one of it's veritces withing the radius' distance from the reference point.
   void GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, Geometry::GetClosestPointOutput* closestPointOut);
 
+  lmSurfacePoint GetClosestSurfacePoint(Mesh* mesh, const Vector3& position, lmReal queryRadius);
+
   void FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices );
 
   // Performs a sphere query on the mesh, and returns average normal of the visible surface

@@ -223,6 +223,33 @@ void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referen
   *closestPointOut = closestPoint;
 }
 
+lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& position, lmReal queryRadius) {
+  std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
+  std::vector<int> tris = mesh->getOctree()->intersectSphere(position, queryRadius*queryRadius, leavesHit);
+
+  // Get triangles
+  Geometry::GetClosestPointOutput closestPoint;
+  closestPoint.distance = FLT_MAX;
+
+  for (size_t ti = 0; ti < tris.size(); ti++) {
+    const Triangle& tri = mesh->getTriangle(tris[ti]);
+
+    Geometry::GetClosestPointOutput output;
+    Geometry::GetClosestPointInput input(mesh, &tri, position);
+    Geometry::getClosestPoint(input, &output);
+    output.triIdx = tris[ti];
+    if (output.distance < closestPoint.distance) {
+      closestPoint = output;
+    }
+  }
+
+  if (closestPoint.distance < FLT_MAX) {
+    GetNormalAtPoint(mesh, closestPoint.triIdx, closestPoint.position, &closestPoint.normal);
+  }
+
+  return lmSurfacePoint(closestPoint.position, closestPoint.normal);
+}
+
 void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices ) {
   LM_ASSERT(LM_EPSILON * LM_EPSILON < movementDirection.squaredNorm(), "");
   Vector3 movementDir = movementDirection.normalized();
