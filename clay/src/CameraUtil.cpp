@@ -1390,7 +1390,7 @@ double CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
   double potential = 0.0;
 
   // process every n-th point
-  const int striding = 1;
+  const int striding = 16;
 
   if (params.userFaultyTriangles) {
     const TriangleVector& triangles = mesh->getTriangles();
