@@ -20,6 +20,7 @@ CameraUtil::CameraUtil() {
   lastCameraUpdateTime = -1.0f;
   avgVertex.position.setZero();
   avgVertex.normal.setZero();
+  framesFromLastCollisions = 1000;
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
@@ -784,8 +785,23 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     UpdateParamsToWalkSmoothedNormals(paramsInOut);
   }
 
+  if (!this->params.cameraOverrideIso && paramsInOut->cameraOverrideIso) {
+    InitIsoCamera(mesh, &isoState);
+    paramsInOut->userFaultyTriangles = false;
+    paramsInOut->minDist = 10.0f;
+    paramsInOut->maxDist = 400.0f;
+  }
   this->params = *paramsInOut;
 
+  static const Mesh* prevMesh = NULL;
+  if (mesh != prevMesh) {
+    // Init camera, and all
+    EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
+    InitIsoCamera(mesh, &isoState);
+  }
+  prevMesh = mesh;
+
+  framesFromLastCollisions++;
 
   if (params.forceCameraOrbit && params.enableCameraOrbit) {
     OrbitCamera(mesh, dt);
@@ -829,6 +845,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   // Process smoothed user input
   Vector3 deltaAngles = userInput * movementRatio; 
   Vector3 movementInCam = userInput * movementRatio; movementInCam.z() = 0.0f;
+  Vector3 movementInWorld = - userInput * movementRatio;
   movementInCam = -1.0f * (transform.rotation * userInput);
   userInput.setZero();
 
@@ -840,6 +857,13 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     userInput.setZero();
     movementInCam.setZero();
     deltaAngles.setZero();
+  }
+
+  if (params.cameraOverrideIso) {
+    isoState.cameraOffsetMultiplier = params.isoRefDistMultiplier;
+    IsoCamera(mesh, &isoState, movementInWorld);
+    if (params.pinUpVector) { CorrectCameraUpVector(dt, Vector3::UnitY()); }
+    return;
   }
 
   // Attempt to calculate new refernce point and normal
@@ -869,7 +893,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
     // backwards normal camera snapping.
     bool backSnapped = false;
-    if (params.enableBackSnapping &&  LM_EPSILON * LM_EPSILON < oldClosestPoint.normal.squaredNorm() &&
+    if (!params.useIsoNormal && params.enableBackSnapping &&  LM_EPSILON * LM_EPSILON < oldClosestPoint.normal.squaredNorm() &&
       LM_EPSILON * LM_EPSILON < movementInCam.squaredNorm() ) {
       Vector3 oldCameraNormal = oldCamera.rotation * Vector3::UnitZ();
 
@@ -915,7 +939,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     }
 
     // Correct camera back to normal orientation
-    if (!backSnapped && params.enableNormalCorrection &&  LM_EPSILON * LM_EPSILON < oldReferencePoint.normal.squaredNorm())
+    if (!params.useIsoNormal && !backSnapped && framesFromLastCollisions > 2 && params.enableNormalCorrection &&  LM_EPSILON * LM_EPSILON < oldReferencePoint.normal.squaredNorm())
     {
       Vector3 oldCameraNormal = oldCamera.rotation * Vector3(0.0f, 0.0f, 1.0f);
 
@@ -1037,7 +1061,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
       const lmSurfacePoint& oldCalcPoint = oldReferencePoint;
       const lmSurfacePoint& newCalcPoint = newReferencePoint;
 
-      if (params.suppresForwardRotation && lmIsNormalized(oldCalcPoint.normal) && LM_EPSILON * LM_EPSILON < movementInCam.squaredNorm()) {
+      if (!params.useIsoNormal &&params.suppresForwardRotation && lmIsNormalized(oldCalcPoint.normal) && LM_EPSILON * LM_EPSILON < movementInCam.squaredNorm()) {
         std::vector<int> vertices;
         FindPointsAheadOfMovement(mesh, oldReferencePoint, sphereRadius, movementInCam.normalized(), &vertices);
         forwardVerticesDetected = 0 < vertices.size();
@@ -1253,6 +1277,7 @@ lmReal CameraUtil::GetSphereQueryRadius()
 {
   return params.sphereRadiusMultiplier * referenceDistance;
 }
+
 void CameraUtil::RealignRefPtAndCamera()
 {
   lmReal dist = (transform.translation - referencePoint.position).norm();
@@ -1352,5 +1377,13 @@ bool CameraUtil::VerifyCameraMovement( Mesh* mesh, const Vector3& from, const Ve
   }
 
   return validMovement;
+}
+
+void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
+{
+}
+
+void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& movement )
+{
 }
 

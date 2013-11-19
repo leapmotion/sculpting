@@ -81,6 +81,23 @@ struct lmSurfacePoint {
 class CameraUtil {
 public:
   struct Params {
+    bool cameraOverrideIso;
+    lmReal isoRefDistMultiplier;
+    lmReal grav_k;
+    lmReal grav_n;
+
+    int numRotationClipIterations;
+
+    bool clipToIsoSurface;
+    bool clipCameraMovement;
+    lmReal refDistForMovemement;
+    bool enableConeClipping;
+    lmReal normalConeAngle;
+    bool enableMaxReorientationRate;
+    lmReal maxReorientationRate;
+    lmReal scaleZMovement;
+
+    bool useIsoNormal;
     lmReal isoMultiplier;
 
     lmReal minDist;
@@ -129,6 +146,23 @@ public:
     bool enableCameraOrbit;
     bool preventCameraInMesh;
     Params() {
+      cameraOverrideIso = false;//true;
+      isoRefDistMultiplier = 2.0f;
+      grav_k = 0.0001f;
+      grav_n = 2.0f;
+      numRotationClipIterations = 1;
+      clipToIsoSurface = false;
+      clipCameraMovement = false;
+      refDistForMovemement = 50.0f;
+      enableConeClipping = false;
+      normalConeAngle = 45 * LM_DEG;
+      enableMaxReorientationRate = false;
+      maxReorientationRate = LM_PI / 2.0f; // 180deg in 2 seconds
+      scaleZMovement = 0.75f;
+
+
+      useIsoNormal = false;
+
       isoMultiplier = 10.0f;
       minDist= 30.0f;
       maxDist = 500.0f;
@@ -199,6 +233,20 @@ public:
 
   // Orbit camera around the mesh
   void OrbitCamera(const Mesh* mesh, lmReal deltaTime);
+
+  struct IsoCameraState {
+    lmReal refDist;
+    lmReal cameraOffsetMultiplier;
+    Vector3 refPosition;
+    Vector3 refNormal;
+    lmSurfacePoint closestPointOnMesh;
+    //lmTransform refTransform;
+    double refPotential; // used when clipping to isosurface
+  } isoState;
+
+  void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
+
+  void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement);
 
   // Records user mouse input from mouse events.
   // 
@@ -308,6 +356,8 @@ public:
   lmSurfacePoint referencePoint;
 
   lmSurfacePoint avgVertex;
+
+  int framesFromLastCollisions;
 
   // Point on the mesh closest to the reference point.
   Geometry::GetClosestPointOutput closestPoint;

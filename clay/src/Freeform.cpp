@@ -84,17 +84,36 @@ void FreeformApp::setup()
 
   _params->addSeparator();
   _params->addText( "text", "label=`Camera parameters:`" );
-  _params->addParam( "Iso Mult", &_camera_params.isoMultiplier, "min=1.0 max=1000.0 step=1.0" );
-  _params->addParam( "Min Dist", &_camera_params.minDist, "min=1.0 max=10.0 step=1.0" );
+
+  _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
+  _params->addParam( "Draw sphere query", &_camera_params.drawSphereQueryResults, "" );
+
+  _params->addParam( "Iso cam", &_camera_params.cameraOverrideIso, "" );
+  _params->addParam( "Iso ref dist mlt", &_camera_params.isoRefDistMultiplier, "min=0.1 max=10.0 step=0.1" );
+  _params->addParam( "Grav_k", &_camera_params.grav_k, "min=0.0001 max=1.0 step=0.001" );
+  _params->addParam( "Grav_n", &_camera_params.grav_n, "min=1.0 max=8.0 step=0.5" );
+  _params->addParam( "#clip rot iterations", &_camera_params.numRotationClipIterations, "min=1.0 max=8.0 step=1.0" );
+  _params->addParam( "Clip to isosurface", &_camera_params.clipToIsoSurface, "" );
+  _params->addParam( "Clip movement", &_camera_params.clipCameraMovement, "" );
+  _params->addParam( "Movement ref dist", &_camera_params.refDistForMovemement, "min=10.0 max=500.0 step=10.0" );
+  _params->addParam( "Enable cone clip", &_camera_params.enableConeClipping, "" );
+  _params->addParam( "Normal cone angle", &_camera_params.normalConeAngle, "min=0.0 max=1.55 step=0.05" );
+  _params->addParam( "Enable max rot", &_camera_params.enableMaxReorientationRate, "" );
+  _params->addParam( "Reorientation rate", &_camera_params.maxReorientationRate, "min=0.2 max=10.0 step=0.2" );
+  _params->addParam( "Scale Z movement", &_camera_params.scaleZMovement, "min=0.1 max=2.0 step=0.1" );
+
+  _params->addParam( "Use Iso Normal", &_camera_params.useIsoNormal, "" );
+
   _params->addParam( "Collide cam", &_camera_params.preventCameraInMesh, "" );
   _params->addParam( "Enable Cam Reset", &_camera_params.enableCameraReset, "" );
   _params->addParam( "Enable Cam Orbit", &_camera_params.enableCameraOrbit, "" );
+
+  //_params->addParam( "Iso Mult", &_camera_params.isoMultiplier, "min=1.0 max=1000.0 step=1.0" );
+  _params->addParam( "Min Dist", &_camera_params.minDist, "min=1.0 max=100.0 step=1.0" );
   _params->addParam( "Max Dist", &_camera_params.maxDist, "min=100.0 max=1000.0 step=20.0" );
   _params->addParam( "Speed @ Min Dist", &_camera_params.speedAtMinDist, "min=0.01 max=1.0 step=0.1" );
   _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
   _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
-  _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
-  _params->addParam( "Draw sphere query", &_camera_params.drawSphereQueryResults, "" );
   _params->addParam( "Use Sphere Query", &_camera_params.useSphereQuery, "" );
   _params->addParam( "Sphere R Mult", &_camera_params.sphereRadiusMultiplier, "min=0.0125 max=0.75 step=0.0125" );
   _params->addParam( "Crawl mode.", &_camera_params.sphereCrawlMode, "" );
