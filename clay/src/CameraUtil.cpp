@@ -1139,55 +1139,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     }
   }
 
-  if (!params.sphereCrawlMode || !rayHit)
-  {
-    std::vector<lmRay> rays;
-    GenerateRays(transform, RAY_CAST_BATCH_SIDE, &rays);
-    std::vector<lmRayCastOutput> rayCastResults;
-    CastRays(mesh, rays, &rayCastResults);
-
-    // Collapse normals and distance and position
-    //
-    lmReal minDist = FLT_MAX;
-    // todo do calculations the same way they're done in MainCameraControl()
-    const int numCasts = rayCastResults.size();
-    //float weightSum = 0;
-    for (int i = 0; i < numCasts; i++) {
-      if (rayCastResults[i].isSuccess() && rayCastResults[i].dist < minDist) {
-        rayHit = true;
-        referencePoint.position = rayCastResults[i].position;
-        referencePoint.normal.setZero();
-        // Calc normal from the triangle
-        Vector3 normal;
-        GetNormalAtPoint(mesh, rayCastResults[i].triangleIdx, referencePoint.position, &normal);
-        referencePoint.normal += normal;
-        refDist = rayCastResults[i].dist;
-        minDist = rayCastResults[i].dist;
-      }
-    }
-
-    if (rayHit && params.useSphereQuery) {
-      assert(0.1f < referencePoint.normal.squaredNorm() && referencePoint.normal.squaredNorm() < 2.0f  && "Normal wrong..");
-      // Perform a sphere cast and average normal
-      const Vector3 cameraDirection = GetCameraDirection();
-      const lmReal sphereRadius = GetSphereQueryRadius();
-
-      Geometry::GetClosestPointOutput closestPoint;
-      lmSurfacePoint avgVertex;
-      lmSurfacePoint pureNewAvgVertex;
-      GetAveragedSurfaceNormal(mesh, referencePoint, sphereRadius, cameraDirection, params.weightNormals, &avgVertex, &pureNewAvgVertex, &closestPoint);
-      if (!lmIsNormalized(closestPoint.normal)) {
-        GetClosestPoint(mesh, referencePoint, sphereRadius, cameraDirection, &closestPoint);
-      }
-      Vector3 avgNormal = avgVertex.normal;
-
-      TODO(adrian, make mesh crawling indepenent of the camera pos);
-
-      referencePoint.normal = lmInterpolate(0.3f, referencePoint.normal, avgNormal).normalized();
-      assert(0.1f < referencePoint.normal.squaredNorm() && referencePoint.normal.squaredNorm() < 2.0f  && "Normal wrong..");
-    }
-  }
-
   // Adjust translation to user input.
   if (rayHit) {
     if (debugDrawUtil && params.drawDebugLines) {
@@ -1200,30 +1151,10 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     referenceDistance = std::max(params.minDist, referenceDistance);
     referenceDistance = std::min(params.maxDist, referenceDistance);
 
-    // testing settings
-    static bool adjustDistance = true;
-    static bool adjustOrientation = true;
-
-    if (adjustOrientation) {
-      if (!params.sphereCrawlMode && !params.freeRotationEnabled) {
-        CorrectCameraOrientation(dtOne, referencePoint.normal);
-      }
+    if (!params.sphereCrawlMode && !params.freeRotationEnabled) {
+      CorrectCameraOrientation(dtOne, referencePoint.normal);
     }
-    if (params.sphereCrawlMode) {
-      refDist = (referencePoint.position - transform.translation).norm();
-    }
-    if (adjustDistance) { CorrectCameraDistance(dt, refDist); }
-  } else if (0) {
-    // backup - no ray hit
-
-    // Create rotations
-    lmQuat rotX(AngleAxis(-deltaAngles.y(), Vector3::UnitX()));
-    lmQuat rotY(AngleAxis(-deltaAngles.x(), Vector3::UnitY()));
-
-    // Apply them to current viewing matrix
-    transform.rotation = transform.rotation * rotX * rotY;
-    // Adjust camera position based on the expected distance
-    transform.translation = transform.rotation * Vector3(0.0f, 0.0f, referenceDistance);
+    CorrectCameraDistance(dt);
   }
 
   // don't update transform when there's no successful raycast
