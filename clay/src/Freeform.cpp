@@ -100,6 +100,8 @@ void FreeformApp::setup()
   _params->addParam( "Use avg normal", &_camera_params.useAvgNormal, "" );
   _params->addParam( "Free rotation", &_camera_params.freeRotationEnabled, "" );
   _params->addParam( "Rotation ratio", &_camera_params.freeRotationRatio, "min=1.0 max=10.0 step=0.25" );
+  _params->addParam( "Input multiplier", &_camera_params.inputMultiplier, "min=0.5 max=5.0 step=0.25" );
+  _params->addParam( "Invert camera input", &_camera_params.invertCameraInput, "" );
   _params->addParam( "Normal correction", &_camera_params.enableNormalCorrection, "" );
   _params->addParam( "Suppers fwd rot", &_camera_params.suppresForwardRotation, "" );
   _params->addParam( "Weight normals", &_camera_params.weightNormals, "" );

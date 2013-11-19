@@ -388,9 +388,10 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
 void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov) {
   std::unique_lock<std::mutex> lock(mutex);
   Vector3 movement(50.0f * _DTheta, -50.0f * _DPhi, -_DFov / 100.0f);
-  userInput += movement;
+  userInput += (params.invertCameraInput?-1.0f:1.0f) * params.inputMultiplier * movement;
 }
 
+#if 0
 void CameraUtil::RecordUserInput(const Vector3& deltaPosition, bool controlOn) {
   std::unique_lock<std::mutex> lock(mutex);
   lmReal prevTime = lastUserInputFromVectorTime;
@@ -424,6 +425,7 @@ void CameraUtil::RecordUserInput(const Vector3& deltaPosition, bool controlOn) {
     }
   }
 }
+#endif
 
 void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut) {
   const Triangle& tri = mesh->getTriangle(triIdx);

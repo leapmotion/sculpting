@@ -101,6 +101,8 @@ public:
 
     bool freeRotationEnabled;
     lmReal freeRotationRatio;
+    lmReal inputMultiplier;
+    bool invertCameraInput;
     bool enableNormalCorrection;
     bool useAvgNormal;
 
@@ -143,6 +145,8 @@ public:
 
       freeRotationEnabled = true;
       freeRotationRatio = 6.0f;
+      inputMultiplier = 2.0f;
+      invertCameraInput = false;
       enableNormalCorrection = true;
       useAvgNormal = true;
 
