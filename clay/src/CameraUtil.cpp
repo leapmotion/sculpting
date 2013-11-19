@@ -641,6 +641,9 @@ void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
   referencePoint.position = ToWorldSpace(referencePoint.position);
   referencePoint.normal = ToWorldSpace(referencePoint.normal);
 
+  isoState.refPosition = ToWorldSpace(isoState.refPosition);
+  isoState.refNormal = ToWorldSpace(isoState.refNormal);
+
   // Get mesh's transformstion
   meshTransform = lmTransformFromMatrix(mesh->getRotationMatrix(), mesh->getTranslation());
 
@@ -648,6 +651,9 @@ void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
   transform.translation = ToMeshSpace(transform.translation);
   referencePoint.position = ToMeshSpace(referencePoint.position);
   referencePoint.normal = ToMeshSpace(referencePoint.normal);
+
+  isoState.refPosition = ToMeshSpace(isoState.refPosition);
+  isoState.refNormal = ToMeshSpace(isoState.refNormal);
 }
 
 void CameraUtil::EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* paramsInOut) {
