@@ -27,7 +27,7 @@ const char AutoSave::PATH_SEPARATOR_UNIX = '/';
 const char AutoSave::PATH_SEPARATOR = PATH_SEPARATOR_WINDOWS;
 #pragma comment (lib,"UserEnv.lib")
 #else // POSIX
-const char FileSystemUtil::PATH_SEPARATOR = PATH_SEPARATOR_UNIX;
+const char AutoSave::PATH_SEPARATOR = PATH_SEPARATOR_UNIX;
 #endif
 
 #if _WIN32 || __APPLE__
