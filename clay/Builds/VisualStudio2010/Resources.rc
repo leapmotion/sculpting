@@ -1,6 +1,6 @@
 #include "../include/Resources.h"
 
-1 ICON "../resources/freeform.ico"
+ICON_IDX ICON "../resources/freeform.ico"
 RES_SKY_VERT_GLSL
 RES_SKY_FRAG_GLSL
 RES_PASSTHROUGH_VERT_GLSL

@@ -1,6 +1,8 @@
 #pragma once
 #include "cinder/CinderResources.h"
 
+#define ICON_IDX 1
+
 // shaders
 #define RES_SKY_VERT_GLSL                     CINDER_RESOURCE( ../resources/, sky-vert.glsl, 116, GLSL )
 #define RES_SKY_FRAG_GLSL                     CINDER_RESOURCE( ../resources/, sky-frag.glsl, 117, GLSL )

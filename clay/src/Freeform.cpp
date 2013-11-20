@@ -62,6 +62,11 @@ void FreeformApp::toggleFullscreen(const std::string& str)
 
 void FreeformApp::setup()
 {
+#if _WIN32
+  HMODULE instance = ::GetModuleHandle(0);
+  SetClassLongPtr(getRenderer()->getHwnd(), GCLP_HICON, (LONG)::LoadImage(instance, MAKEINTRESOURCE(ICON_IDX), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE));
+#endif
+
   FreeImage_Initialise();
   enableAlphaBlending();
   enableDepthRead();
@@ -465,15 +470,6 @@ void FreeformApp::update()
   _camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
   _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
-
-#if 0
-  // Force load-file prompt
-  static bool init = true;
-  if (init && ci::app::getElapsedSeconds() > 1) {
-    init = false;
-    loadFile();
-  }
-#endif
 
   _last_update_time = curTime;
 }
