@@ -35,8 +35,8 @@ float Menu::g_timeSinceSculpting = 0.0f;
 Utilities::ExponentialFilter<float> Menu::g_sculptMult;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
-  m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(-10.0), m_prevSelectedEntry(-1),
-  m_activeColor(Color::white()), m_defaultEntry(0), m_actionsOnly(false), m_haveSelection(false)
+  m_curSelectedEntry(-1), m_deselectTime(0.0), m_selectionTime(-10.0), m_prevSelectedEntry(-1), m_alwaysActivated(false),
+  m_activeColor(Color::white()), m_defaultEntry(0), m_actionsOnly(false), m_haveSelection(false), m_prevClosest(99999.0f)
 {
   m_activation.value = 0.0f;
 }
@@ -58,6 +58,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   float angle = 0.0f;
   float radius = 0.0f;
   const float curRadius = m_activation.value*(m_outerRadius - m_innerRadius) + m_innerRadius;
+  float closest = 9999.0f;
   if (g_sculptMult.value > 0.5f) {
     for (int i=0; i<numTips; i++) {
       //const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
@@ -79,6 +80,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
         const float newValue = ci::math<float>::clamp(m_activation.value + ACTIVATION_AMOUNT);
         m_activation.Update(newValue, curTime, PARENT_SMOOTH_STRENGTH);
       }
+      closest = std::min(closest, radius);
     }
   }
   float maxActivation = 0.0f;
@@ -99,13 +101,14 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
     m_activeName = m_actualName;
   }
 
-  if (m_activation.lastTimeSeconds < curTime) {
+  if (closest > curRadius) {
     // we weren't updated this frame
-    const float newValue = ci::math<float>::clamp(m_activation.value - ACTIVATION_AMOUNT);
+    const float activationMult = m_alwaysActivated ? 1.0f : -1.0f;
+    const float newValue = ci::math<float>::clamp(m_activation.value + activationMult*ACTIVATION_AMOUNT);
     m_activation.Update(newValue, curTime, PARENT_SMOOTH_STRENGTH);
 
     // finger left the area, so check whether to select the most activated entry
-    if (radius > curRadius && maxActivation > 0.25f) {
+    if (radius > curRadius && m_prevClosest < curRadius && maxActivation > 0.25f) {
       if ((maxIdx != m_prevSelectedEntry && m_curSelectedEntry != maxIdx) || (m_curSelectedEntry == -1 && static_cast<float>(curTime - m_deselectTime) > SELECTION_COOLDOWN)) {
         m_curSelectedEntry = maxIdx;
         m_selectionTime = curTime;
@@ -114,6 +117,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
       }
     }
   }
+  m_prevClosest = closest;
 
   // keep the currently selected entry sticking out for a bit longer
   if (m_curSelectedEntry >= 0) {
@@ -460,6 +464,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   _confirm_menu.setAngleOffset(angleOffsetForPosition(_confirm_menu.getPosition()));
   _confirm_menu.setDefaultEntry(0);
   _confirm_menu.setActionsOnly(true);
+  _confirm_menu.setAlwaysActivated(true);
   for (int i=0; i<NUM_CONFIRM_ENTRIES; i++) {
     Menu::MenuEntry& entry = _confirm_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);

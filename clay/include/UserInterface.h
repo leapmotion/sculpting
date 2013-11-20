@@ -336,6 +336,7 @@ public:
   void setActiveName(const std::string& name) { m_activeName = name; }
   void setActiveColor(const ci::Color& color) { m_activeColor = color; }
   ci::Color getActiveColor() const { return m_activeColor; }
+  void setAlwaysActivated(bool activated) { m_alwaysActivated = activated; }
 
   static const Vector2& getWindowSize() { return g_windowSize; }
   static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.975f); }
@@ -392,6 +393,8 @@ private:
   float m_wedgeStart;
   float m_wedgeEnd;
   bool m_haveSelection;
+  float m_prevClosest;
+  bool m_alwaysActivated;
 
   std::string m_activeName;
   std::string m_actualName;
