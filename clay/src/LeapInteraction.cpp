@@ -4,6 +4,8 @@
 #include "Utilities.h"
 #include <vector>
 
+#include "ReplayUtil.h"
+
 using namespace ci;
 
 #define USE_SKELETON_API 0
@@ -22,6 +24,14 @@ LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sc
 
 bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress)
 {
+  LM_ASSERT_IDENTICAL(124);
+  LM_ASSERT_IDENTICAL(aspect);
+  //LM_ASSERT_IDENTICAL(modelView);
+  //LM_ASSERT_IDENTICAL(projection);
+  //LM_ASSERT_IDENTICAL(viewport);
+  LM_ASSERT_IDENTICAL(referenceDistance);
+  LM_ASSERT_IDENTICAL(suppress);
+
   static const double MIN_TIME_BETWEEN_FRAMES = 0.000001;
   _model_view_inv = modelView.inverted();
   _model_view = modelView;
@@ -29,18 +39,18 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
   _window_size = viewport;
   _reference_distance = referenceDistance;
   _fov = fov;
-  if (suppress || !listener.isConnected())
+  if (suppress || !LM_RETURN_TRACKED(listener.isConnected()))
   {
     _cur_frame = Leap::Frame::invalid();
     _last_frame = Leap::Frame::invalid();
   }
-  else if (listener.waitForFrame(_cur_frame, 33))
+  else if (LM_RETURN_TRACKED(listener.waitForFrame(_cur_frame, 33)))
   {
     std::unique_lock<std::mutex> brushLock(_sculpt->getBrushMutex());
     std::unique_lock<std::mutex> tipsLock(_tips_mutex);
-    const double time = Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp());
-    const double prevTime = Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_last_frame.timestamp());
-    if (_last_frame.isValid() && _cur_frame.isValid() && time - prevTime > MIN_TIME_BETWEEN_FRAMES) {
+    const double time = LM_RETURN_TRACKED(Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp()));
+    const double prevTime = LM_RETURN_TRACKED(Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_last_frame.timestamp()));
+    if (LM_RETURN_TRACKED(_last_frame.isValid() && _cur_frame.isValid()) && time - prevTime > MIN_TIME_BETWEEN_FRAMES) {
       _sculpt->clearBrushes();
       _tips.clear();
       updateHandInfos(time);
@@ -55,6 +65,8 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
 
 void LeapInteraction::interact(double curTime)
 {
+  LM_ASSERT_IDENTICAL(124324);
+  LM_TRACK_VALUE(curTime);
   float cur_dtheta = 0;
   float cur_dphi = 0;
   float cur_dzoom = 0;
@@ -67,16 +79,18 @@ void LeapInteraction::interact(double curTime)
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 250, 100);
   static const Vec3f LEAP_SIZE(275, 275, 275);
-  Leap::HandList hands = _cur_frame.hands();
   const float ui_mult = 1.0f - _ui->maxActivation();
   const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
+  LM_TRACK_CONST_VALUE(deltaTime);
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
   const Vector3 scaledSize = calcSize(_fov, _reference_distance);
   const float frameScale = _cur_frame.scaleFactor(_last_frame);
+  LM_TRACK_CONST_VALUE(frameScale);
 
   if (!_cur_frame.hands().isEmpty() || !_cur_frame.pointables().isEmpty()) {
     _last_activity_time = ci::app::getElapsedSeconds();
   }
+  LM_TRACK_VALUE(_last_activity_time);
 
   int numOpenHands = 0;
   for (HandInfoMap::iterator it = _hand_infos.begin(); it != _hand_infos.end(); ++it) {
@@ -90,22 +104,24 @@ void LeapInteraction::interact(double curTime)
       numOpenHands++;
     }
   }
+  LM_TRACK_VALUE(numOpenHands);
 
   if (numOpenHands >= 2) {
     _logScale.Update(std::log(frameScale), curTime, LOG_SCALE_SMOOTH_STRENGTH);
   } else {
     _logScale.Update(0.0f, curTime, LOG_SCALE_SMOOTH_STRENGTH);
     for (HandInfoMap::iterator it = _hand_infos.begin(); it != _hand_infos.end(); ++it) {
+      LM_ASSERT_IDENTICAL(0x12345678);
       const int id = it->first;
       const HandInfo& cur = it->second;
-      const int numFingers = cur.getNumFingers();
-      const float normalY = cur.getNormalY();
-      if (cur.getLastUpdateTime() < curTime) {
+      const int numFingers = LM_RETURN_TRACKED(cur.getNumFingers());
+      const float normalY = LM_RETURN_TRACKED(cur.getNormalY());
+      if (LM_RETURN_TRACKED(cur.getLastUpdateTime() < curTime)) {
         continue;
       }
       if (numFingers > 2 || normalY < 0.35f) {
         // camera interaction
-        const Vector3 movement = cur.getModifiedTranslation();
+        const Vector3 movement = LM_RETURN_TRACKED(cur.getModifiedTranslation());
         cur_dtheta += ORBIT_SPEED * movement.x();
         cur_dphi += ORBIT_SPEED * -movement.y();
         cur_dzoom += ZOOM_SPEED * -movement.z();
@@ -113,15 +129,17 @@ void LeapInteraction::interact(double curTime)
       } else {
         // sculpting interaction
         const Leap::Hand hand = _cur_frame.hand(id);
-        if (hand.isValid()) {
+        if (LM_RETURN_TRACKED(hand.isValid())) {
           const Leap::Pointable pointable = hand.pointables().frontmost();
-          if (pointable.isValid() && pointable.length() >= MIN_POINTABLE_LENGTH && pointable.timeVisible() >= MIN_POINTABLE_AGE) {
+          if (LM_RETURN_TRACKED(pointable.isValid()) &&
+              LM_RETURN_TRACKED(pointable.length()) >= MIN_POINTABLE_LENGTH &&
+              LM_RETURN_TRACKED(pointable.timeVisible()) >= MIN_POINTABLE_AGE) {
             // add brush
-            const float strengthMult = Utilities::SmootherStep(math<float>::clamp(pointable.timeVisible()/AGE_WARMUP_TIME));
+            const float strengthMult = Utilities::SmootherStep(math<float>::clamp(LM_RETURN_TRACKED(pointable.timeVisible())/AGE_WARMUP_TIME));
 
-            Leap::Vector tip_pos = pointable.tipPosition();
-            Leap::Vector tip_dir = pointable.direction();
-            Leap::Vector tip_vel = pointable.tipVelocity();
+            Leap::Vector tip_pos = LM_RETURN_TRACKED(pointable.tipPosition());
+            Leap::Vector tip_dir = LM_RETURN_TRACKED(pointable.direction());
+            Leap::Vector tip_vel = LM_RETURN_TRACKED(pointable.tipVelocity());
 
             Vec3f pos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
             Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
@@ -263,19 +281,35 @@ Vec3f LeapInteraction::getPinchDeltaFromLastCall() {
 }
 
 void LeapInteraction::updateHandInfos(double curTime) {
+  LM_ASSERT_IDENTICAL(123454);
   const Leap::HandList hands = _cur_frame.hands();
   for (int i=0; i<hands.count(); i++) {
     int id = hands[i].id();
     _hand_infos[id].update(hands[i], _last_frame, curTime);
   }
+
+  int numHands = LM_RETURN_TRACKED(hands.count());
+  if (LM_TRACK_IS_REPLAYING())
+  {
+    _hand_infos.clear();
+  }
+
+  { // tracking code only:
+    for (int i = 0; i < numHands; i++)
+    {
+      int id = LM_RETURN_TRACKED_CONDITIONAL(i < hands.count(), hands[i].id(), int);
+      _hand_infos[id] = LM_RETURN_TRACKED_CONDITIONAL(i < hands.count(), _hand_infos[id], HandInfo);
+    }
+  }
 }
 
 void LeapInteraction::cleanUpHandInfos(double curTime) {
+  LM_ASSERT_IDENTICAL(122354);
   static const float MAX_HAND_INFO_AGE = 0.1f; // seconds since last update until hand info gets cleaned up
   HandInfoMap::iterator it = _hand_infos.begin();
   while (it != _hand_infos.end()) {
     HandInfo& cur = it->second;
-    const float curAge = fabs(static_cast<float>(curTime - cur.getLastUpdateTime()));
+    const float curAge = fabs(static_cast<float>(curTime - LM_RETURN_TRACKED(cur.getLastUpdateTime())));
     if (curAge > MAX_HAND_INFO_AGE) {
       _hand_infos.erase(it++);
     } else {

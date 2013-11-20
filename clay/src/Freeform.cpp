@@ -7,6 +7,7 @@
 
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
+#include "ReplayUtil.h"
 
 const float CAMERA_SPEED = 0.005f;
 
@@ -397,12 +398,21 @@ void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float
 
 void FreeformApp::update()
 {
+  static int updateCount = 0;
+  LM_ASSERT_IDENTICAL(1478);
+  LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #")
+  LM_ASSERT_IDENTICAL(updateCount++);
+  LM_ASSERT_IDENTICAL("\r\n");
+  std::cout << "Update frame #" << updateCount << std::endl;
+
   const double curTime = ci::app::getElapsedSeconds();
+  LM_TRACK_CONST_VALUE(curTime);
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
 
   static const float TIME_UNTIL_AUTOMATIC_ORBIT = 60.0f;
   static const float TIME_UNTIL_AUTOMATIC_FOV = 50.0f;
   const float timeSinceActivity = static_cast<float>(curTime - _leap_interaction->getLastActivityTime());
+  LM_TRACK_CONST_VALUE(timeSinceActivity);
   _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - TIME_UNTIL_AUTOMATIC_FOV, 0.0f, TIME_UNTIL_AUTOMATIC_FOV)/TIME_UNTIL_AUTOMATIC_FOV);
 

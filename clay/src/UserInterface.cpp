@@ -7,6 +7,8 @@
 #include "Environment.h"
 #include "Freeform.h"
 
+#include "ReplayUtil.h"
+
 using namespace ci;
 using namespace ci::gl;
 
@@ -492,9 +494,16 @@ void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt) {
   static const float UI_INACTIVITY_FADE_TIME = 10.0f;
 
   std::vector<ci::Vec4f> tips = leap->getTips();
+  LM_ASSERT_IDENTICAL(tips.size());
+  for (int i = 0; i < tips.size(); i++)
+  {
+     LM_ASSERT_IDENTICAL(tips[i]);
+  }
   const double curTime = ci::app::getElapsedSeconds();
+  LM_TRACK_CONST_VALUE(curTime);
 
   const float timeSinceActivity = static_cast<float>(curTime - leap->getLastActivityTime());
+  LM_TRACK_CONST_VALUE(timeSinceActivity);
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - UI_INACTIVITY_FADE_TIME, 0.0f, UI_INACTIVITY_FADE_TIME)/UI_INACTIVITY_FADE_TIME);
 
   Menu::g_maxMenuActivation = ci::math<float>::clamp(inactivityRatio + maxActivation(Menu::g_forceCenter));
