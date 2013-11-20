@@ -54,7 +54,5 @@ bool LeapListener::waitForFrame(Leap::Frame& _Frame, int _MillisecondsTimeout) {
 }
 
 bool LeapListener::isConnected() const {
-  static const double CONNECTION_TIMEOUT = 0.5; // seconds until controller is assumed to be dead
-  const double curTime = ci::app::getElapsedSeconds();
-  return _is_connected && fabs(curTime - _last_frame_time) < CONNECTION_TIMEOUT;
+  return _is_connected;
 }
