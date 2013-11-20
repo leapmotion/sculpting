@@ -124,7 +124,6 @@ private:
   Color _brush_color;
   bool _draw_edges;
   Material _material;
-  std::string _last_loaded_file;
   float _ui_zoom;
   ci::gl::Texture _logo_on_black;
   ci::gl::Texture _logo_on_image;

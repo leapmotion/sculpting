@@ -17,7 +17,7 @@ public:
   bool unmap();
   bool isCreated() const;
   void destroy();
-  static void checkError();
+  static void checkError(const std::string& loc = "");
 
 private:
 

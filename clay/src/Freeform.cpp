@@ -180,9 +180,9 @@ void FreeformApp::setup()
   _aa_mode = _machine_speed > FreeformApp::LOW ? FreeformApp::MSAA : FreeformApp::NONE;
 
   // set mesh detail depending on machine specs
-  static const float LOW_DETAIL_LEVEL = 0.9f;
-  static const float MEDIUM_DETAIL_LEVEL = 0.93f;
-  static const float HIGH_DETAIL_LEVEL = 0.96f;
+  static const float LOW_DETAIL_LEVEL = 0.85f;
+  static const float MEDIUM_DETAIL_LEVEL = 0.9f;
+  static const float HIGH_DETAIL_LEVEL = 0.95f;
   float detail = LOW_DETAIL_LEVEL;
   if (_machine_speed == FreeformApp::MID) {
     detail = MEDIUM_DETAIL_LEVEL;
@@ -216,27 +216,37 @@ void FreeformApp::setup()
     _ui->forceDrawTutorialMenu();
   }
 
-  _mesh_thread = std::thread(&FreeformApp::updateLeapAndMesh, this);
-
-  _auto_save.start();
-
   loadIcons();
   loadShapes();
   loadLogos();
 
   if (_auto_save.haveAutoSave()) {
-    std::ifstream file(_auto_save.getAutoSavePath());
     Files files;
-    Mesh* mesh = files.loadPLY(file);
-    std::unique_lock<std::mutex> lock(_mesh_mutex);
+    Mesh* mesh;
+    try {
+      std::ifstream file(_auto_save.getAutoSavePath());
+      mesh = files.loadPLY(file);
+      file.close();
+    } catch (...) {
+      mesh = 0;
+    }
     mesh_ = mesh;
     if (mesh_) {
       mesh_->startPushState();
+      sculpt_.setMesh(mesh_);
+    } else {
+      try {
+        _auto_save.deleteAutoSave();
+      } catch (...) { }
+      loadShape(BALL);
     }
-    sculpt_.setMesh(mesh_);
   } else {
     loadShape(BALL);
   }
+
+  _mesh_thread = std::thread(&FreeformApp::updateLeapAndMesh, this);
+
+  _auto_save.start();
 }
 
 void FreeformApp::shutdown() {
@@ -246,14 +256,18 @@ void FreeformApp::shutdown() {
 
 void FreeformApp::resize()
 {
-  static const int DOWNSCALE_FACTOR = 4;
+  static const int BLUR_DOWNSCALE_FACTOR = 4;
 
   int width = getWindowWidth();
   int height = getWindowHeight();
-  width = std::max(DOWNSCALE_FACTOR, width);
-  height = std::max(DOWNSCALE_FACTOR, height);
+  width = std::max(BLUR_DOWNSCALE_FACTOR, width);
+  height = std::max(BLUR_DOWNSCALE_FACTOR, height);
+  const int blurWidth = width / BLUR_DOWNSCALE_FACTOR;
+  const int blurHeight = height / BLUR_DOWNSCALE_FACTOR;
 
   // FBOs with no depth buffer and bilinear sampling
+
+  GLBuffer::checkError("Setup");
 
   Fbo::Format formatNoDepthLinear;
   formatNoDepthLinear.setColorInternalFormat(GL_RGB32F_ARB);
@@ -261,8 +275,9 @@ void FreeformApp::resize()
   formatNoDepthLinear.setMagFilter(GL_LINEAR);
   formatNoDepthLinear.enableDepthBuffer(false);
 
-  _horizontal_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepthLinear );
-  _vertical_blur_fbo = Fbo( width/DOWNSCALE_FACTOR, height/DOWNSCALE_FACTOR, formatNoDepthLinear );
+  _horizontal_blur_fbo = Fbo(blurWidth, blurHeight, formatNoDepthLinear);
+  _vertical_blur_fbo = Fbo(blurWidth, blurHeight, formatNoDepthLinear);
+  GLBuffer::checkError("Blur FBOs");
 
   // FBOs with depth buffer
 
@@ -273,6 +288,7 @@ void FreeformApp::resize()
   }
 
   _screen_fbo = Fbo( width, height, formatWithDepth );
+  GLBuffer::checkError("Screen FBO");
 
   Vec3f campos;
   campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
@@ -284,6 +300,7 @@ void FreeformApp::resize()
   _ui->setWindowSize( Vec2i(width, height) );
 
   glEnable(GL_FRAMEBUFFER_SRGB);
+  GLBuffer::checkError("SRGB");
 }
 
 void FreeformApp::mouseDown( MouseEvent event )
@@ -487,22 +504,18 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   glDisable(GL_CULL_FACE);
 
   _screen_fbo.bindFramebuffer();
+  setViewport( _screen_fbo.getBounds() );
+  clear();
+  setMatrices( _camera );
   if (_draw_background) {
     // draw color pass of skybox
     _environment->bindCubeMap(Environment::CUBEMAP_SKY, 0);
     _sky_shader.bind();
     _sky_shader.uniform("cubemap", 0);
-    setViewport( _screen_fbo.getBounds() );
-    clear();
-    setMatrices( _camera );
     gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
     _sky_shader.unbind();
     _environment->unbindCubeMap(0);
-  } else {
-    clear();
   }
-
-  setMatrices( _camera );
 
   // enable depth and culling for rendering mesh
   glEnable(GL_CULL_FACE);
@@ -988,8 +1001,8 @@ int FreeformApp::loadFile()
       Files files;
       Mesh* mesh = 0;
       const std::string pathString = path.string();
-      std::ifstream stream;
-      if (stream) {
+      try {
+        std::ifstream stream;
         if (ext == ".OBJ" || ext == ".obj") {
           stream.open(pathString);
           mesh = files.loadOBJ(stream);
@@ -1004,6 +1017,8 @@ int FreeformApp::loadFile()
           mesh = files.loadPLY(stream);
         }
         stream.close();
+      } catch (...) {
+        mesh = 0;
       }
       std::unique_lock<std::mutex> lock(_mesh_mutex);
       float rotationVel = 0.0f;
@@ -1015,9 +1030,6 @@ int FreeformApp::loadFile()
       mesh_->setRotationVelocity(rotationVel);
       if (mesh_) {
         mesh_->startPushState();
-        _last_loaded_file = pathString;
-      } else {
-        _last_loaded_file = "";
       }
       sculpt_.setMesh(mesh_);
       err = 1;
@@ -1143,15 +1155,17 @@ int FreeformApp::saveFile()
   if (!path.empty()) {
     const std::string ext = path.extension().string();
     if (!ext.empty()) {
-      if (ext == ".OBJ" || ext == ".obj") {
-        std::ofstream file(path.c_str());
-        files.saveOBJ(mesh_, file);
-      } else if (ext == ".STL" || ext == ".stl") {
-        files.saveSTL(mesh_, path.string());
-      } else if (ext == ".PLY" || ext == ".ply") {
-        std::ofstream file(path.c_str());
-        files.savePLY(mesh_, file);
-      }
+      try {
+        if (ext == ".OBJ" || ext == ".obj") {
+          std::ofstream file(path.c_str());
+          files.saveOBJ(mesh_, file);
+        } else if (ext == ".STL" || ext == ".stl") {
+          files.saveSTL(mesh_, path.string());
+        } else if (ext == ".PLY" || ext == ".ply") {
+          std::ofstream file(path.c_str());
+          files.savePLY(mesh_, file);
+        }
+      } catch (...) { }
     }
     err = 1;
   }

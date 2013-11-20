@@ -279,21 +279,21 @@ void Mesh::moveTo(const Vector3& destination)
 void Mesh::draw(GLint vertex, GLint normal, GLint color) {
   verticesBuffer_.bind();
   glEnableVertexAttribArray(vertex);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts 1");
   glVertexAttribPointer(vertex, 3, GL_FLOAT, GL_TRUE, 0, 0);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts 2");
 
   normalsBuffer_.bind();
   glEnableVertexAttribArray(normal);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts 3");
   glVertexAttribPointer(normal, 3, GL_FLOAT, GL_TRUE, 0, 0);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts 4");
 
   colorsBuffer_.bind();
   glEnableVertexAttribArray(color);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts 5");
   glVertexAttribPointer(color, 3, GL_FLOAT, GL_TRUE, 0, 0);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts 6");
 
   indicesBuffer_.bind();
   glDrawElements(GL_TRIANGLES, nbGPUTriangles*3, GL_UNSIGNED_INT, 0);
@@ -310,9 +310,9 @@ void Mesh::draw(GLint vertex, GLint normal, GLint color) {
 void Mesh::drawVerticesOnly(GLint vertex) {
   verticesBuffer_.bind();
   glEnableVertexAttribArray(vertex);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts only 1");
   glVertexAttribPointer(vertex, 3, GL_FLOAT, GL_TRUE, 0, 0);
-  GLBuffer::checkError();
+  GLBuffer::checkError("Draw verts only 2");
 
   indicesBuffer_.bind();
   glDrawElements(GL_TRIANGLES, nbGPUTriangles*3, GL_UNSIGNED_INT, 0);
@@ -475,6 +475,7 @@ bool Mesh::initMesh()
   reinitIndicesBuffer();
   reinitVerticesBuffer();
   pendingGPUTriangles = getNbTriangles();
+  pendingGPUVertices = getNbVertices();
   return true;
 }
 
@@ -540,6 +541,7 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
   }
 
   pendingGPUTriangles = getNbTriangles();
+  pendingGPUVertices = getNbVertices();
 }
 
 void Mesh::updateGPUBuffers() {
@@ -562,7 +564,6 @@ void Mesh::updateGPUBuffers() {
   indexUpdates_.clear();
   indicesBuffer_.bind(); indicesBuffer_.unmap(); indicesBuffer_.release();
 
-  //int numVertex = 0;
   if (reallocateVerticesBuffer_) {
     initVertexVBO();
   }
