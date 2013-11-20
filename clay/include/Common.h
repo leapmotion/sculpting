@@ -71,9 +71,11 @@ inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= 
 #endif
 
 #if !LM_PRODUCTION_BUILD
+# define LM_REPORT(message) std::cout << message
 # define LM_BREAK __asm { int 3 }
-# define LM_ASSERT(condition, message) if (!(condition)) LM_BREAK;
+# define LM_ASSERT(condition, message) if (!(condition)) { LM_REPORT(message); LM_BREAK; }
 #else
+# define LM_REPORT(message)
 # define LM_BREAK
 # define LM_ASSERT(condition, message)
 #endif
