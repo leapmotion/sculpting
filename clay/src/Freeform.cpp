@@ -30,16 +30,6 @@ FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _ph
 
 FreeformApp::~FreeformApp()
 {
-  _shutdown = true;
-  if (_mesh_thread.joinable())
-  {
-    _mesh_thread.join();
-  }
-  if (_loading_thread.joinable())
-  {
-    _loading_thread.join();
-  }
-
   delete _environment;
   std::unique_lock<std::mutex> lock(_mesh_mutex);
   if (mesh_) {
@@ -215,12 +205,12 @@ void FreeformApp::setup()
 
   glEnable(GL_FRAMEBUFFER_SRGB);
 
-#if __APPLE__
-  if (_mesh_thread.joinable())
-  {
-    _mesh_thread.detach();
-  }
-#endif
+//#if __APPLE__
+//  if (_mesh_thread.joinable())
+//  {
+//    _mesh_thread.detach();
+//  }
+//#endif
 
   if (AutoSave::isFirstRun()) {
     _ui->forceDrawTutorialMenu();
@@ -262,6 +252,15 @@ void FreeformApp::setup()
 void FreeformApp::shutdown() {
   _shutdown = true;
   FreeImage_DeInitialise();
+  _shutdown = true;
+  if (_mesh_thread.joinable())
+  {
+    _mesh_thread.join();
+  }
+  if (_loading_thread.joinable())
+  {
+    _loading_thread.join();
+  }
 }
 
 void FreeformApp::resize()
