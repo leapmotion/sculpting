@@ -2,6 +2,7 @@
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
 #include "Geometry.h"
+#include "DataTypes.h"
 
 #define LM_LOG_CAMERA_LOGIC 0
 #define LM_LOG_CAMERA_LOGIC_2 0

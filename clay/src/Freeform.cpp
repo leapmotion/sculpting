@@ -31,7 +31,14 @@ FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _ph
 FreeformApp::~FreeformApp()
 {
   _shutdown = true;
-  _mesh_thread.join();
+  if (_mesh_thread.joinable())
+  {
+    _mesh_thread.join();
+  }
+  if (_loading_thread.joinable())
+  {
+    _loading_thread.join();
+  }
 
   delete _environment;
   std::unique_lock<std::mutex> lock(_mesh_mutex);

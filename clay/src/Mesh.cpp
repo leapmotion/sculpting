@@ -475,7 +475,7 @@ bool Mesh::initMesh()
   reinitIndicesBuffer();
   reinitVerticesBuffer();
   pendingGPUTriangles = getNbTriangles();
-  pendingGPUVertices = getNbVertices();
+//  pendingGPUVertices = getNbVertices();
   return true;
 }
 
@@ -541,7 +541,7 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
   }
 
   pendingGPUTriangles = getNbTriangles();
-  pendingGPUVertices = getNbVertices();
+//  pendingGPUVertices = getNbVertices();
 }
 
 void Mesh::updateGPUBuffers() {

@@ -64,6 +64,9 @@
 		8A7FDF08183A8ECB00E94B5F /* donut.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF03183A8ECB00E94B5F /* donut.obj */; };
 		8A7FDF09183A8ECB00E94B5F /* sheet.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF04183A8ECB00E94B5F /* sheet.obj */; };
 		8A7FDF0C183AEB3500E94B5F /* AutoSave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */; };
+		8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */; };
+		8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */; };
+		8A7FDF13183D44AF00E94B5F /* tutorial-immersive.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */; };
 		8A9B81D51832D37500AA2EA3 /* freigsanprobold-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D31832D37500AA2EA3 /* freigsanprobold-webfont.ttf */; };
 		8A9B81D61832D37500AA2EA3 /* freigsanpromed-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D41832D37500AA2EA3 /* freigsanpromed-webfont.ttf */; };
 		8A9B820E1832D38000AA2EA3 /* brush-size-large.svg in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D81832D38000AA2EA3 /* brush-size-large.svg */; };
@@ -235,6 +238,9 @@
 		8A7FDF04183A8ECB00E94B5F /* sheet.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sheet.obj; sourceTree = "<group>"; };
 		8A7FDF0A183AEB2900E94B5F /* AutoSave.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AutoSave.h; path = ../../include/AutoSave.h; sourceTree = "<group>"; };
 		8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AutoSave.cpp; path = ../../src/AutoSave.cpp; sourceTree = "<group>"; };
+		8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-black.png"; sourceTree = "<group>"; };
+		8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-image.png"; sourceTree = "<group>"; };
+		8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tutorial-immersive.png"; sourceTree = "<group>"; };
 		8A84A925182ADD59001CD625 /* x-negative.exr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "x-negative.exr"; sourceTree = "<group>"; };
 		8A84A926182ADD59001CD625 /* x-positive.exr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "x-positive.exr"; sourceTree = "<group>"; };
 		8A84A927182ADD59001CD625 /* y-negative.exr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "y-negative.exr"; sourceTree = "<group>"; };
@@ -590,6 +596,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8A7FDF0D183D449F00E94B5F /* logos */,
 				8A7FDEFF183A8ECB00E94B5F /* shapes */,
 				8A9B82441832D38A00AA2EA3 /* tutorial */,
 				8A9B81D71832D38000AA2EA3 /* menu-icons */,
@@ -641,6 +648,16 @@
 			);
 			name = shapes;
 			path = ../../resources/shapes;
+			sourceTree = "<group>";
+		};
+		8A7FDF0D183D449F00E94B5F /* logos */ = {
+			isa = PBXGroup;
+			children = (
+				8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */,
+				8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */,
+			);
+			name = logos;
+			path = ../../resources/logos;
 			sourceTree = "<group>";
 		};
 		8A84A922182ADD59001CD625 /* assets */ = {
@@ -1131,6 +1148,7 @@
 		8A9B82441832D38A00AA2EA3 /* tutorial */ = {
 			isa = PBXGroup;
 			children = (
+				8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */,
 				8A9B82451832D38A00AA2EA3 /* tutorial-camera.png */,
 				8A9B82461832D38A00AA2EA3 /* tutorial-menu.png */,
 				8A9B82471832D38A00AA2EA3 /* tutorial-tools.png */,
@@ -1198,6 +1216,7 @@
 				8A9B82101832D38000AA2EA3 /* brush-size-small.svg in Resources */,
 				8A9B82181832D38000AA2EA3 /* edit.svg in Resources */,
 				8A9B82281832D38000AA2EA3 /* paint.png in Resources */,
+				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
 				8A9B822F1832D38000AA2EA3 /* repel.png in Resources */,
 				8A9B82301832D38000AA2EA3 /* save-2.svg in Resources */,
 				8A9B82221832D38000AA2EA3 /* load-3.svg in Resources */,
@@ -1253,6 +1272,7 @@
 				8A9B824A1832D38A00AA2EA3 /* tutorial-tools.png in Resources */,
 				8A9B820F1832D38000AA2EA3 /* brush-size-medium.svg in Resources */,
 				8A9B82411832D38000AA2EA3 /* timeofday.svg in Resources */,
+				8A7FDF13183D44AF00E94B5F /* tutorial-immersive.png in Resources */,
 				8A9B823D1832D38000AA2EA3 /* strength-medium-selected.png in Resources */,
 				8A9B82131832D38000AA2EA3 /* brush-strength.svg in Resources */,
 				8A9B82421832D38000AA2EA3 /* wireframe-2.svg in Resources */,
@@ -1263,6 +1283,7 @@
 				01C5D78A181A482D00194132 /* CinderApp.icns in Resources */,
 				8A9B82431832D38000AA2EA3 /* wireframe.svg in Resources */,
 				8A9B821B1832D38000AA2EA3 /* flatten.png in Resources */,
+				8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */,
 				8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */,
 				8A9B82111832D38000AA2EA3 /* brush-strength-2.svg in Resources */,
 				8A9B821A1832D38000AA2EA3 /* flatten-selected.png in Resources */,

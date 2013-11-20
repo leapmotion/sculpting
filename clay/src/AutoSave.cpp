@@ -42,13 +42,19 @@ AutoSave::AutoSave() : m_shutdown(false), m_savePending(false), m_scale(1.0f) {
 
 void AutoSave::start() {
   m_saveThread = std::thread(&AutoSave::runMainLoop, this);
+#if __APPLE__
+  m_saveThread.detach();
+#endif
 }
 
 void AutoSave::shutdown() {
   std::unique_lock<std::mutex> lock(m_saveMutex);
   m_shutdown = true;
   m_saveCondition.notify_all();
-  m_saveThread.join();
+  if (m_saveThread.joinable())
+  {
+    m_saveThread.join();
+  }
 }
 
 void AutoSave::triggerAutoSave(Mesh* mesh) {
