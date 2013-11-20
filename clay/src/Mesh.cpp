@@ -413,6 +413,9 @@ bool Mesh::initMesh()
   int nbVertices = getNbVertices();
   int nbTriangles = getNbTriangles();
   Aabb aabb;
+  if (vertices_.size() == 0) {
+    return false;
+  }
   aabb.min_ = vertices_[0];
   aabb.max_ = vertices_[0];
   for(int i=0;i<nbVertices;++i)
