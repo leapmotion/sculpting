@@ -46,6 +46,7 @@ void FreeformApp::prepareSettings( Settings *settings )
   ci::app::Window::Format fmt;
   fmt.setTitle("Freeform");
   fmt.setSize(1280, 960);
+  fmt.setFullScreen(true);
   settings->prepareWindow(fmt);
 
   settings->setWindowSize(1280, 960);
