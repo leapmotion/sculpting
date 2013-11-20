@@ -141,6 +141,7 @@
     <ClCompile Include="..\..\src\Mesh.cpp" />
     <ClCompile Include="..\..\src\Octree.cpp" />
     <ClCompile Include="..\..\src\Picking.cpp" />
+    <ClCompile Include="..\..\src\ReplayUtil.cpp" />
     <ClCompile Include="..\..\src\Sculpt.cpp" />
     <ClCompile Include="..\..\src\State.cpp" />
     <ClCompile Include="..\..\src\StdAfx.cpp">
@@ -178,6 +179,7 @@
     <ClInclude Include="..\..\include\Mesh.h" />
     <ClInclude Include="..\..\include\Octree.h" />
     <ClInclude Include="..\..\include\Picking.h" />
+    <ClInclude Include="..\..\include\ReplayUtil.h" />
     <ClInclude Include="..\..\include\Resources.h" />
     <ClInclude Include="..\..\include\Sculpt.h" />
     <ClInclude Include="..\..\include\State.h" />
