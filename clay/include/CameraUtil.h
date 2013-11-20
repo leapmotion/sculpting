@@ -277,7 +277,11 @@ public:
   lmTransform GetCameraInWorldSpace();
 
   // Get radius for mesh spehre queries.
-  lmReal GetSphereQueryRadius();
+  inline lmReal GetSphereQueryRadius()
+  {
+    return params.sphereRadiusMultiplier * referenceDistance;
+  }
+
 
 private:
 
