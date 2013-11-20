@@ -65,8 +65,8 @@ void LeapInteraction::interact(double curTime)
   static const float LOG_SCALE_SMOOTH_STRENGTH = 0.9f;
 
   // create brushes
-  static const Vec3f LEAP_OFFSET(0, 200, 100);
-  static const Vec3f LEAP_SIZE(300, 300, 300);
+  static const Vec3f LEAP_OFFSET(0, 250, 100);
+  static const Vec3f LEAP_SIZE(275, 275, 275);
   Leap::HandList hands = _cur_frame.hands();
   const float ui_mult = 1.0f - _ui->maxActivation();
   const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
