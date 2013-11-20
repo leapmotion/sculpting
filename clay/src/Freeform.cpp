@@ -360,8 +360,13 @@ void FreeformApp::keyDown( KeyEvent event )
   case 's': symmetry_ = !symmetry_; break;
   case 'r': sculpt_.setRemeshRadius(remeshRadius_); break;
 #endif
+#if __APPLE__
+  case 'y': if (event.isMetaDown()) { if (mesh_) { mesh_->redo(); } } break;
+  case 'z': if (event.isMetaDown()) { if (mesh_) { mesh_->undo(); } } break;
+#else
   case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
   case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
+#endif
   case 'c': _lock_camera = !_lock_camera; break;
   case 'f': { std::string dummyString; toggleFullscreen(dummyString); } break;
   }
