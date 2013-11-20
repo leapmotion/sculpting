@@ -113,6 +113,7 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   case SWEEP: sweep(mesh_, iVertsSelected, brush); break;
   case PUSH: push(mesh_, iVertsSelected, brush); break;
   case PAINT: paint(mesh_, iVertsSelected, brush, materialColor_); break;
+  case CREASE: crease(mesh_, iVertsSelected, brush); break;
   default: break;
   }
 
@@ -350,6 +351,29 @@ void Sculpt::push(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush
     Vertex &vert = vertices[iVerts[i]];
     const float strength = brush.strengthAt(vert);
     vert -= std::min(dMove, deformationIntensity*strength)*brush._direction;
+  }
+}
+
+void Sculpt::crease(Mesh* mesh, const std::vector<int>& iVerts, const Brush& brush) {
+  const Vector3 areaNorm = areaNormal(mesh, iVerts);
+  if(areaNorm.squaredNorm()<0.0001f)
+    return;
+  VertexVector& vertices = mesh->getVertices();
+  const int nbVerts = iVerts.size();
+  const float dMove = std::sqrt(d2Move_);
+  const float normalFactor = 30.0f;
+  const Vector3& center = brush._position;
+
+  for (int i = 0; i < nbVerts; ++i) {
+    Vertex& vert = vertices[iVerts[i]];
+    const float strength = brush.strengthAt(vert);
+    const Vector3 displ = strength * ((center - vert) + strength*strength*normalFactor*areaNorm);
+    float displLength = displ.squaredNorm();
+    if (displLength<=d2Move_) {
+      vert += displ;
+    } else {
+      vert += displ.normalized()*dMove;
+    }
   }
 }
 

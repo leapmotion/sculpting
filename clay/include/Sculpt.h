@@ -16,7 +16,7 @@ class Sculpt
 {
 
 public:
-  enum SculptMode{INVALID = -1, INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT};
+  enum SculptMode{INVALID = -1, INFLATE, DEFLATE, SMOOTH, FLATTEN, SWEEP, PUSH, PAINT, CREASE};
   enum TopoMode{DECIMATION, SUBDIVISION, UNIFORMISATION, ADAPTIVE, STATIC};
   Sculpt();
   ~Sculpt();
@@ -38,6 +38,7 @@ public:
   static void flatten(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void sweep(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void push(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
+  static void crease(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void paint(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, const Vector3& color);
 
   int getNumBrushes() const { return (int)_brushes.size(); }
