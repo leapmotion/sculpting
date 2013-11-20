@@ -50,6 +50,7 @@ void ReplayUtil::setMode(Mode mode) {
   m_history.clear();
   m_historyIdx = 0;
   m_historyStream.clear();
+  m_historyStream.reserve(1024*10);
   m_historyStreamIdx = 0;
 
   //delete m_historyIStream; 
@@ -120,6 +121,7 @@ void ReplayUtil::saveHistory()
     file.write(&m_historyStream[0], m_historyStream.size());
   }
   m_historyStream.clear();
+  m_historyStream.reserve(1024*10);
 #endif
 
 }

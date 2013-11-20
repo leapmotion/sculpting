@@ -185,7 +185,8 @@ T ReplayUtil::returnTrackedValue(const T& value) {
   T result  = *reinterpret_cast<T*>(&container);
   return result;
 #else
-  T result = value;
+  T result;
+  std::memcpy(&result, &value, sizeof(T));
   trackObject(result);
   return result;
 #endif
@@ -207,7 +208,8 @@ T ReplayUtil::returnTrackedValue() {
 
 template <typename T>
 void ReplayUtil::assertIdentical(const T& value) {
-  T copy = value;
+  T copy;
+  std::memcpy(&copy, &value, sizeof(T));
   T recorded = returnTrackedValue(value);
   LM_ASSERT(m_mode != MODE_REPLAY || copy == recorded, "LM_ASSERT_IDENTICAL failed.");
 }
