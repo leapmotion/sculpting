@@ -1288,11 +1288,6 @@ lmTransform CameraUtil::GetCameraInWorldSpace()
   return t;
 }
 
-lmReal CameraUtil::GetSphereQueryRadius()
-{
-  return params.sphereRadiusMultiplier * referenceDistance;
-}
-
 void CameraUtil::RealignRefPtAndCamera()
 {
   lmReal dist = (transform.translation - referencePoint.position).norm();
