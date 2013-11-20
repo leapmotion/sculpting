@@ -252,7 +252,9 @@ void FreeformApp::setup()
     loadShape(BALL);
   }
 
+#if 0
   _mesh_thread = std::thread(&FreeformApp::updateLeapAndMesh, this);
+#endif
 
   _auto_save.start();
 }
@@ -483,11 +485,21 @@ void FreeformApp::update()
   _camera.getProjectionMatrix();
 
   _last_update_time = curTime;
+
+  // work for the other thread
+  FreeformApp::updateLeapAndMesh();
 }
 
 void FreeformApp::updateLeapAndMesh() {
-  while (!_shutdown) {
+#if 0
+  while (!_shutdown) 
+#endif
+  {
+#if 0
     bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
+#else 
+    bool suppress = false;
+#endif 
     bool haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
 
     if (haveFrame) {
@@ -743,8 +755,8 @@ void FreeformApp::draw()
   const Environment::LoadingState loading_state = _environment->getLoadingState();
   const float loading_time = _environment->getTimeSinceLoadingStateChange();
   if (!_environment->haveEnvironment()) {
-    exposure_mult = 0.0f;
-    Menu::updateSculptMult(curTime, 0.0f);
+    //exposure_mult = 0.0f;
+    //Menu::updateSculptMult(curTime, 0.0f);
   } else if (loading_state == Environment::LOADING_STATE_LOADING) {
     float mult = 1.0f - math<float>::clamp(loading_time/LOADING_DARKEN_TIME);
     exposure_mult *= mult;
