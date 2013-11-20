@@ -70,6 +70,9 @@ void FreeformApp::setup()
   enableDepthWrite();
   glCullFace( GL_BACK );
   glEnable(GL_CULL_FACE);
+  glEnable(GL_TEXTURE_2D);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   _draw_edges = false;
   _bloom_visible = true;
@@ -709,12 +712,15 @@ void FreeformApp::draw()
 {
   static const float LOADING_DARKEN_TIME = 0.75f;
   static const float LOADING_LIGHTEN_TIME = 1.5f;
+
+  const double curTime = ci::app::getElapsedSeconds();
+
   float exposure_mult = 1.0f;
   const Environment::LoadingState loading_state = _environment->getLoadingState();
   const float loading_time = _environment->getTimeSinceLoadingStateChange();
   if (!_environment->haveEnvironment()) {
     exposure_mult = 0.0f;
-    Menu::updateSculptMult(ci::app::getElapsedSeconds(), 0.0f);
+    Menu::updateSculptMult(curTime, 0.0f);
   } else if (loading_state == Environment::LOADING_STATE_LOADING) {
     float mult = 1.0f - math<float>::clamp(loading_time/LOADING_DARKEN_TIME);
     exposure_mult *= mult;
@@ -807,27 +813,27 @@ void FreeformApp::draw()
     if (!_listener.isConnected()) {
       _ui->drawDisconnected();
     }
-
-    enableDepthRead();
-    enableDepthWrite();
   }
 
-  glPushMatrix();
-  const ci::Vec2i size = getWindowSize();
-  const ci::Area bounds = getWindowBounds();
-  const ci::Vec2f center = getWindowCenter();
-  setMatricesWindow( size );
-  setViewport( bounds );
-  const float aspect = _logo_on_black.getAspectRatio();
-  const float yOffset = 0.0f;
-  static const float LOGO_SCALE = 0.8f;
-  float halfWidth = LOGO_SCALE*size.x/2;
-  float halfHeight = halfWidth / aspect;
-  ci::Rectf area(center.x - halfWidth, center.y - halfHeight + yOffset, center.x + halfWidth, center.y + halfHeight + yOffset);
-  ci::ColorA color(1.0f, 1.0f, 1.0f, 1.0f - exposure_mult);
-  ci::gl::color(color);
-  ci::gl::draw(_logo_on_black, area);
-  glPopMatrix();
+  const float opacityMult = Utilities::SmootherStep(ci::math<float>::clamp(static_cast<float>(curTime / LOADING_LIGHTEN_TIME)));
+  if (exposure_mult < 1.0f) {
+    const ci::Vec2i size = getWindowSize();
+    const ci::Area bounds = getWindowBounds();
+    const ci::Vec2f center = getWindowCenter();
+    setMatricesWindow( size );
+    setViewport( bounds );
+    const float aspect = _logo_on_black.getAspectRatio();
+    const float yOffset = 0.0f;
+    static const float LOGO_SCALE = 0.8f;
+    float halfWidth = LOGO_SCALE*size.x/2;
+    float halfHeight = halfWidth / aspect;
+    ci::Rectf area(center.x - halfWidth, center.y - halfHeight + yOffset, center.x + halfWidth, center.y + halfHeight + yOffset);
+    glColor4f(1.0f, 1.0f, 1.0f, opacityMult*(1.0f - exposure_mult));
+    ci::gl::draw(_logo_on_black, area);
+  }
+
+  enableDepthRead();
+  enableDepthWrite();
 
 #if !LM_PRODUCTION_BUILD
   _params->draw(); // draw the interface
@@ -858,7 +864,8 @@ void FreeformApp::loadIcons() {
 
   _ui->setTutorialTextures(ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_1))),
                            ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2))),
-                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3))));
+                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3))),
+                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_4))));
 }
 
 void FreeformApp::loadShapes() {

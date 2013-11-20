@@ -58,6 +58,7 @@
 #define RES_TUTORIAL_1                        CINDER_RESOURCE( ../resources/tutorial/, tutorial-menu.png, 260, PNG )
 #define RES_TUTORIAL_2                        CINDER_RESOURCE( ../resources/tutorial/, tutorial-camera.png, 261, PNG )
 #define RES_TUTORIAL_3                        CINDER_RESOURCE( ../resources/tutorial/, tutorial-tools.png, 262, PNG )
+#define RES_TUTORIAL_4                        CINDER_RESOURCE( ../resources/tutorial/, tutorial-immersive.png, 263, PNG )
 
 // logo images
 #define RES_LOGO_ON_BLACK                     CINDER_RESOURCE( ../resources/logos/, freeform-on-black.png, 270, PNG )

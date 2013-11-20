@@ -604,8 +604,10 @@ void UserInterface::drawTutorialSlides(float opacityMult) const {
     tex = &_tutorial1;
   } else if (_tutorial_slide == 1) {
     tex = &_tutorial2;
-  } else {
+  } else if (_tutorial_slide == 2) {
     tex = &_tutorial3;
+  } else {
+    tex = &_tutorial4;
   }
   glColor4f(1.0f, 1.0f, 1.0f, opacity);
   ci::gl::draw(*tex, area);
@@ -788,11 +790,11 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     switch (entry.m_entryType) {
     case Menu::TUTORIAL_CLOSE: _draw_tutorial_menu = false; break;
     case Menu::TUTORIAL_NEXT:
-      _tutorial_slide = (_tutorial_slide + 1)%3;
+      _tutorial_slide = (_tutorial_slide + 1)%4;
       _last_switch_time = curTime;
       break;
     case Menu::TUTORIAL_PREVIOUS:
-      _tutorial_slide = (_tutorial_slide == 0 ? 2 : _tutorial_slide-1);
+      _tutorial_slide = (_tutorial_slide == 0 ? 3 : _tutorial_slide-1);
       _last_switch_time = curTime;
       break;
     }

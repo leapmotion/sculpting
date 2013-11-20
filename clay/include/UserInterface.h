@@ -435,10 +435,11 @@ public:
   void drawCursor(const ci::Vec2f& position, float opacity) const;
   void setZoomFactor(float zoom) { Menu::g_zoomFactor = zoom; }
   float getZoomFactor() const { return Menu::g_zoomFactor; }
-  void setTutorialTextures(ci::gl::Texture tutorial1, ci::gl::Texture tutorial2, ci::gl::Texture tutorial3) {
+  void setTutorialTextures(ci::gl::Texture tutorial1, ci::gl::Texture tutorial2, ci::gl::Texture tutorial3, ci::gl::Texture tutorial4) {
     _tutorial1 = tutorial1;
     _tutorial2 = tutorial2;
     _tutorial3 = tutorial3;
+    _tutorial4 = tutorial4;
   }
   bool tutorialActive() const { return _draw_tutorial_menu; }
   void forceDrawTutorialMenu() { _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); }
@@ -470,6 +471,7 @@ private:
   ci::gl::Texture _tutorial1;
   ci::gl::Texture _tutorial2;
   ci::gl::Texture _tutorial3;
+  ci::gl::Texture _tutorial4;
   double _last_switch_time;
   int _tutorial_slide;
   bool _draw_tutorial_menu;
