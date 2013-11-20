@@ -65,6 +65,8 @@ public:
   int saveFile();
   int loadShape(Shape shape);
 
+  void doQuit();
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:

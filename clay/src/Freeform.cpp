@@ -46,7 +46,7 @@ void FreeformApp::prepareSettings( Settings *settings )
   ci::app::Window::Format fmt;
   fmt.setTitle("Freeform");
   fmt.setSize(1280, 960);
-  fmt.setFullScreen(true);
+//  fmt.setFullScreen(true);
   settings->prepareWindow(fmt);
 
   settings->setWindowSize(1280, 960);
@@ -171,7 +171,7 @@ void FreeformApp::setup()
     _bloom_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLOOM_FRAG_GLSL ) );
   } catch (gl::GlslProgCompileExc e) {
     std::cout << e.what() << std::endl;
-    quit();
+    doQuit();
   }
 
   sculpt_.clearBrushes();
@@ -250,9 +250,13 @@ void FreeformApp::setup()
   _auto_save.start();
 }
 
+void FreeformApp::doQuit()
+{
+  shutdown();
+  quit();
+}
+
 void FreeformApp::shutdown() {
-  _shutdown = true;
-  FreeImage_DeInitialise();
   _shutdown = true;
   if (_mesh_thread.joinable())
   {
@@ -262,6 +266,7 @@ void FreeformApp::shutdown() {
   {
     _loading_thread.join();
   }
+  FreeImage_DeInitialise();
 }
 
 void FreeformApp::resize()

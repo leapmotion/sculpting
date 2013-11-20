@@ -198,7 +198,6 @@
 		01C5D79B181A4C3A00194132 /* Resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../../include/Resources.h; sourceTree = "<group>"; };
 		01C5D79C181A4C3A00194132 /* Sculpt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sculpt.h; path = ../../include/Sculpt.h; sourceTree = "<group>"; };
 		01C5D79D181A4C3A00194132 /* State.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = State.h; path = ../../include/State.h; sourceTree = "<group>"; };
-		01C5D79E181A4C3A00194132 /* StdAfx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StdAfx.h; path = ../../include/StdAfx.h; sourceTree = "<group>"; };
 		01C5D7A0181A4C3A00194132 /* Tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Tools.h; path = ../../include/Tools.h; sourceTree = "<group>"; };
 		01C5D7A1181A4C3A00194132 /* Topology.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Topology.h; path = ../../include/Topology.h; sourceTree = "<group>"; };
 		01C5D7A2181A4C3A00194132 /* Triangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Triangle.h; path = ../../include/Triangle.h; sourceTree = "<group>"; };
@@ -494,9 +493,8 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */,
-				8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */,
 				01C5D740181A480600194132 /* Aabb.cpp */,
+				8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */,
 				01C5D741181A480600194132 /* Brush.cpp */,
 				01C5D742181A480600194132 /* Camera.cpp */,
 				01C5D743181A480600194132 /* CameraUtil.cpp */,
@@ -506,6 +504,7 @@
 				01C5D747181A480600194132 /* DebugDrawUtil.cpp */,
 				01C5D748181A480600194132 /* Environment.cpp */,
 				01C5D749181A480600194132 /* Files.cpp */,
+				8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */,
 				01C5D74A181A480600194132 /* Geometry.cpp */,
 				01C5D74B181A480600194132 /* GLBuffer.cpp */,
 				01C5D74C181A480600194132 /* Grid.cpp */,
@@ -553,16 +552,8 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				8A7FDF0A183AEB2900E94B5F /* AutoSave.h */,
-				8A7FDEFE183A8E8400E94B5F /* Freeform.h */,
-				01C5D795181A4C3A00194132 /* Grid.h */,
-				01C5D796181A4C3A00194132 /* LeapInteraction.h */,
-				01C5D797181A4C3A00194132 /* LeapListener.h */,
-				01C5D798181A4C3A00194132 /* Mesh.h */,
-				01C5D799181A4C3A00194132 /* Octree.h */,
-				01C5D79A181A4C3A00194132 /* Picking.h */,
-				01C5D79B181A4C3A00194132 /* Resources.h */,
 				01C5D7A7181A4C8800194132 /* Aabb.h */,
+				8A7FDF0A183AEB2900E94B5F /* AutoSave.h */,
 				01C5D7A8181A4C8800194132 /* Brush.h */,
 				01C5D7A9181A4C8800194132 /* Camera.h */,
 				01C5D7AA181A4C8800194132 /* CameraUtil.h */,
@@ -574,11 +565,20 @@
 				01C5D7B0181A4C8800194132 /* DebugDrawUtil.h */,
 				01C5D7B1181A4C8800194132 /* Environment.h */,
 				01C5D7B2181A4C8800194132 /* Files.h */,
+				8A7FDEFE183A8E8400E94B5F /* Freeform.h */,
+				89C36BE2F0154685A7D47F00 /* Freeform_Prefix.pch */,
 				01C5D7B3181A4C8800194132 /* Geometry.h */,
 				01C5D7B4181A4C8800194132 /* GLBuffer.h */,
+				01C5D795181A4C3A00194132 /* Grid.h */,
+				01C5D796181A4C3A00194132 /* LeapInteraction.h */,
+				01C5D797181A4C3A00194132 /* LeapListener.h */,
+				01C5D798181A4C3A00194132 /* Mesh.h */,
+				01C5D799181A4C3A00194132 /* Octree.h */,
+				01C5D79A181A4C3A00194132 /* Picking.h */,
+				01C5D79B181A4C3A00194132 /* Resources.h */,
 				01C5D79C181A4C3A00194132 /* Sculpt.h */,
 				01C5D79D181A4C3A00194132 /* State.h */,
-				01C5D79E181A4C3A00194132 /* StdAfx.h */,
+				01C5D794181A4A4E00194132 /* StdAfx.h */,
 				01C5D7A0181A4C3A00194132 /* Tools.h */,
 				01C5D7A1181A4C3A00194132 /* Topology.h */,
 				01C5D7A2181A4C3A00194132 /* Triangle.h */,
@@ -588,7 +588,6 @@
 				01C5D7A6181A4C3A00194132 /* Vertex.h */,
 				01C5D794181A4A4E00194132 /* StdAfx.h */,
 				01C5D73F181A47DE00194132 /* Resources.h */,
-				89C36BE2F0154685A7D47F00 /* Freeform_Prefix.pch */,
 			);
 			name = Headers;
 			sourceTree = "<group>";

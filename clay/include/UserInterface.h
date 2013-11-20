@@ -201,6 +201,7 @@ public:
         case Menu::TUTORIAL_PREVIOUS: return "Previous"; break;
         case Menu::TUTORIAL_CLOSE: return "Close"; break;
         case Menu::TUTORIAL_NEXT: return "Next"; break;
+        default: return ""; break;
         }
         return "";
       } else {
@@ -218,6 +219,7 @@ public:
       case Menu::TOOL_SWEEP: return Sculpt::SWEEP; break;
       case Menu::TOOL_PUSH: return Sculpt::PUSH; break;
       case Menu::TOOL_PAINT: return Sculpt::PAINT; break;
+      default: return Sculpt::INVALID; break;
       }
       return Sculpt::INVALID;
     }
@@ -251,6 +253,8 @@ public:
         mat.reflectionBias = 3.0f;
         mat.surfaceColor << 0.7f, 0.675f, 0.6f;
         break;
+      default:
+        break;
       }
       return mat;
     }
@@ -260,6 +264,7 @@ public:
       case Menu::SPIN_SLOW: return 0.37f; break;
       case Menu::SPIN_MEDIUM: return 1.43f; break;
       case Menu::SPIN_FAST: return 2.57f; break;
+      default: return 0.0f; break;
       }
       return 0.0f;
     }
@@ -272,6 +277,7 @@ public:
       case Menu::ENVIRONMENT_JUNGLE_CLIFF: return "Jungle-Cliff"; break;
       case Menu::ENVIRONMENT_JUNGLE: return "Jungle"; break;
       case Menu::ENVIRONMENT_ARCTIC: return "Arctic"; break;
+      default: return ""; break;
       }
       return "";
     }

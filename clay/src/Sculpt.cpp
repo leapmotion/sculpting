@@ -24,7 +24,7 @@ Sculpt::~Sculpt()
 /** Set sculpting mode */
 void Sculpt::setAdaptiveParameters(float radiusSquared, bool clamp)
 {
-  static const float MAX_RADIUS_SQ_SUBDIVIDE = 25.0f * 25.0f; // to prevent detail loss
+//  static const float MAX_RADIUS_SQ_SUBDIVIDE = 25.0f * 25.0f; // to prevent detail loss
   if (clamp) {
     //radiusSquared = std::min(radiusSquared, MAX_RADIUS_SQ_SUBDIVIDE);
   }

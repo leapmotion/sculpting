@@ -45,7 +45,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   static const float PARENT_SMOOTH_STRENGTH = 0.925f;
   static const float CHILD_SMOOTH_STRENGTH = 0.85f;
   static const float SELECTION_COOLDOWN = 1.0f;
-  static const float MIN_TIME_SINCE_SCULPTING = 0.5f; // prevent interacting with menu if we're sculpting
+//  static const float MIN_TIME_SINCE_SCULPTING = 0.5f; // prevent interacting with menu if we're sculpting
   static const float MIN_PARENT_ACTIVATION = 0.75f; // amount of menu activation needed before children can be activated
   static const float MAX_ACTIVATION_LIMIT = 0.9f; // how high the max activation can be before other menus can't be activated
   static const float ACTIVATION_AMOUNT = 0.333f; // the amount to add when activating or deactivating
@@ -63,8 +63,8 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
     for (int i=0; i<numTips; i++) {
       //const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
       const Vector2 pos(tips[i].x, 1.0f - tips[i].y);
-      const float z = tips[i].z;
-      const float strength = tips[i].w;
+//      const float z = tips[i].z;
+//      const float strength = tips[i].w;
       toRadialCoordinates(pos, radius, angle);
 
       // check for hovering in wedges
@@ -735,10 +735,11 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_general_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _general_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-    case Menu::GENERAL_ABOUT: break;
-    case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); break;
-    case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
-    case Menu::GENERAL_EXIT: _draw_confirm_menu = true; _pending_entry = Menu::GENERAL_EXIT; break;
+      case Menu::GENERAL_ABOUT: break;
+      case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); break;
+      case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
+      case Menu::GENERAL_EXIT: _draw_confirm_menu = true; _pending_entry = Menu::GENERAL_EXIT; break;
+      default: break;
     }
     _general_menu.clearSelection();
   }
@@ -746,13 +747,14 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_object_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _object_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-    case Menu::OBJECT_LOAD: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_LOAD; break;
-    case Menu::OBJECT_EXPORT: app->saveFile(); break;
-    case Menu::OBJECT_BALL: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_BALL; break;
-    case Menu::OBJECT_CAN: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CAN; break;
-    case Menu::OBJECT_DONUT: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_DONUT; break;
-    case Menu::OBJECT_SHEET: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_SHEET; break;
-    case Menu::OBJECT_CUBE: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CUBE; break;
+      case Menu::OBJECT_LOAD: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_LOAD; break;
+      case Menu::OBJECT_EXPORT: app->saveFile(); break;
+      case Menu::OBJECT_BALL: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_BALL; break;
+      case Menu::OBJECT_CAN: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CAN; break;
+      case Menu::OBJECT_DONUT: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_DONUT; break;
+      case Menu::OBJECT_SHEET: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_SHEET; break;
+      case Menu::OBJECT_CUBE: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CUBE; break;
+      default: break;
     }
     _object_menu.clearSelection();
   }
@@ -764,6 +766,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
       case Menu::EDITING_TOGGLE_SYMMETRY: app->toggleSymmetry(); break;
       case Menu::EDITING_UNDO: if (mesh) { mesh->undo(); } break;
       case Menu::EDITING_REDO: if (mesh) { mesh->redo(); } break;
+      default: break;
     }
     _editing_menu.clearSelection();
   }
@@ -771,13 +774,14 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_draw_confirm_menu && _confirm_menu.hasSelectedEntry()) {
     if (_confirm_menu.getSelectedEntry().m_entryType == Menu::CONFIRM_YES) {
       switch (_pending_entry) {
-        case Menu::GENERAL_EXIT: app->quit(); break;
+        case Menu::GENERAL_EXIT: app->doQuit(); break;
         case Menu::OBJECT_LOAD: app->loadFile(); break;
         case Menu::OBJECT_BALL: app->loadShape(FreeformApp::BALL); break;
         case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
         case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
         case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
         case Menu::OBJECT_CUBE: app->loadShape(FreeformApp::CUBE); break;
+        default: break;
       }
     }
     _confirm_menu.clearSelection();
@@ -788,15 +792,16 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     const Menu::MenuEntry& entry = _tutorial_menu.getSelectedEntry();
     const double curTime = ci::app::getElapsedSeconds();
     switch (entry.m_entryType) {
-    case Menu::TUTORIAL_CLOSE: _draw_tutorial_menu = false; break;
-    case Menu::TUTORIAL_NEXT:
-      _tutorial_slide = (_tutorial_slide + 1)%4;
-      _last_switch_time = curTime;
-      break;
-    case Menu::TUTORIAL_PREVIOUS:
-      _tutorial_slide = (_tutorial_slide == 0 ? 3 : _tutorial_slide-1);
-      _last_switch_time = curTime;
-      break;
+      case Menu::TUTORIAL_CLOSE: _draw_tutorial_menu = false; break;
+      case Menu::TUTORIAL_NEXT:
+        _tutorial_slide = (_tutorial_slide + 1)%4;
+        _last_switch_time = curTime;
+        break;
+      case Menu::TUTORIAL_PREVIOUS:
+        _tutorial_slide = (_tutorial_slide == 0 ? 3 : _tutorial_slide-1);
+        _last_switch_time = curTime;
+        break;
+      default: break;
     }
     _tutorial_menu.clearSelection();
   }

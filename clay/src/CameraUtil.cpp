@@ -572,8 +572,8 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
         n.normalize();
         LM_DRAW_ARROW(p, p + n * 20.0f, lmColor::CYAN);
       } else {
-        int hadTriangles = tris.size();
-        int i = 0;
+//        int hadTriangles = tris.size();
+//        int i = 0;
       }
     }
   }
@@ -879,7 +879,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   // Attempt to calculate new refernce point and normal
   //
   bool rayHit = false;
-  lmReal refDist = 0.0f;
+//  lmReal refDist = 0.0f;
   const lmTransform oldCamera = this->transform;
 
   if (params.sphereCrawlMode) {
@@ -1034,8 +1034,8 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
       newReferencePoint.normal = params.useAvgNormal ? newAvgVertex.normal : newClosestPoint.normal;
 
       if (params.useIsoNormal) {
-        Vector3 queryPosition = (referencePoint.position + transform.translation) * 0.5f;
-        Vector3 normal = IsoNormal(mesh, queryPosition, GetSphereQueryRadius());
+//        Vector3 queryPosition = (referencePoint.position + transform.translation) * 0.5f;
+//        Vector3 normal = IsoNormal(mesh, queryPosition, GetSphereQueryRadius());
       }
 
       normalOkay = lmIsNormalized(newReferencePoint.normal);
@@ -1166,7 +1166,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
           CorrectCameraOrientation(dtZero, newCameraNormal);
         } else {
           // Prevent snapping back to the original positon
-          lmReal rotationFraction = 0.0f;
+//          lmReal rotationFraction = 0.0f;
           Vector3 newCameraNormal = (transform.translation - referencePoint.position).normalized();
           CorrectCameraOrientation(dtZero, newCameraNormal);
         }
@@ -1514,7 +1514,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   }
 
   Vector3 oldRefPosition = state->refPosition;
-  lmReal oldRefDist = state->refDist;
+//  lmReal oldRefDist = state->refDist;
 
   // Dummy & temp: clip z movement
   Vector3 clippedMovement = movement * std::sqrt(std::sqrt(state->refDist / params.refDistForMovemement));
