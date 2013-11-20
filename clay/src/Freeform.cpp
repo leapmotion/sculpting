@@ -790,20 +790,26 @@ void FreeformApp::draw()
     }
 #endif
 
+    glDisable(GL_CULL_FACE);
+    disableDepthRead();
+    disableDepthWrite();
+    setMatricesWindow( getWindowSize() );
+    setViewport( getWindowBounds() );
+
     if (_draw_ui) {
-      glDisable(GL_CULL_FACE);
-      disableDepthRead();
-      disableDepthWrite();
-      setMatricesWindow( getWindowSize() );
-      setViewport( getWindowBounds() );
       _ui->draw();
-      enableDepthRead();
-      enableDepthWrite();
     }
 
     if (_environment->haveEnvironment()) {
       _ui->drawTutorialSlides(exposure_mult);
     }
+
+    if (!_listener.isConnected()) {
+      _ui->drawDisconnected();
+    }
+
+    enableDepthRead();
+    enableDepthWrite();
   }
 
   glPushMatrix();

@@ -418,6 +418,7 @@ public:
   void update(LeapInteraction* leap, Sculpt* sculpt);
   void draw() const;
   void drawTutorialSlides(float opacityMult) const;
+  void drawDisconnected() const;
   void drawAbout() const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;

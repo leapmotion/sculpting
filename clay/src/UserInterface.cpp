@@ -580,9 +580,6 @@ void UserInterface::drawTutorialSlides(float opacityMult) const {
   }
   static const float TUTORIAL_SCALE = 0.6f;
   static const float IMAGE_FADE_TIME = 0.5f;
-  glDisable(GL_CULL_FACE);
-  disableDepthRead();
-  disableDepthWrite();
 
   const ci::Vec2i size = getWindowSize();
   const ci::Area bounds = getWindowBounds();
@@ -612,9 +609,27 @@ void UserInterface::drawTutorialSlides(float opacityMult) const {
   }
   glColor4f(1.0f, 1.0f, 1.0f, opacity);
   ci::gl::draw(*tex, area);
+}
 
-  enableDepthRead();
-  enableDepthWrite();
+void UserInterface::drawDisconnected() const {
+  const ci::ColorA titleColor(1.0f, 0.2f, 0.1f, 1.0f);
+  const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, 1.0f);
+  const ci::Vec2f offset = Vec2f(0.0f, Menu::FONT_SIZE/2.0f);
+  const ci::Vec2f pos = getWindowCenter() + Vec2f(0.0f, getWindowHeight()/3.0f);
+
+  static const std::string DISCONNECT_MESSAGE = "Leap Motion Controller is disconnected";
+
+  glPushMatrix();
+  gl::translate(pos);
+  gl::scale(1.25f, 1.25f);
+  const ci::Vec2f nameSize = Menu::g_boldTextureFont->measureString(DISCONNECT_MESSAGE);
+  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, 100.0f);
+  gl::color(shadowColor);
+  Menu::g_boldTextureFont->drawString(DISCONNECT_MESSAGE, nameRect, Menu::g_shadowOffset);
+  gl::color(titleColor);
+  Menu::g_boldTextureFont->drawString(DISCONNECT_MESSAGE, nameRect);
+
+  glPopMatrix();
 }
 
 float UserInterface::maxActivation() const {
