@@ -10,7 +10,6 @@ float Sculpt::d2Min_ = 0.0f;
 float Sculpt::d2Max_ = 0.0f;
 float Sculpt::d2Thickness_ = 0.0f;
 float Sculpt::d2Move_ = 0.0f;
-float Sculpt::minDetailMult_ = 0.2f;
 
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), lastSculptTime_(0.0),
@@ -27,9 +26,9 @@ void Sculpt::setAdaptiveParameters(float radiusSquared, bool clamp)
 {
   static const float MAX_RADIUS_SQ_SUBDIVIDE = 25.0f * 25.0f; // to prevent detail loss
   if (clamp) {
-    radiusSquared = std::min(radiusSquared, MAX_RADIUS_SQ_SUBDIVIDE);
+    //radiusSquared = std::min(radiusSquared, MAX_RADIUS_SQ_SUBDIVIDE);
   }
-  d2Max_ = radiusSquared*(1.0f-detail_+minDetailMult_)*0.2f;
+  d2Max_ = radiusSquared*(1.1f-detail_)*0.2f;
   d2Min_ = d2Max_/4.2025f;
   d2Move_ = d2Min_*0.2375f;
   d2Thickness_ = (4.f*d2Move_ + d2Max_/3.f)*1.1f;
@@ -105,40 +104,42 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   std::vector<int>::iterator it = std::remove_if(iVertsSelected.begin(), iVertsSelected.end(), pred);
   iVertsSelected.resize(it - iVertsSelected.begin());
 
-  switch(sculptMode_) {
-  case INFLATE: draw(mesh_, iVertsSelected, brush, false); break;
-  case DEFLATE: draw(mesh_, iVertsSelected, brush, true); break;
-  case SMOOTH: smooth(mesh_, iVertsSelected, brush); break;
-  case FLATTEN: flatten(mesh_, iVertsSelected, brush); break;
-  case SWEEP: sweep(mesh_, iVertsSelected, brush); break;
-  case PUSH: push(mesh_, iVertsSelected, brush); break;
-  case PAINT: paint(mesh_, iVertsSelected, brush, materialColor_); break;
-  case CREASE: crease(mesh_, iVertsSelected, brush); break;
-  default: break;
+  if (!iVertsSelected.empty()) {
+    switch(sculptMode_) {
+    case INFLATE: draw(mesh_, iVertsSelected, brush, false); break;
+    case DEFLATE: draw(mesh_, iVertsSelected, brush, true); break;
+    case SMOOTH: smooth(mesh_, iVertsSelected, brush); break;
+    case FLATTEN: flatten(mesh_, iVertsSelected, brush); break;
+    case SWEEP: sweep(mesh_, iVertsSelected, brush); break;
+    case PUSH: push(mesh_, iVertsSelected, brush); break;
+    case PAINT: paint(mesh_, iVertsSelected, brush, materialColor_); break;
+    case CREASE: crease(mesh_, iVertsSelected, brush); break;
+    default: break;
+    }
+
+    if (sculptMode_ == DEFLATE || sculptMode_ == SWEEP || sculptMode_ == PUSH || sculptMode_ == INFLATE) {
+      Brush autoSmoothBrush(brush);
+      autoSmoothBrush._strength *= autoSmoothStrength_;
+      smooth(mesh_, iVertsSelected, autoSmoothBrush);
+    }
   }
 
-  if (sculptMode_ == DEFLATE || sculptMode_ == SWEEP || sculptMode_ == PUSH || sculptMode_ == INFLATE) {
-    Brush autoSmoothBrush(brush);
-    autoSmoothBrush._strength *= autoSmoothStrength_;
-    smooth(mesh_, iVertsSelected, autoSmoothBrush);
-  }
-
-  if(topoMode_==ADAPTIVE) {
+  if (topoMode_==ADAPTIVE) {
     topo_.adaptTopology(iTris_, d2Thickness_);
+    mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
   }
 
-  mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
   mesh_->updateMesh(iTris_,iVertsSelected);
 }
 
 /** Smooth a group of vertices. New position is given by simple averaging */
-void Sculpt::smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush)
+void Sculpt::smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool limit)
 {
   VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   Vector3Vector smoothVerts(nbVerts, Vector3::Zero());
   Vector3Vector smoothColors(nbVerts, Vector3::Zero());
-  laplacianSmooth(mesh, iVerts,smoothVerts, smoothColors);
+  laplacianSmooth(mesh, iVerts, smoothVerts, smoothColors);
   float deformationIntensity = 0.5f;
 
   float dMove = sqrtf(d2Move_);
@@ -148,17 +149,18 @@ void Sculpt::smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& bru
     Vertex &vert = vertices[iVerts[i]];
     Vector3 displ = deformationIntensity*(smoothVerts[i]-vert)*brush._strength;
     vert.material_ = brush._strength*smoothColors[i] + (1.0f-brush._strength)*vert.material_;
-    float displLength = displ.squaredNorm();
-    if(displLength<=d2Move_) {
-      vert += displ;
-    } else {
-      vert += displ.normalized()*dMove;
+    if (limit) {
+      float displLength = displ.squaredNorm();
+      if (displLength >= d2Move_) {
+        displ = (displ/std::sqrt(displLength))*dMove;
+      }
     }
+    vert += displ;
   }
 }
 
 /** Smooth a group of vertices along the plane defined by the normal of the vertex */
-void Sculpt::smoothFlat(Mesh* mesh, const std::vector<int> &iVerts)
+void Sculpt::smoothFlat(Mesh* mesh, const std::vector<int> &iVerts, bool limit)
 {
   VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
@@ -175,12 +177,13 @@ void Sculpt::smoothFlat(Mesh* mesh, const std::vector<int> &iVerts)
     Vector3& n = vert.normal_;
     vertSmo-=n*n.dot(vertSmo-vert);
     Vector3 displ = (vertSmo-vert);
-    float displLength = displ.squaredNorm();
-    if (displLength<=d2Move_) {
-      vert += displ;
-    } else {
-      vert += displ.normalized()*dMove;
+    if (limit) {
+      float displLength = displ.squaredNorm();
+      if (displLength >= d2Move_) {
+        displ = (displ/std::sqrt(displLength))*dMove;
+      }
     }
+    vert += displ;
     vert.material_ = smoothColors[i];
   }
 }

@@ -180,16 +180,16 @@ void FreeformApp::setup()
   _aa_mode = _machine_speed > FreeformApp::LOW ? FreeformApp::MSAA : FreeformApp::NONE;
 
   // set mesh detail depending on machine specs
-  static const float LOW_DETAIL_LEVEL = 0.2f;
-  static const float MEDIUM_DETAIL_LEVEL = 0.17f;
-  static const float HIGH_DETAIL_LEVEL = 0.14f;
-  float detailMult = LOW_DETAIL_LEVEL;
+  static const float LOW_DETAIL_LEVEL = 0.9f;
+  static const float MEDIUM_DETAIL_LEVEL = 0.93f;
+  static const float HIGH_DETAIL_LEVEL = 0.96f;
+  float detail = LOW_DETAIL_LEVEL;
   if (_machine_speed == FreeformApp::MID) {
-    detailMult = MEDIUM_DETAIL_LEVEL;
+    detail = MEDIUM_DETAIL_LEVEL;
   } else if (_machine_speed == FreeformApp::HIGH) {
-    detailMult = HIGH_DETAIL_LEVEL;
+    detail = HIGH_DETAIL_LEVEL;
   }
-  Sculpt::setMinDetailMult(detailMult);
+  Sculpt::setDetail(detail);
 
   _ui = new UserInterface();
   _ui->setRegularFont(ci::Font(loadResource( RES_FONT_FREIGHTSANS_TTF ), Menu::FONT_SIZE));

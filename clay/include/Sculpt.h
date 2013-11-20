@@ -24,16 +24,15 @@ public:
   void toggleCulling();
   void setSculptMode(SculptMode mode) { sculptMode_ = mode; }
   void setTopoMode(TopoMode mode) { topoMode_ = mode; }
-  void setDetail(float detail) { detail_ = detail; }
   bool isSweep() { return sculptMode_==SWEEP; }
   void setMaterialColor(const Vector3& color) { materialColor_ = color; }
 
   void setRemeshRadius(float remeshRadius) { remeshRadius_ = remeshRadius; }
   void sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush);
 
-  static void setMinDetailMult(float minDetailMult) { minDetailMult_ = minDetailMult; }
-  static void smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
-  static void smoothFlat(Mesh* mesh, const std::vector<int> &iVerts);
+  static void setDetail(float detail) { detail_ = detail; }
+  static void smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool limit = true);
+  static void smoothFlat(Mesh* mesh, const std::vector<int> &iVerts, bool limit = true);
   static void draw(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool negate = false);
   static void flatten(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void sweep(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
@@ -74,7 +73,6 @@ private:
   static float d2Max_; //uniform refinement of mesh (max edge length)
   static float d2Thickness_; //distance between 2 vertices before split/merge
   static float d2Move_; //max displacement of vertices per step
-  static float minDetailMult_;
 
   Mesh* mesh_; //selected meshs
   SculptMode sculptMode_; //sculpting mode
