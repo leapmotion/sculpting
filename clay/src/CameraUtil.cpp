@@ -43,6 +43,10 @@ void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, l
 }
 
 void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
+#if LM_LOG_CAMERA_LOGIC_4
+  std::cout << "CAMERA RESET!" << std::endl;
+#endif
+
   const VertexVector& vertices = mesh->getVertices();
   LM_ASSERT(vertices.size(), "Mesh has no vertices.");
   LM_ASSERT(lmIsNormalized(cameraDirection), "Camera direction is not normalized.");
@@ -72,6 +76,17 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
 
   // Set camera position
   transform.translation = referencePoint.position + referenceDistance * (transform.rotation * Vector3::UnitZ());
+
+  // reset iso camera
+  if (params.cameraOverrideIso)
+  {
+    isoState.refDist = lmClip(isoState.refDist, params.minDist, params.maxDist);
+    isoState.refNormal = referencePoint.normal;
+    isoState.refPosition = referencePoint.position + isoState.refDist * referencePoint.normal;
+
+    transform.translation = isoState.refPosition + isoState.refDist * params.isoRefDistMultiplier * (transform.rotation * Vector3::UnitZ());
+  }
+
 }
 
 void CameraUtil::GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut) {
@@ -1331,11 +1346,16 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
 
   lmRayCastOutput rayCastOutput;
 
+  const Vector3 rayDirection = ray.GetDirection();
+  const lmReal rayLength = ray.GetLength();
+
+
   // Cast ray for each triangle's aabb
   for (size_t ti = 0; ti < triangles.size(); ti++) {
     const Triangle& tri = mesh->getTriangle(triangles[ti]);
     Vector3 hitPoint;
-    bool rayHit = tri.aabb_.intersectRay(ray.start, ray.GetDirection());
+
+    bool rayHit = tri.aabb_.intersectRay(ray.start, rayDirection);
     if (rayHit) {
       rayHit = Geometry::intersectionRayTriangle(
         ray.start, ray.end,
@@ -1346,24 +1366,24 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
     }
     if (rayHit) {
       hits.push_back(triangles[ti]);
-      lmReal dist = (hitPoint-ray.start).dot(ray.GetDirection());
-      if (dist < minDist || collectall) {
+      lmReal dist = (hitPoint-ray.start).dot(rayDirection);
+      if (0 <= dist && dist < minDist || collectall) {
         minDist = dist;
 
         rayCastOutput.triangleIdx = triangles[ti];
         rayCastOutput.position = hitPoint;
         rayCastOutput.normal = tri.normal_;
         rayCastOutput.dist = dist;
-        rayCastOutput.fraction = dist / ray.GetLength();
+        rayCastOutput.fraction = dist / rayLength;
 
-        if (collectall) {
+        if (collectall && lmInRange(rayCastOutput.fraction, 0.0f, 1.0f)) {
           results->push_back(rayCastOutput);
         }
       }
     }
   }
 
-  if (!collectall && minDist < FLT_MAX) {
+  if (!collectall && minDist < FLT_MAX && lmInRange(rayCastOutput.fraction, 0.0f, 1.0f)) {
     results->push_back(rayCastOutput);
   }
 }
@@ -1372,7 +1392,7 @@ bool CameraUtil::VerifyCameraMovement( Mesh* mesh, const Vector3& from, const Ve
 {
   bool validMovement = false;
 
-  bool cameraCollidesMesh = CollideCameraSphere(mesh, to, radius);
+  bool cameraCollidesMesh = radius > 0.0f ? CollideCameraSphere(mesh, to, radius) : false;
 
   if (!cameraCollidesMesh) {
 
@@ -1538,11 +1558,30 @@ lmReal CameraUtil::IsoQueryRadius(IsoCameraState* state) const {
   return std::max(state->refDist + params.isoQueryPaddingRadius, params.isoQueryPaddingRadius);
 }
 
-void CameraUtil::IsoUpdateCameraDirection(const Vector3& newDirection, IsoCameraState* state ) {
+void CameraUtil::IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state ) {
   lmQuat qCorrection; qCorrection.setFromTwoVectors(GetCameraDirection(), newDirection);
 
   transform.rotation = qCorrection * transform.rotation;
   transform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
+}
+
+void CameraUtil::IsoPreventCameraInMesh( Mesh* mesh, IsoCameraState* state )
+{
+  // Raycast from refPoint to camera.
+  // reset camera to first hit found.
+  lmRayCastOutput raycast;
+  CastOneRay(mesh, lmRay(state->refPosition, transform.translation), &raycast);
+  if (raycast.isSuccess()) {
+#if LM_LOG_CAMERA_LOGIC_4
+    std::cout << "rayfraction " << raycast.fraction;
+    std::cout << " raydist " << raycast.dist;
+    std::cout << " prevdist " << (state->refPosition, transform.translation).norm() << std::endl;
+    std::cout << "Hugging camera to refPoint (mesh collision)" << std::endl;
+#endif
+    LM_ASSERT(lmInRange(raycast.fraction, 0.0f, 1.0f), "Inavlid raycast result returned.");
+    LM_ASSERT(raycast.dist <= (state->refPosition, transform.translation).norm(), "Camera collision with mesh failed.");
+    transform.translation = raycast.position;
+  }
 }
 
 void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
@@ -1559,6 +1598,7 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
 
   state->refPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(state));
 
+  state->numFailedUpdates = 0;
   // Remember closest point distance
 }
 
@@ -1568,12 +1608,30 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   LM_DRAW_CROSS(state->closestPointOnMesh.position, 20.0f, lmColor::RED);
   LM_DRAW_ARROW(state->closestPointOnMesh.position, state->closestPointOnMesh.position + state->closestPointOnMesh.normal * 40.0f, lmColor::RED);
 
+  if(state->numFailedUpdates) {
+#if LM_LOG_CAMERA_LOGIC_4
+    std::cout << "dist: " <<
+                 isoState.refDist << ", pos: " << isoState.refPosition.x() << ", " << isoState.refPosition.y() << ", " <<
+                 isoState.refPosition.z() << std::endl;
+#endif
+  }
+
+  static const int MAX_NUM_FAILED_UPDATED_BEFORE_CAMERA_RESET = 30;
+  if (state->numFailedUpdates++ > MAX_NUM_FAILED_UPDATED_BEFORE_CAMERA_RESET) {
+    ResetCamera(mesh, -Vector3::UnitZ());
+    state->numFailedUpdates = 0;
+  }
+
   // Check if current refPosition is inside the mesh (which may happen sculpting) and correct it.
   {
     int attemptCount = 0;
     lmRayCastOutput raycastOutput;
     CastOneRay(mesh, lmRay(transform.translation, state->refPosition), &raycastOutput);
     while (raycastOutput.isSuccess()) {
+      LM_ASSERT(lmInRange(raycastOutput.fraction, 0.0f, 1.0f), "Invalid raycast output.");
+#if LM_LOG_CAMERA_LOGIC_4
+      std::cout << "Moving camera out of mesh!" << std::endl;
+#endif
       //state->refPosition = raycastOutput.position + (-1.0f / std::min(raycastOutput.normal.dot(-GetCameraDirection()), 0.2f)) * GetCameraDirection();
       if (GetCameraDirection().dot(raycastOutput.normal) < 0) {
         state->refPosition = raycastOutput.position + params.minDist * raycastOutput.normal;
@@ -1606,8 +1664,13 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   clippedMovement = transform.rotation * clippedMovement;
 
   // Verify movement
-  bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, params.minDist/2.0f);
-  if (!validMovement) {
+  //lmReal radiusForCameraSphereCollision = params.minDist/2.0f;
+  lmReal radiusForCameraSphereCollision = 0.0f;
+  bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
+  if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
+#if LM_LOG_CAMERA_LOGIC_4
+    std::cout << "Invalid camera movement (collision)." << std::endl;
+#endif
     return;
   }
 
@@ -1619,10 +1682,30 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
     clippedMovement = newPos - state->refPosition;
   }
 
+
   Vector3 newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
   if (!lmIsNormalized(newNormal)) {
-    return;
-  } else {
+#if LM_LOG_CAMERA_LOGIC_4
+    std::cout << "New IsoNormal not found, broadening the search." << std::endl;
+#endif
+    lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, 10000.0f);
+    if (!lmIsNormalized(closestPoint.normal)) {
+#if LM_LOG_CAMERA_LOGIC_4
+      std::cout << "Now IsoNormal failed (closest point not found)." << std::endl;
+#endif
+      return;
+    }
+    state->refDist = (state->closestPointOnMesh.position - state->refPosition).norm();
+    newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+    if (!lmIsNormalized(newNormal)) {
+#if LM_LOG_CAMERA_LOGIC_4
+      std::cout << "Now IsoNormal failed (while closest point was ok)." << std::endl;
+#endif
+      return;
+    }
+  }
+
+  if (lmIsNormalized(newNormal)) {
     // clip movement based on normal change.
     Vector3 oldSurfacePosition = state->refPosition - state->refDist * state->refNormal;
     Vector3 newSurfacePosition = state->refPosition + clippedMovement - state->refDist * newNormal;
@@ -1637,6 +1720,9 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
       std::cout << "Movement scaling: " << scale << std::endl;
 #endif
       if (!lmIsNormalized(newNormal)) {
+#if LM_LOG_CAMERA_LOGIC_4
+        std::cout << "New IsoNormal wrong, after angle-movement clipping." << std::endl;
+#endif
         return;
       }
     }
@@ -1644,8 +1730,17 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   // Update closest distance: last check
   lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, state->refDist + clippedMovement.norm());
-  if (!lmIsNormalized(state->closestPointOnMesh.normal)) {
-    return;
+  if (!lmIsNormalized(closestPoint.normal)) {
+#if LM_LOG_CAMERA_LOGIC_4
+    std::cout << "Ref Dist too small for queries" << std::endl;
+#endif
+    closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, 10000.0f);
+    if (!lmIsNormalized(closestPoint.normal)) {
+#if LM_LOG_CAMERA_LOGIC_
+      std::cout << "ClosestPoint normal wrong." << std::endl;
+#endif
+      return;
+    }
   }
 
   state->refPosition += clippedMovement;
@@ -1660,9 +1755,13 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   LM_ASSERT(state->refDist < 10000, "Reference distance exploded.")
 
+  // crashes: IsoPreventCameraInMesh(mesh, state);
+
   // Display reference sphere (updating point & radius):
   referencePoint.position = state->refPosition - state->refNormal * state->refDist;
   referencePoint.normal = state->refNormal;
   referenceDistance = state->refDist * (1 + params.isoRefDistMultiplier);
+
+  state->numFailedUpdates = 0;
 }
 

@@ -89,6 +89,8 @@ public:
 
     int numRotationClipIterations;
 
+    lmReal isoQueryPaddingRadius;
+
     bool clipToIsoSurface;
     bool clipCameraMovement;
     lmReal refDistForMovemement;
@@ -147,11 +149,13 @@ public:
     bool enableCameraOrbit;
     bool preventCameraInMesh;
     Params() {
-      cameraOverrideIso = false;//true;
+      cameraOverrideIso = true;
       isoRefDistMultiplier = 2.0f;
       grav_k = 0.0001f;
       grav_n = 2.0f;
       numRotationClipIterations = 1;
+      //isoQueryPaddingRadius = 50.0f;
+      isoQueryPaddingRadius = 50.0f; // tmp perf ?
       clipToIsoSurface = false;
       clipCameraMovement = false;
       refDistForMovemement = 50.0f;
@@ -243,6 +247,7 @@ public:
     lmSurfacePoint closestPointOnMesh;
     //lmTransform refTransform;
     double refPotential; // used when clipping to isosurface
+    int numFailedUpdates;
   } isoState;
 
   lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
