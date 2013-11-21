@@ -306,9 +306,6 @@ private:
   // Compute camera transform from standard camera vectors: from, to, & assumed up along y-axis.
   static void GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut);
 
-  // Generates a batch of rays from camera point in the camera's looking direction.
-  void GenerateRays(const lmTransform& transform, int castsPerRow, std::vector<lmRay>* rays);
-
   // todo: Move to an utility.
   void CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std::vector<lmRayCastOutput>* results);
 

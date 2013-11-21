@@ -80,28 +80,6 @@ void CameraUtil::GetTransformFromStandardCamera(const Vector3& from, const Vecto
   tOut.rotation = (q1 * q2).normalized();
 }
 
-void CameraUtil::GenerateRays(const lmTransform& transform, int castsPerRow, std::vector<lmRay>* raysOut) {
-  // Generate several rays.
-  std::vector<Vector3, Eigen::aligned_allocator<Vector3> > rays;
-  // Vector3Vector
-  for (int i = 0; i < castsPerRow*castsPerRow; i++) {
-    rays.push_back(Vector3((-(castsPerRow-1)/2.0f+i%castsPerRow)*4.0f,(-(castsPerRow-1)/2.0f+i/castsPerRow)*4.0f,-100) * 10);
-  }
-  // transform ray targets
-  for (size_t i = 0; i < rays.size(); i++) {
-    rays[i] = transform.rotation * rays[i] + transform.translation;
-    lmRay ray(transform.translation, rays[i]);
-    raysOut->push_back(ray);
-  }
-  // TODO fix debug lines
-  if (0 && debugDrawUtil) {
-    std::unique_lock<std::mutex> lock(debugDrawUtil->m_mutex);
-    for (size_t ri = 0; ri < rays.size(); ri++) {
-      LM_DRAW_POINT(rays[ri], lmColor::CYAN);
-    }
-  }
-}
-
 void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std::vector<lmRayCastOutput>* results) {
   for (size_t ri = 0; ri < rays.size(); ri++) {
     const lmRay& ray = rays[ri];
