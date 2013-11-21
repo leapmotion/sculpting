@@ -427,8 +427,10 @@ bool Mesh::initMesh()
     computeRingVertices(i);
     aabb.expand(vertices_[i]);
   }
-  center_ = aabb.getCenter();
-  float diag = (aabb.max_-aabb.min_).norm();
+  //center_ = aabb.getCenter();
+  //float diag = (aabb.max_-aabb.min_).norm();
+  center_ = Vector3::Zero();
+  float diag = aabb.max_.cwiseAbs().cwiseMax(aabb.min_.cwiseAbs()).norm();
   scale_ = Mesh::globalScale_/diag;
 #pragma omp parallel for
   for(int i=0;i<nbVertices;++i)
