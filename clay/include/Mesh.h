@@ -58,6 +58,7 @@ public:
   const Vector3& getRotationOrigin() const;
   const Vector3& getRotationAxis() const;
   float getRotationVelocity() const;
+  float getRotationVelocity_notSmoothed() const;
 
   void getTrianglesFromVertices(const std::vector<int> &iVerts, std::vector<int>& triangles);
   void getVerticesFromTriangles(const std::vector<int> &iTris, std::vector<int>& vertices);

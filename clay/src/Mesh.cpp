@@ -68,6 +68,7 @@ void Mesh::updateRotation(double curTime) {
 const Vector3& Mesh::getRotationOrigin() const { return rotationOrigin_; }
 const Vector3& Mesh::getRotationAxis() const { return rotationAxis_; }
 float Mesh::getRotationVelocity() const { return rotationVelocitySmoother_.value; }
+float Mesh::getRotationVelocity_notSmoothed() const { return rotationVelocity_; }
 
 /** Return all the triangles linked to a group of vertices */
 void Mesh::getTrianglesFromVertices(const std::vector<int> &iVerts, std::vector<int>& triangles)

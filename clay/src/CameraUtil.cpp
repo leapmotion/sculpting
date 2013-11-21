@@ -1765,6 +1765,11 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   LM_ASSERT(lmIsNormalized(state->refNormal), "Iso normal failed.")
 
+  if (mesh->getRotationVelocity_notSmoothed() > 0.0f) {
+    IsoCameraConstrainWhenSpinning(mesh, state);
+  }
+
+
   // Update camera
   IsoUpdateCameraTransform(-state->refNormal, state);
 
@@ -1778,5 +1783,41 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   referenceDistance = state->refDist * (1 + params.isoRefDistMultiplier);
 
   state->numFailedUpdates = 0;
+}
+
+void CameraUtil::IsoCameraConstrainWhenSpinning( Mesh* mesh, IsoCameraState* state )
+{
+  // Orient normal towards Y-axis
+  if (true)
+  {
+    // Fancy clipping towards Y-axis
+    Vector3 fromOrigin = state->refPosition;
+    Vector3 fromYAxis = fromOrigin; fromYAxis.y() = 0.0f;
+    Vector3 refNormalFromY = state->refNormal; refNormalFromY.y() = 0.0f;
+    if (!lmIsZero(fromYAxis) && !lmIsZero(refNormalFromY)) {
+      fromYAxis.normalize();
+      refNormalFromY.normalize();
+      lmQuat correction; correction.setFromTwoVectors(refNormalFromY, fromYAxis);
+      state->refNormal = correction * state->refNormal;
+    }
+  }
+  else
+  {
+    // Just clipping toward origin
+    if (!lmIsZero(state->refPosition))
+    {
+      state->refNormal = state->refPosition.normalized();
+    }
+  }
+
+  // raycast from camera & move back the refPoint if needed.
+  Vector3 rayStart = state->refPosition + state->refNormal * 1000.0f;
+  Vector3 rayEnd = state->refPosition - state->refNormal * state->refDist;
+  lmRayCastOutput raycastOutput;
+  CastOneRay(mesh, lmRay(rayStart, rayEnd), &raycastOutput);
+  if (raycastOutput.isSuccess()) {
+    LM_ASSERT(lmInRange(raycastOutput.fraction, 0.0f, 1.0f), "Raycast output invalid.");
+    state->refPosition = raycastOutput.position + state->refNormal * state->refDist;
+  }
 }
 

@@ -264,6 +264,8 @@ public:
 
   void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement);
 
+  void IsoCameraConstrainWhenSpinning(Mesh* mesh, IsoCameraState* state);
+
   // Records user mouse input from mouse events.
   // 
   // Accumulates data for later processing in UpdateCamera.
