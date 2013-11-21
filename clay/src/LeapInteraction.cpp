@@ -190,7 +190,7 @@ void LeapInteraction::interact(double curTime)
             } else {
               strength = 0.0f;
             }
-            if (strengthMult > 0.25f) {
+            if (strengthMult > 0.25f && ui_mult > 0.25f) {
               _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, fromCameraMult*strengthMult);
             }
           }
