@@ -285,7 +285,7 @@ void FreeformApp::shutdown() {
   }
   if (_loading_thread.joinable())
   {
-    _loading_thread.join();
+    _loading_thread.detach();
   }
   FreeImage_DeInitialise();
 }
