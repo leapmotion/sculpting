@@ -50,6 +50,9 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
 #endif
 
   const VertexVector& vertices = mesh->getVertices();
+  if (vertices.empty()) {
+    return;
+  }
   LM_ASSERT(vertices.size(), "Mesh has no vertices.");
   LM_ASSERT(lmIsNormalized(cameraDirection), "Camera direction is not normalized.");
 
