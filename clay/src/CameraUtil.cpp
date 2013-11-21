@@ -610,7 +610,7 @@ bool CameraUtil::CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal
 
     Geometry::GetClosestPointInput input(mesh, &tri, position);
     Geometry::GetClosestPointOutput output;
-    Geometry::getClosestPoint(input, &output);
+    Geometry::getClosestPoint_noNormal(input, &output);
 
     if (output.distanceSqr < radius*radius) {
       collidingTriangles.push_back(output);
@@ -797,6 +797,12 @@ void CameraUtil::UpdateParamsToWalkSmoothedNormals(Params* paramsInOut) {
 }
 
 void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
+
+  if (mesh->getVertices().empty())
+  {
+    // mesh has no vertices. do nothing.
+    return; 
+  }
 
   LM_ASSERT(mesh, "Can't upate the camera without a mesh");
   UpdateMeshTransform(mesh, paramsInOut);
@@ -1351,7 +1357,6 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
 {
   queryTriangles.clear();
   mesh->getOctree()->intersectRay(ray.start, ray.GetDirection(), queryTriangles);
-  std::vector<int> hits;
   lmReal minDist = FLT_MAX;
 
   lmRayCastOutput rayCastOutput;
@@ -1375,7 +1380,6 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
         tri.normal_, hitPoint);
     }
     if (rayHit) {
-      hits.push_back(queryTriangles[ti]);
       lmReal dist = (hitPoint-ray.start).dot(rayDirection);
       if (0 <= dist && dist < minDist || collectall) {
         minDist = dist;
