@@ -158,7 +158,7 @@ private:
     Vector3 normal;
   };
 
-  typedef std::vector<IndexUpdate, Eigen::aligned_allocator<IndexUpdate> > IndexUpdateVector;
+  typedef std::vector<IndexUpdate> IndexUpdateVector;
   typedef std::vector<VertexUpdate, Eigen::aligned_allocator<VertexUpdate> > VertexUpdateVector;
 
   IndexUpdateVector indexUpdates_;

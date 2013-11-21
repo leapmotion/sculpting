@@ -508,7 +508,11 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 
   std::unique_lock<std::mutex> lock(bufferMutex_);
 
-  if (totalTris < indicesBufferCount_) {
+  pendingGPUTriangles = totalTris;
+  pendingGPUVertices = totalVerts;
+
+  // HACK: this causes flickering on some machines so disable it for now and force reallocation
+  if (0) { //totalTris < indicesBufferCount_) {
     // within storage bounds, so it's OK to only update part of the buffer
     const int nbTris=iTris.size();
     for (int i=0; i<nbTris; i++) {
@@ -541,9 +545,6 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
     reinitVerticesBuffer();
     reallocateVerticesBuffer_ = true;
   }
-
-  pendingGPUTriangles = totalTris;
-  pendingGPUVertices = totalVerts;
 }
 
 void Mesh::updateGPUBuffers() {
@@ -553,50 +554,54 @@ void Mesh::updateGPUBuffers() {
     initIndexVBO();
   }
 
-  GLuint* indicesArray;
-  indicesBuffer_.bind(); indicesArray = (GLuint*)indicesBuffer_.map(GL_WRITE_ONLY); indicesBuffer_.release();
   const int nbTris = indexUpdates_.size();
-  for (int i=0; i<nbTris; i++) {
-    const IndexUpdate& cur = indexUpdates_[i];
-    const int j = cur.idx;
-    indicesArray[j*3] = cur.indices[0];
-    indicesArray[j*3+1] = cur.indices[1];
-    indicesArray[j*3+2] = cur.indices[2];
+  if (nbTris > 0) {
+    GLuint* indicesArray;
+    indicesBuffer_.bind(); indicesArray = (GLuint*)indicesBuffer_.map(GL_WRITE_ONLY); indicesBuffer_.release();
+    for (int i=0; i<nbTris; i++) {
+      const IndexUpdate& cur = indexUpdates_[i];
+      const int j = cur.idx;
+      indicesArray[j*3] = cur.indices[0];
+      indicesArray[j*3+1] = cur.indices[1];
+      indicesArray[j*3+2] = cur.indices[2];
+    }
+    indexUpdates_.clear();
+    indicesBuffer_.bind(); indicesBuffer_.unmap(); indicesBuffer_.release();
   }
-  indexUpdates_.clear();
-  indicesBuffer_.bind(); indicesBuffer_.unmap(); indicesBuffer_.release();
+
+  nbGPUTriangles = pendingGPUTriangles;
 
   if (reallocateVerticesBuffer_) {
     initVertexVBO();
   }
 
-  GLfloat* verticesArray;
-  GLfloat* normalsArray;
-  GLfloat* colorsArray;
-  verticesBuffer_.bind(); verticesArray = (GLfloat*)verticesBuffer_.map(GL_WRITE_ONLY); verticesBuffer_.release();
-  normalsBuffer_.bind(); normalsArray = (GLfloat*)normalsBuffer_.map(GL_WRITE_ONLY); normalsBuffer_.release();
-  colorsBuffer_.bind(); colorsArray = (GLfloat*)colorsBuffer_.map(GL_WRITE_ONLY); colorsBuffer_.release();
-
   const int nbVerts = vertexUpdates_.size();
-  for (int i=0; i<nbVerts; i++) {
-    const VertexUpdate& cur = vertexUpdates_[i];
-    const int j = cur.idx;
-    verticesArray[j*3] = cur.pos.x();
-    verticesArray[j*3+1] = cur.pos.y();
-    verticesArray[j*3+2] = cur.pos.z();
-    normalsArray[j*3] = cur.normal.x();
-    normalsArray[j*3+1] = cur.normal.y();
-    normalsArray[j*3+2] = cur.normal.z();
-    colorsArray[j*3] = cur.color.x();
-    colorsArray[j*3+1] = cur.color.y();
-    colorsArray[j*3+2] = cur.color.z();
+  if (nbVerts > 0) {
+    GLfloat* verticesArray;
+    GLfloat* normalsArray;
+    GLfloat* colorsArray;
+    verticesBuffer_.bind(); verticesArray = (GLfloat*)verticesBuffer_.map(GL_WRITE_ONLY); verticesBuffer_.release();
+    normalsBuffer_.bind(); normalsArray = (GLfloat*)normalsBuffer_.map(GL_WRITE_ONLY); normalsBuffer_.release();
+    colorsBuffer_.bind(); colorsArray = (GLfloat*)colorsBuffer_.map(GL_WRITE_ONLY); colorsBuffer_.release();
+    for (int i=0; i<nbVerts; i++) {
+      const VertexUpdate& cur = vertexUpdates_[i];
+      const int j = cur.idx;
+      verticesArray[j*3] = cur.pos.x();
+      verticesArray[j*3+1] = cur.pos.y();
+      verticesArray[j*3+2] = cur.pos.z();
+      normalsArray[j*3] = cur.normal.x();
+      normalsArray[j*3+1] = cur.normal.y();
+      normalsArray[j*3+2] = cur.normal.z();
+      colorsArray[j*3] = cur.color.x();
+      colorsArray[j*3+1] = cur.color.y();
+      colorsArray[j*3+2] = cur.color.z();
+    }
+    vertexUpdates_.clear();
+    verticesBuffer_.bind(); verticesBuffer_.unmap(); verticesBuffer_.release();
+    normalsBuffer_.bind(); normalsBuffer_.unmap(); normalsBuffer_.release();
+    colorsBuffer_.bind(); colorsBuffer_.unmap(); colorsBuffer_.release();
   }
-  vertexUpdates_.clear();
-  verticesBuffer_.bind(); verticesBuffer_.unmap(); verticesBuffer_.release();
-  normalsBuffer_.bind(); normalsBuffer_.unmap(); normalsBuffer_.release();
-  colorsBuffer_.bind(); colorsBuffer_.unmap(); colorsBuffer_.release();
 
-  nbGPUTriangles = pendingGPUTriangles;
 }
 
 /**

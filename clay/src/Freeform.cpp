@@ -486,6 +486,10 @@ void FreeformApp::update()
   _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
   _camera.getProjectionMatrix();
 
+  if (mesh_) {
+    mesh_->updateGPUBuffers();
+  }
+
   _last_update_time = curTime;
 
 #if LM_DISABLE_THREADING_AND_ENVIRONMENT
@@ -601,7 +605,6 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   const double lastSculptTime = sculpt_.getLastSculptTime();
 
   if (mesh_) {
-    mesh_->updateGPUBuffers();
     _material_shader.bind();
     GLint vertex = _material_shader.getAttribLocation("vertex");
     GLint normal = _material_shader.getAttribLocation("normal");
