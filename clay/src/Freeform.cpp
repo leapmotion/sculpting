@@ -195,8 +195,18 @@ void FreeformApp::setup()
   float detail = LOW_DETAIL_LEVEL;
   if (_machine_speed == FreeformApp::MID) {
     detail = MEDIUM_DETAIL_LEVEL;
+#if !LM_PRODUCTION_BUILD
+    std::cout << "Medium Detail" << std::endl;
+#endif
   } else if (_machine_speed == FreeformApp::HIGH) {
     detail = HIGH_DETAIL_LEVEL;
+#if !LM_PRODUCTION_BUILD
+    std::cout << "High Detail" << std::endl;
+#endif
+  } else {
+#if !LM_PRODUCTION_BUILD
+    std::cout << "Low Detail" << std::endl;
+#endif
   }
   Sculpt::setDetail(detail);
 
@@ -294,25 +304,37 @@ void FreeformApp::resize()
 
   GLBuffer::checkError("Setup");
 
-  Fbo::Format formatNoDepthLinear;
-  formatNoDepthLinear.setColorInternalFormat(GL_RGB32F_ARB);
-  formatNoDepthLinear.setMinFilter(GL_LINEAR);
-  formatNoDepthLinear.setMagFilter(GL_LINEAR);
-  formatNoDepthLinear.enableDepthBuffer(false);
+  Fbo::Format blurFormat;
+  if (_machine_speed > FreeformApp::LOW) {
+    blurFormat.setColorInternalFormat(GL_RGB16F_ARB);
+  }
+  blurFormat.setMinFilter(GL_LINEAR);
+  blurFormat.setMagFilter(GL_LINEAR);
+  blurFormat.enableMipmapping(false);
+  blurFormat.enableDepthBuffer(false);
 
-  _horizontal_blur_fbo = Fbo(blurWidth, blurHeight, formatNoDepthLinear);
-  _vertical_blur_fbo = Fbo(blurWidth, blurHeight, formatNoDepthLinear);
+  _horizontal_blur_fbo = Fbo(blurWidth, blurHeight, blurFormat);
+  _vertical_blur_fbo = Fbo(blurWidth, blurHeight, blurFormat);
   GLBuffer::checkError("Blur FBOs");
 
   // FBOs with depth buffer
 
-  Fbo::Format formatWithDepth;
-  formatWithDepth.setColorInternalFormat(GL_RGB32F_ARB);
+  Fbo::Format screenFormat;
+  if (_machine_speed > FreeformApp::LOW) {
+    screenFormat.setColorInternalFormat(GL_RGB16F_ARB);
+  }
+  screenFormat.setMinFilter(GL_NEAREST);
+  screenFormat.setMagFilter(GL_NEAREST);
+  screenFormat.enableMipmapping(false);
+  screenFormat.enableDepthBuffer(true, false);
   if (_aa_mode == MSAA) {
-    formatWithDepth.setSamples(4);
+#if !LM_PRODUCTION_BUILD
+    std::cout << "using multisampling" << std::endl;
+#endif
+    screenFormat.setSamples(4);
   }
 
-  _screen_fbo = Fbo( width, height, formatWithDepth );
+  _screen_fbo = Fbo(width, height, screenFormat);
   GLBuffer::checkError("Screen FBO");
 
   Vec3f campos;
@@ -533,6 +555,8 @@ void FreeformApp::updateLeapAndMesh() {
 
 void FreeformApp::renderSceneToFbo(Camera& _Camera)
 {
+  GLBuffer::checkFrameBufferStatus("1");
+
   const double curTime = ci::app::getElapsedSeconds();
 
   // set FOV and depth parameters based on current state
@@ -570,6 +594,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   gl::enableDepthWrite();
   enableAlphaBlending();
 
+  GLBuffer::checkFrameBufferStatus("2");
+
   _environment->bindCubeMap(Environment::CUBEMAP_IRRADIANCE, 0);
   _environment->bindCubeMap(Environment::CUBEMAP_RADIANCE, 1);
 
@@ -603,6 +629,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   ci::Matrix44f transformit = transform.inverted().transposed();
 
   const double lastSculptTime = sculpt_.getLastSculptTime();
+
+  GLBuffer::checkFrameBufferStatus("3");
 
   if (mesh_) {
     _material_shader.bind();
@@ -716,6 +744,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   }
 
   _screen_fbo.unbindFramebuffer();
+
+  GLBuffer::checkFrameBufferStatus("4");
 }
 
 void FreeformApp::createBloom()
@@ -795,6 +825,9 @@ void FreeformApp::draw()
   if (exposure_mult > 0.0f) {
     renderSceneToFbo(_camera);
 
+    GLBuffer::checkError("After FBO");
+    GLBuffer::checkFrameBufferStatus("After FBO");
+
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
 
@@ -823,6 +856,9 @@ void FreeformApp::draw()
     _screen_shader.unbind();
     _screen_fbo.unbindTexture();
     _vertical_blur_fbo.unbindTexture();
+    
+    GLBuffer::checkError("After post process");
+    GLBuffer::checkFrameBufferStatus("After post process");
 
 #if !LM_PRODUCTION_BUILD
     if (_draw_ui) {
@@ -858,6 +894,9 @@ void FreeformApp::draw()
     if (!_listener.isConnected()) {
       _ui->drawDisconnected();
     }
+
+    GLBuffer::checkError("After UI");
+    GLBuffer::checkFrameBufferStatus("After UI");
   }
 
   const float opacityMult = Utilities::SmootherStep(ci::math<float>::clamp(static_cast<float>(curTime / LOADING_LIGHTEN_TIME)));
@@ -876,6 +915,9 @@ void FreeformApp::draw()
     glColor4f(1.0f, 1.0f, 1.0f, opacityMult*(1.0f - exposure_mult));
     ci::gl::draw(_logo_on_black, area);
   }
+  
+  GLBuffer::checkError("After logo");
+  GLBuffer::checkFrameBufferStatus("After logo");
 
   enableDepthRead();
   enableDepthWrite();
@@ -1070,16 +1112,16 @@ int FreeformApp::loadFile()
       try {
         std::ifstream stream;
         if (ext == ".OBJ" || ext == ".obj") {
-          stream.open(pathString);
+          stream.open(pathString.c_str(), std::ios::in);
           mesh = files.loadOBJ(stream);
         } else if (ext == ".STL" || ext == ".stl") {
-          stream.open(pathString, std::ios::binary);
+          stream.open(pathString.c_str(), std::ios::in | std::ios::binary);
           mesh = files.loadSTL(stream);
         } else if (ext == ".3DS" || ext == ".3ds") {
-          stream.open(pathString, std::ios::binary);
+          stream.open(pathString.c_str(), std::ios::in | std::ios::binary);
           mesh = files.load3DS(stream);
         } else if (ext == ".PLY" || ext == ".ply") {
-          stream.open(pathString);
+          stream.open(pathString.c_str(), std::ios::in);
           mesh = files.loadPLY(stream);
         }
         stream.close();

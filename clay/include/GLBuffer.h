@@ -18,6 +18,7 @@ public:
   bool isCreated() const;
   void destroy();
   static void checkError(const std::string& loc = "");
+  static void checkFrameBufferStatus(const std::string& loc = "");
 
 private:
 
