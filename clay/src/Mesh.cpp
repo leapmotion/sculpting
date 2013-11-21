@@ -378,7 +378,9 @@ void Mesh::initIndexVBO() {
 }
 
 void Mesh::reinitVerticesBuffer() {
+#if !LM_PRODUCTION_BUILD
   std::cout << "Reinializing vertices buffer" << std::endl;
+#endif
   vertexUpdates_.clear();
 
   const int nbVertices = getNbVertices();
@@ -393,7 +395,9 @@ void Mesh::reinitVerticesBuffer() {
 }
 
 void Mesh::reinitIndicesBuffer() {
+#if !LM_PRODUCTION_BUILD
   std::cout << "Reinializing indices buffer" << std::endl;
+#endif
   indexUpdates_.clear();
 
   const int nbTriangles = getNbTriangles();
@@ -480,7 +484,7 @@ bool Mesh::initMesh()
   reallocateVerticesBuffer_ = true;
   reallocateIndicesBuffer_ = true;
   pendingGPUTriangles = getNbTriangles();
-//  pendingGPUVertices = getNbVertices();
+  pendingGPUVertices = getNbVertices();
   return true;
 }
 

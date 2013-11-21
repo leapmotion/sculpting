@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "GLBuffer.h"
+#include "Common.h"
 
 GLBuffer::GLBuffer(GLenum type) : type_(type), buffer_(0) { }
 
@@ -48,9 +49,11 @@ bool GLBuffer::isCreated() const {
 
 void GLBuffer::destroy() {
   glDeleteBuffers(1, &buffer_);
+  buffer_ = 0;
 }
 
 void GLBuffer::checkError(const std::string& loc) {
+#if !LM_PRODUCTION_BUILD
   GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
     if (!loc.empty()) {
@@ -58,4 +61,5 @@ void GLBuffer::checkError(const std::string& loc) {
     }
     std::cout << "GL Error code: " << err << std::endl;
   }
+#endif
 }

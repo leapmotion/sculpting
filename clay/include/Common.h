@@ -64,7 +64,7 @@ inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= 
 
 #define TODO(owner, message) LM_LOG << #owner << ": " << #message << std::endl;
 
-#if DEBUG
+#if DEBUG || _DEBUG
 #define LM_PRODUCTION_BUILD 0
 #else
 #define LM_PRODUCTION_BUILD 1

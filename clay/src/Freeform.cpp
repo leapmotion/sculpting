@@ -43,15 +43,16 @@ FreeformApp::~FreeformApp()
 void FreeformApp::prepareSettings( Settings *settings )
 {
   settings->setTitle("Freeform");
+  settings->setWindowSize(1024, 768);
+  //settings->disableFrameRate();
+
   ci::app::Window::Format fmt;
   fmt.setTitle("Freeform");
-  fmt.setSize(1280, 960);
+  fmt.setSize(1024, 768);
   fmt.setFullScreen(true);
   settings->prepareWindow(fmt);
 
-  settings->setWindowSize(1280, 960);
-  //settings->disableFrameRate();
-  //enableVerticalSync(false);
+  enableVerticalSync(true);
 }
 
 void FreeformApp::toggleFullscreen(const std::string& str)
@@ -188,7 +189,7 @@ void FreeformApp::setup()
   // set mesh detail depending on machine specs
   static const float LOW_DETAIL_LEVEL = 0.85f;
   static const float MEDIUM_DETAIL_LEVEL = 0.9f;
-  static const float HIGH_DETAIL_LEVEL = 0.95f;
+  static const float HIGH_DETAIL_LEVEL = 1.0f;
   float detail = LOW_DETAIL_LEVEL;
   if (_machine_speed == FreeformApp::MID) {
     detail = MEDIUM_DETAIL_LEVEL;
@@ -1013,7 +1014,15 @@ int FreeformApp::loadFile()
   file_extensions.push_back("stl");
   file_extensions.push_back("3ds");
   file_extensions.push_back("ply");
+
+  bool toggleFull = isFullScreen();
+  if (toggleFull) {
+    setFullScreen(false);
+  }
   fs::path path = getOpenFilePath("", file_extensions);
+  if (toggleFull) {
+    setFullScreen(true);
+  }
 
   int err = -1;
   if (!path.empty()) {
@@ -1171,11 +1180,18 @@ int FreeformApp::saveFile()
   file_extensions.push_back("stl");
   file_extensions.push_back("obj");
 
+  bool toggleFull = isFullScreen();
+  if (toggleFull) {
+    setFullScreen(false);
+  }
 #if _WIN32
   fs::path path = getSaveFilePathCustom("", file_extensions);
 #else
   fs::path path = getSaveFilePath("", file_extensions);
 #endif
+  if (toggleFull) {
+    setFullScreen(true);
+  }
 
   int err = -1;
   if (!path.empty()) {
