@@ -172,7 +172,7 @@ void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referen
   const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts, tris);
 
   Geometry::GetClosestPointOutput closestPoint;
-  closestPoint.distance = FLT_MAX;
+  closestPoint.distanceSqr = FLT_MAX;
   int closestTriangleIdx = -1;;
 
   for (size_t ti = 0; ti < tris.size(); ti++) {
@@ -189,7 +189,7 @@ void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referen
         input.point = referencePoint.position;
         Geometry::getClosestPoint(input, &output);
         output.triIdx = tris[ti];
-        if (output.distance < closestPoint.distance) {
+        if (output.distanceSqr < closestPoint.distanceSqr) {
           closestPoint = output;
           closestPoint.normal = tri.normal_;
           closestTriangleIdx = tris[ti];
@@ -198,7 +198,7 @@ void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referen
     }
   }
 
-  if (closestPoint.distance < FLT_MAX) {
+  if (closestPoint.distanceSqr < FLT_MAX) {
     GetNormalAtPoint(mesh, closestTriangleIdx, closestPoint.position, &closestPoint.normal);
   }
 
@@ -211,7 +211,7 @@ lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& pos
 
   // Get triangles
   Geometry::GetClosestPointOutput closestPoint;
-  closestPoint.distance = FLT_MAX;
+  closestPoint.distanceSqr = FLT_MAX;
 
   for (size_t ti = 0; ti < tris.size(); ti++) {
     const Triangle& tri = mesh->getTriangle(tris[ti]);
@@ -220,12 +220,12 @@ lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& pos
     Geometry::GetClosestPointInput input(mesh, &tri, position);
     Geometry::getClosestPoint(input, &output);
     output.triIdx = tris[ti];
-    if (output.distance < closestPoint.distance) {
+    if (output.distanceSqr < closestPoint.distanceSqr) {
       closestPoint = output;
     }
   }
 
-  if (closestPoint.distance < FLT_MAX) {
+  if (closestPoint.distanceSqr < FLT_MAX) {
     GetNormalAtPoint(mesh, closestPoint.triIdx, closestPoint.position, &closestPoint.normal);
   }
 
@@ -297,7 +297,7 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
           input.point = referencePoint.position;
           Geometry::getClosestPoint(input, &output);
           output.triIdx = tris[ti];
-          if (output.distance < closestPoint.distance) {
+          if (output.distanceSqr < closestPoint.distanceSqr) {
             closestPoint = output;
           }
 
@@ -307,7 +307,7 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
         }
 
         // Calc point weight
-        lmReal t = closestPoint.distance / radius;
+        lmReal t = std::sqrt(closestPoint.distanceSqr) / radius; // todo remove sqrt later
         t = 1.0f - std::min(1.0f, t);
         t = t*t;
 
@@ -529,7 +529,7 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
           input.point = p + epsXyz[ei];
           Geometry::GetClosestPointOutput output;
           Geometry::getClosestPoint(input, &output);
-          lmReal d = output.distance / paramsInOut->isoMultiplier;
+          lmReal d = std::sqrt(output.distanceSqr) / paramsInOut->isoMultiplier;
           potentialXyz[ei] += 1.0f / (d*d) * TriArea(mesh, tri);
           pmin = std::min(pmin, potentialXyz[ei]);
           pmax = std::max(pmax, potentialXyz[ei]);
@@ -580,7 +580,7 @@ bool CameraUtil::CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal
     Geometry::GetClosestPointOutput output;
     Geometry::getClosestPoint(input, &output);
 
-    if (output.distance < radius) {
+    if (output.distanceSqr < radius*radius) {
       collidingTriangles.push_back(output);
       // Cutting things short -- only return if collision happened
       break;
@@ -636,10 +636,22 @@ void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
 }
 
 void CameraUtil::EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* paramsInOut) {
-  const lmReal radius = GetSphereQueryRadius();
-  std::vector<int> verts;
-  const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
-  if (!verts.size() && params.enableCameraReset) {
+  bool resetCamera = false;
+  if (params.cameraOverrideIso) {
+    //// Iso camera
+    //std::cout << "Iso cam: dist: " <<
+    //             isoState.refDist << ", pos: " << isoState.refPosition.x() << ", " << isoState.refPosition.y() << ", " <<
+    //             isoState.refPosition.z() << std::endl;
+
+  } else {
+    // Normal camera
+    const lmReal radius = GetSphereQueryRadius();
+    std::vector<int> verts;
+    const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
+    resetCamera = !verts.size();
+  }
+
+  if (resetCamera && params.enableCameraReset ) {
     ResetCamera(mesh, GetCameraDirection());
   }
 }
@@ -784,7 +796,8 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   static const Mesh* prevMesh = NULL;
   if (mesh != prevMesh) {
     // Init camera, and all
-    EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
+    //EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
+    ResetCamera(mesh, -(Vector3::UnitZ() + -0.3f * Vector3::UnitX() + 0.2f * Vector3::UnitY()).normalized());
     InitIsoCamera(mesh, &isoState);
   }
   prevMesh = mesh;
@@ -1367,46 +1380,126 @@ bool CameraUtil::VerifyCameraMovement( Mesh* mesh, const Vector3& from, const Ve
   return validMovement;
 }
 
-double CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal queryRadius )
+lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal queryRadius )
 {
+  std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
+  std::vector<int> selectedTriangles = mesh->getOctree()->intersectSphere(position,queryRadius*queryRadius,leavesHit);
+
   //lmReal radius = Get
-  double potential = 0.0;
+  lmReal potential = 0.0;
 
   // process every n-th point
-  const int striding = 4;
+  const int striding = 1;
+
+  const lmReal queryRadiusSqr = queryRadius*queryRadius;
+
+  //int count[2] = {0,0};
 
   if (params.userFaultyTriangles) {
     const TriangleVector& triangles = mesh->getTriangles();
 
-    for (unsigned ti = 0; ti < triangles.size(); ti+= striding)
+
+    for (unsigned ti = 0; ti < selectedTriangles.size(); ti+= striding)
     {
-      const Triangle& tri = triangles[ti];
+      const Triangle& tri = triangles[selectedTriangles[ti]];
 
       Geometry::GetClosestPointInput input(mesh, &tri, position);
       Geometry::GetClosestPointOutput output;
-      Geometry::getClosestPoint(input, &output);
+      Geometry::getClosestPoint_noNormal(input, &output);
 
-      double dist = output.distance;
-      dist = lmClip(dist, 0.001, 1000000.0);
-      potential += 1.0 / (dist*dist);
+      lmReal distSqr = output.distanceSqr;
+
+      if (distSqr < queryRadiusSqr)
+      {
+
+        distSqr = lmClip(distSqr, params.grav_k*params.grav_k, 1000000.0f*1000000.0f);
+
+        //lmReal distPowered = std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
+        //const lmReal weightDenominator = std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
+
+        // avoid calling std::pow
+        const lmReal distPowered = distSqr;//  std std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
+        const lmReal weightDenominator = queryRadiusSqr;// std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
+
+#if 0
+        if (params.grav_n > 2.0f)
+        {
+          distPowered *= distSqr;
+          weightDenominator *= queryRadiusSqr;
+          if (params.grav_n > 4.0f)
+          {
+            distPowered *= distSqr;
+            weightDenominator *= queryRadiusSqr;
+          }
+        }
+#endif
+
+        lmReal weight = 1.0f - (distPowered / weightDenominator);
+        weight = lmClip(weight, 0.0f, 1.0f);
+        lmReal area = TriArea(mesh, tri);
+        potential += area * weight / distPowered;
+
+        if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
+          debugDrawUtil->DrawTriangle(mesh, tri);
+        }
+
+        //count[1]++;
+      }
+      //else
+      //{
+      //  count[0]++;
+      //}
     }
+    //std::cout << "triangles detailDist / octTreeQueryt: " << count[1] << " / " << count[0]+count[1] << std::endl;
+
   } else {
+    //lmReal minw = 1000000000.0f;
+    //lmReal maxw = -1000000000.0f;
+    //lmReal mind = 1000000000.0f;
+    //lmReal maxd = -1000000000.0f;
+
+    std::vector<int> selectedVertices;
+    mesh->getVerticesFromTriangles(selectedTriangles, selectedVertices);
+
     const VertexVector& vertices = mesh->getVertices();
 
-    for (unsigned vi = 0; vi < vertices.size(); vi+= striding)
+    for (unsigned vi = 0; vi < selectedVertices.size(); vi+= striding)
     {
-      const Vertex& vert = vertices[vi];
+      const Vertex& vert = vertices[selectedVertices[vi]];
 
-      double distSqr = (position-vert).squaredNorm();
-      //static const double K = 0.0001f;
-      distSqr = lmClip(distSqr, (double)params.grav_k*params.grav_k, 1000000.0*1000000.0);
-      //static const double N = 6.0f;
-      potential += 1.0 / std::pow(distSqr, (double)params.grav_n);
+      lmReal distSqr = (position-vert).squaredNorm();
+      //static const lmReal K = 0.0001f;
+      distSqr = lmClip(distSqr, params.grav_k*params.grav_k, 1000000.0f*1000000.0f);
 
-      if (params.drawSphereQueryResults) {
-        LM_DRAW_CROSS(vert, 5.0f, lmColor::WHITE);
+      if (distSqr < queryRadiusSqr)
+      {
+
+        //static const lmReal N = 6.0f;
+        //lmReal distPowered = std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
+        //const lmReal weightDenominator = std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
+
+        const lmReal distPowered = distSqr;// std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
+        const lmReal weightDenominator = queryRadiusSqr;//std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
+
+
+        lmReal weight = 1.0f - (distPowered / weightDenominator);
+        //minw = std::min(minw, weight);
+        //maxw = std::max(maxw, weight);
+        //lmReal dist = std::sqrt(distSqr);
+        //mind = std::min(mind, dist);
+        //maxd = std::max(maxd, dist);
+        weight = lmClip(weight, 0.0f, 1.0f);
+
+        potential += weight / distPowered;
+        //potential += 1.0 / distPowered;
+
+        if (params.drawSphereQueryResults) {
+          LM_DRAW_CROSS(vert, 3.0f, lmColor::WHITE);
+        }
       }
     }
+    //std::cout << "weight min/max: " << minw << " / " << maxw << std::endl;
+    //std::cout << "dist min/max/queryr: " << mind << " / " << maxd << " / " << queryRadius << std::endl;
   }
 
   return potential;
@@ -1416,16 +1509,15 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
 {
   lmReal epsilon = 0.1f;
   const Vector3& pos = position;
-  double potential = IsoPotential(mesh, pos, queryRadius);
+  lmReal potential = IsoPotential(mesh, pos, queryRadius);
   Vector3 posX = pos; posX.x() += epsilon;
   Vector3 posY = pos; posY.y() += epsilon;
   Vector3 posZ = pos; posZ.z() += epsilon;
-  double dPotentialX = IsoPotential(mesh, posX, queryRadius) - potential;
-  double dPotentialY = IsoPotential(mesh, posY, queryRadius) - potential;
-  double dPotentialZ = IsoPotential(mesh, posZ, queryRadius) - potential;
+  lmReal dPotentialX = IsoPotential(mesh, posX, queryRadius) - potential;
+  lmReal dPotentialY = IsoPotential(mesh, posY, queryRadius) - potential;
+  lmReal dPotentialZ = IsoPotential(mesh, posZ, queryRadius) - potential;
 
-  typedef Eigen::Matrix<double, 3, 1> Vector3d;
-  Vector3d negNormal(dPotentialX, dPotentialY, dPotentialZ);
+  Vector3 negNormal(dPotentialX, dPotentialY, dPotentialZ);
   negNormal.normalize();
 
   //std::cout << "Iso potential: " << potential << std::endl;
@@ -1435,7 +1527,7 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
 }
 
 lmReal CameraUtil::IsoQueryRadius(IsoCameraState* state) const {
-  return std::min(state->refDist + 50.0f, 50.0f);
+  return std::max(state->refDist + params.isoQueryPaddingRadius, params.isoQueryPaddingRadius);
 }
 
 void CameraUtil::IsoUpdateCameraDirection(const Vector3& newDirection, IsoCameraState* state ) {

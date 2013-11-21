@@ -245,13 +245,15 @@ public:
     double refPotential; // used when clipping to isosurface
   } isoState;
 
-  double IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
+  lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
   Vector3 IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
   lmReal IsoQueryRadius(IsoCameraState* state) const;
 
-  void IsoUpdateCameraDirection(const Vector3& newDirection, IsoCameraState* state );
+  void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state );
+
+  void IsoPreventCameraInMesh(Mesh* mesh, IsoCameraState* state);
 
   void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
 

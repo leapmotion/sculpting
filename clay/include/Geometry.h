@@ -49,15 +49,17 @@ namespace Geometry {
   struct GetClosestPointOutput {
     Vector3 position;
     Vector3 normal;
-    lmReal distance;
+    lmReal distanceSqr;
     int triIdx;
 
-    GetClosestPointOutput() : position(Vector3::Zero()), normal(Vector3::Zero()), distance(FLT_MAX), triIdx(-1) {}
-    void setInvalid() { position.setZero(); normal.setZero(); distance = FLT_MAX; triIdx = -1; }
-    bool isValid() const { return distance < FLT_MAX; }
+    GetClosestPointOutput() : position(Vector3::Zero()), normal(Vector3::Zero()), distanceSqr(FLT_MAX), triIdx(-1) {}
+    void setInvalid() { position.setZero(); normal.setZero(); distanceSqr = FLT_MAX; triIdx = -1; }
+    bool isValid() const { return distanceSqr < FLT_MAX; }
   };
 
   void getClosestPoint(const GetClosestPointInput& input, GetClosestPointOutput* output);
+
+  void getClosestPoint_noNormal(const GetClosestPointInput& input, GetClosestPointOutput* output);
 }
 
 #endif /*__GEOMETRY_H__*/
