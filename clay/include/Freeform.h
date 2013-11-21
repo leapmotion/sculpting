@@ -30,7 +30,7 @@ class DebugDrawUtil;
 #if LM_PRODUCTION_BUILD
 #define LM_DISABLE_THREADING_AND_ENVIRONMENT 0
 #else
-#define LM_DISABLE_THREADING_AND_ENVIRONMENT 1
+#define LM_DISABLE_THREADING_AND_ENVIRONMENT 0
 #endif
 
 class FreeformApp : public AppNative

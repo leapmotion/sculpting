@@ -9,11 +9,13 @@
 #define LM_LOG_CAMERA_LOGIC_2 0
 #define LM_LOG_CAMERA_LOGIC_3 0
 #define LM_LOG_CAMERA_LOGIC_4 0
+#define LM_DRAW_DEBUG_OBJECTS 0
 #else
 #define LM_LOG_CAMERA_LOGIC 0
 #define LM_LOG_CAMERA_LOGIC_2 0
-#define LM_LOG_CAMERA_LOGIC_3 1
-#define LM_LOG_CAMERA_LOGIC_4 1
+#define LM_LOG_CAMERA_LOGIC_3 0
+#define LM_LOG_CAMERA_LOGIC_4 0
+#define LM_DRAW_DEBUG_OBJECTS 1
 #endif
 
 CameraUtil::CameraUtil() {
@@ -323,10 +325,11 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
           if (output.distanceSqr < closestPoint.distanceSqr) {
             closestPoint = output;
           }
-
+#if LM_DRAW_DEBUG_OBJECTS
           if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
             debugDrawUtil->DrawTriangle(mesh, tri);
           }
+#endif
         }
 
         // Calc point weight
@@ -369,10 +372,11 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
         normal += vert.normal_ * weight;
         position += weight * vert;
         sumWeight += weight;
-
+#if LM_DRAW_DEBUG_OBJECTS
         if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
           LM_DRAW_CROSS(vert, 5.0f, lmColor::WHITE);
         }
+#endif
       }
     }
     if (0.0f < sumWeight) {
@@ -504,9 +508,11 @@ void CameraUtil::DebugDrawNormals(const Mesh* mesh, const Params& paramsIn) {
     Geometry::GetClosestPointOutput newClosestPoint;
     GetAveragedSurfaceNormal(mesh, refPoint, GetSphereQueryRadius(), -1.0f * vert.normal_, paramsIn.weightNormals, &newAvgVertex, &pureNewAvgVertex, &newClosestPoint);
 
+#if LM_DRAW_DEBUG_OBJECTS
     if(debugDrawUtil) {
       LM_DRAW_ARROW(vert, vert + newAvgVertex.normal * 10.0f, lmColor::WHITE);
     }
+#endif
   }
 
   for (size_t i = 0; i < trangles.size(); i++) {
@@ -1467,9 +1473,11 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
         lmReal area = TriArea(mesh, tri);
         potential += area * weight / distPowered;
 
+#if LM_DRAW_DEBUG_OBJECTS
         if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
           debugDrawUtil->DrawTriangle(mesh, tri);
         }
+#endif
 
         //count[1]++;
       }
@@ -1521,9 +1529,11 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
         potential += weight / distPowered;
         //potential += 1.0 / distPowered;
 
+#if LM_DRAW_DEBUG_OBJECTS
         if (params.drawSphereQueryResults) {
           LM_DRAW_CROSS(vert, 3.0f, lmColor::WHITE);
         }
+#endif
       }
     }
     //std::cout << "weight min/max: " << minw << " / " << maxw << std::endl;
