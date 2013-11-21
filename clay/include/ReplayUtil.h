@@ -120,14 +120,14 @@ std::istream& operator >> (std::istream& is, ReplayUtil::Item& i);
 #define LM_TRACK_IS_RECORDING() false
 #define LM_TRACK_IS_REPLAYING() false
 
-#define LM_TRACK_VALUE(value) value
-#define LM_TRACK_CONST_VALUE(value) value
+#define LM_TRACK_VALUE(value) (void) value
+#define LM_TRACK_CONST_VALUE(value) (void) value
 
 #define LM_RETURN_TRACKED(value) value
 
 #define LM_RETURN_TRACKED_CONDITIONAL(condition, value, type) value // LM_ASSERT(condition)
 
-#define LM_ASSERT_IDENTICAL(value) value
+#define LM_ASSERT_IDENTICAL(value) (void) value
 
 #define LM_TRACK_TODO()
 

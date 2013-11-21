@@ -41,8 +41,6 @@
 		01C5D778181A480600194132 /* UserInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D75B181A480600194132 /* UserInterface.cpp */; };
 		01C5D779181A480600194132 /* Vertex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D75C181A480600194132 /* Vertex.cpp */; };
 		01C5D787181A482D00194132 /* bloom-frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D77A181A482D00194132 /* bloom-frag.glsl */; };
-		01C5D789181A482D00194132 /* cinder_app_icon.ico in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D77C181A482D00194132 /* cinder_app_icon.ico */; };
-		01C5D78A181A482D00194132 /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D77D181A482D00194132 /* CinderApp.icns */; };
 		01C5D78C181A482D00194132 /* material-frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D77F181A482D00194132 /* material-frag.glsl */; };
 		01C5D78D181A482D00194132 /* material-vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D780181A482D00194132 /* material-vert.glsl */; };
 		01C5D78F181A482D00194132 /* passthrough-vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D782181A482D00194132 /* passthrough-vert.glsl */; };
@@ -67,6 +65,9 @@
 		8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */; };
 		8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */; };
 		8A7FDF13183D44AF00E94B5F /* tutorial-immersive.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */; };
+		8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF14183DAFA400E94B5F /* freeform.icns */; };
+		8A7FDF17183DAFA400E94B5F /* freeform.ico in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF15183DAFA400E94B5F /* freeform.ico */; };
+		8A7FDF1A183E941800E94B5F /* ReplayUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */; };
 		8A9B81D51832D37500AA2EA3 /* freigsanprobold-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D31832D37500AA2EA3 /* freigsanprobold-webfont.ttf */; };
 		8A9B81D61832D37500AA2EA3 /* freigsanpromed-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D41832D37500AA2EA3 /* freigsanpromed-webfont.ttf */; };
 		8A9B820E1832D38000AA2EA3 /* brush-size-large.svg in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D81832D38000AA2EA3 /* brush-size-large.svg */; };
@@ -179,8 +180,6 @@
 		01C5D75B181A480600194132 /* UserInterface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UserInterface.cpp; path = ../../src/UserInterface.cpp; sourceTree = "<group>"; };
 		01C5D75C181A480600194132 /* Vertex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Vertex.cpp; path = ../../src/Vertex.cpp; sourceTree = "<group>"; };
 		01C5D77A181A482D00194132 /* bloom-frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "bloom-frag.glsl"; path = "../../resources/bloom-frag.glsl"; sourceTree = "<group>"; };
-		01C5D77C181A482D00194132 /* cinder_app_icon.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; name = cinder_app_icon.ico; path = ../../resources/cinder_app_icon.ico; sourceTree = "<group>"; };
-		01C5D77D181A482D00194132 /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = CinderApp.icns; path = ../../resources/CinderApp.icns; sourceTree = "<group>"; };
 		01C5D77F181A482D00194132 /* material-frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "material-frag.glsl"; path = "../../resources/material-frag.glsl"; sourceTree = "<group>"; };
 		01C5D780181A482D00194132 /* material-vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "material-vert.glsl"; path = "../../resources/material-vert.glsl"; sourceTree = "<group>"; };
 		01C5D782181A482D00194132 /* passthrough-vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "passthrough-vert.glsl"; path = "../../resources/passthrough-vert.glsl"; sourceTree = "<group>"; };
@@ -240,6 +239,10 @@
 		8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-black.png"; sourceTree = "<group>"; };
 		8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-image.png"; sourceTree = "<group>"; };
 		8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tutorial-immersive.png"; sourceTree = "<group>"; };
+		8A7FDF14183DAFA400E94B5F /* freeform.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = freeform.icns; path = ../../resources/freeform.icns; sourceTree = "<group>"; };
+		8A7FDF15183DAFA400E94B5F /* freeform.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; name = freeform.ico; path = ../../resources/freeform.ico; sourceTree = "<group>"; };
+		8A7FDF18183E940D00E94B5F /* ReplayUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReplayUtil.h; path = ../../include/ReplayUtil.h; sourceTree = "<group>"; };
+		8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ReplayUtil.cpp; path = ../../src/ReplayUtil.cpp; sourceTree = "<group>"; };
 		8A84A925182ADD59001CD625 /* x-negative.exr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "x-negative.exr"; sourceTree = "<group>"; };
 		8A84A926182ADD59001CD625 /* x-positive.exr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "x-positive.exr"; sourceTree = "<group>"; };
 		8A84A927182ADD59001CD625 /* y-negative.exr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "y-negative.exr"; sourceTree = "<group>"; };
@@ -493,6 +496,7 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */,
 				01C5D740181A480600194132 /* Aabb.cpp */,
 				8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */,
 				01C5D741181A480600194132 /* Brush.cpp */,
@@ -552,6 +556,7 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				8A7FDF18183E940D00E94B5F /* ReplayUtil.h */,
 				01C5D7A7181A4C8800194132 /* Aabb.h */,
 				8A7FDF0A183AEB2900E94B5F /* AutoSave.h */,
 				01C5D7A8181A4C8800194132 /* Brush.h */,
@@ -595,6 +600,8 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8A7FDF14183DAFA400E94B5F /* freeform.icns */,
+				8A7FDF15183DAFA400E94B5F /* freeform.ico */,
 				8A7FDF0D183D449F00E94B5F /* logos */,
 				8A7FDEFF183A8ECB00E94B5F /* shapes */,
 				8A9B82441832D38A00AA2EA3 /* tutorial */,
@@ -603,8 +610,6 @@
 				8A9B81D41832D37500AA2EA3 /* freigsanpromed-webfont.ttf */,
 				01C5D77A181A482D00194132 /* bloom-frag.glsl */,
 				8A24C4B8182D9905005151DA /* brush-vert.glsl */,
-				01C5D77C181A482D00194132 /* cinder_app_icon.ico */,
-				01C5D77D181A482D00194132 /* CinderApp.icns */,
 				01C5D77F181A482D00194132 /* material-frag.glsl */,
 				01C5D780181A482D00194132 /* material-vert.glsl */,
 				01C5D782181A482D00194132 /* passthrough-vert.glsl */,
@@ -1216,6 +1221,7 @@
 				8A9B82181832D38000AA2EA3 /* edit.svg in Resources */,
 				8A9B82281832D38000AA2EA3 /* paint.png in Resources */,
 				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
+				8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */,
 				8A9B822F1832D38000AA2EA3 /* repel.png in Resources */,
 				8A9B82301832D38000AA2EA3 /* save-2.svg in Resources */,
 				8A9B82221832D38000AA2EA3 /* load-3.svg in Resources */,
@@ -1265,7 +1271,6 @@
 				8A9B82161832D38000AA2EA3 /* clay.png in Resources */,
 				8A9B82341832D38000AA2EA3 /* shrink.svg in Resources */,
 				8A9B82171832D38000AA2EA3 /* dawn.svg in Resources */,
-				01C5D789181A482D00194132 /* cinder_app_icon.ico in Resources */,
 				8A9B82311832D38000AA2EA3 /* save.svg in Resources */,
 				01C5D787181A482D00194132 /* bloom-frag.glsl in Resources */,
 				8A9B824A1832D38A00AA2EA3 /* tutorial-tools.png in Resources */,
@@ -1279,11 +1284,11 @@
 				8A9B822A1832D38000AA2EA3 /* plastic.png in Resources */,
 				8A9B82491832D38A00AA2EA3 /* tutorial-menu.png in Resources */,
 				8A9B821F1832D38000AA2EA3 /* grow.png in Resources */,
-				01C5D78A181A482D00194132 /* CinderApp.icns in Resources */,
 				8A9B82431832D38000AA2EA3 /* wireframe.svg in Resources */,
 				8A9B821B1832D38000AA2EA3 /* flatten.png in Resources */,
 				8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */,
 				8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */,
+				8A7FDF17183DAFA400E94B5F /* freeform.ico in Resources */,
 				8A9B82111832D38000AA2EA3 /* brush-strength-2.svg in Resources */,
 				8A9B821A1832D38000AA2EA3 /* flatten-selected.png in Resources */,
 				8A9B823C1832D38000AA2EA3 /* strength-low.png in Resources */,
@@ -1315,6 +1320,7 @@
 				01C5D775181A480600194132 /* TopologyDecimation.cpp in Sources */,
 				01C5D766181A480600194132 /* Files.cpp in Sources */,
 				01C5D76A181A480600194132 /* LeapInteraction.cpp in Sources */,
+				8A7FDF1A183E941800E94B5F /* ReplayUtil.cpp in Sources */,
 				01C5D76E181A480600194132 /* Picking.cpp in Sources */,
 				01C5D76B181A480600194132 /* LeapListener.cpp in Sources */,
 				01C5D763181A480600194132 /* CImageSurface.cpp in Sources */,
@@ -1395,7 +1401,7 @@
 				GCC_FAST_MATH = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Freeform_Prefix.pch;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;

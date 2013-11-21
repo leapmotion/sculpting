@@ -1384,7 +1384,7 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
     }
     if (rayHit) {
       lmReal dist = (hitPoint-ray.start).dot(rayDirection);
-      if (0 <= dist && dist < minDist || collectall) {
+      if ((0 <= dist && dist < minDist) || collectall) {
         minDist = dist;
 
         rayCastOutput.triangleIdx = queryTriangles[ti];
