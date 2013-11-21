@@ -738,7 +738,9 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
 
   if (_environment_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _environment_menu.getSelectedEntry();
-    //app->setEnvironment(entry.toEnvironmentName());
+#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
+    app->setEnvironment(entry.toEnvironmentName());
+#endif
     _environment_menu.clearSelection();
   }
 

@@ -252,7 +252,7 @@ void FreeformApp::setup()
     loadShape(BALL);
   }
 
-#if 0
+#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
   _mesh_thread = std::thread(&FreeformApp::updateLeapAndMesh, this);
 #endif
 
@@ -486,16 +486,18 @@ void FreeformApp::update()
 
   _last_update_time = curTime;
 
+#if LM_DISABLE_THREADING_AND_ENVIRONMENT
   // work for the other thread
   FreeformApp::updateLeapAndMesh();
+#endif
 }
 
 void FreeformApp::updateLeapAndMesh() {
-#if 0
+#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
   while (!_shutdown) 
 #endif
   {
-#if 0
+#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
     bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
 #else 
     bool suppress = false;
@@ -755,8 +757,10 @@ void FreeformApp::draw()
   const Environment::LoadingState loading_state = _environment->getLoadingState();
   const float loading_time = _environment->getTimeSinceLoadingStateChange();
   if (!_environment->haveEnvironment()) {
-    //exposure_mult = 0.0f;
-    //Menu::updateSculptMult(curTime, 0.0f);
+#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
+    exposure_mult = 0.0f;
+    Menu::updateSculptMult(curTime, 0.0f);
+#endif
   } else if (loading_state == Environment::LOADING_STATE_LOADING) {
     float mult = 1.0f - math<float>::clamp(loading_time/LOADING_DARKEN_TIME);
     exposure_mult *= mult;
