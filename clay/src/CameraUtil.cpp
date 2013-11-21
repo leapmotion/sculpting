@@ -1589,7 +1589,8 @@ void CameraUtil::IsoPreventCameraInMesh( Mesh* mesh, IsoCameraState* state )
   // Raycast from refPoint to camera.
   // reset camera to first hit found.
   lmRayCastOutput raycast;
-  CastOneRay(mesh, lmRay(state->refPosition, transform.translation), &raycast);
+  lmRay ray(state->refPosition, transform.translation);
+  CastOneRay(mesh, ray, &raycast);
   if (raycast.isSuccess()) {
 #if LM_LOG_CAMERA_LOGIC_4
     std::cout << "rayfraction " << raycast.fraction;
@@ -1598,8 +1599,17 @@ void CameraUtil::IsoPreventCameraInMesh( Mesh* mesh, IsoCameraState* state )
     std::cout << "Hugging camera to refPoint (mesh collision)" << std::endl;
 #endif
     LM_ASSERT(lmInRange(raycast.fraction, 0.0f, 1.0f), "Inavlid raycast result returned.");
-    LM_ASSERT(raycast.dist <= (state->refPosition, transform.translation).norm(), "Camera collision with mesh failed.");
-    transform.translation = raycast.position;
+    // Don't know why this fails !?
+    LM_ASSERT(raycast.dist <= ray.GetLength(), "Raycast result corrupted.");
+    //LM_ASSERT(raycast.dist <= (state->refPosition, transform.translation).norm(), "Camera collision with mesh failed.");
+
+    // if clip this
+    lmReal refPositionFraction = std::max(raycast.fraction, params.minDist / state->refDist);
+    refPositionFraction = lmClip(refPositionFraction, 0.0f, 1.0f);
+    state->refPosition -= state->refNormal * state->refDist * (1.0f-refPositionFraction);
+    state->refDist *= refPositionFraction;
+
+    transform.translation = raycast.position - ray.GetDirection() * 0.01f;
   }
 }
 
@@ -1683,8 +1693,8 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   clippedMovement = transform.rotation * clippedMovement;
 
   // Verify movement
-  //lmReal radiusForCameraSphereCollision = params.minDist/2.0f;
-  lmReal radiusForCameraSphereCollision = 0.0f;
+  lmReal radiusForCameraSphereCollision = params.minDist;
+  //lmReal radiusForCameraSphereCollision = 0.0f;
   bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
   if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
 #if LM_LOG_CAMERA_LOGIC_4
@@ -1779,7 +1789,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   LM_ASSERT(state->refDist < 10000, "Reference distance exploded.")
 
-  // crashes: IsoPreventCameraInMesh(mesh, state);
+  IsoPreventCameraInMesh(mesh, state);
 
   // Display reference sphere (updating point & radius):
   referencePoint.position = state->refPosition - state->refNormal * state->refDist;
