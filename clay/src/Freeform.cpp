@@ -329,9 +329,6 @@ void FreeformApp::resize()
   screenFormat.enableMipmapping(false);
   screenFormat.enableDepthBuffer(true, false);
   if (_aa_mode == MSAA) {
-#if !LM_PRODUCTION_BUILD
-    std::cout << "using multisampling" << std::endl;
-#endif
     screenFormat.setSamples(4);
   }
 

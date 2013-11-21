@@ -20,6 +20,7 @@ LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sc
   _dphi.value = 0.0f;
   _dtheta.value = 0.0f;
   _dzoom.value = 0.0f;
+  _logScale.Update(0.0f, 0.0, 0.95f);
 }
 
 bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress)
