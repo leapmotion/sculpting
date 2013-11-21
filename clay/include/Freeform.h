@@ -113,6 +113,7 @@ private:
   Vector3 _focus_point;
   float _focus_radius;
   double _last_update_time;
+  double _last_load_time;
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
   std::mutex _mesh_mutex;
   MachineSpeed _machine_speed;

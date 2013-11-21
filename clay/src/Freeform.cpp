@@ -22,7 +22,7 @@ const float MAX_FOV = 90.0f;
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
   drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
-  _lock_camera(false)
+  _lock_camera(false), _last_load_time(0.0)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = &DebugDrawUtil::getInstance();
@@ -252,6 +252,7 @@ void FreeformApp::setup()
     mesh_ = mesh;
     if (mesh_) {
       mesh_->startPushState();
+      _last_load_time = ci::app::getElapsedSeconds();
       sculpt_.setMesh(mesh_);
     } else {
       try {
@@ -521,19 +522,21 @@ void FreeformApp::update()
 }
 
 void FreeformApp::updateLeapAndMesh() {
+  static const double BRUSH_DISABLE_TIME_AFTER_LOAD = 1.0;
 #if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
   while (!_shutdown) 
 #endif
   {
+    const double curTime = ci::app::getElapsedSeconds();
 #if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
     bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
+    suppress = suppress || (curTime - _last_load_time) < BRUSH_DISABLE_TIME_AFTER_LOAD;
 #else 
     bool suppress = false;
 #endif 
     bool haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
 
     if (haveFrame) {
-      const double curTime = ci::app::getElapsedSeconds();
       const double lastSculptTime = sculpt_.getLastSculptTime();
 
       std::unique_lock<std::mutex> lock(_mesh_mutex);
@@ -1140,6 +1143,7 @@ int FreeformApp::loadFile()
       mesh_ = mesh;
       mesh_->setRotationVelocity(rotationVel);
       if (mesh_) {
+        _last_load_time = ci::app::getElapsedSeconds();
         mesh_->startPushState();
       }
       sculpt_.setMesh(mesh_);
@@ -1171,6 +1175,7 @@ int FreeformApp::loadShape(Shape shape) {
   mesh_->setRotationVelocity(rotationVel);
   if (mesh_) {
     mesh_->startPushState();
+    _last_load_time = ci::app::getElapsedSeconds();
   }
   sculpt_.setMesh(mesh_);
 

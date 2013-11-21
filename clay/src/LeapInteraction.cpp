@@ -43,6 +43,10 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
   {
     _cur_frame = Leap::Frame::invalid();
     _last_frame = Leap::Frame::invalid();
+    std::unique_lock<std::mutex> brushLock(_sculpt->getBrushMutex());
+    std::unique_lock<std::mutex> tipsLock(_tips_mutex);
+    _sculpt->clearBrushes();
+    _tips.clear();
   }
   else if (LM_RETURN_TRACKED(listener.waitForFrame(_cur_frame, 33)))
   {
