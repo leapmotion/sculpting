@@ -228,19 +228,20 @@ void Mesh::computeRingVertices(int iVert)
 void Mesh::getVerticesInsideSphere(const Vector3& point, float radiusWorldSquared, std::vector<int>& result) {
   VertexVector &vertices = getVertices();
   std::vector<Octree*> &leavesHit = getLeavesUpdate();
-  std::vector<int> iTrisInCells = getOctree()->intersectSphere(point,radiusWorldSquared,leavesHit);
-  std::vector<int> iVerts;
-  getVerticesFromTriangles(iTrisInCells, iVerts);
-  int nbVerts = iVerts.size();
+  queryTriangles_.clear();
+  getOctree()->intersectSphere(point,radiusWorldSquared,leavesHit,queryTriangles_);
+  queryVertices_.clear();
+  getVerticesFromTriangles(queryTriangles_, queryVertices_);
+  int nbVerts = queryVertices_.size();
   ++Vertex::sculptMask_;
   for (int i=0;i<nbVerts;++i)
   {
-    Vertex &v=vertices[iVerts[i]];
+    Vertex &v=vertices[queryVertices_[i]];
     const float distSquared = (v-point).squaredNorm();
     if(distSquared<radiusWorldSquared)
     {
       v.sculptFlag_ = Vertex::sculptMask_;
-      result.push_back(iVerts[i]);
+      result.push_back(queryVertices_[i]);
     }
   }
 }
@@ -248,17 +249,18 @@ void Mesh::getVerticesInsideSphere(const Vector3& point, float radiusWorldSquare
 void Mesh::getVerticesInsideBrush(const Brush& brush, std::vector<int>& result) {
   VertexVector &vertices = getVertices();
   std::vector<Octree*> &leavesHit = getLeavesUpdate();
-  std::vector<int> iTrisInCells = getOctree()->intersectSphere(brush.boundingSphereCenter(),brush.boundingSphereRadiusSq(),leavesHit);
-  std::vector<int> iVerts;
-  getVerticesFromTriangles(iTrisInCells, iVerts);
-  int nbVerts = iVerts.size();
+  queryTriangles_.clear();
+  getOctree()->intersectSphere(brush.boundingSphereCenter(),brush.boundingSphereRadiusSq(),leavesHit, queryTriangles_);
+  queryVertices_.clear();
+  getVerticesFromTriangles(queryTriangles_, queryVertices_);
+  int nbVerts = queryVertices_.size();
   ++Vertex::sculptMask_;
   for (int i=0;i<nbVerts;++i)
   {
-    Vertex &v=vertices[iVerts[i]];
+    Vertex &v=vertices[queryVertices_[i]];
     if (brush.contains(v)) {
       v.sculptFlag_ = Vertex::sculptMask_;
-      result.push_back(iVerts[i]);
+      result.push_back(queryVertices_[i]);
     }
   }
 }

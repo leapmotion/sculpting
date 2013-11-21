@@ -108,7 +108,8 @@ void CameraUtil::GetTransformFromStandardCamera(const Vector3& from, const Vecto
 void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std::vector<lmRayCastOutput>* results) {
   for (size_t ri = 0; ri < rays.size(); ri++) {
     const lmRay& ray = rays[ri];
-    std::vector<int> triangles = mesh->getOctree()->intersectRay(ray.start, ray.GetDirection());
+    queryTriangles.clear();
+    mesh->getOctree()->intersectRay(ray.start, ray.GetDirection(), queryTriangles);
 
     int numAabbSuccess = 0;
     int numTriSuccess = 0;
@@ -118,8 +119,8 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
     int minDistIdx = -1;
     lmRayCastOutput rayCastOutput;
     // 0. cast ray for each triangle's aabb
-    for (size_t ti = 0; ti < triangles.size(); ti++) {
-      const Triangle& tri = mesh->getTriangle(triangles[ti]);
+    for (size_t ti = 0; ti < queryTriangles.size(); ti++) {
+      const Triangle& tri = mesh->getTriangle(queryTriangles[ti]);
       Vector3 rayOnPlane;
       bool result = tri.aabb_.intersectRay(ray.start, ray.GetDirection());
       if (result) {
@@ -134,10 +135,10 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
       if (result) {
         numTriSuccess++;
         //if (tri.aabb_.intersectRay(f, dir)) {
-        tris2.push_back(triangles[ti]);
+        tris2.push_back(queryTriangles[ti]);
         lmReal dist = (rayOnPlane-ray.start).dot(ray.GetDirection());
         if (dist < minDist) {
-          minDistIdx = triangles[ti];
+          minDistIdx = queryTriangles[ti];
           minDist = dist;
 
           rayCastOutput.triangleIdx = minDistIdx;
@@ -151,14 +152,14 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
 
     const bool drawClosestOnly = true;
     if (drawClosestOnly) {
-      triangles.clear(); 
+      queryTriangles.clear();
       results->push_back(rayCastOutput);
       if (minDistIdx != -1) {
         // for debug display only
-        triangles.push_back(minDistIdx);
+        queryTriangles.push_back(minDistIdx);
       }
     } else {
-      triangles = tris2; // fix: append
+      queryTriangles = tris2; // fix: append
     }
 
     //// Display debug triangles
@@ -232,19 +233,20 @@ void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referen
 
 lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& position, lmReal queryRadius) {
   std::vector<Octree*> leavesHit;
-  std::vector<int> tris = mesh->getOctree()->intersectSphere(position, queryRadius*queryRadius, leavesHit);
+  queryTriangles.clear();
+  mesh->getOctree()->intersectSphere(position, queryRadius*queryRadius, leavesHit, queryTriangles);
 
   // Get triangles
   Geometry::GetClosestPointOutput closestPoint;
   closestPoint.distanceSqr = FLT_MAX;
 
-  for (size_t ti = 0; ti < tris.size(); ti++) {
-    const Triangle& tri = mesh->getTriangle(tris[ti]);
+  for (size_t ti = 0; ti < queryTriangles.size(); ti++) {
+    const Triangle& tri = mesh->getTriangle(queryTriangles[ti]);
 
     Geometry::GetClosestPointOutput output;
     Geometry::GetClosestPointInput input(mesh, &tri, position);
     Geometry::getClosestPoint(input, &output);
-    output.triIdx = tris[ti];
+    output.triIdx = queryTriangles[ti];
     if (output.distanceSqr < closestPoint.distanceSqr) {
       closestPoint = output;
     }
@@ -597,12 +599,13 @@ bool CameraUtil::CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal
 {
   // Get potential triangles from the aabb octree.
   std::vector<Octree*> leavesHit;
-  std::vector<int> iTrisInCells = mesh->getOctree()->intersectSphere(position,radius*radius,leavesHit);
+  queryTriangles.clear();
+  mesh->getOctree()->intersectSphere(position,radius*radius,leavesHit,queryTriangles);
 
   // Collide each potential triangle; find real collisions.
   std::vector<Geometry::GetClosestPointOutput> collidingTriangles;
-  for (unsigned ti = 0; ti < iTrisInCells.size(); ti++) {
-    int triIdx = iTrisInCells[ti];
+  for (unsigned ti = 0; ti < queryTriangles.size(); ti++) {
+    int triIdx = queryTriangles[ti];
     const Triangle& tri = mesh->getTriangle(triIdx);
 
     Geometry::GetClosestPointInput input(mesh, &tri, position);
@@ -1346,7 +1349,8 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, lmRayCastOutput
 
 void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmRayCastOutput>* results, bool collectall /*= false*/ )
 {
-  std::vector<int> triangles = mesh->getOctree()->intersectRay(ray.start, ray.GetDirection());
+  queryTriangles.clear();
+  mesh->getOctree()->intersectRay(ray.start, ray.GetDirection(), queryTriangles);
   std::vector<int> hits;
   lmReal minDist = FLT_MAX;
 
@@ -1357,8 +1361,8 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
 
 
   // Cast ray for each triangle's aabb
-  for (size_t ti = 0; ti < triangles.size(); ti++) {
-    const Triangle& tri = mesh->getTriangle(triangles[ti]);
+  for (size_t ti = 0; ti < queryTriangles.size(); ti++) {
+    const Triangle& tri = mesh->getTriangle(queryTriangles[ti]);
     Vector3 hitPoint;
 
     bool rayHit = tri.aabb_.intersectRay(ray.start, rayDirection);
@@ -1371,12 +1375,12 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
         tri.normal_, hitPoint);
     }
     if (rayHit) {
-      hits.push_back(triangles[ti]);
+      hits.push_back(queryTriangles[ti]);
       lmReal dist = (hitPoint-ray.start).dot(rayDirection);
       if (0 <= dist && dist < minDist || collectall) {
         minDist = dist;
 
-        rayCastOutput.triangleIdx = triangles[ti];
+        rayCastOutput.triangleIdx = queryTriangles[ti];
         rayCastOutput.position = hitPoint;
         rayCastOutput.normal = tri.normal_;
         rayCastOutput.dist = dist;

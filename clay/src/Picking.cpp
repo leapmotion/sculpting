@@ -31,7 +31,8 @@ void Picking::intersectionRayMesh(Mesh *mesh, const Vector3& vertexNear, const V
   pickedTriangle_ = -1;
   VertexVector &vertices = mesh->getVertices();
   TriangleVector &triangles = mesh->getTriangles();
-  std::vector<int> iTrisCandidates = mesh->getOctree()->intersectRay(vertexNear,(vertexFar-vertexNear).normalized());
+  std::vector<int> iTrisCandidates;
+  mesh->getOctree()->intersectRay(vertexNear,(vertexFar-vertexNear).normalized(), iTrisCandidates);
   float distance = std::numeric_limits<float>::max();
   int nbTrisCandidates = iTrisCandidates.size();
 #pragma omp parallel for
@@ -77,7 +78,8 @@ void Picking::setPickedVerticesInsideSphere(float radiusWorldSquared)
   pickedVertices_.clear();
   VertexVector &vertices = mesh_->getVertices();
   std::vector<Octree*> &leavesHit = mesh_->getLeavesUpdate();
-  std::vector<int> iTrisInCells = mesh_->getOctree()->intersectSphere(intersectionPoint_,radiusWorldSquared,leavesHit);
+  std::vector<int> iTrisInCells;
+  mesh_->getOctree()->intersectSphere(intersectionPoint_,radiusWorldSquared,leavesHit,iTrisInCells);
   std::vector<int> iVerts;
   mesh_->getVerticesFromTriangles(iTrisInCells, iVerts);
   int nbVerts = iVerts.size();

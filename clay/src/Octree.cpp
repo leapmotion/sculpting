@@ -110,49 +110,30 @@ void Octree::draw() const
 }
 
 /** Return triangles in cells hit by a ray */
-std::vector<int> Octree::intersectRay(const Vector3& vert, const Vector3& dir) const
-{
-  if(aabbLoose_.intersectRay(vert,dir))
-  {
-    if (child_[0]!=0)
-    {
-      std::vector<int> iTriangles;
-      for (int i=0;i<8;++i)
-      {
-        std::vector<int> iTris = child_[i]->intersectRay(vert, dir);
-        iTriangles.insert(iTriangles.end(), iTris.begin(), iTris.end());
+void Octree::intersectRay(const Vector3& vert, const Vector3& dir, std::vector<int>& trisHit) const {
+  if(aabbLoose_.intersectRay(vert,dir)) {
+    if (child_[0]!=0) {
+      for (int i=0;i<8;++i) {
+        child_[i]->intersectRay(vert, dir, trisHit);
       }
-      return iTriangles;
+    } else {
+      trisHit.insert(trisHit.end(), iTris_.begin(), iTris_.end());
     }
-    else
-      return iTris_;
   }
-  return std::vector<int>();
 }
 
 /** Return triangles inside a sphere */
-std::vector<int> Octree::intersectSphere(const Vector3& vert, float radiusSquared,
-                                         std::vector<Octree*> &leavesHit)
-{
-  if(aabbSplit_.intersectSphere(vert,radiusSquared))
-  {
-    if (child_[0]!=0)
-    {
-      std::vector<int> iTriangles;
-      for (int i=0;i<8;++i)
-      {
-        std::vector<int> iTris = child_[i]->intersectSphere(vert, radiusSquared,leavesHit);
-        iTriangles.insert(iTriangles.end(), iTris.begin(), iTris.end());
+void Octree::intersectSphere(const Vector3& vert, float radiusSquared, std::vector<Octree*> &leavesHit, std::vector<int>& trisHit) {
+  if(aabbSplit_.intersectSphere(vert,radiusSquared)) {
+    if (child_[0]!=0) {
+      for (int i=0;i<8;++i) {
+        child_[i]->intersectSphere(vert, radiusSquared,leavesHit, trisHit);
       }
-      return iTriangles;
-    }
-    else
-    {
+    } else {
       leavesHit.push_back(this);
-      return iTris_;
+      trisHit.insert(trisHit.end(), iTris_.begin(), iTris_.end());
     }
   }
-  return std::vector<int>();
 }
 
 /** Add triangle in the octree, subdivide the cell if necessary */

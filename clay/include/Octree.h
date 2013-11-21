@@ -29,8 +29,8 @@ public:
   Octree* getParent();
   Octree **getChildren();
   void draw() const;
-  std::vector<int> intersectRay(const Vector3& vert, const Vector3& dir) const;
-  std::vector<int> intersectSphere(const Vector3& vert, float radiusSquared, std::vector<Octree*> &leavesHit);
+  void intersectRay(const Vector3& vert, const Vector3& dir, std::vector<int>& trisHit) const;
+  void intersectSphere(const Vector3& vert, float radiusSquared, std::vector<Octree*> &leavesHit, std::vector<int>& trisHit);
   void addTriangle(Mesh *mesh, Triangle &tri);
   static void checkEmptiness(Octree* leaf, std::vector<Octree*> &cutLeaves);
 

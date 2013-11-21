@@ -413,6 +413,8 @@ public:
 
   std::mutex mutex;
 
+  std::vector<int> queryTriangles;
+
 public:
 
   // Settings

@@ -110,6 +110,8 @@ private:
 
   VertexVector vertices_; //vertices
   TriangleVector triangles_; //triangles
+  std::vector<int> queryTriangles_;
+  std::vector<int> queryVertices_;
   GLint verticesBufferCount_;
   GLint indicesBufferCount_;
   GLBuffer verticesBuffer_; //vertices buffer (openGL)
