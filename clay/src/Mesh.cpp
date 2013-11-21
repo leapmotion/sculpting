@@ -553,6 +553,11 @@ void Mesh::updateGPUBuffers() {
   if (nbTris > 0) {
     GLuint* indicesArray;
     indicesBuffer_.bind(); indicesArray = (GLuint*)indicesBuffer_.map(GL_WRITE_ONLY); indicesBuffer_.release();
+    if (indicesArray == nullptr)
+    {
+      initIndexVBO();
+      indicesBuffer_.bind(); indicesArray = (GLuint*)indicesBuffer_.map(GL_WRITE_ONLY); indicesBuffer_.release();
+    }
     for (int i=0; i<nbTris; i++) {
       const IndexUpdate& cur = indexUpdates_[i];
       const int j = cur.idx;
