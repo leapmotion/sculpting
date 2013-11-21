@@ -2,7 +2,7 @@
 #include "Octree.h"
 
 /** Constructor */
-Octree::Octree(Octree* parent, int depth) : parent_(parent), aabbLoose_(), aabbSplit_(), iTris_(), depth_(depth)
+Octree::Octree(Octree* parent, int depth) : parent_(parent), depth_(depth)
 {
   for (int i=0;i<8;++i)
     child_[i]=0;

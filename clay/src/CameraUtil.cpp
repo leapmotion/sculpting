@@ -228,7 +228,7 @@ void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referen
 }
 
 lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& position, lmReal queryRadius) {
-  std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
+  std::vector<Octree*> leavesHit;
   std::vector<int> tris = mesh->getOctree()->intersectSphere(position, queryRadius*queryRadius, leavesHit);
 
   // Get triangles
@@ -589,7 +589,7 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
 bool CameraUtil::CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal radius )
 {
   // Get potential triangles from the aabb octree.
-  std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
+  std::vector<Octree*> leavesHit;
   std::vector<int> iTrisInCells = mesh->getOctree()->intersectSphere(position,radius*radius,leavesHit);
 
   // Collide each potential triangle; find real collisions.

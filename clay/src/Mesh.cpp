@@ -9,15 +9,15 @@
 
 const float Mesh::globalScale_ = 500.f;
 int Mesh::stateMask_ = 1;
-const int undoLimit_ = 10;
+const int undoLimit_ = 20;
 
 /** Constructor */
-Mesh::Mesh() : center_(Vector3::Zero()), scale_(1), lastUpdateTime_(0.0),
+Mesh::Mesh() : center_(Vector3::Zero()), scale_(1), lastUpdateTime_(0.0), translation_(Vector3::Zero()),
   octree_(0), rotationMatrix_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
   normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER), colorsBuffer_(GL_ARRAY_BUFFER),
   rotationOrigin_(Vector3::Zero()), rotationAxis_(Vector3::UnitY()), rotationVelocity_(0.0f), curRotation_(0.0f),
   verticesBufferCount_(0), indicesBufferCount_(0), reallocateVerticesBuffer_(true), reallocateIndicesBuffer_(true),
-  undoPending_(false), redoPending_(false), nbGPUTriangles(0), pendingGPUTriangles(0), translation_(Vector3::Zero())
+  undoPending_(false), redoPending_(false), nbGPUTriangles(0), pendingGPUTriangles(0), pendingGPUVertices(0)
 { }
 
 /** Destructor */
@@ -330,7 +330,7 @@ void Mesh::drawOctree() const {
 }
 
 void Mesh::initVertexVBO() {
-  const int nbVertices = getNbVertices();
+  const int nbVertices = pendingGPUVertices;
   verticesBufferCount_ = 2*nbVertices;
   const int verticesBytes = verticesBufferCount_*3*sizeof(GLfloat);
 
@@ -362,7 +362,7 @@ void Mesh::initVertexVBO() {
 }
 
 void Mesh::initIndexVBO() {
-  const int nbTriangles = getNbTriangles();
+  const int nbTriangles = pendingGPUTriangles;
   indicesBufferCount_ = 2*nbTriangles;
   const int indicesBytes = indicesBufferCount_*3*sizeof(GLuint);
 
@@ -378,13 +378,13 @@ void Mesh::initIndexVBO() {
 }
 
 void Mesh::reinitVerticesBuffer() {
+  std::cout << "Reinializing vertices buffer" << std::endl;
   vertexUpdates_.clear();
-  reallocateVerticesBuffer_ = true;
 
   const int nbVertices = getNbVertices();
   for (int i=0; i<nbVertices; i++) {
     VertexUpdate update;
-    update.idx = i;
+    update.idx = vertices_[i].id_;
     update.color = vertices_[i].material_;
     update.normal = vertices_[i].normal_;
     update.pos = vertices_[i];
@@ -393,13 +393,13 @@ void Mesh::reinitVerticesBuffer() {
 }
 
 void Mesh::reinitIndicesBuffer() {
+  std::cout << "Reinializing indices buffer" << std::endl;
   indexUpdates_.clear();
-  reallocateIndicesBuffer_ = true;
 
   const int nbTriangles = getNbTriangles();
   for (int i=0; i<nbTriangles; i++) {
     IndexUpdate update;
-    update.idx = i;
+    update.idx = triangles_[i].id_;
     update.indices[0] = triangles_[i].vIndices_[0];
     update.indices[1] = triangles_[i].vIndices_[1];
     update.indices[2] = triangles_[i].vIndices_[2];
@@ -477,6 +477,8 @@ bool Mesh::initMesh()
 
   reinitIndicesBuffer();
   reinitVerticesBuffer();
+  reallocateVerticesBuffer_ = true;
+  reallocateIndicesBuffer_ = true;
   pendingGPUTriangles = getNbTriangles();
 //  pendingGPUVertices = getNbVertices();
   return true;
@@ -485,36 +487,22 @@ bool Mesh::initMesh()
 /** Update geometry  */
 void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVerts)
 {
-  const int nbTris=iTris.size();
-  const int nbVerts=iVerts.size();
-#pragma omp parallel for //recompute triangle normals and aabb
-  for (int i=0;i<nbTris;++i)
-  {
-    Triangle &t=triangles_[iTris[i]];
-    const Vector3& v1=vertices_[t.vIndices_[0]];
-    const Vector3& v2=vertices_[t.vIndices_[1]];
-    const Vector3& v3=vertices_[t.vIndices_[2]];
-    Vector3 normal = (v2-v1).cross(v3-v1);
-    float length = normal.norm();
-    if (length < 0.001f) {
-      LM_ASSERT(false, "Bad normal");
-      t.normal_ = Vector3::UnitY();
-    } else {
-      t.normal_ = normal/length;
-    }
-    LM_ASSERT(fabs(t.normal_.norm() - 1.0f) < 0.001f, "Bad normal");
-    t.aabb_ = Geometry::computeTriangleAabb(v1,v2,v3);
-  }
+  computeTriangleNormals(iTris);
   updateOctree(iTris);
-  updateNormals(iVerts);
+  computeVertexNormals(iVerts);
+
 #if _WIN32
   LM_ASSERT(_CrtCheckMemory(), "Bad heap");
 #endif
 
+  const int totalTris = getNbTriangles();
+  const int totalVerts = getNbVertices();
+
   std::unique_lock<std::mutex> lock(bufferMutex_);
 
-  if (getNbTriangles() < indicesBufferCount_) {
+  if (totalTris < indicesBufferCount_) {
     // within storage bounds, so it's OK to only update part of the buffer
+    const int nbTris=iTris.size();
     for (int i=0; i<nbTris; i++) {
       IndexUpdate update;
       update.idx = iTris[i];
@@ -526,10 +514,12 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
   } else {
     // not enough space, reallocate
     reinitIndicesBuffer();
+    reallocateIndicesBuffer_ = true;
   }
 
-  if (getNbVertices() < verticesBufferCount_) {
+  if (totalVerts < verticesBufferCount_) {
     // within storage bounds, so it's OK to only update part of the buffer
+    const int nbVerts=iVerts.size();
     for (int i=0; i<nbVerts; i++) {
       VertexUpdate update;
       update.idx = iVerts[i];
@@ -541,10 +531,11 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
   } else {
     // not enough space, reallocate
     reinitVerticesBuffer();
+    reallocateVerticesBuffer_ = true;
   }
 
-  pendingGPUTriangles = getNbTriangles();
-//  pendingGPUVertices = getNbVertices();
+  pendingGPUTriangles = totalTris;
+  pendingGPUVertices = totalVerts;
 }
 
 void Mesh::updateGPUBuffers() {
@@ -665,8 +656,29 @@ void Mesh::updateOctree(const std::vector<int> &iTris)
   }
 }
 
+void Mesh::computeTriangleNormals(const std::vector<int> &iTris) {
+  const int nbTris = iTris.size();
+  for (int i=0;i<nbTris;++i)
+  {
+    Triangle &t=triangles_[iTris[i]];
+    const Vector3& v1=vertices_[t.vIndices_[0]];
+    const Vector3& v2=vertices_[t.vIndices_[1]];
+    const Vector3& v3=vertices_[t.vIndices_[2]];
+    Vector3 normal = (v2-v1).cross(v3-v1);
+    float length = normal.norm();
+    if (length < 0.001f) {
+      LM_ASSERT(false, "Bad normal");
+      t.normal_ = Vector3::UnitY();
+    } else {
+      t.normal_ = normal/length;
+    }
+    LM_ASSERT(fabs(t.normal_.norm() - 1.0f) < 0.001f, "Bad normal");
+    t.aabb_ = Geometry::computeTriangleAabb(v1,v2,v3);
+  }
+}
+
 /** Update normals */
-void Mesh::updateNormals(const std::vector<int> &iVerts)
+void Mesh::computeVertexNormals(const std::vector<int> &iVerts)
 {
   int nbVers = iVerts.size();
   for (int i=0;i<nbVers;++i)
@@ -808,6 +820,7 @@ void Mesh::handleUndoRedo() {
   if (redoPending_) {
     performRedo();
   }
+  leavesUpdate_.clear();
 }
 
 /** Undo (also push_back the redo) */
@@ -887,8 +900,11 @@ void Mesh::performUndo()
     }
   }
   recomputeOctree(undoIte_->aabbState_);
+  std::unique_lock<std::mutex> lock(bufferMutex_);
   reinitVerticesBuffer();
   reinitIndicesBuffer();
+  pendingGPUTriangles = getNbTriangles();
+  pendingGPUVertices = getNbVertices();
   redo_.push_back(redo);
   if(undoIte_!=undo_.begin())
   {
@@ -929,8 +945,11 @@ void Mesh::performRedo()
     vertices_[v.id_] = v;
   }
   recomputeOctree(redoIte_->aabbState_);
+  std::unique_lock<std::mutex> lock(bufferMutex_);
   reinitVerticesBuffer();
   reinitIndicesBuffer();
+  pendingGPUTriangles = getNbTriangles();
+  pendingGPUVertices = getNbVertices();
   if(!beginIte_) {
     ++undoIte_;
   } else {

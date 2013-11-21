@@ -98,7 +98,8 @@ public:
 private:
 
   void updateOctree(const std::vector<int> &iTris);
-  void updateNormals(const std::vector<int> &iVerts);
+  void computeTriangleNormals(const std::vector<int> &iTris);
+  void computeVertexNormals(const std::vector<int> &iVerts);
   float angleTri(int iTri, int iVer);
   void initIndexVBO();
   void initVertexVBO();
@@ -119,6 +120,7 @@ private:
   bool reallocateIndicesBuffer_;
   int pendingGPUTriangles;
   int nbGPUTriangles;
+  int pendingGPUVertices;
   Vector3 center_; //center of mesh
   float scale_; //scale
   Octree *octree_; //octree
