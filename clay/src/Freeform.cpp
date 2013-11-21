@@ -404,7 +404,9 @@ void FreeformApp::update()
   LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
   LM_ASSERT_IDENTICAL(updateCount++);
   LM_ASSERT_IDENTICAL("\r\n");
-  std::cout << "Update frame #" << updateCount << std::endl;
+#if LM_LOG_CAMERA_LOGIC_4
+  std::cout << std::endl << "Frm#" << updateCount << " ";
+#endif
 
   const double curTime = ci::app::getElapsedSeconds();
   LM_TRACK_CONST_VALUE(curTime);

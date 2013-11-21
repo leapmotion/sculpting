@@ -46,6 +46,11 @@ inline T lmClip(T val, T min, T max) {
 }
 
 template <typename T>
+inline bool lmInRange(T val, T min, T max) {
+  return min <= val && val <= max;
+}
+
+template <typename T>
 inline T lmInterpolate(lmReal t, const T& v0, const T& v1) {
   return (1-t)*v0+t*v1;
 }

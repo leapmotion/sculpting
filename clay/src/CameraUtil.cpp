@@ -4,9 +4,17 @@
 #include "Geometry.h"
 #include "DataTypes.h"
 
+#if LM_PRODUCTION_BUILD
 #define LM_LOG_CAMERA_LOGIC 0
 #define LM_LOG_CAMERA_LOGIC_2 0
 #define LM_LOG_CAMERA_LOGIC_3 0
+#define LM_LOG_CAMERA_LOGIC_4 0
+#else
+#define LM_LOG_CAMERA_LOGIC 0
+#define LM_LOG_CAMERA_LOGIC_2 0
+#define LM_LOG_CAMERA_LOGIC_3 1
+#define LM_LOG_CAMERA_LOGIC_4 1
+#endif
 
 CameraUtil::CameraUtil() {
   transform.setIdentity();
@@ -1556,6 +1564,10 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
 
 void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& movement )
 {
+  LM_DRAW_CROSS(state->refPosition, 20.0f, lmColor::GREEN);
+  LM_DRAW_CROSS(state->closestPointOnMesh.position, 20.0f, lmColor::RED);
+  LM_DRAW_ARROW(state->closestPointOnMesh.position, state->closestPointOnMesh.position + state->closestPointOnMesh.normal * 40.0f, lmColor::RED);
+
   // Check if current refPosition is inside the mesh (which may happen sculpting) and correct it.
   {
     int attemptCount = 0;
@@ -1644,11 +1656,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   LM_ASSERT(lmIsNormalized(state->refNormal), "Iso normal failed.")
 
   // Update camera
-  IsoUpdateCameraDirection(-state->refNormal, state);
-
-  LM_DRAW_CROSS(state->refPosition, 20.0f, lmColor::GREEN);
-  LM_DRAW_CROSS(state->closestPointOnMesh.position, 20.0f, lmColor::RED);
-  LM_DRAW_ARROW(state->closestPointOnMesh.position, state->closestPointOnMesh.position + state->closestPointOnMesh.normal * 40.0f, lmColor::RED);
+  IsoUpdateCameraTransform(-state->refNormal, state);
 
   LM_ASSERT(state->refDist < 10000, "Reference distance exploded.")
 
