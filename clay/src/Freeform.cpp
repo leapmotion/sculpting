@@ -986,7 +986,10 @@ FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& rend
       break;
     }
   }
-  assert(it != render_string.end());
+  if (it == render_string.end()) {
+    std::cout << render_string << std::endl;
+    return FreeformApp::MID;
+  }
   int model_number = atoi(render_string.substr(it - render_string.begin()).c_str());
   if (render_string.find("Intel HD") != std::string::npos) {
     return FreeformApp::LOW;
