@@ -40,10 +40,12 @@ private:
   std::mutex m_saveMutex;
   std::condition_variable m_saveCondition;
   bool m_savePending;
+  double m_lastSaveTime;
 
   static const std::string APPLICATION_DIRECTORY;
   static const char PATH_SEPARATOR_WINDOWS;
   static const char PATH_SEPARATOR_UNIX;
+  static const double MIN_TIME_BETWEEN_AUTOSAVES;
 
 };
 

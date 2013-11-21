@@ -22,6 +22,7 @@
 
 const char AutoSave::PATH_SEPARATOR_WINDOWS = '\\';
 const char AutoSave::PATH_SEPARATOR_UNIX = '/';
+const double AutoSave::MIN_TIME_BETWEEN_AUTOSAVES = 30.0;
 
 #ifdef _WIN32
 const char AutoSave::PATH_SEPARATOR = PATH_SEPARATOR_WINDOWS;
@@ -36,7 +37,7 @@ const std::string AutoSave::APPLICATION_DIRECTORY = "Freeform";
 const std::string AutoSave::APPLICATION_DIRECTORY[] = ".Freeform";
 #endif
 
-AutoSave::AutoSave() : m_shutdown(false), m_savePending(false), m_scale(1.0f) {
+AutoSave::AutoSave() : m_shutdown(false), m_savePending(false), m_scale(1.0f), m_lastSaveTime(-MIN_TIME_BETWEEN_AUTOSAVES) {
 
 }
 
@@ -59,11 +60,15 @@ void AutoSave::shutdown() {
 
 void AutoSave::triggerAutoSave(Mesh* mesh) {
   std::unique_lock<std::mutex> lock(m_saveMutex);
-  m_vertices = mesh->getVertices();
-  m_triangles = mesh->getTriangles();
-  m_scale = mesh->getScale();
-  m_savePending = true;
-  m_saveCondition.notify_all();
+  const double curTime = ci::app::getElapsedSeconds();
+  if (curTime - m_lastSaveTime > MIN_TIME_BETWEEN_AUTOSAVES) {
+    m_vertices = mesh->getVertices();
+    m_triangles = mesh->getTriangles();
+    m_scale = mesh->getScale();
+    m_savePending = true;
+    m_saveCondition.notify_all();
+    m_lastSaveTime = curTime;
+  }
 }
 
 bool AutoSave::haveAutoSave() const {
