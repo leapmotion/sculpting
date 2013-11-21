@@ -472,13 +472,14 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 
   const int NUM_TUTORIAL_ENTRIES = 3;
-  _tutorial_menu.setName("Navigation");
+  _tutorial_menu.setName("Tutorial");
   _tutorial_menu.setPosition(Vector2(0.65f, 0.75f));
   _tutorial_menu.setNumEntries(NUM_TUTORIAL_ENTRIES);
   entryType = Menu::TUTORIAL_NEXT;
   _tutorial_menu.setAngleOffset(static_cast<float>(M_PI) + angleOffsetForPosition(_tutorial_menu.getPosition()));
   _tutorial_menu.setDefaultEntry(0);
   _tutorial_menu.setActionsOnly(true);
+  _tutorial_menu.setAlwaysActivated(true);
   for (int i=0; i<NUM_TUTORIAL_ENTRIES; i++) {
     Menu::MenuEntry& entry = _tutorial_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
