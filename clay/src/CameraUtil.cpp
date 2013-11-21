@@ -1421,7 +1421,8 @@ bool CameraUtil::VerifyCameraMovement( Mesh* mesh, const Vector3& from, const Ve
 lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal queryRadius )
 {
   std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
-  std::vector<int> selectedTriangles = mesh->getOctree()->intersectSphere(position,queryRadius*queryRadius,leavesHit);
+  queryTriangles.clear();
+  mesh->getOctree()->intersectSphere(position,queryRadius*queryRadius,leavesHit, queryTriangles);
 
   //lmReal radius = Get
   lmReal potential = 0.0;
@@ -1437,9 +1438,9 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
     const TriangleVector& triangles = mesh->getTriangles();
 
 
-    for (unsigned ti = 0; ti < selectedTriangles.size(); ti+= striding)
+    for (unsigned ti = 0; ti < queryTriangles.size(); ti+= striding)
     {
-      const Triangle& tri = triangles[selectedTriangles[ti]];
+      const Triangle& tri = triangles[queryTriangles[ti]];
 
       Geometry::GetClosestPointInput input(mesh, &tri, position);
       Geometry::GetClosestPointOutput output;
@@ -1499,7 +1500,7 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
     //lmReal maxd = -1000000000.0f;
 
     std::vector<int> selectedVertices;
-    mesh->getVerticesFromTriangles(selectedTriangles, selectedVertices);
+    mesh->getVerticesFromTriangles(queryTriangles, selectedVertices);
 
     const VertexVector& vertices = mesh->getVertices();
 
