@@ -6,6 +6,8 @@
 #include <streambuf>
 #include <iostream>
 
+#define ENABLE_REPLAY_UTIL 0
+
 #define LM_USE_ITEMS 0
 
 #ifndef LM_BREAK
@@ -88,9 +90,12 @@ private:
 std::ostream& operator << (std::ostream& os, const ReplayUtil::Item& i);
 std::istream& operator >> (std::istream& is, ReplayUtil::Item& i);
 
+#if ENABLE_REPLAY_UTIL
+
 #define LM_START_RECORD() ReplayUtil::getInstance().setMode(ReplayUtil::MODE_RECORD)
 #define LM_START_REPLAY() ReplayUtil::getInstance().setMode(ReplayUtil::MODE_REPLAY)
 
+#define LM_TRACK_IS_ACTIVE() (ReplayUtil::getInstance().getMode() != ReplayUtil::MODE_INACTIVE)
 #define LM_TRACK_IS_RECORDING() (ReplayUtil::getInstance().getMode() == ReplayUtil::MODE_RECORD)
 #define LM_TRACK_IS_REPLAYING() (ReplayUtil::getInstance().getMode() == ReplayUtil::MODE_REPLAY)
 
@@ -105,6 +110,28 @@ std::istream& operator >> (std::istream& is, ReplayUtil::Item& i);
 #define LM_ASSERT_IDENTICAL(value) ReplayUtil::getInstance().assertIdentical(value)
 
 #define LM_TRACK_TODO() 
+
+#else
+
+#define LM_START_RECORD()
+#define LM_START_REPLAY()
+
+#define LM_TRACK_IS_ACTIVE() false
+#define LM_TRACK_IS_RECORDING() false
+#define LM_TRACK_IS_REPLAYING() false
+
+#define LM_TRACK_VALUE(value) value
+#define LM_TRACK_CONST_VALUE(value) value
+
+#define LM_RETURN_TRACKED(value) value
+
+#define LM_RETURN_TRACKED_CONDITIONAL(condition, value, type) value // LM_ASSERT(condition)
+
+#define LM_ASSERT_IDENTICAL(value) value
+
+#define LM_TRACK_TODO()
+
+#endif
 
 template <bool b> struct StaticAssert {};
 template <> struct StaticAssert<true> { static void Assert() {} };

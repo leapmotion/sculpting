@@ -495,7 +495,7 @@ void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt) {
 
   std::vector<ci::Vec4f> tips = leap->getTips();
   LM_ASSERT_IDENTICAL(tips.size());
-  for (int i = 0; i < tips.size(); i++)
+  for (unsigned i = 0; i < tips.size(); i++)
   {
      LM_ASSERT_IDENTICAL(tips[i]);
   }

@@ -401,8 +401,7 @@ void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float
 void FreeformApp::update()
 {
   static int updateCount = 0;
-  LM_ASSERT_IDENTICAL(1478);
-  LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #")
+  LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
   LM_ASSERT_IDENTICAL(updateCount++);
   LM_ASSERT_IDENTICAL("\r\n");
   std::cout << "Update frame #" << updateCount << std::endl;
