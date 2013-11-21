@@ -14,8 +14,8 @@
 class Octree
 {
 public:
-  static const int maxDepth_ = 12;
-  static const int maxTriangles_ = 2000;
+  static const int maxDepth_ = 15;
+  static const int maxTriangles_ = 200;
 
 public:
   Octree(Octree *parent=0, int depth = 0);
