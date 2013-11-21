@@ -61,7 +61,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   float radius = 0.0f;
   const float curRadius = m_activation.value*(m_outerRadius - m_innerRadius) + m_innerRadius;
   float closest = 9999.0f;
-  if (g_sculptMult.value > 0.5f) {
+  //if (g_sculptMult.value > 0.5f) {
     for (int i=0; i<numTips; i++) {
       //const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
       const Vector2 pos(tips[i].x, 1.0f - tips[i].y);
@@ -84,7 +84,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
       }
       closest = std::min(closest, radius);
     }
-  }
+  //}
   float maxActivation = 0.0f;
   int maxIdx;
 
@@ -357,7 +357,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.m_value = 30.0f*ratio + 10.0f;
   }
 
-  const int NUM_COLOR_ENTRIES = 8;
+  const int NUM_COLOR_ENTRIES = 10;
   _color_menu.setName("Color");
   _color_menu.setPosition(Vector2(0.925f, 0.65f));
   _color_menu.setNumEntries(NUM_COLOR_ENTRIES);
