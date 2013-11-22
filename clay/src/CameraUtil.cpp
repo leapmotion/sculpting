@@ -1761,11 +1761,22 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   }
 
   // Saftey clip movement so that the camera doesn't go past the safety distance.
-  if ((state->refPosition + clippedMovement).norm() > params.maxDist) {
-    Vector3 newPos = state->refPosition + clippedMovement;
-    newPos.normalize();
-    newPos *= params.maxDist;
-    clippedMovement = newPos - state->refPosition;
+  if (0) {
+    if ((state->refPosition + clippedMovement).norm() > params.maxDist) {
+      Vector3 newPos = state->refPosition + clippedMovement;
+      newPos.normalize();
+      newPos *= params.maxDist;
+      clippedMovement = newPos - state->refPosition;
+    }
+  } else  {
+    if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > params.maxDist/(1+params.isoRefDistMultiplier)*1.5f) {
+      // Clip to the closest point
+      Vector3 newRelPos = (state->refPosition - state->closestPointOnMesh.position) + clippedMovement;
+      newRelPos.normalize();
+      newRelPos *= params.maxDist/(1+params.isoRefDistMultiplier)*1.5f;
+      Vector3 newPos = state->closestPointOnMesh.position + newRelPos;
+      clippedMovement = newPos - state->refPosition;
+    }
   }
 
 
