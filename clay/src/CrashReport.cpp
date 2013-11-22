@@ -7,6 +7,7 @@
   strictly forbidden unless prior written permission is obtained from Leap Motion.
 
 ===================================================================================================================*/
+#include "StdAfx.h"
 #include "CrashReport.h"
 
 #if USE_CRASH_REPORTING

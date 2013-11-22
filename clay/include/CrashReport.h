@@ -6,6 +6,11 @@
 * between Leap Motion and you, your company or other organization.             *
 \******************************************************************************/
 
+#ifndef __CRASHREPORT_H__
+#define __CRASHREPORT_H
+
+#define USE_CRASH_REPORTING 1
+
 #if USE_CRASH_REPORTING
 namespace google_breakpad {
   class ExceptionHandler;
@@ -37,4 +42,6 @@ inline void CrashReport::CallExtraHandler() const {
 inline CrashReport::CrashReport(ExtraHandler) {}
 inline CrashReport::~CrashReport() {}
 inline void CrashReport::CallExtraHandler() const {}
+#endif
+
 #endif

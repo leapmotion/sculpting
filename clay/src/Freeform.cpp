@@ -584,7 +584,7 @@ void FreeformApp::updateLeapAndMesh() {
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
           sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
-          _camera_util->timeOfLastScupt = sculpt_.getLastSculptTime();
+          _camera_util->timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
@@ -1393,6 +1393,26 @@ int main( int argc, char * const argv[] ) {
   return 0;
 }
 #else
-//CINDER_APP_NATIVE( FreeformApp, RendererGl )
-CINDER_APP_NATIVE( FreeformApp, RendererGl(RendererGl::AA_NONE) )
+
+#if _WIN32
+int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,int nCmdShow) {
+  CrashReport cr;
+  cinder::app::AppBasic::prepareLaunch();
+  cinder::app::AppBasic *app = new FreeformApp;
+  cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
+  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm");
+  cinder::app::AppBasic::cleanupLaunch();
+  return 0;
+}
+#else
+int main( int argc, char * const argv[] ) {
+  CrashReport cr;
+  cinder::app::AppBasic::prepareLaunch();
+  cinder::app::AppBasic *app = new FreeformApp;
+  cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
+  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm", argc, argv);
+  cinder::app::AppBasic::cleanupLaunch();
+}
+#endif
+
 #endif
