@@ -444,11 +444,19 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
+#if _WIN32
   const int NUM_EDITING_ENTRIES = 4;
+#else
+  const int NUM_EDITING_ENTRIES = 3;
+#endif
   _editing_menu.setName("Edit");
   _editing_menu.setPosition(Vector2(0.5f, 0.075f));
   _editing_menu.setNumEntries(NUM_EDITING_ENTRIES);
+#if _WIN32
   entryType = Menu::EDITING_TOGGLE_WIREFRAME;
+#else
+  entryType = Menu::EDITING_TOGGLE_SYMMETRY;
+#endif
   _editing_menu.setAngleOffset(angleOffsetForPosition(_editing_menu.getPosition()));
   _editing_menu.setDefaultEntry(0);
   _editing_menu.setActionsOnly(true);
