@@ -389,7 +389,7 @@ void FreeformApp::keyDown( KeyEvent event )
   switch( event.getChar() )
   {
 #if !LM_PRODUCTION_BUILD
-  case KeyEvent::KEY_ESCAPE: quit(); break;
+  case KeyEvent::KEY_ESCAPE: doQuit(); break;
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
   case 's': symmetry_ = !symmetry_; break;
@@ -531,7 +531,13 @@ void FreeformApp::updateLeapAndMesh() {
 #else 
     bool suppress = false;
 #endif 
-    bool haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+    bool haveFrame;
+    try {
+      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+    } catch (...) {
+      std::cerr << "Failed trying to processInteraction\n";
+      haveFrame = false;
+    }
 
     if (haveFrame) {
       const double lastSculptTime = sculpt_.getLastSculptTime();
