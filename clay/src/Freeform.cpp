@@ -402,6 +402,7 @@ void FreeformApp::keyDown( KeyEvent event )
 #if __APPLE__
   case 'y': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
   case 'z': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
+  case 'f': if (event.isMetaDown()) toggleFullscreen(""); break;
 #else
   case 'y': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
   case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;

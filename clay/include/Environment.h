@@ -67,7 +67,7 @@ public:
 private:
 
   static const int MIPMAP_LEVELS = 6;
-  static const int NUM_CHANNELS = 3;
+  static const int NUM_CHANNELS;
   static const int CUBEMAP_SIDES = 6;
 
   struct CubemapImages {

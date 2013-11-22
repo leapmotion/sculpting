@@ -14,6 +14,8 @@
 
 using namespace ci::app;
 
+const int Environment::NUM_CHANNELS = 3;
+
 CCubeMapProcessor* Environment::_cubemap_processor = new CCubeMapProcessor();
 std::vector<Environment::EnvironmentInfo> Environment::_environment_infos;
 std::string Environment::working_directory;
@@ -165,7 +167,7 @@ void Environment::finishProcessing() {
   _loading_state = LOADING_STATE_NONE;
 
   _cur_environment = _pending_environment;
-  _pending_environment == "";
+  _pending_environment = "";
 
   GLBuffer::checkError("Finish processing");
 }
