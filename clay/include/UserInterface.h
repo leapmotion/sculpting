@@ -67,9 +67,9 @@ public:
 
     // general
     GENERAL_TUTORIAL,
-    GENERAL_TOGGLE_SOUND,
-    GENERAL_EXIT,
     GENERAL_ABOUT,
+    GENERAL_EXIT,
+    GENERAL_TOGGLE_SOUND,
 
     // object
     OBJECT_LOAD,
