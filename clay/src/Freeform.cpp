@@ -535,7 +535,6 @@ void FreeformApp::updateLeapAndMesh() {
     try {
       haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
     } catch (...) {
-      std::cerr << "Failed trying to processInteraction\n";
       haveFrame = false;
     }
 
