@@ -1507,9 +1507,13 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
         //const lmReal weightDenominator = std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
 
         // avoid calling std::pow
-        const lmReal distPowered = distSqr;//  std std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
-        const lmReal weightDenominator = queryRadiusSqr;// std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
+        lmReal distPowered = distSqr;//  std std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
+        lmReal weightDenominator = queryRadiusSqr;// std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
 
+        distPowered *= distSqr;
+        weightDenominator *= queryRadiusSqr;
+        distPowered *= distSqr;
+        weightDenominator *= queryRadiusSqr;
 #if 0
         if (params.grav_n > 2.0f)
         {
@@ -1569,9 +1573,13 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
         //lmReal distPowered = std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
         //const lmReal weightDenominator = std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
 
-        const lmReal distPowered = distSqr;// std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
-        const lmReal weightDenominator = queryRadiusSqr;//std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
+        lmReal distPowered = distSqr;// std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
+        lmReal weightDenominator = queryRadiusSqr;//std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
 
+        distPowered *= distSqr;
+        weightDenominator *= queryRadiusSqr;
+        distPowered *= distSqr;
+        weightDenominator *= queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
         //minw = std::min(minw, weight);
