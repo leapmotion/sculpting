@@ -4,6 +4,7 @@
 #include "cinder/app/App.h"
 #include "CCubeMapProcessor.h"
 #include "Common.h"
+#include "GLBuffer.h"
 
 #if _WIN32
 #include <direct.h>
@@ -13,15 +14,13 @@
 
 using namespace ci::app;
 
-const int MIPMAP_LEVELS = 6;
-
 CCubeMapProcessor* Environment::_cubemap_processor = new CCubeMapProcessor();
 std::vector<Environment::EnvironmentInfo> Environment::_environment_infos;
 std::string Environment::working_directory;
 
 Environment::Environment() : _cur_environment(""), _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0)
 {
-  for (int i = 0; i < 6; ++i)
+  for (int i = 0; i < CUBEMAP_SIDES; ++i)
   {
     bitmaps[i] = nullptr;
   }
@@ -31,7 +30,34 @@ Environment::Environment() : _cur_environment(""), _loading_state(LOADING_STATE_
 
 Environment::~Environment() { }
 
-void Environment::setEnvironment(const std::string& name) {
+void Environment::bindCubeMap(CubeMap map, int pos) {
+  glActiveTexture(GL_TEXTURE0 + pos);
+  switch(map) {
+  case CUBEMAP_SKY: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_sky); break;
+  case CUBEMAP_DEPTH: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_depth); break;
+  case CUBEMAP_IRRADIANCE: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_irradiance); break;
+  case CUBEMAP_RADIANCE: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_radiance); break;
+  default: break;
+  }
+  GLBuffer::checkError("Bind cubemap");
+}
+
+void Environment::unbindCubeMap(int pos) {
+  glActiveTexture(GL_TEXTURE0 + pos);
+  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
+  GLBuffer::checkError("Unbind cubemap");
+}
+
+Environment::EnvironmentInfo* Environment::getEnvironmentInfoFromString(const std::string& name) {
+  for (size_t i=0; i<_environment_infos.size(); i++) {
+    if (_environment_infos[i]._name == name) {
+      return &_environment_infos[i];
+    }
+  }
+  return 0;
+}
+
+void Environment::beginLoading(const std::string& name) {
   if (name == _cur_environment) {
     return;
   }
@@ -54,46 +80,14 @@ void Environment::setEnvironment(const std::string& name) {
     return;
   }
 
-  _cur_environment = name;
+  _pending_environment = name;
 
-  // wait for transition completion
-  _loading_state = LOADING_STATE_DONE_LOADING;
-  std::unique_lock<std::mutex> lock(_loading_mutex);
-  _loading_condition.wait(lock);
-}
-
-void Environment::bindCubeMap(CubeMap map, int pos) {
-  glActiveTexture(GL_TEXTURE0 + pos);
-  switch(map) {
-  case CUBEMAP_SKY: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_sky); break;
-  case CUBEMAP_DEPTH: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_depth); break;
-  case CUBEMAP_IRRADIANCE: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_irradiance); break;
-  case CUBEMAP_RADIANCE: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_radiance); break;
-  }
-}
-
-void Environment::unbindCubeMap(int pos) {
-  glActiveTexture(GL_TEXTURE0 + pos);
-  glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
-}
-
-const std::vector<Environment::EnvironmentInfo>& Environment::getEnvironmentInfos() {
-  return _environment_infos;
-}
-
-Environment::EnvironmentInfo* Environment::getEnvironmentInfoFromString(const std::string& name) {
-  for (size_t i=0; i<_environment_infos.size(); i++) {
-    if (_environment_infos[i]._name == name) {
-      return &_environment_infos[i];
-    }
-  }
-  return 0;
-}
-
-void Environment::transitionComplete() {
-  std::unique_lock<std::mutex> lock(_loading_mutex);
   _loading_state_change_time = getElapsedSeconds();
-  _loading_state = LOADING_STATE_PROCESSING;
+  _loading_state = LOADING_STATE_DONE_LOADING;
+}
+
+void Environment::finishLoading() {
+  std::unique_lock<std::mutex> lock(_loading_mutex);
 
   // free old textures
   if (!_cur_environment.empty()) {
@@ -101,53 +95,79 @@ void Environment::transitionComplete() {
     glDeleteTextures(1, &_cubemap_irradiance);
     glDeleteTextures(1, &_cubemap_radiance);
   }
+  _cur_environment = "";
 
   // generate OpenGL cubemap textures
   prepareCubemap(&_cubemap_sky, 1);
   prepareCubemap(&_cubemap_irradiance, 1);
   prepareCubemap(&_cubemap_radiance, MIPMAP_LEVELS);
 
-  float* images[6];
   int width, height;
   GLint internal_format;
   GLenum format;
 
-  // transfer sky images into OpenGL
-  for (int i=0; i<6; i++) {
-    images[i] = reinterpret_cast<float*>(FreeImage_GetBits(bitmaps[i]));
+  for (int i=0; i<CUBEMAP_SIDES; i++) {
+    orig_images[i] = reinterpret_cast<float*>(FreeImage_GetBits(bitmaps[i]));
   }
   width = bitmap_widths[0];
   height = bitmap_heights[0];
   internal_format = internal_formats[0];
   format = formats[0];
-  saveImagesToCubemap(_cubemap_sky, internal_format, 0, width, height, format, images);
+  saveImagesToCubemap(_cubemap_sky, internal_format, 0, width, height, format, orig_images);
 
-  // generate mipmapped cubemaps of radiance and irradiance from sky images
   static const int DOWNSCALE_FACTOR = 3;
   _cubemap_processor->Clear();
   _cubemap_processor->Init(width, height/DOWNSCALE_FACTOR, MIPMAP_LEVELS, 3);
-  generateMipmappedCubemap(_cubemap_irradiance, internal_format, format, width, width/DOWNSCALE_FACTOR, images, true);
-  generateMipmappedCubemap(_cubemap_radiance, internal_format, format, width, width/DOWNSCALE_FACTOR, images, false);
 
+  irradianceImages.cubemap = _cubemap_irradiance;
+  irradianceImages.internalFormat = internal_format;
+  irradianceImages.inputSize = width;
+  irradianceImages.outputSize = width/DOWNSCALE_FACTOR;
+  irradianceImages.format = format;
+  irradianceImages.irradiance = true;
+
+  radianceImages.cubemap = _cubemap_radiance;
+  radianceImages.internalFormat = internal_format;
+  radianceImages.inputSize = width;
+  radianceImages.outputSize = width/DOWNSCALE_FACTOR;
+  radianceImages.format = format;
+  radianceImages.irradiance = false;
+
+  for (int i=0; i<MIPMAP_LEVELS; i++) {
+    float** irrImages = irradianceImages.images[i];
+    float** radImages = radianceImages.images[i];
+    for (int j=0; j<CUBEMAP_SIDES; j++) {
+      irrImages[j] = 0;
+      radImages[j] = 0;
+    }
+  }
+
+  GLBuffer::checkError("Finish loading");
+}
+
+void Environment::beginProcessing() {
+  _loading_state_change_time = getElapsedSeconds();
+  _loading_state = LOADING_STATE_PROCESSING;
+
+  processMipmappedCubemap(irradianceImages);
+  processMipmappedCubemap(radianceImages);
+
+  _loading_state_change_time = getElapsedSeconds();
+  _loading_state = LOADING_STATE_DONE_PROCESSING;
+}
+
+void Environment::finishProcessing() {
+  uploadMipmappedCubemap(irradianceImages);
+  uploadMipmappedCubemap(radianceImages);
   freeBitmaps(bitmaps);
 
   _loading_state_change_time = getElapsedSeconds();
   _loading_state = LOADING_STATE_NONE;
 
-  _loading_condition.notify_all();
-}
+  _cur_environment = _pending_environment;
+  _pending_environment == "";
 
-Environment::LoadingState Environment::getLoadingState() const {
-  return _loading_state;
-}
-
-float Environment::getTimeSinceLoadingStateChange() const {
-  double cur_time = getElapsedSeconds();
-  return static_cast<float>(cur_time - _loading_state_change_time);
-}
-
-const std::string& Environment::getCurEnvironmentString() const {
-  return _cur_environment;
+  GLBuffer::checkError("Finish processing");
 }
 
 bool Environment::loadImageSet(std::string* filenames,
@@ -157,14 +177,14 @@ bool Environment::loadImageSet(std::string* filenames,
                                GLint* internalFormats,
                                GLenum* formats)
 {
-  for (int i=0; i<6; i++) {
+  for (int i=0; i<CUBEMAP_SIDES; i++) {
     loadBitmap(filenames, i, bitmaps, bitmapWidths, bitmapHeights, internalFormats, formats);
   }
 
   GLint internal_format;
   GLenum format;
   unsigned int width, height;
-  for (int i=0; i<6; i++) {
+  for (int i=0; i<CUBEMAP_SIDES; i++) {
     if (i == 0) {
       internal_format = internalFormats[i];
       format = formats[i];
@@ -218,7 +238,7 @@ void Environment::loadBitmap(std::string* filenames,
 }
 
 void Environment::freeBitmaps(FIBITMAP** bitmaps) {
-  for (int i=0; i<6; i++) {
+  for (int i=0; i<CUBEMAP_SIDES; i++) {
     if (bitmaps[i]) {
       FreeImage_Unload(bitmaps[i]);
       bitmaps[i] = 0;
@@ -226,24 +246,24 @@ void Environment::freeBitmaps(FIBITMAP** bitmaps) {
   }
 }
 
-void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format, GLenum format, int input_size, int output_size, float** images, bool irradiance) {
-  int numChannels = 3;
-  int numLevels = irradiance ? 1 : MIPMAP_LEVELS;
+//void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format, GLenum format, int input_size, int output_size, float** images, bool irradiance) {
+void Environment::processMipmappedCubemap(CubemapImages& cubemapImages) {
+  const int numLevels = cubemapImages.irradiance ? 1 : MIPMAP_LEVELS;
 
-  std::thread threads[6];
-  for (int i=0; i<6; i++) {
+  std::thread threads[CUBEMAP_SIDES];
+  for (int i=0; i<CUBEMAP_SIDES; i++) {
     threads[i] = std::thread(&CCubeMapProcessor::SetInputFaceData,
       _cubemap_processor,
       i,
       CP_VAL_FLOAT32,
-      numChannels,
-      input_size*numChannels*4,
-      images[i],
+      NUM_CHANNELS,
+      cubemapImages.inputSize*NUM_CHANNELS*4,
+      orig_images[i],
       10.0f,
       1.0f,
       1.0f);
   }
-  for (int i=0; i<6; i++) {
+  for (int i=0; i<CUBEMAP_SIDES; i++) {
     threads[i].join();
   }
 
@@ -258,12 +278,11 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
   int NumMipmap = numLevels;
   int CosinePowerMipmapChainMode = CP_COSINEPOWER_CHAIN_DROP;
   bool bExcludeBase = false;
-  bool bIrradianceCubemap = irradiance;
+  bool bIrradianceCubemap = cubemapImages.irradiance;
   int LightingModel = false;
   float GlossScale = 10.0f;
   float GlossBias = 1.0f;
   int EdgeFixupTech = CP_FIXUP_BENT;
-  //bool bCubeEdgeFixup = true;
   int EdgeFixupWidth = 1; 
 
   _cubemap_processor->InitiateFiltering(
@@ -286,31 +305,39 @@ void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format
     GlossBias
     );
 
-  int cur_size = output_size;
-  float* output_images[6];
+  int cur_size = cubemapImages.outputSize;
   for (int i=0; i<numLevels; i++) {
-    int numBytes = cur_size*cur_size*numChannels*4;
-    for (int j=0; j<6; j++) {
-      output_images[j] = new float[numBytes];
+    int numBytes = cur_size*cur_size*NUM_CHANNELS*4;
+    for (int j=0; j<CUBEMAP_SIDES; j++) {
+      cubemapImages.images[i][j] = new float[numBytes];
       threads[j] = std::thread(&CCubeMapProcessor::GetOutputFaceData,
         _cubemap_processor,
         j,
         i,
         CP_VAL_FLOAT32,
-        numChannels,
-        cur_size*numChannels*4,
-        output_images[j],
+        NUM_CHANNELS,
+        cur_size*NUM_CHANNELS*4,
+        cubemapImages.images[i][j],
         1.0f,
         1.0f);
     }
-    for (int j=0; j<6; j++) {
+    for (int j=0; j<CUBEMAP_SIDES; j++) {
       threads[j].join();
     }
+    cur_size /= 2;
+  }
+}
 
-    saveImagesToCubemap(cubemap, internal_format, i, cur_size, cur_size, format, output_images);
+void Environment::uploadMipmappedCubemap(CubemapImages& cubemapImages) {
+  const int numLevels = cubemapImages.irradiance ? 1 : MIPMAP_LEVELS;
 
-    for (int j=0; j<6; j++) {
-      delete[] output_images[j];
+  int cur_size = cubemapImages.outputSize;
+  for (int i=0; i<numLevels; i++) {
+    float** images = cubemapImages.images[i];
+    saveImagesToCubemap(cubemapImages.cubemap, cubemapImages.internalFormat, i, cur_size, cur_size, cubemapImages.format, images);
+    for (int j=0; j<CUBEMAP_SIDES; j++) {
+      delete[] images[j];
+      images[j] = 0;
     }
     cur_size /= 2;
   }
@@ -329,8 +356,7 @@ void Environment::prepareCubemap(GLuint* cubemap, int numLevels) {
 
 void Environment::saveImagesToCubemap(GLuint cubemap, GLint internal_format, int miplevel, unsigned int width, unsigned int height, GLenum format, float** images) {
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubemap);
-  for (int i=0; i<6; i++)
-  {
+  for (int i=0; i<CUBEMAP_SIDES; i++) {
     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + i, miplevel, internal_format, width, height, 0, format, GL_FLOAT, images[i]);
   }
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);

@@ -818,60 +818,77 @@ void FreeformApp::createBloom()
   _vertical_blur_fbo.unbindFramebuffer();
 }
 
-void FreeformApp::draw()
-{
-  static const float LOADING_DARKEN_TIME = 0.75f;
+float FreeformApp::checkEnvironmentLoading() {
+  static const float LOADING_DARKEN_TIME = 0.5f;
   static const float LOADING_LIGHTEN_TIME = 1.5f;
 
+  const Environment::LoadingState loadingState = _environment->getLoadingState();
   const double curTime = ci::app::getElapsedSeconds();
+  const float timeSinceStateChange = static_cast<float>(curTime - _environment->getLastStateChangeTime());
 
-  float exposure_mult = 1.0f;
-  const Environment::LoadingState loading_state = _environment->getLoadingState();
-  const float loading_time = _environment->getTimeSinceLoadingStateChange();
   if (!_environment->haveEnvironment()) {
-#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
-    exposure_mult = 0.0f;
     Menu::updateSculptMult(curTime, 0.0f);
-#endif
-  } else if (loading_state == Environment::LOADING_STATE_LOADING) {
-    float mult = 1.0f - math<float>::clamp(loading_time/LOADING_DARKEN_TIME);
-    exposure_mult *= mult;
-  } else if (loading_state == Environment::LOADING_STATE_DONE_LOADING && loading_time > LOADING_DARKEN_TIME) {
-    _environment->transitionComplete();
-    exposure_mult = 0.0f;
-    Environment::EnvironmentInfo* info = Environment::getEnvironmentInfoFromString(_environment->getCurEnvironmentString());
+  }
+
+  float exposureMult = 1.0f;
+  if (loadingState == Environment::LOADING_STATE_NONE) {
+    const float ratio = math<float>::clamp(timeSinceStateChange/LOADING_LIGHTEN_TIME);
+    exposureMult = Utilities::SmootherStep(ratio*ratio);
+  } else if (loadingState == Environment::LOADING_STATE_LOADING) {
+    const float ratio = 1.0f - math<float>::clamp(timeSinceStateChange/LOADING_DARKEN_TIME);
+    exposureMult = Utilities::SmootherStep(ratio*ratio);
+  } else if (loadingState == Environment::LOADING_STATE_DONE_LOADING) {
+    exposureMult = 0.0f;
+    _environment->finishLoading();
+    _loading_thread.join();
+    _loading_thread = std::thread(&Environment::beginProcessing, _environment);
+    Environment::EnvironmentInfo* info = Environment::getEnvironmentInfoFromString(_environment->getPendingEnvironmentString());
     if (info) {
       _bloom_strength = info->_bloom_strength;
       _bloom_light_threshold = info->_bloom_threshold;
       _exposure = info->_exposure;
       _contrast = info->_contrast;
     }
-  } else if (loading_state == Environment::LOADING_STATE_PROCESSING) {
-    exposure_mult = 0.0f;
+  } else if (loadingState == Environment::LOADING_STATE_PROCESSING) {
+    exposureMult = 0.0f;
+  } else if (loadingState == Environment::LOADING_STATE_DONE_PROCESSING) {
+    exposureMult = 0.0f;
+    _environment->finishProcessing();
+    _loading_thread.join();
     _ui->clearConfirm();
-  } else if (loading_state == Environment::LOADING_STATE_NONE) {
-    exposure_mult *= math<float>::clamp(loading_time/LOADING_LIGHTEN_TIME);
   }
 
-  exposure_mult = Utilities::SmootherStep(exposure_mult*exposure_mult);
+  return exposureMult;
+}
 
+void FreeformApp::draw() {
   clear();
 
-  const float width = static_cast<float>(getWindowBounds().getWidth());
-  const float height = static_cast<float>(getWindowBounds().getHeight());
+  const double curTime = ci::app::getElapsedSeconds();
+  const float exposureMult = checkEnvironmentLoading();
 
-  if (exposure_mult > 0.0f) {
+  const ci::Vec2i size = getWindowSize();
+  const ci::Area bounds = getWindowBounds();
+  const ci::Vec2f center = getWindowCenter();
+
+  if (exposureMult > 0.0f) {
     renderSceneToFbo(_camera);
 
     GLBuffer::checkError("After FBO");
     GLBuffer::checkFrameBufferStatus("After FBO");
+  }
 
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
+  disableDepthRead();
+  disableDepthWrite();
 
+  if (exposureMult > 0.0f) {
     if (_bloom_visible) {
       createBloom();
     }
+
+    const float width = static_cast<float>(size.x);
+    const float height = static_cast<float>(size.y);
 
     setViewport( _screen_fbo.getBounds() );
     setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
@@ -885,7 +902,7 @@ void FreeformApp::draw()
     _screen_shader.uniform( "depth_texture", 2 );
     _screen_shader.uniform( "width", width );
     _screen_shader.uniform( "height", height );
-    _screen_shader.uniform( "exposure", _exposure * exposure_mult * tutorialMult);
+    _screen_shader.uniform( "exposure", _exposure * exposureMult * tutorialMult);
     _screen_shader.uniform( "contrast", _contrast );
     _screen_shader.uniform( "bloom_strength", _bloom_strength * static_cast<float>(_bloom_visible) );
     _screen_shader.uniform( "vignette_radius", static_cast<float>(0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2))) );
@@ -915,18 +932,15 @@ void FreeformApp::draw()
     }
 #endif
 
-    glDisable(GL_CULL_FACE);
-    disableDepthRead();
-    disableDepthWrite();
-    setMatricesWindow( getWindowSize() );
-    setViewport( getWindowBounds() );
+    setMatricesWindow( size );
+    setViewport( bounds );
 
     if (_draw_ui) {
-      _ui->draw();
+      _ui->draw(exposureMult);
     }
 
     if (_environment->haveEnvironment()) {
-      _ui->drawTutorialSlides(exposure_mult);
+      _ui->drawTutorialSlides(exposureMult);
     }
 
     if (!_listener.isConnected()) {
@@ -937,21 +951,31 @@ void FreeformApp::draw()
     GLBuffer::checkFrameBufferStatus("After UI");
   }
 
-  const float opacityMult = Utilities::SmootherStep(ci::math<float>::clamp(static_cast<float>(curTime / LOADING_LIGHTEN_TIME)));
-  if (exposure_mult < 1.0f) {
-    const ci::Vec2i size = getWindowSize();
-    const ci::Area bounds = getWindowBounds();
-    const ci::Vec2f center = getWindowCenter();
-    setMatricesWindow( size );
-    setViewport( bounds );
+  setMatricesWindow( size );
+  setViewport( bounds );
+
+  if (exposureMult < 1.0f) {
+    // draw logo
     const float aspect = _logo_on_black.getAspectRatio();
-    const float yOffset = 0.0f;
-    static const float LOGO_SCALE = 0.8f;
+    const float yOffset = static_cast<float>(-size.y / 20.0f);
+    static const float LOGO_SCALE = 0.6f;
     float halfWidth = LOGO_SCALE*size.x/2;
     float halfHeight = halfWidth / aspect;
     ci::Rectf area(center.x - halfWidth, center.y - halfHeight + yOffset, center.x + halfWidth, center.y + halfHeight + yOffset);
-    glColor4f(1.0f, 1.0f, 1.0f, opacityMult*(1.0f - exposure_mult));
+    glColor4f(1.0f, 1.0f, 1.0f, (1.0f - exposureMult));
     ci::gl::draw(_logo_on_black, area);
+
+    // draw loading animation
+    static const float ANIM_DRAW_LIMIT = 0.25f;
+    if (exposureMult < ANIM_DRAW_LIMIT) {
+      const float loadingYOffset = static_cast<float>(size.y / 5.0f);
+      const ci::Vec2f loadingCenter(center.x, center.y + loadingYOffset);
+      const float loadingRadius = static_cast<float>(size.x/50.0f);
+      const float loadingStartAngle = -static_cast<float>(curTime * 360.0f);
+      const float loadingSweepAngle = 240.0f;
+      glColor4f(0.7f, 0.7f, 0.7f, (ANIM_DRAW_LIMIT - exposureMult)/ANIM_DRAW_LIMIT);
+      Utilities::drawPartialDisk(loadingCenter, loadingRadius*0.85f, loadingRadius, loadingStartAngle, loadingSweepAngle);
+    }
   }
   
   GLBuffer::checkError("After logo");
@@ -1114,7 +1138,7 @@ void FreeformApp::setEnvironment(const std::string& str) {
     _loading_thread.detach();
   }
 #endif
-  _loading_thread = std::thread(&Environment::setEnvironment, _environment, str);
+  _loading_thread = std::thread(&Environment::beginLoading, _environment, str);
 }
 
 void FreeformApp::toggleSound() {

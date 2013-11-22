@@ -56,8 +56,9 @@ void GLBuffer::checkError(const std::string& loc) {
 #if !LM_PRODUCTION_BUILD
   GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
+    std::cout << "GL error ";
     if (!loc.empty()) {
-      std::cout << "At " << loc << ": ";
+      std::cout << "at " << loc << ": ";
     }
     std::cout << "code: " << std::hex << err << std::endl;
   }
@@ -68,8 +69,9 @@ void GLBuffer::checkFrameBufferStatus(const std::string& loc) {
 #if !LM_PRODUCTION_BUILD
   GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
+    std::cout << "Framebuffer error ";
     if (!loc.empty()) {
-      std::cout << "At " << loc << ": ";
+      std::cout << "at " << loc << ": ";
     }
     std::cout << "code: " << std::hex << status << std::endl;
   }

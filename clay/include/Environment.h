@@ -30,7 +30,8 @@ public:
     LOADING_STATE_NONE,
     LOADING_STATE_LOADING,
     LOADING_STATE_DONE_LOADING,
-    LOADING_STATE_PROCESSING
+    LOADING_STATE_PROCESSING,
+    LOADING_STATE_DONE_PROCESSING
   };
 
   struct EnvironmentInfo {
@@ -49,24 +50,41 @@ public:
   Environment();
   virtual ~Environment();
   bool haveEnvironment() const { return !_cur_environment.empty(); }
-  void setEnvironment(const std::string& name);
   void bindCubeMap(CubeMap map, int pos);
   void unbindCubeMap(int pos);
-  const std::string& getCurEnvironmentString() const;
-  void transitionComplete();
-  void processingComplete();
-  LoadingState getLoadingState() const;
-  float getTimeSinceLoadingStateChange() const;
+  const std::string& getCurEnvironmentString() const { return _cur_environment; }
+  const std::string& getPendingEnvironmentString() const { return _pending_environment; }
+  void beginLoading(const std::string& name);
+  void finishLoading();
+  void beginProcessing();
+  void finishProcessing();
+  LoadingState getLoadingState() const { return _loading_state; }
+  double getLastStateChangeTime() const { return _loading_state_change_time; }
   
-  static const std::vector<EnvironmentInfo>& getEnvironmentInfos();
+  static const std::vector<EnvironmentInfo>& getEnvironmentInfos() { return _environment_infos; }
   static EnvironmentInfo* getEnvironmentInfoFromString(const std::string& name);
 
 private:
 
+  static const int MIPMAP_LEVELS = 6;
+  static const int NUM_CHANNELS = 3;
+  static const int CUBEMAP_SIDES = 6;
+
+  struct CubemapImages {
+    GLuint cubemap;
+    GLint internalFormat;
+    unsigned int inputSize;
+    unsigned int outputSize;
+    GLenum format;
+    float* images[MIPMAP_LEVELS][CUBEMAP_SIDES];
+    bool irradiance;
+  };
+
   bool loadImageSet(std::string* filenames, FIBITMAP** bitmaps, unsigned int* bitmapWidths, unsigned int* bitmapHeights, GLint* internalFormats, GLenum* formats);
   void loadBitmap(std::string* filenames, int _Idx, FIBITMAP** bitmaps, unsigned int* bitmapWidths, unsigned int* bitmapHeights, GLint* internalFormats, GLenum* formats);
   void freeBitmaps(FIBITMAP** bitmaps);
-  void generateMipmappedCubemap(GLuint cubemap, GLint internal_format, GLenum format, int input_size, int output_size, float** images, bool irradiance);
+  void processMipmappedCubemap(CubemapImages& cubemapImages);
+  void uploadMipmappedCubemap(CubemapImages& cubemapImages);
   void prepareCubemap(GLuint* cubemap, int numLevels);
   void saveImagesToCubemap(GLuint cubemap, GLint internal_format, int miplevel, unsigned int width, unsigned int height, GLenum format, float** images);
   
@@ -75,28 +93,28 @@ private:
   static void createEnvironmentInfos();
   static void createWorkingDirectory();
 
+  CubemapImages irradianceImages;
+  CubemapImages radianceImages;
+
   GLuint _cubemap_sky;
   GLuint _cubemap_depth;
   GLuint _cubemap_irradiance;
   GLuint _cubemap_radiance;
 
   std::string _cur_environment;
+  std::string _pending_environment;
   std::condition_variable _loading_condition;
   std::mutex _loading_mutex;
   LoadingState _loading_state;
   double _loading_state_change_time;
+
+  float* orig_images[6];
 
   FIBITMAP* bitmaps[6];
   unsigned int bitmap_widths[6];
   unsigned int bitmap_heights[6];
   GLint internal_formats[6];
   GLenum formats[6];
-
-  FIBITMAP* depth_bitmaps[6];
-  unsigned int depth_bitmap_widths[6];
-  unsigned int depth_bitmap_heights[6];
-  GLint depth_internal_formats[6];
-  GLenum depth_formats[6];
 
   static CCubeMapProcessor* _cubemap_processor;
   static std::vector<EnvironmentInfo> _environment_infos;

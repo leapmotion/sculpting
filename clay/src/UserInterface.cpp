@@ -560,7 +560,7 @@ void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt) {
   }
 }
 
-void UserInterface::draw() const {
+void UserInterface::draw(float overallOpacity) const {
   const float opacity = maxActivation();
   for (size_t i=0; i<_cursor_positions.size(); i++) {
     drawCursor(_cursor_positions[i], opacity*opacity);
@@ -569,7 +569,7 @@ void UserInterface::draw() const {
   static const float FADE_IN_TIME = 0.333f;
   const double curTime = ci::app::getElapsedSeconds();
   const float timeSinceToggle = static_cast<float>(curTime - _last_switch_time);
-  Menu::g_menuOpacityCap = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/FADE_IN_TIME));
+  Menu::g_menuOpacityCap = overallOpacity * Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/FADE_IN_TIME));
 
   enableAlphaBlending();
   if (_draw_confirm_menu) {

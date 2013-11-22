@@ -423,7 +423,7 @@ public:
 
   UserInterface();
   void update(LeapInteraction* leap, Sculpt* sculpt);
-  void draw() const;
+  void draw(float overallOpacity) const;
   void drawTutorialSlides(float opacityMult) const;
   void drawDisconnected() const;
   void drawAbout() const;
