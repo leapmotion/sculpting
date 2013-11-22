@@ -252,6 +252,8 @@ public:
 
   lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
+  void IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials );
+
   Vector3 IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
   lmReal IsoQueryRadius(IsoCameraState* state) const;
