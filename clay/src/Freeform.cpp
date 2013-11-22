@@ -408,8 +408,15 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
 #endif
   case 'c': _lock_camera = !_lock_camera; break;
-  case 'f': { std::string dummyString; toggleFullscreen(dummyString); } break;
   }
+#if _WIN32
+  if (event.isAltDown() && event.getCode() == KeyEvent::KEY_F4) {
+    doQuit();
+  }
+  if (event.isAltDown() && event.getCode() == KeyEvent::KEY_RETURN) {
+    setFullScreen(!isFullScreen());
+  }
+#endif
 }
 
 void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
