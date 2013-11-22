@@ -270,6 +270,8 @@ public:
 
   void IsoCameraConstrainWhenSpinning(Mesh* mesh, IsoCameraState* state);
 
+  void IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoState);
+
   void IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state);
 
   // Records user mouse input from mouse events.

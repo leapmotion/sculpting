@@ -1942,6 +1942,8 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   IsoOnMeshUpdateStopped(mesh, state);
 
+  IsoResetIfInsideManifoldMesh(mesh, state);
+
   // Check if current refPosition is inside the mesh (which may happen sculpting) and correct it.
   {
     int attemptCount = 0;
@@ -2134,6 +2136,25 @@ void CameraUtil::IsoCameraConstrainWhenSpinning( Mesh* mesh, IsoCameraState* sta
   if (raycastOutput.isSuccess()) {
     LM_ASSERT(lmInRange(raycastOutput.fraction, 0.0f, 1.0f), "Raycast output invalid.");
     state->refPosition = raycastOutput.position - ray.GetDirection() * state->refDist;
+  }
+}
+
+void CameraUtil::IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoState) {
+  // Only use for manifold meshes..
+  lmRay ray0(isoState->refPosition, isoState->refPosition - 10000.0f * isoState->refNormal);
+  lmRay ray1(isoState->refPosition, isoState->refPosition + 10000.0f * isoState->refNormal);
+  std::vector<lmRayCastOutput> results0;
+  std::vector<lmRayCastOutput> results1;
+  const bool collectAll = true;
+  CastOneRay(mesh, ray0, &results0, collectAll);
+  CastOneRay(mesh, ray1, &results1, collectAll);
+
+  if ((results0.size() % 2) && (results1.size() % 2)) {
+    // Inside mesh && first output
+#if LM_LOG_CAMERA_LOGIC_4
+    std::cout << "Inside manifold mesh." << std::endl;
+#endif
+    ResetCamera(mesh, GetCameraDirection());
   }
 }
 
