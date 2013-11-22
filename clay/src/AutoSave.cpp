@@ -61,7 +61,7 @@ void AutoSave::shutdown() {
 void AutoSave::triggerAutoSave(Mesh* mesh) {
   std::unique_lock<std::mutex> lock(m_saveMutex);
   const double curTime = ci::app::getElapsedSeconds();
-  if (curTime - m_lastSaveTime > MIN_TIME_BETWEEN_AUTOSAVES) {
+  if (curTime - m_lastSaveTime > MIN_TIME_BETWEEN_AUTOSAVES && mesh->getNbVertices() > 0 && mesh->getNbTriangles() > 0) {
     m_vertices = mesh->getVertices();
     m_triangles = mesh->getTriangles();
     m_scale = mesh->getScale();
