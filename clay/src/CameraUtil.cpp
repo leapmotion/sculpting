@@ -33,6 +33,14 @@ CameraUtil::CameraUtil() {
   avgVertex.position.setZero();
   avgVertex.normal.setZero();
   framesFromLastCollisions = 1000;
+  timeSinceOrbitingStarted = FLT_MAX;
+  timeSinceOrbitingEnded = FLT_MAX;
+  timeSinceCameraUpdateStarted = FLT_MAX;
+  timeOfMovementSinceLastMeshMofification = FLT_MAX;
+  timeOfLastScupt = 0.0f;
+  prevTimeOfLastSculpt = 0.0f;
+  justSculpted = false;
+  forceVerifyPositionAfterSculpting = false;
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
@@ -798,8 +806,13 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
       referencePoint.normal = q * Vector3::UnitZ();
     }
     // Fix cameara direction & position
-    transform.rotation = q;
-    transform.translation = (q * Vector3::UnitZ()) * (refPtDistFromOrigin + referenceDistance);
+    static const lmReal ORBITING_BLEND_IN_TIME = 5.0f;
+    const lmReal blendingFactor = lmClip(timeSinceOrbitingStarted / ORBITING_BLEND_IN_TIME, 0.0f, 1.0f);
+
+    //transform.rotation = q;
+    transform.rotation = transform.rotation.slerp(blendingFactor*deltaTime, q);
+    Vector3 targetTranslation = (transform.rotation * Vector3::UnitZ()) * (refPtDistFromOrigin + referenceDistance);
+    transform.translation = lmInterpolate(blendingFactor*deltaTime, transform.translation, targetTranslation);
   }
 
 }
@@ -853,6 +866,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     //EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
     ResetCamera(mesh, -(Vector3::UnitZ() + -0.3f * Vector3::UnitX() + 0.2f * Vector3::UnitY()).normalized());
     InitIsoCamera(mesh, &isoState);
+    timeSinceCameraUpdateStarted = FLT_MAX;
   }
   prevMesh = mesh;
 
@@ -860,12 +874,18 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   if (params.forceCameraOrbit && params.enableCameraOrbit) {
     OrbitCamera(mesh, dt);
+    timeSinceOrbitingStarted += dt;
+    timeSinceOrbitingEnded = 0.0f;
+    timeOfMovementSinceLastMeshMofification = FLT_MAX;
     UpdateCameraInWorldSpace();
     return;
   } else if (params.enableCameraReset) {
     // Don't do this when orbiting.
     EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
   }
+
+  timeSinceOrbitingStarted = 0.0f;
+  timeSinceOrbitingEnded += dt;
 
   //DebugDrawNormals(mesh, paramsIn);
   //ExperimentWithIsosurfaces(mesh, paramsInOut);
@@ -882,9 +902,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   lmReal dtOne = 1.0f;
   lmReal dtZero = 0.0f;
-  if(!params.enableSmoothing) {
-    dt = dtOne;
-  }
 
   Vector3 usedUserInput = userInput;
   // Multiply motion by distance:
@@ -919,11 +936,18 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   if (params.cameraOverrideIso) {
     isoState.cameraOffsetMultiplier = params.isoRefDistMultiplier;
-    IsoCamera(mesh, &isoState, movementInWorld);
+    IsoCamera(mesh, &isoState, movementInWorld, dt);
     if (params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
     UpdateCameraInWorldSpace();
+    prevTimeOfLastSculpt = timeOfLastScupt;
+
     return;
   }
+
+  if(!params.enableSmoothing) {
+    dt = dtOne;
+  }
+
 
   const Vector3 oldOldCameraNormal = transform.rotation * Vector3::UnitZ();
 
@@ -1257,7 +1281,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   }
 
   // don't update transform when there's no successful raycast
-  if (params.pinUpVector) { CorrectCameraUpVector(dt, Vector3::UnitY()); }
+  if (params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
 
   if (params.preventCameraInMesh) {
     bool validMovement = VerifyCameraMovement(mesh, oldCamera.translation, transform.translation, GetSphereQueryRadius());
@@ -1330,7 +1354,7 @@ void CameraUtil::CorrectCameraUpVector(lmReal dt, const Vector3& up) {
     // Calc correction rotation and rate.
     Vector3 oldUp = transform.rotation * Vector3::UnitY();
     lmQuat dQ; dQ.setFromTwoVectors(oldUp, newUp); dQ.normalize();
-    lmReal adjustOrientationRate = std::pow(0.9f, dt);
+    lmReal adjustOrientationRate = std::pow(0.97f, dt);
 
     // Apply correction.
     dQ = dQ.slerp(adjustOrientationRate, lmQuat::Identity());
@@ -1776,13 +1800,37 @@ lmReal CameraUtil::IsoQueryRadius(IsoCameraState* state) const {
   return std::max(state->refDist + params.isoQueryPaddingRadius, params.isoQueryPaddingRadius);
 }
 
-void CameraUtil::IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state ) {
+void CameraUtil::IsoUpdateCameraTransform( const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime )
+{
   lmQuat qCorrection; qCorrection.setFromTwoVectors(GetCameraDirection(), newDirection);
 
   //std::unique_lock<std::mutex> lock(mutex);
 
-  transform.rotation = qCorrection * transform.rotation;
-  transform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
+
+  lmTransform newTransform;
+  newTransform.rotation = qCorrection * transform.rotation;
+  newTransform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
+
+  static const lmReal BLEND_IN_TIME_AFTER_ORBITING = 5.0f;
+  lmReal blendingFactor = lmClip(timeSinceOrbitingEnded/BLEND_IN_TIME_AFTER_ORBITING, 0.0f, 1.0f);
+  blendingFactor *= blendingFactor;
+
+  if (timeSinceOrbitingEnded < BLEND_IN_TIME_AFTER_ORBITING * 1.5f) {
+    // just use orbit blending
+  } else {
+    // use sculpting blending
+    static const lmReal BLEND_IN_TIME_AFTER_CAMERA_IDLE = 2.0f;
+    lmReal blendingFactor2 = lmClip(timeOfMovementSinceLastMeshMofification/BLEND_IN_TIME_AFTER_CAMERA_IDLE, 0.0f, 1.0f);
+    blendingFactor2 *= blendingFactor2;
+
+    blendingFactor = blendingFactor2;
+  }
+
+  transform.rotation = transform.rotation.slerp(blendingFactor, newTransform.rotation);
+  transform.translation = lmInterpolate(blendingFactor, transform.translation, newTransform.translation);
+
+  //transform.rotation = qCorrection * transform.rotation;
+  //transform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
 }
 
 void CameraUtil::IsoUpdateReferencePoint(IsoCameraState* state ) {
@@ -1839,10 +1887,18 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
 
   state->numFailedUpdates = 0;
   // Remember closest point distance
+
+  IsoUpdateReferencePoint(state);
 }
 
-void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& movement )
+void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& movement, lmReal deltaTime )
 {
+  justSculpted = (prevTimeOfLastSculpt != timeOfLastScupt);
+  if (justSculpted) {
+    timeOfMovementSinceLastMeshMofification = 0.0f;
+    forceVerifyPositionAfterSculpting = true;
+  }
+
   LM_DRAW_CROSS(state->refPosition, 20.0f, lmColor::GREEN);
   LM_DRAW_CROSS(state->closestPointOnMesh.position, 20.0f, lmColor::RED);
   LM_DRAW_ARROW(state->closestPointOnMesh.position, state->closestPointOnMesh.position + state->closestPointOnMesh.normal * 40.0f, lmColor::RED);
@@ -1850,14 +1906,18 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   if (movement.norm() < LM_EPSILON) {
     if (mesh->getRotationVelocity_notSmoothed() > 0.0f) {
       IsoCameraConstrainWhenSpinning(mesh, state);
-      IsoUpdateCameraTransform(-state->refNormal, state);
-      IsoUpdateReferencePoint(state);
-      UpdateCameraInWorldSpace();
     }
+
+    IsoUpdateCameraTransform(-state->refNormal, state, deltaTime);
+    IsoUpdateReferencePoint(state);
+    UpdateCameraInWorldSpace();
 
     // do nothing.
     return;
   }
+
+  timeOfMovementSinceLastMeshMofification += deltaTime;
+
 
   if(state->numFailedUpdates) {
 #if LM_LOG_CAMERA_LOGIC_4
@@ -1874,11 +1934,13 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #endif
   }
 
-  static const int MAX_NUM_FAILED_UPDATED_BEFORE_CAMERA_RESET = 30;
+  static const int MAX_NUM_FAILED_UPDATED_BEFORE_CAMERA_RESET = 60;
   if (state->numFailedUpdates++ > MAX_NUM_FAILED_UPDATED_BEFORE_CAMERA_RESET) {
     ResetCamera(mesh, -Vector3::UnitZ());
     state->numFailedUpdates = 0;
   }
+
+  IsoOnMeshUpdateStopped(mesh, state);
 
   // Check if current refPosition is inside the mesh (which may happen sculpting) and correct it.
   {
@@ -2025,9 +2087,8 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
     IsoCameraConstrainWhenSpinning(mesh, state);
   }
 
-
   // Update camera
-  IsoUpdateCameraTransform(-state->refNormal, state);
+  IsoUpdateCameraTransform(-state->refNormal, state, deltaTime);
 
   LM_ASSERT(state->refDist < 10000, "Reference distance exploded.")
 
@@ -2073,5 +2134,42 @@ void CameraUtil::IsoCameraConstrainWhenSpinning( Mesh* mesh, IsoCameraState* sta
   if (raycastOutput.isSuccess()) {
     LM_ASSERT(lmInRange(raycastOutput.fraction, 0.0f, 1.0f), "Raycast output invalid.");
     state->refPosition = raycastOutput.position - ray.GetDirection() * state->refDist;
+  }
+}
+
+void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
+
+  //// this is not called when sculpting
+  //bool justSculpted = (timeOfLastScupt != state->lastSculptTime); // find
+  //state->lastSculptTime = timeOfLastScupt;
+
+  if (forceVerifyPositionAfterSculpting) {
+    // Just stopped sculpting
+    //std::cout << "Stopped sculpting" << std::endl;
+
+    // Raycast towards reference point, if collision, move ref point. remember Distance, and try to preserve it.
+    lmRay ray(transform.translation, state->refPosition);
+    ray.end += ray.GetDirection() * (params.minDist * 2.0f + 0.1f);
+    lmRayCastOutput raycastOutput;
+    CastOneRay(mesh, ray, &raycastOutput);
+
+    if (raycastOutput.isSuccess()) {
+      std::cout << "Moving reference point" << std::endl;
+      const lmReal refToCamDist = (1+params.isoRefDistMultiplier); // convert between refDist and distance to camera
+      // Adjust refPoint & ref dist
+      //lmReal prevDistToMesh = state->refDist * refToCamDist;
+      lmReal currRefDist = raycastOutput.dist / refToCamDist;
+      currRefDist = std::max(currRefDist, params.minDist * 2.0f + 0.1f);
+
+      state->refDist = currRefDist;
+      state->refPosition = raycastOutput.position - ray.GetDirection() * state->refDist;
+      // Don't update normal now.
+
+      // We'll need to ease in normal adaption.
+    }
+
+    // Readjust normal blending
+
+    forceVerifyPositionAfterSculpting = false;
   }
 }

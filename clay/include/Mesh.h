@@ -60,6 +60,8 @@ public:
   float getRotationVelocity() const;
   float getRotationVelocity_notSmoothed() const;
 
+  double getLastUpdateTime() const { return lastUpdateTime_; }
+
   void getTrianglesFromVertices(const std::vector<int> &iVerts, std::vector<int>& triangles);
   void getVerticesFromTriangles(const std::vector<int> &iTris, std::vector<int>& vertices);
   void expandTriangles(std::vector<int> &iTris, int nRing);

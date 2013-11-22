@@ -174,7 +174,7 @@ public:
       speedAtMinDist = 0.5f;
       speedAtMaxDist = 2.5f;
       pinUpVector = true;
-      smoothingFactor = 0.02f;
+      smoothingFactor = 0.1f;
       drawDebugLines = false;
       drawSphereQueryResults = false;
 
@@ -246,7 +246,7 @@ public:
     Vector3 refNormal;
     lmSurfacePoint closestPointOnMesh;
     //lmTransform refTransform;
-    double refPotential; // used when clipping to isosurface
+    lmReal refPotential; // used when clipping to isosurface
     int numFailedUpdates;
   } isoState;
 
@@ -258,7 +258,7 @@ public:
 
   lmReal IsoQueryRadius(IsoCameraState* state) const;
 
-  void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state );
+  void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime);
 
   void IsoUpdateReferencePoint(IsoCameraState* state );
 
@@ -266,9 +266,11 @@ public:
 
   void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
 
-  void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement);
+  void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement, lmReal deltaTime);
 
   void IsoCameraConstrainWhenSpinning(Mesh* mesh, IsoCameraState* state);
+
+  void IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state);
 
   // Records user mouse input from mouse events.
   // 
@@ -411,6 +413,15 @@ public:
 
   // Time of last camera udpate
   lmReal lastCameraUpdateTime;
+
+  lmReal timeSinceOrbitingStarted;
+  lmReal timeSinceOrbitingEnded;
+  lmReal timeSinceCameraUpdateStarted;
+  lmReal timeOfMovementSinceLastMeshMofification;
+  lmReal timeOfLastScupt;
+  lmReal prevTimeOfLastSculpt;
+  bool justSculpted;
+  bool forceVerifyPositionAfterSculpting;
 
   Params params;
 

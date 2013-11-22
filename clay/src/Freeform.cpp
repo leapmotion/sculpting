@@ -583,6 +583,7 @@ void FreeformApp::updateLeapAndMesh() {
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
           sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
+          _camera_util->timeOfLastScupt = sculpt_.getLastSculptTime();
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
