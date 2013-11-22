@@ -285,6 +285,8 @@ public:
 
   lmTransform GetCameraInWorldSpace();
 
+  void UpdateCameraInWorldSpace();
+
   // Get radius for mesh spehre queries.
   inline lmReal GetSphereQueryRadius()
   {
@@ -367,6 +369,9 @@ public:
   // Camera's current transform.
   lmTransform transform;
 
+  // Camera's current transform.
+  lmTransform transformInWorldSpaceForGraphics;
+
   // Mesh's transform
   lmTransform meshTransform;
 
@@ -413,7 +418,10 @@ public:
   // Current state of the camera.
   State state;
 
-  std::mutex mutex;
+  std::mutex transformForGraphicsMutex;
+  std::mutex userInputMutex;
+  std::mutex referencePointMutex;
+
 
   std::vector<int> queryTriangles;
 

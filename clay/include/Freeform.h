@@ -116,6 +116,7 @@ private:
   double _last_load_time;
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
   std::mutex _mesh_mutex;
+  std::mutex _mesh_update_rotation_mutex;
   MachineSpeed _machine_speed;
   bool _lock_camera;
   AutoSave _auto_save;

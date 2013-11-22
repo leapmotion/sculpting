@@ -482,9 +482,12 @@ void FreeformApp::update()
     _camera_util->debugDrawUtil = _debug_draw_util;
   }
   
-  std::unique_lock<std::mutex> lock(_camera_util->mutex);
-  lmTransform tCamera = _camera_util->GetCameraInWorldSpace();
-  lock.unlock();
+  lmTransform tCamera;
+  {
+    // Hack -- lock access to mesh rotation for a moment
+    std::unique_lock<std::mutex> lock(_mesh_update_rotation_mutex);
+    tCamera = _camera_util->GetCameraInWorldSpace();
+  }
 
   campos = ToVec3f(tCamera.translation);
   Vector3 up = tCamera.rotation * Vector3::UnitY();
@@ -493,7 +496,10 @@ void FreeformApp::update()
   //_focus_point = to;
   Matrix4x4 trans = mesh_->getTransformation();
   Vector4 temp;
-  temp << _camera_util->referencePoint.position, 1.0;
+  {
+    std::unique_lock<std::mutex> lock(_camera_util->referencePointMutex);
+    temp << _camera_util->referencePoint.position, 1.0;
+  }
   _focus_point = (trans * temp).head<3>();
   _focus_radius = _camera_util->GetSphereQueryRadius();
 
@@ -543,7 +549,10 @@ void FreeformApp::updateLeapAndMesh() {
 
       std::unique_lock<std::mutex> lock(_mesh_mutex);
       if (mesh_) {
-        mesh_->updateRotation(curTime);
+        {
+          std::unique_lock<std::mutex> lock(_mesh_update_rotation_mutex);
+          mesh_->updateRotation(curTime);
+        }
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
           _camera_util->UpdateCamera(mesh_, &_camera_params);
         }
