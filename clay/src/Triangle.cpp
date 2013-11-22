@@ -7,7 +7,7 @@ int Triangle::tagMask_ = 1;
 
 /** Constructor */
 Triangle::Triangle(const Vector3& n, int iVer1, int iVer2, int iVer3, int id) : tagFlag_(1), stateFlag_(1),
-  id_(id), normal_(n), aabb_(), leaf_(0), posInLeaf_(-1)
+  id_(id), normal_(n), aabb_(), leaf_(0), posInLeaf_(-1), area(-1.0f)
 {
   vIndices_[0] = iVer1;
   vIndices_[1] = iVer2;

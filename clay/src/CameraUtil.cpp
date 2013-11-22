@@ -177,14 +177,14 @@ void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std:
   }
 }
 
-inline static lmReal TriArea(const Mesh* mesh, const Triangle& tri) {
-  const Vertex& v0 = mesh->getVertex(tri.vIndices_[0]);
-  const Vertex& v1 = mesh->getVertex(tri.vIndices_[1]);
-  const Vertex& v2 = mesh->getVertex(tri.vIndices_[2]);
-
-  const lmReal area = 0.5f * (v1-v0).cross(v2-v0).norm();
-  return area;
-}
+//inline static lmReal TriArea(const Mesh* mesh, const Triangle& tri) {
+//  const Vertex& v0 = mesh->getVertex(tri.vIndices_[0]);
+//  const Vertex& v1 = mesh->getVertex(tri.vIndices_[1]);
+//  const Vertex& v2 = mesh->getVertex(tri.vIndices_[2]);
+//
+//  const lmReal area = 0.5f * (v1-v0).cross(v2-v0).norm();
+//  return area;
+//}
 
 inline static Vector3 TriCenter(const Mesh* mesh, const Triangle& tri) {
   const Vertex& v0 = mesh->getVertex(tri.vIndices_[0]);
@@ -318,7 +318,7 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
       if (camDotTNormal < 0.0f) {
         lmReal weight = weightNormals ? std::max(0.0f, -camDotTNormal) : 1.0f;
         // Calc distance and weight
-        lmReal a = TriArea(mesh, tri);
+        lmReal a = tri.area;// TriArea(mesh, tri);
 
         Geometry::GetClosestPointOutput output;
         {
@@ -565,7 +565,7 @@ void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut
           Geometry::GetClosestPointOutput output;
           Geometry::getClosestPoint(input, &output);
           lmReal d = std::sqrt(output.distanceSqr) / paramsInOut->isoMultiplier;
-          potentialXyz[ei] += 1.0f / (d*d) * TriArea(mesh, tri);
+          potentialXyz[ei] += 1.0f / (d*d) * tri.area;// TriArea(mesh, tri);
           pmin = std::min(pmin, potentialXyz[ei]);
           pmax = std::max(pmax, potentialXyz[ei]);
         }
@@ -1533,8 +1533,8 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
         weight = lmClip(weight, 0.0f, 1.0f);
-        lmReal area = TriArea(mesh, tri);
-        potential += area * weight / distPowered;
+        //lmReal area = TriArea(mesh, tri);
+        potential += tri.area * weight / distPowered;
 
 #if LM_DRAW_DEBUG_OBJECTS
         if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
@@ -1655,8 +1655,8 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
         weightDenominator *= queryRadiusSqr;
         lmReal weight = 1.0f - (distPowered / weightDenominator);
         weight = lmClip(weight, 0.0f, 1.0f);
-        lmReal area = TriArea(mesh, tri);
-        potentials[0] += area * weight / distPowered;
+        //lmReal area = TriArea(mesh, tri);
+        potentials[0] += tri.area * weight / distPowered;
 
 #if LM_DRAW_DEBUG_OBJECTS
         if (debugDrawUtil && params.drawDebugLines && params.drawSphereQueryResults) {
@@ -1677,8 +1677,8 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
           weightDenominator *= queryRadiusSqr;
           lmReal weight = 1.0f - (distPowered / weightDenominator);
           weight = lmClip(weight, 0.0f, 1.0f);
-          lmReal area = TriArea(mesh, tri);
-          potentials[i] += area * weight / distPowered;
+          //lmReal area = TriArea(mesh, tri);
+          potentials[i] += tri.area * weight / distPowered;
 
         }
 

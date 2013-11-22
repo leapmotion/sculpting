@@ -11,6 +11,16 @@ const float Mesh::globalScale_ = 500.f;
 int Mesh::stateMask_ = 1;
 const int undoLimit_ = 20;
 
+/** Helper functions */
+inline static lmReal TriArea(const Mesh* mesh, const Triangle& tri) {
+  const Vertex& v0 = mesh->getVertex(tri.vIndices_[0]);
+  const Vertex& v1 = mesh->getVertex(tri.vIndices_[1]);
+  const Vertex& v2 = mesh->getVertex(tri.vIndices_[2]);
+
+  const lmReal area = 0.5f * (v1-v0).cross(v2-v0).norm();
+  return area;
+}
+
 /** Constructor */
 Mesh::Mesh() : center_(Vector3::Zero()), scale_(1), lastUpdateTime_(0.0), translation_(Vector3::Zero()),
   octree_(0), rotationMatrix_(Matrix4x4::Identity()), beginIte_(false), verticesBuffer_(GL_ARRAY_BUFFER),
@@ -445,6 +455,7 @@ bool Mesh::initMesh()
   {
     Triangle &t = triangles_[i];
     t.aabb_ = Geometry::computeTriangleAabb(vertices_[t.vIndices_[0]],vertices_[t.vIndices_[1]],vertices_[t.vIndices_[2]]);
+    t.area = TriArea(this, t);
   }
   aabb.checkFlat((aabb.max_-aabb.min_).norm()*0.02f);
   Vector3 vecShift = (aabb.max_-aabb.min_)*0.2f; //root octree bigger than minimum aabb...
@@ -493,6 +504,7 @@ bool Mesh::initMesh()
 void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVerts)
 {
   computeTriangleNormals(iTris);
+  computeTriangleAreas(iTris);
   updateOctree(iTris);
   computeVertexNormals(iVerts);
 
@@ -689,6 +701,15 @@ void Mesh::computeTriangleNormals(const std::vector<int> &iTris) {
     }
     LM_ASSERT(fabs(t.normal_.norm() - 1.0f) < 0.001f, "Bad normal");
     t.aabb_ = Geometry::computeTriangleAabb(v1,v2,v3);
+  }
+}
+
+void Mesh::computeTriangleAreas(const std::vector<int> &iTris) {
+  const int nbTris = iTris.size();
+  for (int i=0;i<nbTris;++i)
+  {
+    Triangle &t=triangles_[iTris[i]];
+    t.area = TriArea(this, t);
   }
 }
 

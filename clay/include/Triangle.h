@@ -32,6 +32,7 @@ public:
   Aabb aabb_; //bounding box of the triangle
   Octree *leaf_; //octree leaf
   int posInLeaf_; //position index in the leaf
+  float area;
 };
 
 typedef std::vector<Triangle, Eigen::aligned_allocator<Triangle> > TriangleVector;
