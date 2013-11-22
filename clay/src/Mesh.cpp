@@ -681,7 +681,7 @@ void Mesh::computeTriangleNormals(const std::vector<int> &iTris) {
     const Vector3& v3=vertices_[t.vIndices_[2]];
     Vector3 normal = (v2-v1).cross(v3-v1);
     float length = normal.norm();
-    if (length < 0.001f) {
+    if (length < 0.00001f) {
       LM_ASSERT(false, "Bad normal");
       t.normal_ = Vector3::UnitY();
     } else {
@@ -701,6 +701,7 @@ void Mesh::computeVertexNormals(const std::vector<int> &iVerts)
     Vertex &vert=vertices_[iVerts[i]];
     const std::vector<int> &iTri = vert.tIndices_;
     int nbTri = iTri.size();
+    LM_ASSERT(nbTri > 0, "Bad vertex");
     Vector3 normal(Vector3::Zero());
     for (int j=0;j<nbTri;++j)
       normal+=triangles_[iTri[j]].normal_;
@@ -987,6 +988,17 @@ void Mesh::recomputeOctree(const Aabb &aabbSplit)
   delete octree_;
   octree_ = new Octree();
   octree_->build(this, triangles, aabbSplit);
+}
+
+void Mesh::checkNormals() {
+#if !LM_PRODUCTION_BUILD
+  for (size_t i=0; i<triangles_.size(); i++) {
+    LM_ASSERT(fabs(triangles_[i].normal_.norm() - 1.0f) < 0.0001f, "Bad normal" << triangles_[i].normal_.transpose());
+  }
+  for (size_t i=0; i<vertices_.size(); i++) {
+    LM_ASSERT(fabs(vertices_[i].normal_.norm() - 1.0f) < 0.0001f, "Bad normal" << vertices_[i].normal_.transpose());
+  }
+#endif
 }
 
 typedef std::pair<int, int> lmEdge;

@@ -98,6 +98,8 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   default : break;
   }
 
+  mesh_->computeTriangleNormals(iTris_);
+
   mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
 
   MaskMatch pred(vertices);

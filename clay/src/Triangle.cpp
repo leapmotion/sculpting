@@ -29,3 +29,7 @@ void Triangle::replaceVertex(int iVerOld, int iVerNew)
     vIndices_[2]=iVerNew;
   }
 }
+
+bool Triangle::indicesUnique() const {
+  return vIndices_[0] != vIndices_[1] && vIndices_[1] != vIndices_[2] && vIndices_[0] != vIndices_[2];
+}

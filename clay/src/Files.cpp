@@ -223,7 +223,9 @@ Mesh* Files::loadOBJ(std::istream& stream) const
       v1.addTriangle(triangles.size());
       v2.addTriangle(triangles.size());
       v3.addTriangle(triangles.size());
-      triangles.push_back(Triangle((v2-v1).cross(v3-v1).normalized(), iVer1, iVer2, iVer3, triangles.size()));
+      Vector3 normal =(v2-v1).cross(v3-v1).normalized();
+      LM_ASSERT(fabs(normal.norm() - 1.0f) < 0.00001, "Bad normal");
+      triangles.push_back(Triangle(normal, iVer1, iVer2, iVer3, triangles.size()));
       //quad to triangle...
       if(iVer4!=-1)
       {
@@ -235,7 +237,9 @@ Mesh* Files::loadOBJ(std::istream& stream) const
         v1.addTriangle(triangles.size());
         v3.addTriangle(triangles.size());
         v4.addTriangle(triangles.size());
-        triangles.push_back(Triangle((v3-v1).cross(v4-v1).normalized(), iVer1, iVer3, iVer4, triangles.size()));
+        normal = (v3-v1).cross(v4-v1).normalized();
+        LM_ASSERT(fabs(normal.norm() - 1.0f) < 0.00001, "Bad normal");
+        triangles.push_back(Triangle(normal, iVer1, iVer3, iVer4, triangles.size()));
         iVer4 = -1;
       }
       for (int i=0; i<4; i++) {

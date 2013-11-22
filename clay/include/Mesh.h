@@ -93,13 +93,14 @@ public:
   void redo();
   void handleUndoRedo();
   void recomputeOctree(const Aabb &aabbSplit);
+  void checkNormals();
+  void computeTriangleNormals(const std::vector<int> &iTris);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
 
   void updateOctree(const std::vector<int> &iTris);
-  void computeTriangleNormals(const std::vector<int> &iTris);
   void computeVertexNormals(const std::vector<int> &iVerts);
   float angleTri(int iTri, int iVer);
   void initIndexVBO();

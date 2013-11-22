@@ -23,6 +23,7 @@ public:
   Triangle(const Vector3& n = Vector3::Zero(),int iVer1 = -1, int iVer2 = -1, int iVer3 = -1, int id = -1);
   ~Triangle();
   void replaceVertex(int iVerOld, int iVerNew);
+  bool indicesUnique() const;
 
 public:
   int id_; //id
