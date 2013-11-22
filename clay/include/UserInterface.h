@@ -452,6 +452,7 @@ public:
     _tutorial4 = tutorial4;
   }
   bool tutorialActive() const { return _draw_tutorial_menu; }
+  bool toolsSlideActive() const { return _tutorial_slide == 2; }
   void forceDrawTutorialMenu() { _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); }
 
 private:
@@ -459,7 +460,7 @@ private:
   void initializeMenu(Menu& menu);
   std::string tutorialStringSuffix(int num, int total) {
     std::stringstream ss;
-    ss << num << " of " << total;
+    ss << num << "/" << total;
     return ss.str();
   }
 

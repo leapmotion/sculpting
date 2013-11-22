@@ -22,7 +22,7 @@ const float MAX_FOV = 90.0f;
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
   drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
-  _lock_camera(false), _last_load_time(0.0)
+  _lock_camera(false), _last_load_time(0.0), _first_environment_load(true)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = &DebugDrawUtil::getInstance();
@@ -580,7 +580,9 @@ void FreeformApp::updateLeapAndMesh() {
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
           _camera_util->UpdateCamera(mesh_, &_camera_params);
         }
-        sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
+        if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
+          sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
+        }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     } else if (mesh_) {
@@ -821,7 +823,7 @@ void FreeformApp::createBloom()
 
 float FreeformApp::checkEnvironmentLoading() {
   static const float LOADING_DARKEN_TIME = 0.5f;
-  static const float LOADING_LIGHTEN_TIME = 1.5f;
+  static const float LOADING_LIGHTEN_TIME = 2.0f;
 
   const Environment::LoadingState loadingState = _environment->getLoadingState();
   const double curTime = ci::app::getElapsedSeconds();
@@ -850,13 +852,17 @@ float FreeformApp::checkEnvironmentLoading() {
       _exposure = info->_exposure;
       _contrast = info->_contrast;
     }
+    _first_environment_load = false;
   } else if (loadingState == Environment::LOADING_STATE_PROCESSING) {
     exposureMult = 0.0f;
   } else if (loadingState == Environment::LOADING_STATE_DONE_PROCESSING) {
     exposureMult = 0.0f;
     _environment->finishProcessing();
     _loading_thread.join();
-    _ui->clearConfirm();
+  }
+
+  if (_first_environment_load) {
+    exposureMult = 0.0f;
   }
 
   return exposureMult;

@@ -227,7 +227,7 @@ void Environment::loadBitmap(std::string* filenames,
         internalFormats[_Idx] = GL_R32F;
         formats[_Idx] = GL_RED;
       } else if (cur_type == FIT_RGBF) {
-        internalFormats[_Idx] = GL_RGB32F_ARB;
+        internalFormats[_Idx] = GL_RGB16F_ARB;
         formats[_Idx] = GL_RGB;
       }
     } else {
@@ -309,7 +309,7 @@ void Environment::processMipmappedCubemap(CubemapImages& cubemapImages) {
 
   int cur_size = cubemapImages.outputSize;
   for (int i=0; i<numLevels; i++) {
-    int numBytes = cur_size*cur_size*NUM_CHANNELS*4;
+    int numBytes = cur_size*cur_size*NUM_CHANNELS*sizeof(float);
     for (int j=0; j<CUBEMAP_SIDES; j++) {
       cubemapImages.images[i][j] = new float[numBytes];
       threads[j] = std::thread(&CCubeMapProcessor::GetOutputFaceData,
@@ -318,7 +318,7 @@ void Environment::processMipmappedCubemap(CubemapImages& cubemapImages) {
         i,
         CP_VAL_FLOAT32,
         NUM_CHANNELS,
-        cur_size*NUM_CHANNELS*4,
+        cur_size*NUM_CHANNELS*sizeof(float),
         cubemapImages.images[i][j],
         1.0f,
         1.0f);
@@ -349,9 +349,11 @@ void Environment::prepareCubemap(GLuint* cubemap, int numLevels) {
   glGenTextures(1, cubemap);
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, *cubemap);
   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MIN_FILTER, numLevels > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_BASE_LEVEL, 0);
   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAX_LEVEL, numLevels-1);
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 }

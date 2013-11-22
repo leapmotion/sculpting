@@ -121,6 +121,7 @@ private:
   MachineSpeed _machine_speed;
   bool _lock_camera;
   AutoSave _auto_save;
+  bool _first_environment_load;
 
   // *** Leap stuff ***
   LeapListener _listener;
