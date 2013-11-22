@@ -129,6 +129,7 @@
 		8A9B824A1832D38A00AA2EA3 /* tutorial-tools.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B82471832D38A00AA2EA3 /* tutorial-tools.png */; };
 		8AB1906318400DFB00347357 /* CrashReport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8AB1906218400DFB00347357 /* CrashReport.cpp */; };
 		8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
+		8AB190681840111700347357 /* credits.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AB190671840111700347357 /* credits.png */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -466,6 +467,7 @@
 		8AB1906218400DFB00347357 /* CrashReport.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CrashReport.cpp; path = ../../src/CrashReport.cpp; sourceTree = "<group>"; };
 		8AB1906418400E0D00347357 /* CrashReport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CrashReport.h; path = ../../include/CrashReport.h; sourceTree = "<group>"; };
 		8AB1906518400EF400347357 /* Breakpad.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Breakpad.framework; path = "../../../../../../../../opt/local/Libraries/breakpad-0.1/lib/Breakpad.framework"; sourceTree = "<group>"; };
+		8AB190671840111700347357 /* credits.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = credits.png; path = ../../resources/credits.png; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Freeform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeform.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEAF09CCD9054AE5A257591B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -608,6 +610,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8AB190671840111700347357 /* credits.png */,
 				8A7FDF14183DAFA400E94B5F /* freeform.icns */,
 				8A7FDF15183DAFA400E94B5F /* freeform.ico */,
 				8A7FDF0D183D449F00E94B5F /* logos */,
@@ -1289,6 +1292,7 @@
 				8A9B823D1832D38000AA2EA3 /* strength-medium-selected.png in Resources */,
 				8A9B82131832D38000AA2EA3 /* brush-strength.svg in Resources */,
 				8A9B82421832D38000AA2EA3 /* wireframe-2.svg in Resources */,
+				8AB190681840111700347357 /* credits.png in Resources */,
 				8A9B82211832D38000AA2EA3 /* load-2.svg in Resources */,
 				8A9B822A1832D38000AA2EA3 /* plastic.png in Resources */,
 				8A9B82491832D38A00AA2EA3 /* tutorial-menu.png in Resources */,
