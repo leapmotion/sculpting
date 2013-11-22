@@ -682,6 +682,27 @@ void UserInterface::drawDisconnected() const {
   glPopMatrix();
 }
 
+void UserInterface::drawShaderError() const {
+  const ci::ColorA titleColor(1.0f, 0.2f, 0.1f, 1.0f);
+  const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, 1.0f);
+  const ci::Vec2f offset = Vec2f(0.0f, Menu::FONT_SIZE/2.0f);
+  const ci::Vec2f pos = getWindowCenter() + Vec2f(0.0f, -getWindowHeight()/3.0f);
+
+  static const std::string SHADER_ERROR_MESSAGE = "Graphics error occurred. Please update drivers and check minimum requirements.";
+
+  glPushMatrix();
+  gl::translate(pos);
+  gl::scale(0.9f, 0.9f);
+  const ci::Vec2f nameSize = Menu::g_boldTextureFont->measureString(SHADER_ERROR_MESSAGE);
+  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, 100.0f);
+  gl::color(shadowColor);
+  Menu::g_boldTextureFont->drawString(SHADER_ERROR_MESSAGE, nameRect, Menu::g_shadowOffset);
+  gl::color(titleColor);
+  Menu::g_boldTextureFont->drawString(SHADER_ERROR_MESSAGE, nameRect);
+
+  glPopMatrix();
+}
+
 float UserInterface::maxActivation() const {
   float result = 0.0f;
 

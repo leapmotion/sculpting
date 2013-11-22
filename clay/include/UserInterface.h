@@ -427,6 +427,7 @@ public:
   void drawTutorialSlides(float opacityMult) const;
   void drawAbout(float opacityMult) const;
   void drawDisconnected() const;
+  void drawShaderError() const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
   float maxActivation(Vector2& pos) const;

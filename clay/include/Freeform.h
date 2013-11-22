@@ -122,6 +122,7 @@ private:
   bool _lock_camera;
   AutoSave _auto_save;
   bool _first_environment_load;
+  bool _have_shaders;
 
   // *** Leap stuff ***
   LeapListener _listener;
