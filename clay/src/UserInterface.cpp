@@ -848,7 +848,7 @@ void UserInterface::showConfirm(Menu::MenuEntryType entryType) {
   case Menu::OBJECT_DONUT:
   case Menu::OBJECT_SHEET:
   case Menu::OBJECT_CUBE: _confirm_menu.setName("Discard changes and load a new object?"); break;
-  case Menu::GENERAL_EXIT: _confirm_menu.setName("Are you sure you'd like to exit?"); break;
+  case Menu::GENERAL_EXIT: _confirm_menu.setName("Are you sure you would like to exit?"); break;
   default: _confirm_menu.setName("Are you sure?"); break;
   }
 }

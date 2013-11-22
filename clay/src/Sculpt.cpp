@@ -301,6 +301,13 @@ void Sculpt::laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3
           color += ivr.material_;
         }
       }
+#if 0
+      LM_ASSERT(nbVertEdge > 0, "Not enough verts");
+#else
+      if (nbVertEdge == 0) {
+        std::cout << "Not enough verts" << std::endl;
+      }
+#endif
       if (nbVertEdge > 0) {
         smoothVerts[i]=center/static_cast<float>(nbVertEdge);
         smoothColors[i]=color/static_cast<float>(nbVertEdge);
@@ -314,6 +321,13 @@ void Sculpt::laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3
         center+=vertices[ivRing[j]];
         color+=vertices[ivRing[j]].material_;
       }
+#if 0
+      LM_ASSERT(nbVRing > 0, "Not enough verts");
+#else
+      if (nbVRing == 0) {
+        std::cout << "Not enough vRing" << std::endl;
+      }
+#endif
       if (nbVRing > 0) {
         smoothVerts[i]=center/static_cast<float>(nbVRing);
         smoothColors[i]=color/static_cast<float>(nbVRing);

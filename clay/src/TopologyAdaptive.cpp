@@ -312,6 +312,8 @@ void Topology::connect1Ring(std::vector<Edge> &edges1, std::vector<Edge> &edges2
   matchEdgesNearest(edges1,edges2);
   int nbEdges1 = edges1.size();
   int nbEdges2 = edges2.size();
+  LM_ASSERT(nbEdges1 > 0, "Not enough edges");
+  LM_ASSERT(nbEdges2 > 0, "Not enough edges");
   float step = static_cast<float>(nbEdges2)/static_cast<float>(nbEdges1);
   int temp = 0;
   if(nbEdges1==nbEdges2)

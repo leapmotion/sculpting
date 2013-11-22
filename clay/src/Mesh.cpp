@@ -917,6 +917,8 @@ void Mesh::performUndo()
   }
   recomputeOctree(undoIte_->aabbState_);
   std::unique_lock<std::mutex> lock(bufferMutex_);
+  reallocateIndicesBuffer_ = true;
+  reallocateVerticesBuffer_ = true;
   reinitVerticesBuffer();
   reinitIndicesBuffer();
   pendingGPUTriangles = getNbTriangles();
@@ -962,6 +964,8 @@ void Mesh::performRedo()
   }
   recomputeOctree(redoIte_->aabbState_);
   std::unique_lock<std::mutex> lock(bufferMutex_);
+  reallocateIndicesBuffer_ = true;
+  reallocateVerticesBuffer_ = true;
   reinitVerticesBuffer();
   reinitIndicesBuffer();
   pendingGPUTriangles = getNbTriangles();
