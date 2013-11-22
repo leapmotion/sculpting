@@ -36,10 +36,9 @@ CameraUtil::CameraUtil() {
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
-  std::unique_lock<std::mutex> lock(transformForGraphicsMutex);
-  GetTransformFromStandardCamera(from, to, transform);
-
-  this->referenceDistance = referenceDistance;
+  //std::unique_lock<std::mutex> lock(transformForGraphicsMutex);
+  //GetTransformFromStandardCamera(from, to, transform);
+  //this->referenceDistance = referenceDistance;
   state = STATE_FREEFLOATING;
 }
 
@@ -94,6 +93,7 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
     transform.translation = isoState.refPosition + isoState.refDist * params.isoRefDistMultiplier * (transform.rotation * Vector3::UnitZ());
   }
 
+  UpdateCameraInWorldSpace();
 }
 
 void CameraUtil::GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut) {
