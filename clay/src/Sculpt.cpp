@@ -199,16 +199,14 @@ void Sculpt::draw(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush
   VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
   const float dMove = std::sqrt(d2Move_);
-  float deformationIntensity = brush._radius*0.05f;
-  if (negate) {
-    deformationIntensity = -deformationIntensity;
-  }
+  const float deformationIntensity = brush._radius*0.05f;
+  const float negationFactor = negate ? -1.0f : 1.0f;
 #pragma omp parallel for
   for (int i = 0; i<nbVerts; ++i)
   {
     Vertex &vert=vertices[iVerts[i]];
     const float strength = brush.strengthAt(vert);
-    vert += vert.normal_ * std::min(dMove, deformationIntensity*strength);
+    vert += vert.normal_ * negationFactor * std::min(dMove, deformationIntensity*strength);
   }
 }
 
