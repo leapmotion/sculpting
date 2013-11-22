@@ -309,6 +309,7 @@ public:
   static Utilities::ExponentialFilter<float> g_maxMenuActivationSmoother;
   static Vector2 g_forceCenter;
   static float g_timeSinceSculpting;
+  static float g_menuOpacityCap;
 
   Menu();
   void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
@@ -430,6 +431,9 @@ public:
   float maxActivation() const;
   float maxActivation(Vector2& pos) const;
   void handleSelections(Sculpt* sculpt, LeapInteraction* leap, FreeformApp* app, Mesh* mesh);
+  void showConfirm(Menu::MenuEntryType entryType);
+  bool haveExitConfirm() const;
+  void clearConfirm();
   void setRegularFont(const ci::Font& font) {
     Menu::g_font = font;
     Menu::g_textureFont = ci::gl::TextureFont::create(font);

@@ -34,6 +34,7 @@ float Menu::g_maxMenuActivation = 0.0f;
 Utilities::ExponentialFilter<float> Menu::g_maxMenuActivationSmoother;
 Vector2 Menu::g_forceCenter(Vector2(0.5f, 0.5f));
 float Menu::g_timeSinceSculpting = 0.0f;
+float Menu::g_menuOpacityCap = 1.0f;
 Utilities::ExponentialFilter<float> Menu::g_sculptMult;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
@@ -51,6 +52,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   static const float MIN_PARENT_ACTIVATION = 0.75f; // amount of menu activation needed before children can be activated
   static const float MAX_ACTIVATION_LIMIT = 0.9f; // how high the max activation can be before other menus can't be activated
   static const float ACTIVATION_AMOUNT = 0.333f; // the amount to add when activating or deactivating
+  static const float ACTIVATION_REQUIREMENT_ENTRY = 0.1f;
   const double lastSculptTime = sculpt->getLastSculptTime();
   const double curTime = ci::app::getElapsedSeconds();
   const int numTips = tips.size();
@@ -110,7 +112,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
     m_activation.Update(newValue, curTime, PARENT_SMOOTH_STRENGTH);
 
     // finger left the area, so check whether to select the most activated entry
-    if (radius > curRadius && m_prevClosest < curRadius && maxActivation > 0.25f) {
+    if (radius > curRadius && m_prevClosest < curRadius && maxActivation > ACTIVATION_REQUIREMENT_ENTRY) {
       if ((maxIdx != m_prevSelectedEntry && m_curSelectedEntry != maxIdx) || (m_curSelectedEntry == -1 && static_cast<float>(curTime - m_deselectTime) > SELECTION_COOLDOWN)) {
         m_curSelectedEntry = maxIdx;
         m_selectionTime = curTime;
@@ -179,26 +181,24 @@ void Menu::setNumEntries(int num) {
 }
 
 void Menu::draw() const {
-  glPushMatrix();
-
   static const float BASE_BRIGHTNESS = 0.25f;
   const float activation = m_activation.value;
   const float opacityDiff = std::max(0.0f, g_maxMenuActivationSmoother.value - activation);
-  const float menuOpacity = (1.0f - opacityDiff) * getOpacity(activation);
+  const float menuOpacity = g_menuOpacityCap * (1.0f - opacityDiff) * getOpacity(activation);
   const ci::Vec2f pos = relativeToAbsolute(m_position + forceAt(m_position));
 
   if (activation > 0.01f) {
     // complete the remainder of the ring
     const float parentStart =  Utilities::RADIANS_TO_DEGREES*(getSweepStart() + m_sweepAngle);
     const float parentSweep = 360.0f - Utilities::RADIANS_TO_DEGREES * m_sweepAngle;
-    glColor4f(BASE_BRIGHTNESS, BASE_BRIGHTNESS, BASE_BRIGHTNESS, getOpacity(0.0f));
+    glColor4f(BASE_BRIGHTNESS, BASE_BRIGHTNESS, BASE_BRIGHTNESS, g_menuOpacityCap * getOpacity(0.0f));
     Utilities::drawPartialDisk(pos, m_wedgeStart, m_wedgeEnd, parentStart, parentSweep);
   }
 
   for (size_t i=0; i<m_entries.size(); i++) {
     const float entryActivation = m_entries[i].m_activationStrength.value;
     if (entryActivation > 0.01f || activation > 0.01f) {
-      const float entryOpacity = getOpacity(entryActivation);
+      const float entryOpacity = g_menuOpacityCap * getOpacity(entryActivation);
       const float wedgeStart = m_entries[i].m_wedgeStart;
       const float wedgeEnd = m_entries[i].m_wedgeEnd;
       const float angleStart = Utilities::RADIANS_TO_DEGREES*m_entries[i].m_angleStart;
@@ -262,8 +262,6 @@ void Menu::draw() const {
       glPopMatrix();
     }
   }
-  glPopMatrix();
-
   glPopMatrix();
 }
 
@@ -568,6 +566,11 @@ void UserInterface::draw() const {
     drawCursor(_cursor_positions[i], opacity*opacity);
   }
 
+  static const float FADE_IN_TIME = 0.333f;
+  const double curTime = ci::app::getElapsedSeconds();
+  const float timeSinceToggle = static_cast<float>(curTime - _last_switch_time);
+  Menu::g_menuOpacityCap = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/FADE_IN_TIME));
+
   enableAlphaBlending();
   if (_draw_confirm_menu) {
     _confirm_menu.draw();
@@ -703,6 +706,8 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     _first_selection_check = false;
   }
 
+  const double curTime = ci::app::getElapsedSeconds();
+
   if (_type_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _type_menu.getSelectedEntry();
     Sculpt::SculptMode mode = entry.toSculptMode();
@@ -756,9 +761,9 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     const Menu::MenuEntry& entry = _general_menu.getSelectedEntry();
     switch (entry.m_entryType) {
       case Menu::GENERAL_ABOUT: break;
-      case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); break;
+      case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = curTime; break;
       case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
-      case Menu::GENERAL_EXIT: _draw_confirm_menu = true; _pending_entry = Menu::GENERAL_EXIT; break;
+      case Menu::GENERAL_EXIT: showConfirm(Menu::GENERAL_EXIT); break;
       default: break;
     }
     _general_menu.clearSelection();
@@ -767,13 +772,13 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_object_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _object_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-      case Menu::OBJECT_LOAD: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_LOAD; break;
+      case Menu::OBJECT_LOAD: showConfirm(Menu::OBJECT_LOAD); break;
       case Menu::OBJECT_EXPORT: app->saveFile(); break;
-      case Menu::OBJECT_BALL: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_BALL; break;
-      case Menu::OBJECT_CAN: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CAN; break;
-      case Menu::OBJECT_DONUT: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_DONUT; break;
-      case Menu::OBJECT_SHEET: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_SHEET; break;
-      case Menu::OBJECT_CUBE: _draw_confirm_menu = true; _pending_entry = Menu::OBJECT_CUBE; break;
+      case Menu::OBJECT_BALL: showConfirm(Menu::OBJECT_BALL); break;
+      case Menu::OBJECT_CAN: showConfirm(Menu::OBJECT_CAN); break;
+      case Menu::OBJECT_DONUT: showConfirm(Menu::OBJECT_DONUT); break;
+      case Menu::OBJECT_SHEET: showConfirm(Menu::OBJECT_SHEET); break;
+      case Menu::OBJECT_CUBE: showConfirm(Menu::OBJECT_CUBE); break;
       default: break;
     }
     _object_menu.clearSelection();
@@ -805,14 +810,17 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
       }
     }
     _confirm_menu.clearSelection();
+    _last_switch_time = curTime;
     _draw_confirm_menu = false;
   }
 
   if (_draw_tutorial_menu && _tutorial_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _tutorial_menu.getSelectedEntry();
-    const double curTime = ci::app::getElapsedSeconds();
     switch (entry.m_entryType) {
-      case Menu::TUTORIAL_CLOSE: _draw_tutorial_menu = false; break;
+      case Menu::TUTORIAL_CLOSE:
+        _draw_tutorial_menu = false;
+        _last_switch_time = curTime;
+        break;
       case Menu::TUTORIAL_NEXT:
         _tutorial_slide = (_tutorial_slide + 1)%4;
         _last_switch_time = curTime;
@@ -825,6 +833,32 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     }
     _tutorial_menu.clearSelection();
   }
+}
+
+void UserInterface::showConfirm(Menu::MenuEntryType entryType) {
+  _draw_confirm_menu = true;
+  _last_switch_time = ci::app::getElapsedSeconds();
+  _pending_entry = entryType;
+
+  switch (_pending_entry) {
+  case Menu::OBJECT_LOAD:
+  case Menu::OBJECT_BALL:
+  case Menu::OBJECT_CAN:
+  case Menu::OBJECT_DONUT:
+  case Menu::OBJECT_SHEET:
+  case Menu::OBJECT_CUBE: _confirm_menu.setName("Discard changes and load a new object?"); break;
+  case Menu::GENERAL_EXIT: _confirm_menu.setName("Are you sure you'd like to exit?"); break;
+  default: _confirm_menu.setName("Are you sure?"); break;
+  }
+}
+
+bool UserInterface::haveExitConfirm() const {
+  return _draw_confirm_menu && _pending_entry == Menu::GENERAL_EXIT;
+}
+
+void UserInterface::clearConfirm() {
+  _draw_confirm_menu = false;
+  _last_switch_time = ci::app::getElapsedSeconds();
 }
 
 void UserInterface::drawCursor(const ci::Vec2f& position, float opacity) const {

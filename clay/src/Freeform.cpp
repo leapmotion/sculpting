@@ -394,7 +394,6 @@ void FreeformApp::keyDown( KeyEvent event )
   switch( event.getChar() )
   {
 #if !LM_PRODUCTION_BUILD
-  case KeyEvent::KEY_ESCAPE: doQuit(); break;
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
   case 's': symmetry_ = !symmetry_; break;
@@ -407,6 +406,13 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'y': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
   case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
 #endif
+  case KeyEvent::KEY_ESCAPE:
+    if (_ui->haveExitConfirm()) {
+      _ui->clearConfirm();
+    } else {
+      _ui->showConfirm(Menu::GENERAL_EXIT);
+    }
+    break;
   case 'c': _lock_camera = !_lock_camera; break;
   }
 #if _WIN32
@@ -417,6 +423,11 @@ void FreeformApp::keyDown( KeyEvent event )
     setFullScreen(!isFullScreen());
   }
 #endif
+  if (event.getCode() == KeyEvent::KEY_RETURN) {
+    if (_ui->haveExitConfirm()) {
+      doQuit();
+    }
+  }
 }
 
 void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
@@ -837,6 +848,7 @@ void FreeformApp::draw()
     }
   } else if (loading_state == Environment::LOADING_STATE_PROCESSING) {
     exposure_mult = 0.0f;
+    _ui->clearConfirm();
   } else if (loading_state == Environment::LOADING_STATE_NONE) {
     exposure_mult *= math<float>::clamp(loading_time/LOADING_LIGHTEN_TIME);
   }
