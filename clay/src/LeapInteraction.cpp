@@ -77,7 +77,7 @@ void LeapInteraction::interact(double curTime)
   float cur_dzoom = 0;
   static const float ORBIT_SPEED = 0.01f;
   static const float ZOOM_SPEED = 90.0f;
-  static const float AGE_WARMUP_TIME = 0.5f;
+  static const float AGE_WARMUP_TIME = 0.75f;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
   static const float LOG_SCALE_SMOOTH_STRENGTH = 0.9f;
 
@@ -124,7 +124,8 @@ void LeapInteraction::interact(double curTime)
       if (LM_RETURN_TRACKED(cur.getLastUpdateTime() < curTime)) {
         continue;
       }
-      if (numFingers > 2 || normalY < 0.35f) {
+      const float timeSinceHandOpenChange = static_cast<float>(curTime - cur.getLastHandOpenChangeTime());
+      if (cur.handOpen() || normalY < 0.35f) {
         // camera interaction
         const Vector3 movement = LM_RETURN_TRACKED(cur.getModifiedTranslation());
         cur_dtheta += ORBIT_SPEED * movement.x();
@@ -140,7 +141,7 @@ void LeapInteraction::interact(double curTime)
               LM_RETURN_TRACKED(pointable.length()) >= MIN_POINTABLE_LENGTH &&
               LM_RETURN_TRACKED(pointable.timeVisible()) >= MIN_POINTABLE_AGE) {
             // add brush
-            const float strengthMult = Utilities::SmootherStep(math<float>::clamp(LM_RETURN_TRACKED(pointable.timeVisible())/AGE_WARMUP_TIME));
+            const float strengthMult = Utilities::SmootherStep(math<float>::clamp(LM_RETURN_TRACKED(std::min(timeSinceHandOpenChange,pointable.timeVisible()))/AGE_WARMUP_TIME));
 
             Leap::Vector tip_pos = LM_RETURN_TRACKED(pointable.tipPosition());
             Leap::Vector tip_dir = LM_RETURN_TRACKED(pointable.direction());
@@ -180,7 +181,8 @@ void LeapInteraction::interact(double curTime)
             if (_autoBrush) {
               adjRadius *= autoBrushScaleFactor;
             }
-            if (transPos.x >= -0.025f && transPos.x <= 1.025f && transPos.y >= -0.025f && transPos.y <= 1.025f) {
+            static const float BORDER_THICKNESS = 0.035f;
+            if (transPos.x >= -BORDER_THICKNESS && transPos.x <= (1.0f + BORDER_THICKNESS) && transPos.y >= -BORDER_THICKNESS && transPos.y <= (1.0f + BORDER_THICKNESS)) {
               // compute a point on the surface of the sphere to use as the screen-space radius
               radPos.x = (radPos.x + 1)/2;
               radPos.y = (radPos.y + 1)/2;

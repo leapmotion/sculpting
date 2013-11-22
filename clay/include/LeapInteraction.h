@@ -108,13 +108,15 @@ private:
 class HandInfo {
 public:
 
-  HandInfo() : m_lastUpdateTime(0.0) { }
+  HandInfo() : m_lastUpdateTime(0.0), m_lastHandOpenChangeTime(0.0), m_handOpen(false) { }
 
   int getNumFingers() const { return m_numFingers.FilteredCategory(); }
   Vector3 getTranslation() const { return m_translation.value; }
   float getTranslationRatio() const { return m_transRatio.value; }
   float getNormalY() const { return m_normalY.value; }
   double getLastUpdateTime() const { return m_lastUpdateTime; }
+  double getLastHandOpenChangeTime() const { return m_lastHandOpenChangeTime; }
+  bool handOpen() const { return m_handOpen; }
 
   Vector3 getModifiedTranslation() const {
     const float ratio = getTranslationRatio();
@@ -125,7 +127,7 @@ public:
   void update(const Leap::Hand& hand, const Leap::Frame& sinceFrame, double curTime) {
     static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.9f;
     static const float TRANSLATION_SMOOTH_STRENGTH = 0.5f;
-    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.95f;
+    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.975f;
     static const float NORMAL_Y_SMOOTH_STRENGTH = 0.9f;
     m_lastUpdateTime = curTime;
 
@@ -138,6 +140,14 @@ public:
       }
     }
     m_numFingers.Update(numFingers, curTime, NUM_FINGERS_SMOOTH_STRENGTH);
+    const int curNumFingers = m_numFingers.FilteredCategory();
+    if (curNumFingers > 2 && !m_handOpen) {
+      m_handOpen = true;
+      m_lastHandOpenChangeTime = curTime;
+    } else if (m_handOpen && curNumFingers <= 2) {
+      m_handOpen = false;
+      m_lastHandOpenChangeTime = curTime;
+    }
 
     // update translation
     const Leap::Vector temp(hand.translation(sinceFrame));
@@ -147,7 +157,7 @@ public:
     // update translation ratio
     if (translation.squaredNorm() > 0.001f) {
       const Vector3 unitTranslation = translation.normalized();
-      const float curRatio = std::sqrt(unitTranslation.x()*unitTranslation.x() + unitTranslation.y()*unitTranslation.y());
+      const float curRatio = unitTranslation.x()*unitTranslation.x() + unitTranslation.y()*unitTranslation.y();
       m_transRatio.Update(curRatio, curTime, TRANSLATION_RATIO_SMOOTH_STRENGTH);
     } else {
       m_transRatio.Update(0.5f, curTime, TRANSLATION_RATIO_SMOOTH_STRENGTH);
@@ -162,6 +172,8 @@ private:
   Utilities::ExponentialFilter<float> m_transRatio;
   Utilities::ExponentialFilter<float> m_normalY;
   double m_lastUpdateTime;
+  bool m_handOpen;
+  double m_lastHandOpenChangeTime;
 };
 
 #endif
