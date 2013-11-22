@@ -72,7 +72,7 @@ inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= 
 #if DEBUG || _DEBUG
 #define LM_PRODUCTION_BUILD 0
 #else
-#define LM_PRODUCTION_BUILD 1
+#define LM_PRODUCTION_BUILD 0
 #endif
 
 #if !LM_PRODUCTION_BUILD

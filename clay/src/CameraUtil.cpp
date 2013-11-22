@@ -13,8 +13,8 @@
 #else
 #define LM_LOG_CAMERA_LOGIC 0
 #define LM_LOG_CAMERA_LOGIC_2 0
-#define LM_LOG_CAMERA_LOGIC_3 0
-#define LM_LOG_CAMERA_LOGIC_4 0
+#define LM_LOG_CAMERA_LOGIC_3 1
+#define LM_LOG_CAMERA_LOGIC_4 1
 #define LM_DRAW_DEBUG_OBJECTS 1
 #endif
 

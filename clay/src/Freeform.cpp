@@ -50,7 +50,7 @@ void FreeformApp::prepareSettings( Settings *settings )
   ci::app::Window::Format fmt;
   fmt.setTitle("Freeform");
   fmt.setSize(1024, 768);
-  fmt.setFullScreen(true);
+  fmt.setFullScreen(false);
   settings->prepareWindow(fmt);
 
   enableVerticalSync(true);
