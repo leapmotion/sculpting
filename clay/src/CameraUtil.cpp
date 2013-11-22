@@ -660,6 +660,8 @@ void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
 
   isoState.refPosition = ToWorldSpace(isoState.refPosition);
   isoState.refNormal = ToWorldSpace(isoState.refNormal);
+  isoState.closestPointOnMesh.position = ToWorldSpace(isoState.closestPointOnMesh.position);
+  isoState.closestPointOnMesh.normal = ToWorldSpace(isoState.closestPointOnMesh.normal);
 
   // Get mesh's transformstion
   meshTransform = lmTransformFromMatrix(mesh->getRotationMatrix(), mesh->getTranslation());
@@ -671,6 +673,8 @@ void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
 
   isoState.refPosition = ToMeshSpace(isoState.refPosition);
   isoState.refNormal = ToMeshSpace(isoState.refNormal);
+  isoState.closestPointOnMesh.position = ToMeshSpace(isoState.closestPointOnMesh.position);
+  isoState.closestPointOnMesh.normal = ToMeshSpace(isoState.closestPointOnMesh.normal);
 }
 
 void CameraUtil::EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* paramsInOut) {
@@ -1834,6 +1838,15 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   LM_DRAW_CROSS(state->refPosition, 20.0f, lmColor::GREEN);
   LM_DRAW_CROSS(state->closestPointOnMesh.position, 20.0f, lmColor::RED);
   LM_DRAW_ARROW(state->closestPointOnMesh.position, state->closestPointOnMesh.position + state->closestPointOnMesh.normal * 40.0f, lmColor::RED);
+
+  if (movement.norm() < LM_EPSILON) {
+    if (mesh->getRotationVelocity_notSmoothed() > 0.0f) {
+      IsoCameraConstrainWhenSpinning(mesh, state);
+    }
+
+    // do nothing.
+    return;
+  }
 
   if(state->numFailedUpdates) {
 #if LM_LOG_CAMERA_LOGIC_4
