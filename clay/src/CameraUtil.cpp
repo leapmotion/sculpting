@@ -1850,6 +1850,9 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   if (movement.norm() < LM_EPSILON) {
     if (mesh->getRotationVelocity_notSmoothed() > 0.0f) {
       IsoCameraConstrainWhenSpinning(mesh, state);
+      IsoUpdateCameraTransform(-state->refNormal, state);
+      IsoUpdateReferencePoint(state);
+      UpdateCameraInWorldSpace();
     }
 
     // do nothing.
@@ -2065,10 +2068,10 @@ void CameraUtil::IsoCameraConstrainWhenSpinning( Mesh* mesh, IsoCameraState* sta
   Vector3 rayStart = state->refPosition + state->refNormal * 1000.0f;
   Vector3 rayEnd = state->refPosition - state->refNormal * state->refDist;
   lmRayCastOutput raycastOutput;
-  CastOneRay(mesh, lmRay(rayStart, rayEnd), &raycastOutput);
+  lmRay ray(rayStart, rayEnd);
+  CastOneRay(mesh, ray, &raycastOutput);
   if (raycastOutput.isSuccess()) {
     LM_ASSERT(lmInRange(raycastOutput.fraction, 0.0f, 1.0f), "Raycast output invalid.");
-    state->refPosition = raycastOutput.position + state->refNormal * state->refDist;
+    state->refPosition = raycastOutput.position - ray.GetDirection() * state->refDist;
   }
 }
-
