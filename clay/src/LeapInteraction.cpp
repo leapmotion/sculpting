@@ -119,7 +119,7 @@ void LeapInteraction::interact(double curTime)
       LM_ASSERT_IDENTICAL(0x12345678);
       const int id = it->first;
       const HandInfo& cur = it->second;
-      const int numFingers = LM_RETURN_TRACKED(cur.getNumFingers());
+//      const int numFingers = LM_RETURN_TRACKED(cur.getNumFingers());
       const float normalY = LM_RETURN_TRACKED(cur.getNormalY());
       if (LM_RETURN_TRACKED(cur.getLastUpdateTime() < curTime)) {
         continue;

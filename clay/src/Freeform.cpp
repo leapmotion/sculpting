@@ -8,6 +8,7 @@
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
 #include "ReplayUtil.h"
+#include "CrashReport.h"
 
 const float CAMERA_SPEED = 0.005f;
 
@@ -1371,6 +1372,7 @@ int FreeformApp::saveFile()
 #pragma comment( linker, "/subsystem:\"console\" /entry:\"mainCRTStartup\"" )
 
 int main( int argc, char * const argv[] ) {
+  CrashReport cr;
   cinder::app::AppBasic::prepareLaunch();
   cinder::app::AppBasic *app = new FreeformApp;
   //cinder::app::RendererRef ren(new RendererGl());

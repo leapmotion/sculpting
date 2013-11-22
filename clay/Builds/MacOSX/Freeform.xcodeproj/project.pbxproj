@@ -127,6 +127,8 @@
 		8A9B82481832D38A00AA2EA3 /* tutorial-camera.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B82451832D38A00AA2EA3 /* tutorial-camera.png */; };
 		8A9B82491832D38A00AA2EA3 /* tutorial-menu.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B82461832D38A00AA2EA3 /* tutorial-menu.png */; };
 		8A9B824A1832D38A00AA2EA3 /* tutorial-tools.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B82471832D38A00AA2EA3 /* tutorial-tools.png */; };
+		8AB1906318400DFB00347357 /* CrashReport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8AB1906218400DFB00347357 /* CrashReport.cpp */; };
+		8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -461,6 +463,9 @@
 		8A9B82451832D38A00AA2EA3 /* tutorial-camera.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tutorial-camera.png"; sourceTree = "<group>"; };
 		8A9B82461832D38A00AA2EA3 /* tutorial-menu.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tutorial-menu.png"; sourceTree = "<group>"; };
 		8A9B82471832D38A00AA2EA3 /* tutorial-tools.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tutorial-tools.png"; sourceTree = "<group>"; };
+		8AB1906218400DFB00347357 /* CrashReport.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CrashReport.cpp; path = ../../src/CrashReport.cpp; sourceTree = "<group>"; };
+		8AB1906418400E0D00347357 /* CrashReport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CrashReport.h; path = ../../include/CrashReport.h; sourceTree = "<group>"; };
+		8AB1906518400EF400347357 /* Breakpad.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Breakpad.framework; path = "../../../../../../../../opt/local/Libraries/breakpad-0.1/lib/Breakpad.framework"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Freeform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeform.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEAF09CCD9054AE5A257591B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -474,6 +479,7 @@
 				18392F4D179E91EC006709CF /* libLeap.dylib in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				0091D8F90E81B9330029341E /* OpenGL.framework in Frameworks */,
+				8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */,
 				5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */,
 				5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */,
 				00B784B30FF439BC000DE1D7 /* Accelerate.framework in Frameworks */,
@@ -496,6 +502,7 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8AB1906218400DFB00347357 /* CrashReport.cpp */,
 				8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */,
 				01C5D740181A480600194132 /* Aabb.cpp */,
 				8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */,
@@ -556,7 +563,6 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				8A7FDF18183E940D00E94B5F /* ReplayUtil.h */,
 				01C5D7A7181A4C8800194132 /* Aabb.h */,
 				8A7FDF0A183AEB2900E94B5F /* AutoSave.h */,
 				01C5D7A8181A4C8800194132 /* Brush.h */,
@@ -566,6 +572,7 @@
 				01C5D7AC181A4C8800194132 /* CCubeMapProcessor.h */,
 				01C5D7AD181A4C8800194132 /* CImageSurface.h */,
 				01C5D7AE181A4C8800194132 /* Common.h */,
+				8AB1906418400E0D00347357 /* CrashReport.h */,
 				01C5D7AF181A4C8800194132 /* DataTypes.h */,
 				01C5D7B0181A4C8800194132 /* DebugDrawUtil.h */,
 				01C5D7B1181A4C8800194132 /* Environment.h */,
@@ -580,6 +587,7 @@
 				01C5D798181A4C3A00194132 /* Mesh.h */,
 				01C5D799181A4C3A00194132 /* Octree.h */,
 				01C5D79A181A4C3A00194132 /* Picking.h */,
+				8A7FDF18183E940D00E94B5F /* ReplayUtil.h */,
 				01C5D79B181A4C3A00194132 /* Resources.h */,
 				01C5D79C181A4C3A00194132 /* Sculpt.h */,
 				01C5D79D181A4C3A00194132 /* State.h */,
@@ -627,6 +635,7 @@
 			children = (
 				18392F4C179E91EC006709CF /* libLeap.dylib */,
 				18392F4A179E9050006709CF /* libfreeimage.dylib */,
+				8AB1906518400EF400347357 /* Breakpad.framework */,
 				00B784AF0FF439BC000DE1D7 /* Accelerate.framework */,
 				00B784B00FF439BC000DE1D7 /* AudioToolbox.framework */,
 				00B784B10FF439BC000DE1D7 /* AudioUnit.framework */,
@@ -1316,6 +1325,7 @@
 				01C5D760181A480600194132 /* CameraUtil.cpp in Sources */,
 				01C5D767181A480600194132 /* Geometry.cpp in Sources */,
 				01C5D75D181A480600194132 /* Aabb.cpp in Sources */,
+				8AB1906318400DFB00347357 /* CrashReport.cpp in Sources */,
 				01C5D76F181A480600194132 /* Sculpt.cpp in Sources */,
 				01C5D775181A480600194132 /* TopologyDecimation.cpp in Sources */,
 				01C5D766181A480600194132 /* Files.cpp in Sources */,
@@ -1350,6 +1360,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/local/Libraries/breakpad-0.1/lib",
+				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -1366,6 +1380,7 @@
 					"$(LIBRARIES_PATH)/FreeImage/Dist",
 					"$(LIBRARIES_PATH)/eigen-3.1.2",
 					"$(CINDER_PATH)/include",
+					"$(LIBRARIES_PATH)/breakpad-0.1/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
@@ -1398,6 +1413,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/local/Libraries/breakpad-0.1/lib",
+				);
 				GCC_FAST_MATH = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -1411,6 +1430,7 @@
 					"$(LIBRARIES_PATH)/FreeImage/Dist",
 					"$(LIBRARIES_PATH)/eigen-3.1.2",
 					"$(CINDER_PATH)/include",
+					"$(LIBRARIES_PATH)/breakpad-0.1/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
