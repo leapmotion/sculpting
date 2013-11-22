@@ -52,35 +52,10 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
     }
   }
 
-  Tools::tidy(iTrisToDelete_);
-  int nbTrisDelete = iTrisToDelete_.size();
-  for(int i=nbTrisDelete-1;i>=0;--i) {
-    deleteTriangle(iTrisToDelete_[i]);
-  }
-
-  Tools::tidy(iVertsToDelete_);
-  int nbVertsToDelete = iVertsToDelete_.size();
-  for(int i=nbVertsToDelete-1;i>=0;--i) {
-    deleteVertex(iVertsToDelete_[i]);
-  }
+  applyDeletion();
 
   std::vector<int> iVertsDecimated;
-  int nbVertsDecimated = iVertsDecimated_.size();
-  int nbVertices = vertices().size();
-  ++Vertex::tagMask_;
-  for(int i=0;i<nbVertsDecimated;++i)
-  {
-    int iVert = iVertsDecimated_[i];
-    if(iVert>=nbVertices) {
-      continue;
-    }
-    Vertex &v = vertices()[iVert];
-    if(v.tagFlag_==Vertex::tagMask_) {
-      continue;
-    }
-    v.tagFlag_ = Vertex::tagMask_;
-    iVertsDecimated.push_back(iVert);
-  }
+  getValidModifiedVertices(iVertsDecimated);
 
   std::vector<int> newTris;
   mesh_->getTrianglesFromVertices(iVertsDecimated, newTris);
@@ -106,6 +81,39 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
   iTris = iTrisTemp;
 }
 
+void Topology::applyDeletion() {
+  Tools::tidy(iTrisToDelete_);
+  int nbTrisDelete = iTrisToDelete_.size();
+  for(int i=nbTrisDelete-1;i>=0;--i) {
+    deleteTriangle(iTrisToDelete_[i]);
+  }
+
+  Tools::tidy(iVertsToDelete_);
+  int nbVertsToDelete = iVertsToDelete_.size();
+  for(int i=nbVertsToDelete-1;i>=0;--i) {
+    deleteVertex(iVertsToDelete_[i]);
+  }
+}
+
+void Topology::getValidModifiedVertices(std::vector<int>& iVerts) {
+  int nbVertsDecimated = iVertsDecimated_.size();
+  int nbVertices = vertices().size();
+  ++Vertex::tagMask_;
+  for(int i=0;i<nbVertsDecimated;++i)
+  {
+    int iVert = iVertsDecimated_[i];
+    if(iVert>=nbVertices) {
+      continue;
+    }
+    Vertex &v = vertices()[iVert];
+    if(v.tagFlag_==Vertex::tagMask_) {
+      continue;
+    }
+    v.tagFlag_ = Vertex::tagMask_;
+    iVerts.push_back(iVert);
+  }
+}
+
 /** Find opposite triangle */
 int Topology::findOppositeTriangle(int iTri, int iv1, int iv2)
 {
@@ -115,9 +123,15 @@ int Topology::findOppositeTriangle(int iTri, int iv1, int iv2)
   std::vector<int> &iTris2 = v2.tIndices_;
   std::sort(iTris1.begin(),iTris1.end());
   std::sort(iTris2.begin(),iTris2.end());
-  std::vector<int> res(iTris1.size(),-1);
+  std::vector<int> res(std::max(iTris1.size(), iTris2.size()),-1);
   std::set_intersection(iTris1.begin(),iTris1.end(),iTris2.begin(),iTris2.end(),res.begin());
-  if(res.size() < 3 || res[2]!=-1) {
+  for (size_t i=0; i<res.size(); i++) {
+    if (res[i] == -1) {
+      res.resize(i);
+      break;
+    }
+  }
+  if (res.size() != 2) {
     return -1;
   }
   if(res[0]==iTri) {
@@ -197,7 +211,7 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
 
   std::sort(ring1.begin(),ring1.end());
   std::sort(ring2.begin(),ring2.end());
-  std::vector<int> res(ring1.size(),-1);
+  std::vector<int> res(std::max(ring1.size(), ring2.size()),-1);
   std::set_intersection(ring1.begin(),ring1.end(),ring2.begin(),ring2.end(),res.begin());
 
   LM_ASSERT(res.size() >= 2, "Not enough res");

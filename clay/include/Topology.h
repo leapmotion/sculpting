@@ -61,6 +61,8 @@ private :
 
   //decimation stuffs
   void decimateTriangles(int iTri1, int iTri2, std::vector<int> &iTris);
+  void applyDeletion();
+  void getValidModifiedVertices(std::vector<int>& iVerts);
   int findOppositeTriangle(int iTri, int iv1, int iv2);
   void edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, int ivOpp2, std::vector<int> &iTris);
   void deleteTriangle(int iTri);

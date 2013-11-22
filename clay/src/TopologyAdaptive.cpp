@@ -106,34 +106,13 @@ void Topology::checkCollisions(std::vector<int> &iVerts, float d2Thickness)
     }
   }
 
-  Tools::tidy(iTrisToDelete_);
-  int nbTrisDelete = iTrisToDelete_.size();
-  for(int i=nbTrisDelete-1;i>=0;--i)
-    deleteTriangle(iTrisToDelete_[i]);
-
-  Tools::tidy(iVertsToDelete_);
-  int nbVertsToDelete = iVertsToDelete_.size();
-  for(int i=nbVertsToDelete-1;i>=0;--i)
-    deleteVertex(iVertsToDelete_[i]);
+  applyDeletion();
 
   std::vector<int> iVertsDecimated;
-  int nbVertsDecimated = iVertsDecimated_.size();
-  int nbVertices = vertices().size();
-  ++Vertex::tagMask_;
-  for(int i=0;i<nbVertsDecimated;++i)
-  {
-    int iVert = iVertsDecimated_[i];
-    if(iVert>=nbVertices)
-      continue;
-    Vertex &v = vertices()[iVert];
-    if(v.tagFlag_==Vertex::tagMask_)
-      continue;
-    v.tagFlag_ = Vertex::tagMask_;
-    iVertsDecimated.push_back(iVert);
-  }
+  getValidModifiedVertices(iVertsDecimated);
   iVertsDecimated_ = iVertsDecimated;
 
-  nbVertsDecimated = iVertsDecimated_.size();
+  int nbVertsDecimated = iVertsDecimated_.size();
   std::vector<int> vSmooth;
   for(int i=0;i<nbVertsDecimated;++i)
   {
@@ -178,7 +157,7 @@ void Topology::vertexJoin(int iv1, int iv2)
 
   std::sort(ring1.begin(),ring1.end());
   std::sort(ring2.begin(),ring2.end());
-  std::vector<int> common(nbRing2,-1);
+  std::vector<int> common(std::max(nbRing1, nbRing2),-1);
   std::set_intersection(ring1.begin(),ring1.end(),ring2.begin(),ring2.end(),common.begin());
 
   int nbCommon = common.size();

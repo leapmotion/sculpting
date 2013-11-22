@@ -993,10 +993,24 @@ void Mesh::recomputeOctree(const Aabb &aabbSplit)
 void Mesh::checkNormals() {
 #if !LM_PRODUCTION_BUILD
   for (size_t i=0; i<triangles_.size(); i++) {
-    LM_ASSERT(fabs(triangles_[i].normal_.norm() - 1.0f) < 0.0001f, "Bad normal" << triangles_[i].normal_.transpose());
+    LM_ASSERT(fabs(triangles_[i].normal_.norm() - 1.0f) < 0.0001f, "Bad normal " << triangles_[i].normal_.transpose());
   }
   for (size_t i=0; i<vertices_.size(); i++) {
-    LM_ASSERT(fabs(vertices_[i].normal_.norm() - 1.0f) < 0.0001f, "Bad normal" << vertices_[i].normal_.transpose());
+    LM_ASSERT(fabs(vertices_[i].normal_.norm() - 1.0f) < 0.0001f, "Bad normal " << vertices_[i].normal_.transpose());
+  }
+#endif
+}
+
+void Mesh::checkVertices(const std::vector<int>& iVerts, float d2Min) {
+  return;
+#if !LM_PRODUCTION_BUILD
+  for (size_t i=0; i<iVerts.size(); i++) {
+    const Vertex v1 = vertices_[iVerts[i]];
+    for (size_t j=i+1; j<iVerts.size(); j++) {
+      const Vertex v2 = vertices_[iVerts[j]];
+      const float distSq = (v1 - v2).squaredNorm();
+      LM_ASSERT(distSq >= d2Min, "Vertices too close " << distSq << " " << v1.transpose() << " " << v2.transpose() << std::endl);
+    }
   }
 #endif
 }

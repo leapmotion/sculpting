@@ -94,6 +94,7 @@ public:
   void handleUndoRedo();
   void recomputeOctree(const Aabb &aabbSplit);
   void checkNormals();
+  void checkVertices(const std::vector<int>& iVerts, float d2Min);
   void computeTriangleNormals(const std::vector<int> &iTris);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
