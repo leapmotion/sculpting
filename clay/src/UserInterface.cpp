@@ -480,7 +480,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   }
 
   const int NUM_TUTORIAL_ENTRIES = 3;
-  _tutorial_menu.setName("Tutorial");
+  _tutorial_menu.setName("Tutorial " + tutorialStringSuffix(_tutorial_slide+1, 4));
   _tutorial_menu.setPosition(Vector2(0.65f, 0.75f));
   _tutorial_menu.setNumEntries(NUM_TUTORIAL_ENTRIES);
   entryType = Menu::TUTORIAL_NEXT;
@@ -831,6 +831,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
         break;
       default: break;
     }
+    _tutorial_menu.setName("Tutorial " + tutorialStringSuffix(_tutorial_slide+1, 4));
     _tutorial_menu.clearSelection();
   }
 }

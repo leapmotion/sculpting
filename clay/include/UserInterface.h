@@ -457,6 +457,11 @@ public:
 private:
 
   void initializeMenu(Menu& menu);
+  std::string tutorialStringSuffix(int num, int total) {
+    std::stringstream ss;
+    ss << num << " of " << total;
+    return ss.str();
+  }
 
   static float angleOffsetForPosition(const Vector2& pos);
 
