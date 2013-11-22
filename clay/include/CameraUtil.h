@@ -260,6 +260,8 @@ public:
 
   void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state );
 
+  void IsoUpdateReferencePoint(IsoCameraState* state );
+
   void IsoPreventCameraInMesh(Mesh* mesh, IsoCameraState* state);
 
   void InitIsoCamera(Mesh* mesh, IsoCameraState* state);

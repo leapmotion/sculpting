@@ -86,7 +86,8 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
   // reset iso camera
   if (params.cameraOverrideIso)
   {
-    isoState.refDist = lmClip(isoState.refDist, params.minDist, params.maxDist);
+    //isoState.refDist = lmClip(isoState.refDist, params.minDist, params.maxDist);
+    isoState.refDist = params.maxDist/(1+params.isoRefDistMultiplier)*1.5f;
     isoState.refNormal = referencePoint.normal;
     isoState.refPosition = referencePoint.position + isoState.refDist * referencePoint.normal;
 
@@ -1784,6 +1785,13 @@ void CameraUtil::IsoUpdateCameraTransform(const Vector3& newDirection, IsoCamera
   transform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
 }
 
+void CameraUtil::IsoUpdateReferencePoint(IsoCameraState* state ) {
+  std::unique_lock<std::mutex> lock(referencePointMutex);
+  referencePoint.position = state->refPosition - state->refNormal * state->refDist;
+  referencePoint.normal = state->refNormal;
+  referenceDistance = state->refDist * (1 + params.isoRefDistMultiplier);
+}
+
 void CameraUtil::IsoPreventCameraInMesh( Mesh* mesh, IsoCameraState* state )
 {
   // Raycast from refPoint to camera.
@@ -2023,12 +2031,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   IsoPreventCameraInMesh(mesh, state);
 
   // Display reference sphere (updating point & radius):
-  {
-    //std::unique_lock<std::mutex> lock(referencePointMutex);
-    referencePoint.position = state->refPosition - state->refNormal * state->refDist;
-    referencePoint.normal = state->refNormal;
-    referenceDistance = state->refDist * (1 + params.isoRefDistMultiplier);
-  }
+  IsoUpdateReferencePoint(state);
 
   state->numFailedUpdates = 0;
 }
