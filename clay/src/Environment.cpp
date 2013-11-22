@@ -20,7 +20,8 @@ CCubeMapProcessor* Environment::_cubemap_processor = new CCubeMapProcessor();
 std::vector<Environment::EnvironmentInfo> Environment::_environment_infos;
 std::string Environment::working_directory;
 
-Environment::Environment() : _cur_environment(""), _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0)
+Environment::Environment()
+  : _cur_environment(""), _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0), _use_hdr(true)
 {
   for (int i = 0; i < CUBEMAP_SIDES; ++i)
   {
@@ -224,10 +225,10 @@ void Environment::loadBitmap(std::string* filenames,
       bitmapHeights[_Idx] = FreeImage_GetHeight(bitmaps[_Idx]);
       FreeImage_FlipVertical(bitmaps[_Idx]);
       if (cur_type == FIT_FLOAT) {
-        internalFormats[_Idx] = GL_R32F;
+        internalFormats[_Idx] = _use_hdr ? GL_R16F : GL_R8;
         formats[_Idx] = GL_RED;
       } else if (cur_type == FIT_RGBF) {
-        internalFormats[_Idx] = GL_RGB16F_ARB;
+        internalFormats[_Idx] = _use_hdr ? GL_RGB16F_ARB : GL_RGB8;
         formats[_Idx] = GL_RGB;
       }
     } else {

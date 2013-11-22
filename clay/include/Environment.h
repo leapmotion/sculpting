@@ -58,6 +58,7 @@ public:
   void finishLoading();
   void beginProcessing();
   void finishProcessing();
+  void setUseHDR(bool use) { _use_hdr = use; }
   LoadingState getLoadingState() const { return _loading_state; }
   double getLastStateChangeTime() const { return _loading_state_change_time; }
   
@@ -109,6 +110,7 @@ private:
   double _loading_state_change_time;
 
   float* orig_images[6];
+  bool _use_hdr;
 
   FIBITMAP* bitmaps[6];
   unsigned int bitmap_widths[6];

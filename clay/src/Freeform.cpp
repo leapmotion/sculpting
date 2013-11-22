@@ -187,6 +187,7 @@ void FreeformApp::setup()
   _machine_speed = parseRenderString(std::string((char*)glGetString(GL_RENDERER)));
   _bloom_visible = _machine_speed > FreeformApp::LOW;
   _aa_mode = _machine_speed > FreeformApp::LOW ? FreeformApp::MSAA : FreeformApp::NONE;
+  _environment->setUseHDR(_machine_speed > FreeformApp::LOW);
 
   // set mesh detail depending on machine specs
   static const float LOW_DETAIL_LEVEL = 0.85f;
@@ -1048,18 +1049,6 @@ void FreeformApp::loadLogos() {
 }
 
 FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& render_string) {
-  // would be cleaner if I used Boost.Spirit
-  std::string::const_iterator it = render_string.begin();
-  for (; it != render_string.end(); it++) {
-    if (isdigit(*it)) {
-      break;
-    }
-  }
-  if (it == render_string.end()) {
-    std::cout << render_string << std::endl;
-    return FreeformApp::MID;
-  }
-  int model_number = atoi(render_string.substr(it - render_string.begin()).c_str());
   if (render_string.find("Intel HD") != std::string::npos) {
     return FreeformApp::LOW;
   }
@@ -1074,6 +1063,19 @@ FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& rend
       // workstation card, give them a shot at full resolution regardless of the model #
       return FreeformApp::HIGH;
   }
+
+  std::string::const_iterator it = render_string.begin();
+  for (; it != render_string.end(); it++) {
+    if (isdigit(*it)) {
+      break;
+    }
+  }
+  if (it == render_string.end()) {
+    std::cout << render_string << std::endl;
+    return FreeformApp::MID;
+  }
+  int model_number = atoi(render_string.substr(it - render_string.begin()).c_str());
+
   if (render_string.find("GeForce") != std::string::npos) {
     if (model_number > 1000) {
       if (render_string.find("M OpenGL") != std::string::npos) {
