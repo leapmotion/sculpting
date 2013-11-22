@@ -386,6 +386,11 @@ void FreeformApp::mouseMove( MouseEvent event)
 
 void FreeformApp::keyDown( KeyEvent event )
 {
+  static const double MIN_TIME_SINCE_SCULPTING_FOR_UNDO = 0.25;
+  const double curTime = ci::app::getElapsedSeconds();
+  const double lastSculptTime = sculpt_.getLastSculptTime();
+  const bool allowUndo = (curTime - lastSculptTime) > MIN_TIME_SINCE_SCULPTING_FOR_UNDO;
+
   switch( event.getChar() )
   {
 #if !LM_PRODUCTION_BUILD
@@ -396,11 +401,11 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'r': sculpt_.setRemeshRadius(remeshRadius_); break;
 #endif
 #if __APPLE__
-  case 'y': if (event.isMetaDown()) { if (mesh_) { mesh_->redo(); } } break;
-  case 'z': if (event.isMetaDown()) { if (mesh_) { mesh_->undo(); } } break;
+  case 'y': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
+  case 'z': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
 #else
-  case 'y': if (event.isControlDown()) { if (mesh_) { mesh_->redo(); } } break;
-  case 'z': if (event.isControlDown()) { if (mesh_) { mesh_->undo(); } } break;
+  case 'y': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
+  case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
 #endif
   case 'c': _lock_camera = !_lock_camera; break;
   case 'f': { std::string dummyString; toggleFullscreen(dummyString); } break;
