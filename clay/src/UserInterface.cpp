@@ -307,8 +307,8 @@ void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) 
   radius = absoluteToRelative(diff.length());
 }
 
-UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true),
-  _draw_confirm_menu(false), _draw_tutorial_menu(false), _last_switch_time(0.0), _tutorial_slide(0)
+UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true), _draw_confirm_menu(false),
+  _draw_tutorial_menu(false), _last_switch_time(0.0), _tutorial_slide(0), _draw_about(false)
 {
   srand(static_cast<unsigned int>(time(0)));
   int entryType;
@@ -634,6 +634,33 @@ void UserInterface::drawTutorialSlides(float opacityMult) const {
   ci::gl::draw(*tex, area);
 }
 
+void UserInterface::drawAbout(float opacityMult) const {
+  if (!_draw_about) {
+    return;
+  }
+  static const float ABOUT_SCALE = 0.7f;
+  static const float IMAGE_FADE_TIME = 0.5f;
+
+  const ci::Vec2i size = getWindowSize();
+  const ci::Area bounds = getWindowBounds();
+  const ci::Vec2f center = getWindowCenter();
+  const float yOffset = 0.0f;
+
+  setMatricesWindow( size );
+  setViewport( bounds );
+  const float aspect = _about.getAspectRatio();
+  float halfWidth = ABOUT_SCALE*size.x/2;
+  float halfHeight = halfWidth / aspect;
+  ci::Rectf area(center.x - halfWidth, center.y - halfHeight + yOffset, center.x + halfWidth, center.y + halfHeight + yOffset);
+
+  const double curTime = ci::app::getElapsedSeconds();
+  const float timeSinceToggle = static_cast<float>(ci::app::getElapsedSeconds() - _last_switch_time);
+  const float opacity = opacityMult * Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/IMAGE_FADE_TIME));
+
+  glColor4f(1.0f, 1.0f, 1.0f, opacity);
+  ci::gl::draw(_about, area);
+}
+
 void UserInterface::drawDisconnected() const {
   const ci::ColorA titleColor(1.0f, 0.2f, 0.1f, 1.0f);
   const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -760,7 +787,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_general_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _general_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-      case Menu::GENERAL_ABOUT: break;
+      case Menu::GENERAL_ABOUT: _draw_about = !_draw_about; _last_switch_time = curTime; break;
       case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = curTime; break;
       case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
       case Menu::GENERAL_EXIT: showConfirm(Menu::GENERAL_EXIT); break;

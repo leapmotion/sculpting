@@ -900,7 +900,7 @@ void FreeformApp::draw() {
 
     setViewport( _screen_fbo.getBounds() );
     setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
-    const float tutorialMult = _ui->tutorialActive() ? 0.65f : 1.0f;
+    const float overlayMult = (_ui->aboutActive() || _ui->tutorialActive()) ? 0.65f : 1.0f;
 
     _screen_fbo.bindTexture(0);
     _vertical_blur_fbo.bindTexture(1);
@@ -910,7 +910,7 @@ void FreeformApp::draw() {
     _screen_shader.uniform( "depth_texture", 2 );
     _screen_shader.uniform( "width", width );
     _screen_shader.uniform( "height", height );
-    _screen_shader.uniform( "exposure", _exposure * exposureMult * tutorialMult);
+    _screen_shader.uniform( "exposure", _exposure * exposureMult * overlayMult);
     _screen_shader.uniform( "contrast", _contrast );
     _screen_shader.uniform( "bloom_strength", _bloom_strength * static_cast<float>(_bloom_visible) );
     _screen_shader.uniform( "vignette_radius", static_cast<float>(0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2))) );
@@ -949,6 +949,7 @@ void FreeformApp::draw() {
 
     if (_environment->haveEnvironment()) {
       _ui->drawTutorialSlides(exposureMult);
+      _ui->drawAbout(exposureMult);
     }
 
     if (!_listener.isConnected()) {
@@ -976,7 +977,7 @@ void FreeformApp::draw() {
     // draw loading animation
     static const float ANIM_DRAW_LIMIT = 0.25f;
     if (exposureMult < ANIM_DRAW_LIMIT) {
-      const float loadingYOffset = static_cast<float>(size.y / 5.0f);
+      const float loadingYOffset = static_cast<float>(size.y / 4.0f);
       const ci::Vec2f loadingCenter(center.x, center.y + loadingYOffset);
       const float loadingRadius = static_cast<float>(size.x/50.0f);
       const float loadingStartAngle = -static_cast<float>(curTime * 360.0f);
@@ -1023,6 +1024,8 @@ void FreeformApp::loadIcons() {
                            ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2))),
                            ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3))),
                            ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_4))));
+
+  _ui->setAboutTexture(ci::gl::Texture(loadImage(loadResource(RES_CREDITS))));
 }
 
 void FreeformApp::loadShapes() {

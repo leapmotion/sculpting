@@ -65,3 +65,6 @@
 // logo images
 #define RES_LOGO_ON_BLACK                     CINDER_RESOURCE( ../resources/logos/, freeform-on-black.png, 270, PNG )
 #define RES_LOGO_ON_IMAGE                     CINDER_RESOURCE( ../resources/logos/, freeform-on-image.png, 271, PNG )
+
+// about image
+#define RES_CREDITS                           CINDER_RESOURCE( ../resources/, credits.png, 280, PNG )

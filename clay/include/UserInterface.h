@@ -425,8 +425,8 @@ public:
   void update(LeapInteraction* leap, Sculpt* sculpt);
   void draw(float overallOpacity) const;
   void drawTutorialSlides(float opacityMult) const;
+  void drawAbout(float opacityMult) const;
   void drawDisconnected() const;
-  void drawAbout() const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;
   float maxActivation(Vector2& pos) const;
@@ -454,6 +454,8 @@ public:
   bool tutorialActive() const { return _draw_tutorial_menu; }
   bool toolsSlideActive() const { return _tutorial_slide == 2; }
   void forceDrawTutorialMenu() { _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); }
+  void setAboutTexture(ci::gl::Texture about) { _about = about; }
+  bool aboutActive() const { return _draw_about; }
 
 private:
 
@@ -493,6 +495,9 @@ private:
   bool _draw_tutorial_menu;
   Menu _tutorial_menu;
   mutable Utilities::ExponentialFilter<float> _tutorial_opacity;
+
+  ci::gl::Texture _about;
+  bool _draw_about;
 
   Menu::MenuEntryType _pending_entry;
 
