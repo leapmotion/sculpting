@@ -2190,6 +2190,17 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
     }
 
     // Readjust normal blending
+    lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition, (params.minDist + 0.1f) * 1.5f);
+    lmReal dist = (closestPoint.position - state->refPosition).norm();
+    int attempts = 0;
+    while((dist < params.minDist + 0.1f) && attempts < 10) {
+      lmReal diff = params.minDist + 0.1f - dist;
+      state->refPosition += closestPoint.normal * diff * 1.2f;
+
+      closestPoint = GetClosestSurfacePoint(mesh, state->refPosition, (params.minDist + 0.1f) * 1.5f);
+      dist = (closestPoint.position - state->refPosition).norm();
+      attempts++;
+    }
 
     forceVerifyPositionAfterSculpting = false;
   }
