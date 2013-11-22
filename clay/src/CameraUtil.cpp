@@ -1727,7 +1727,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #endif
       return;
     }
-    state->refDist = (state->closestPointOnMesh.position - state->refPosition).norm();
+    state->refDist = (closestPoint.position - (state->refPosition + clippedMovement)).norm();
     newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
     if (!lmIsNormalized(newNormal)) {
 #if LM_LOG_CAMERA_LOGIC_4
