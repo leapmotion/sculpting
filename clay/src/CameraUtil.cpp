@@ -920,7 +920,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   if (params.cameraOverrideIso) {
     isoState.cameraOffsetMultiplier = params.isoRefDistMultiplier;
     IsoCamera(mesh, &isoState, movementInWorld);
-    if (params.pinUpVector) { CorrectCameraUpVector(dt, Vector3::UnitY()); }
+    if (params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
     UpdateCameraInWorldSpace();
     return;
   }
@@ -1322,14 +1322,14 @@ void CameraUtil::CorrectCameraUpVector(lmReal dt, const Vector3& up) {
 
   // Take the up vector, and project it onto camera's xy-plane
   const lmReal xyPlaneNormalDotUp = xyPlaneNormal.dot(up);
-  Vector3 newUp = up - xyPlaneNormal * xyPlaneNormalDotUp;
+  Vector3 newUp = up - xyPlaneNormal * xyPlaneNormalDotUp; newUp.normalize();
 
   // Disable correction, if camera is facing vertically or horizontally. Hard limit.
   if (std::fabs(xyPlaneNormalDotUp) < 0.9) {
 
     // Calc correction rotation and rate.
     Vector3 oldUp = transform.rotation * Vector3::UnitY();
-    lmQuat dQ; dQ.setFromTwoVectors(oldUp, newUp);
+    lmQuat dQ; dQ.setFromTwoVectors(oldUp, newUp); dQ.normalize();
     lmReal adjustOrientationRate = std::pow(0.9f, dt);
 
     // Apply correction.
