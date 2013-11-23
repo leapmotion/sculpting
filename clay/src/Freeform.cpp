@@ -717,6 +717,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
 
     glPushMatrix();
     glPolygonOffset(1.0f, 1.0f);
+    glPolygonMode(GL_FRONT, GL_FILL);
     glEnable(GL_POLYGON_OFFSET_FILL);
     mesh_->draw(vertex, normal, color);
     glDisable(GL_POLYGON_OFFSET_FILL);
@@ -765,7 +766,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "ambientFactor", 0.3f );
     _brush_shader.uniform( "diffuseFactor", 0.0f );
     _brush_shader.uniform( "reflectionFactor", 0.0f );
-    glDisable(GL_DEPTH_TEST);
+    gl::disableDepthRead();
+    gl::disableDepthWrite();
     brushes[i].draw(uiMult);
     if (symmetry_) {
       // draw "ghost" symmetry brush
@@ -779,7 +781,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "ambientFactor", 0.2f );
     _brush_shader.uniform( "diffuseFactor", 0.4f );
     _brush_shader.uniform( "reflectionFactor", 0.15f );
-    glEnable(GL_DEPTH_TEST);
+    gl::enableDepthWrite();
+    gl::enableDepthWrite();
     brushes[i].draw(uiMult);
     if (symmetry_) {
       // draw regular symmetry brush
@@ -806,6 +809,7 @@ void FreeformApp::createBloom()
   if (!_have_shaders) {
     return;
   }
+  gl::color(ci::ColorA::white());
   const float horizSize = _bloom_size / _horizontal_blur_fbo.getWidth();
   _horizontal_blur_fbo.bindFramebuffer();
   setViewport( _horizontal_blur_fbo.getBounds() );
@@ -886,13 +890,13 @@ float FreeformApp::checkEnvironmentLoading() {
 
 void FreeformApp::draw() {
   clear();
-
   const double curTime = ci::app::getElapsedSeconds();
   const float exposureMult = checkEnvironmentLoading();
 
   const ci::Vec2i size = getWindowSize();
   const ci::Area bounds = getWindowBounds();
   const ci::Vec2f center = getWindowCenter();
+  const ci::Area viewport = getViewport();
 
   if (exposureMult > 0.0f && _have_shaders) {
     renderSceneToFbo(_camera);
@@ -904,6 +908,7 @@ void FreeformApp::draw() {
   glDisable(GL_CULL_FACE);
   disableDepthRead();
   disableDepthWrite();
+  enableAlphaBlending();
 
   if (exposureMult > 0.0f && _have_shaders) {
     if (_bloom_visible) {
@@ -913,9 +918,11 @@ void FreeformApp::draw() {
     const float width = static_cast<float>(size.x);
     const float height = static_cast<float>(size.y);
 
-    setViewport( _screen_fbo.getBounds() );
+    setViewport( viewport );
     setMatricesWindow( getWindowWidth(), getWindowHeight(), false);
     const float overlayMult = (_ui->aboutActive() || _ui->tutorialActive()) ? 0.65f : 1.0f;
+
+    gl::color(ci::ColorA::white());
 
     _screen_fbo.bindTexture(0);
     _vertical_blur_fbo.bindTexture(1);
@@ -932,8 +939,8 @@ void FreeformApp::draw() {
     _screen_shader.uniform( "vignette_strength", 0.75f );
     gl::drawSolidRect(Rectf(0.0f,0.0f,width,height));
     _screen_shader.unbind();
-    _screen_fbo.unbindTexture();
     _vertical_blur_fbo.unbindTexture();
+    _screen_fbo.unbindTexture();
     
     GLBuffer::checkError("After post process");
     GLBuffer::checkFrameBufferStatus("After post process");
@@ -955,8 +962,10 @@ void FreeformApp::draw() {
     }
 #endif
 
+    gl::color(ci::ColorA::white());
+
     setMatricesWindow( size );
-    setViewport( bounds );
+    setViewport( viewport );
 
     if (_draw_ui) {
       _ui->draw(exposureMult);
@@ -993,7 +1002,7 @@ void FreeformApp::draw() {
   }
 
   setMatricesWindow( size );
-  setViewport( bounds );
+  setViewport( viewport );
 
   if (exposureMult < 1.0f) {
     // draw logo
@@ -1018,6 +1027,9 @@ void FreeformApp::draw() {
       Utilities::drawPartialDisk(loadingCenter, loadingRadius*0.85f, loadingRadius, loadingStartAngle, loadingSweepAngle);
     }
   }
+
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+  Utilities::drawPartialDisk(ci::Vec2f(-200, -200), 10, 20, 0, 50);
   
   if (!_have_shaders) {
     _ui->drawShaderError();
@@ -1026,12 +1038,11 @@ void FreeformApp::draw() {
   GLBuffer::checkError("After logo");
   GLBuffer::checkFrameBufferStatus("After logo");
 
-  enableDepthRead();
-  enableDepthWrite();
-
 #if !LM_PRODUCTION_BUILD
   _params->draw(); // draw the interface
 #endif
+
+  glFlush();
 }
 
 void FreeformApp::loadIcons() {

@@ -64,8 +64,7 @@ void main()
   if (useRefraction) {
     vec3 refractcolor = highlightMult*(1.0-diffuseFactor)*vertexColor*textureCube(radiance, refractray, refractionBias).rgb;
     vec3 blend = mix(mix(reflectcolor, refractcolor, dot(normal, -eyedir)), reflectcolor, diffuseFactor);
-    gl_FragColor = vec4((ambientcolor+diffusecolor)*surfaceColor + blend, 1.0);
-    gl_FragColor.rgb *= highlightMult;
+    gl_FragColor = vec4(highlightMult * ((ambientcolor+diffusecolor)*surfaceColor + blend), 1.0);
   } else {
     float alpha = alphaMult*dot(normal, -eyedir);
     gl_FragColor = vec4((ambientcolor+diffusecolor)*surfaceColor + reflectcolor, alpha);

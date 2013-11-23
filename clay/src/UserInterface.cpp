@@ -589,7 +589,6 @@ void UserInterface::draw(float overallOpacity) const {
   const float timeSinceToggle = static_cast<float>(curTime - _last_switch_time);
   Menu::g_menuOpacityCap = overallOpacity * Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/FADE_IN_TIME));
 
-  enableAlphaBlending();
   if (_draw_confirm_menu) {
     _confirm_menu.draw();
   } else if (_draw_tutorial_menu) {
