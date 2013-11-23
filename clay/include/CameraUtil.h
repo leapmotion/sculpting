@@ -424,6 +424,7 @@ public:
   lmReal prevTimeOfLastSculpt;
   bool justSculpted;
   bool forceVerifyPositionAfterSculpting;
+  int numFramesInsideManifoldMesh;
 
   Params params;
 

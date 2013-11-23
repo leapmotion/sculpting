@@ -41,6 +41,7 @@ CameraUtil::CameraUtil() {
   prevTimeOfLastSculpt = 0.0f;
   justSculpted = false;
   forceVerifyPositionAfterSculpting = false;
+  numFramesInsideManifoldMesh = 0;
 }
 
 void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
@@ -2154,7 +2155,13 @@ void CameraUtil::IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoSta
 #if LM_LOG_CAMERA_LOGIC_4
     std::cout << "Inside manifold mesh." << std::endl;
 #endif
-    ResetCamera(mesh, GetCameraDirection());
+    numFramesInsideManifoldMesh++;
+    if (numFramesInsideManifoldMesh > 60) {
+      numFramesInsideManifoldMesh = 0;
+      ResetCamera(mesh, GetCameraDirection());
+    }
+  } else {
+    numFramesInsideManifoldMesh = 0;
   }
 }
 
@@ -2175,7 +2182,9 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
     CastOneRay(mesh, ray, &raycastOutput);
 
     if (raycastOutput.isSuccess()) {
+#if LM_LOG_CAMERA_LOGIC_4
       std::cout << "Moving reference point" << std::endl;
+#endif
       const lmReal refToCamDist = (1+params.isoRefDistMultiplier); // convert between refDist and distance to camera
       // Adjust refPoint & ref dist
       //lmReal prevDistToMesh = state->refDist * refToCamDist;
