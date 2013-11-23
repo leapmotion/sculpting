@@ -108,7 +108,7 @@ private:
 class HandInfo {
 public:
 
-  HandInfo() : m_lastUpdateTime(0.0), m_lastHandOpenChangeTime(0.0), m_handOpen(false) { }
+  HandInfo() : m_lastUpdateTime(0.0), m_lastHandOpenChangeTime(0.0), m_handOpen(false), m_firstUpdate(true), m_lastPalmPos(Vector3::Zero()) { }
 
   int getNumFingers() const { return m_numFingers.FilteredCategory(); }
   Vector3 getTranslation() const { return m_translation.value; }
@@ -127,7 +127,7 @@ public:
   void update(const Leap::Hand& hand, const Leap::Frame& sinceFrame, double curTime) {
     static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.9f;
     static const float TRANSLATION_SMOOTH_STRENGTH = 0.5f;
-    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.975f;
+    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.985f;
     static const float NORMAL_Y_SMOOTH_STRENGTH = 0.9f;
     m_lastUpdateTime = curTime;
 
@@ -150,8 +150,14 @@ public:
     }
 
     // update translation
-    const Leap::Vector temp(hand.translation(sinceFrame));
-    const Vector3 translation(temp.x, temp.y, temp.z);
+    const Leap::Vector temp(hand.palmPosition());
+    const Vector3 curPos(temp.x, temp.y, temp.z);
+    Vector3 translation = curPos - m_lastPalmPos;
+    if (m_firstUpdate) {
+      translation = Vector3::Zero();
+    }
+    m_lastPalmPos = curPos;
+    m_firstUpdate = false;
     m_translation.Update(translation, curTime, TRANSLATION_SMOOTH_STRENGTH);
 
     // update translation ratio
@@ -167,6 +173,8 @@ public:
     m_normalY.Update(fabs(hand.palmNormal().y), curTime, NORMAL_Y_SMOOTH_STRENGTH);
   }
 private:
+  bool m_firstUpdate;
+  Vector3 m_lastPalmPos;
   Utilities::CategoricalFilter<10> m_numFingers;
   Utilities::ExponentialFilter<Vector3> m_translation;
   Utilities::ExponentialFilter<float> m_transRatio;
