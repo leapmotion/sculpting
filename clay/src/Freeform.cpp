@@ -411,6 +411,9 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
 #endif
   case KeyEvent::KEY_ESCAPE:
+    if (_first_environment_load) {
+      doQuit();
+    }
     if (_ui->haveExitConfirm()) {
       _ui->clearConfirm();
     } else {

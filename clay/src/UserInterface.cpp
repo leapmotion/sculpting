@@ -308,7 +308,7 @@ void Menu::toRadialCoordinates(const Vector2& pos, float& radius, float& angle) 
 }
 
 UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check(true), _draw_confirm_menu(false),
-  _draw_tutorial_menu(false), _last_switch_time(0.0), _tutorial_slide(0), _draw_about(false)
+  _draw_tutorial_menu(false), _last_switch_time(0.0), _tutorial_slide(0), _draw_about_menu(false)
 {
   srand(static_cast<unsigned int>(time(0)));
   int entryType;
@@ -493,6 +493,21 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
+
+  const int NUM_ABOUT_ENTRIES = 1;
+  _about_menu.setName("Close");
+  _about_menu.setPosition(Vector2(0.65f, 0.75f));
+  _about_menu.setNumEntries(NUM_ABOUT_ENTRIES);
+  entryType = Menu::ABOUT_CLOSE;
+  _about_menu.setAngleOffset(static_cast<float>(M_PI) + angleOffsetForPosition(_about_menu.getPosition()));
+  _about_menu.setDefaultEntry(0);
+  _about_menu.setActionsOnly(true);
+  _about_menu.setAlwaysActivated(true);
+  for (int i=0; i<NUM_ABOUT_ENTRIES; i++) {
+    Menu::MenuEntry& entry = _about_menu.getEntry(i);
+    entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
+    entry.drawMethod = Menu::MenuEntry::STRING;
+  }
 }
 
 void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt) {
@@ -551,6 +566,9 @@ void UserInterface::update(LeapInteraction* leap, Sculpt* sculpt) {
   _editing_menu.update(*tipsForAll, sculpt);
   _confirm_menu.update(*tipsForConfirm, sculpt);
   _tutorial_menu.update(*tipsForTutorial, sculpt);
+  if (_draw_about_menu) {
+    _about_menu.update(*tipsForAll, sculpt);
+  }
 
   // add cursor positions
   _cursor_positions.clear();
@@ -592,6 +610,9 @@ void UserInterface::draw(float overallOpacity) const {
     _general_menu.draw();
     _object_menu.draw();
     _editing_menu.draw();
+    if (_draw_about_menu) {
+      _about_menu.draw();
+    }
   }
 }
 
@@ -635,16 +656,16 @@ void UserInterface::drawTutorialSlides(float opacityMult) const {
 }
 
 void UserInterface::drawAbout(float opacityMult) const {
-  if (!_draw_about) {
+  if (!_draw_about_menu) {
     return;
   }
-  static const float ABOUT_SCALE = 0.7f;
+  static const float ABOUT_SCALE = 0.6f;
   static const float IMAGE_FADE_TIME = 0.5f;
 
   const ci::Vec2i size = getWindowSize();
   const ci::Area bounds = getWindowBounds();
   const ci::Vec2f center = getWindowCenter();
-  const float yOffset = 0.0f;
+  const float yOffset = -size.y / 8.0f;
 
   setMatricesWindow( size );
   setViewport( bounds );
@@ -772,6 +793,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     initializeMenu(_editing_menu);
     initializeMenu(_confirm_menu);
     initializeMenu(_tutorial_menu);
+    initializeMenu(_about_menu);
     _first_selection_check = false;
   }
 
@@ -829,7 +851,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_general_menu.hasSelectedEntry()) {
     const Menu::MenuEntry& entry = _general_menu.getSelectedEntry();
     switch (entry.m_entryType) {
-      case Menu::GENERAL_ABOUT: _draw_about = !_draw_about; _last_switch_time = curTime; break;
+      case Menu::GENERAL_ABOUT: _draw_about_menu = !_draw_about_menu; _last_switch_time = curTime; break;
       case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = curTime; break;
       case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
       case Menu::GENERAL_EXIT: showConfirm(Menu::GENERAL_EXIT); break;
@@ -902,6 +924,17 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     }
     _tutorial_menu.setName("Tutorial " + tutorialStringSuffix(_tutorial_slide+1, 4));
     _tutorial_menu.clearSelection();
+  }
+
+  if (_draw_about_menu && _about_menu.hasSelectedEntry()) {
+    const Menu::MenuEntry& entry = _about_menu.getSelectedEntry();
+    switch (entry.m_entryType) {
+    case Menu::ABOUT_CLOSE:
+      _draw_about_menu = false;
+      _last_switch_time = curTime;
+      break;
+    }
+    _about_menu.clearSelection();
   }
 }
 

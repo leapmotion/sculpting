@@ -131,6 +131,8 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
     mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
   }
 
+  mesh_->checkVertices(iVertsSelected, d2Min_);
+
   mesh_->updateMesh(iTris_,iVertsSelected);
 }
 
@@ -301,13 +303,7 @@ void Sculpt::laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3
           color += ivr.material_;
         }
       }
-#if 0
       LM_ASSERT(nbVertEdge > 0, "Not enough verts");
-#else
-      if (nbVertEdge == 0) {
-        std::cout << "Not enough verts" << std::endl;
-      }
-#endif
       if (nbVertEdge > 0) {
         smoothVerts[i]=center/static_cast<float>(nbVertEdge);
         smoothColors[i]=color/static_cast<float>(nbVertEdge);
@@ -321,13 +317,7 @@ void Sculpt::laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3
         center+=vertices[ivRing[j]];
         color+=vertices[ivRing[j]].material_;
       }
-#if 0
       LM_ASSERT(nbVRing > 0, "Not enough verts");
-#else
-      if (nbVRing == 0) {
-        std::cout << "Not enough vRing" << std::endl;
-      }
-#endif
       if (nbVRing > 0) {
         smoothVerts[i]=center/static_cast<float>(nbVRing);
         smoothColors[i]=color/static_cast<float>(nbVRing);
@@ -413,11 +403,16 @@ void Sculpt::addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3
   brush._radius = radius;
   brush._radius_squared = radius*radius;
   brush._length = 0.0f;//30.0f;
-  brush._strength = strength;
+  brush._strength = ci::math<float>::clamp(strength);
   brush._position = pos;
   brush._direction = dir;
   brush._velocity = vel;
-  brush._activation = activation;
+  brush._activation = ci::math<float>::clamp(activation);
+  LM_ASSERT(radius > 0.00001f && radius < 9999999.0f, "Bad radius");
+  LM_ASSERT(strength >= 0.0f && strength <= 1.0f, "Bad strength");
+  LM_ASSERT(fabs(dir.norm() - 1.0f) < 0.0001f, "Bad direction");
+  LM_ASSERT(vel.norm() > 0.00001f && vel.norm() < 9999999.0f, "Bad velocity");
+  LM_ASSERT(activation >= 0.0f && activation <= 1.0f, "Bad activation");
 }
 
 void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
@@ -425,6 +420,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
   if (sculptMode_ == INVALID) {
     return;
   }
+
   static const float DESIRED_ANGLE_PER_SAMPLE = 0.03f;
 
   std::unique_lock<std::mutex> lock(brushMutex_);

@@ -95,6 +95,9 @@ public:
     TUTORIAL_CLOSE,
     TUTORIAL_PREVIOUS,
 
+    // about
+    ABOUT_CLOSE,
+
     NUM_ICONS
   };
 
@@ -186,7 +189,7 @@ public:
         case Menu::GENERAL_TOGGLE_SOUND: return "Toggle Sound"; break;
         case Menu::GENERAL_EXIT: return "Exit"; break;
         case Menu::OBJECT_LOAD: return "Load"; break;
-        case Menu::OBJECT_EXPORT: return "Export"; break;
+        case Menu::OBJECT_EXPORT: return "Save"; break;
         case Menu::OBJECT_BALL: return "Sphere"; break;
         case Menu::OBJECT_CAN: return "Cylinder"; break;
         case Menu::OBJECT_DONUT: return "Torus"; break;
@@ -201,6 +204,7 @@ public:
         case Menu::TUTORIAL_PREVIOUS: return "Previous"; break;
         case Menu::TUTORIAL_CLOSE: return "Close"; break;
         case Menu::TUTORIAL_NEXT: return "Next"; break;
+        case Menu::ABOUT_CLOSE: return "Close"; break;
         default: return ""; break;
         }
         return "";
@@ -457,7 +461,7 @@ public:
   bool toolsSlideActive() const { return _tutorial_slide == 2; }
   void forceDrawTutorialMenu() { _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); }
   void setAboutTexture(ci::gl::Texture about) { _about = about; }
-  bool aboutActive() const { return _draw_about; }
+  bool aboutActive() const { return _draw_about_menu; }
 
 private:
 
@@ -483,6 +487,7 @@ private:
   Menu _object_menu;
   Menu _editing_menu;
   Menu _confirm_menu;
+  Menu _about_menu;
 
   bool _draw_color_menu;
   bool _draw_confirm_menu;
@@ -499,7 +504,7 @@ private:
   mutable Utilities::ExponentialFilter<float> _tutorial_opacity;
 
   ci::gl::Texture _about;
-  bool _draw_about;
+  bool _draw_about_menu;
 
   Menu::MenuEntryType _pending_entry;
 
