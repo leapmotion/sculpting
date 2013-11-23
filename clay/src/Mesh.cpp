@@ -29,7 +29,9 @@ Mesh::Mesh() : center_(Vector3::Zero()), scale_(1), lastUpdateTime_(0.0), transl
   verticesBufferCount_(0), indicesBufferCount_(0), reallocateVerticesBuffer_(true), reallocateIndicesBuffer_(true),
   undoPending_(false), redoPending_(false), nbGPUTriangles(0), pendingGPUTriangles(0), lastIndexInitGPUTriangles(0),
   pendingGPUVertices(0)
-{ }
+{
+  rotationVelocitySmoother_.Update(0.0f, 0.0, 0.5f);
+}
 
 /** Destructor */
 Mesh::~Mesh()
