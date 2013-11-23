@@ -68,8 +68,6 @@
 		8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF14183DAFA400E94B5F /* freeform.icns */; };
 		8A7FDF17183DAFA400E94B5F /* freeform.ico in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF15183DAFA400E94B5F /* freeform.ico */; };
 		8A7FDF1A183E941800E94B5F /* ReplayUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */; };
-		8A9B81D51832D37500AA2EA3 /* freigsanprobold-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D31832D37500AA2EA3 /* freigsanprobold-webfont.ttf */; };
-		8A9B81D61832D37500AA2EA3 /* freigsanpromed-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D41832D37500AA2EA3 /* freigsanpromed-webfont.ttf */; };
 		8A9B820E1832D38000AA2EA3 /* brush-size-large.svg in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D81832D38000AA2EA3 /* brush-size-large.svg */; };
 		8A9B820F1832D38000AA2EA3 /* brush-size-medium.svg in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81D91832D38000AA2EA3 /* brush-size-medium.svg */; };
 		8A9B82101832D38000AA2EA3 /* brush-size-small.svg in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81DA1832D38000AA2EA3 /* brush-size-small.svg */; };
@@ -130,6 +128,9 @@
 		8AB1906318400DFB00347357 /* CrashReport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8AB1906218400DFB00347357 /* CrashReport.cpp */; };
 		8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
 		8AB190681840111700347357 /* credits.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AB190671840111700347357 /* credits.png */; };
+		8AB1906A18401CE000347357 /* Breakpad.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
+		8AB1906C18401D5000347357 /* breakpadUtilities.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906B18401D5000347357 /* breakpadUtilities.dylib */; };
+		8AB1906D18401D6700347357 /* breakpadUtilities.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8AB1906B18401D5000347357 /* breakpadUtilities.dylib */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -140,8 +141,19 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
+				8AB1906D18401D6700347357 /* breakpadUtilities.dylib in CopyFiles */,
 				18392F4E179E92EE006709CF /* libLeap.dylib in CopyFiles */,
 				18392F4F179E92EE006709CF /* libfreeimage.dylib in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8AB1906918401CCD00347357 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				8AB1906A18401CE000347357 /* Breakpad.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -405,8 +417,6 @@
 		8A84A9DF182ADD59001CD625 /* sheet.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = sheet.obj; sourceTree = "<group>"; };
 		8A84A9E0182ADD59001CD625 /* sphere.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = sphere.obj; sourceTree = "<group>"; };
 		8A84A9E1182ADD59001CD625 /* torus.obj */ = {isa = PBXFileReference; lastKnownFileType = text; path = torus.obj; sourceTree = "<group>"; };
-		8A9B81D31832D37500AA2EA3 /* freigsanprobold-webfont.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "freigsanprobold-webfont.ttf"; path = "../../resources/freigsanprobold-webfont.ttf"; sourceTree = "<group>"; };
-		8A9B81D41832D37500AA2EA3 /* freigsanpromed-webfont.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "freigsanpromed-webfont.ttf"; path = "../../resources/freigsanpromed-webfont.ttf"; sourceTree = "<group>"; };
 		8A9B81D81832D38000AA2EA3 /* brush-size-large.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "brush-size-large.svg"; sourceTree = "<group>"; };
 		8A9B81D91832D38000AA2EA3 /* brush-size-medium.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "brush-size-medium.svg"; sourceTree = "<group>"; };
 		8A9B81DA1832D38000AA2EA3 /* brush-size-small.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "brush-size-small.svg"; sourceTree = "<group>"; };
@@ -468,6 +478,7 @@
 		8AB1906418400E0D00347357 /* CrashReport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CrashReport.h; path = ../../include/CrashReport.h; sourceTree = "<group>"; };
 		8AB1906518400EF400347357 /* Breakpad.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Breakpad.framework; path = "../../../../../../../../opt/local/Libraries/breakpad-0.1/lib/Breakpad.framework"; sourceTree = "<group>"; };
 		8AB190671840111700347357 /* credits.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = credits.png; path = ../../resources/credits.png; sourceTree = "<group>"; };
+		8AB1906B18401D5000347357 /* breakpadUtilities.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = breakpadUtilities.dylib; path = "../../../../../../../../opt/local/Libraries/breakpad-0.1/lib/breakpadUtilities.dylib"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Freeform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeform.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEAF09CCD9054AE5A257591B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -479,9 +490,10 @@
 			files = (
 				18392F4B179E9050006709CF /* libfreeimage.dylib in Frameworks */,
 				18392F4D179E91EC006709CF /* libLeap.dylib in Frameworks */,
+				8AB1906C18401D5000347357 /* breakpadUtilities.dylib in Frameworks */,
+				8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				0091D8F90E81B9330029341E /* OpenGL.framework in Frameworks */,
-				8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */,
 				5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */,
 				5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */,
 				00B784B30FF439BC000DE1D7 /* Accelerate.framework in Frameworks */,
@@ -504,8 +516,6 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				8AB1906218400DFB00347357 /* CrashReport.cpp */,
-				8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */,
 				01C5D740181A480600194132 /* Aabb.cpp */,
 				8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */,
 				01C5D741181A480600194132 /* Brush.cpp */,
@@ -514,6 +524,7 @@
 				01C5D744181A480600194132 /* CBBoxInt32.cpp */,
 				01C5D745181A480600194132 /* CCubeMapProcessor.cpp */,
 				01C5D746181A480600194132 /* CImageSurface.cpp */,
+				8AB1906218400DFB00347357 /* CrashReport.cpp */,
 				01C5D747181A480600194132 /* DebugDrawUtil.cpp */,
 				01C5D748181A480600194132 /* Environment.cpp */,
 				01C5D749181A480600194132 /* Files.cpp */,
@@ -526,6 +537,7 @@
 				01C5D74F181A480600194132 /* Mesh.cpp */,
 				01C5D750181A480600194132 /* Octree.cpp */,
 				01C5D751181A480600194132 /* Picking.cpp */,
+				8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */,
 				01C5D752181A480600194132 /* Sculpt.cpp */,
 				01C5D753181A480600194132 /* State.cpp */,
 				01C5D754181A480600194132 /* StdAfx.cpp */,
@@ -617,8 +629,6 @@
 				8A7FDEFF183A8ECB00E94B5F /* shapes */,
 				8A9B82441832D38A00AA2EA3 /* tutorial */,
 				8A9B81D71832D38000AA2EA3 /* menu-icons */,
-				8A9B81D31832D37500AA2EA3 /* freigsanprobold-webfont.ttf */,
-				8A9B81D41832D37500AA2EA3 /* freigsanpromed-webfont.ttf */,
 				01C5D77A181A482D00194132 /* bloom-frag.glsl */,
 				8A24C4B8182D9905005151DA /* brush-vert.glsl */,
 				01C5D77F181A482D00194132 /* material-frag.glsl */,
@@ -636,6 +646,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8AB1906B18401D5000347357 /* breakpadUtilities.dylib */,
 				18392F4C179E91EC006709CF /* libLeap.dylib */,
 				18392F4A179E9050006709CF /* libfreeimage.dylib */,
 				8AB1906518400EF400347357 /* Breakpad.framework */,
@@ -1184,6 +1195,7 @@
 				8D11072E0486CEB800E47090 /* Frameworks */,
 				8D1107290486CEB800E47090 /* Resources */,
 				186A4D661782FDFB009757B7 /* CopyFiles */,
+				8AB1906918401CCD00347357 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -1247,10 +1259,8 @@
 				8A9B82361832D38000AA2EA3 /* smooth.png in Resources */,
 				8A9B82121832D38000AA2EA3 /* brush-strength-3.svg in Resources */,
 				8A9B82201832D38000AA2EA3 /* grow.svg in Resources */,
-				8A9B81D61832D37500AA2EA3 /* freigsanpromed-webfont.ttf in Resources */,
 				8A9B82231832D38000AA2EA3 /* load.svg in Resources */,
 				8A9B82191832D38000AA2EA3 /* environment.svg in Resources */,
-				8A9B81D51832D37500AA2EA3 /* freigsanprobold-webfont.ttf in Resources */,
 				8A9B82141832D38000AA2EA3 /* brush-type.svg in Resources */,
 				01C5D78D181A482D00194132 /* material-vert.glsl in Resources */,
 				8A9B821D1832D38000AA2EA3 /* glass.png in Resources */,
@@ -1397,8 +1407,12 @@
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
 					/opt/local/Libraries/cinder_0.8.4/lib/macosx,
+					"/opt/local/Libraries/breakpad-0.1/lib",
 				);
-				OTHER_LDFLAGS = "-lcinder";
+				OTHER_LDFLAGS = (
+					"-lcinder",
+					"-sectcreate\n__DATA\n__09ffe29c32cd8a\n../../resources/freigsanprobold-webfont.ttf\n-sectcreate\n__DATA\n__274e7ba8743fd6\n../../resources/freigsanpromed-webfont.ttf",
+				);
 				PRODUCT_NAME = Freeform;
 				SDKROOT = macosx;
 				SYMROOT = ./build;
@@ -1427,6 +1441,7 @@
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = Freeform_Prefix.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = "USE_CRASH_REPORTING=1";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(CINDER_PATH)/boost",
@@ -1447,8 +1462,12 @@
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
 					/opt/local/Libraries/cinder_0.8.4/lib/macosx,
+					"/opt/local/Libraries/breakpad-0.1/lib",
 				);
-				OTHER_LDFLAGS = "-lcinder";
+				OTHER_LDFLAGS = (
+					"-lcinder",
+					"-sectcreate\n__DATA\n__09ffe29c32cd8a\n../../resources/freigsanprobold-webfont.ttf\n-sectcreate\n__DATA\n__274e7ba8743fd6\n../../resources/freigsanpromed-webfont.ttf",
+				);
 				PRODUCT_NAME = Freeform;
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = YES;

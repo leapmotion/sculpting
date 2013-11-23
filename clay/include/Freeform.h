@@ -7,6 +7,12 @@
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Fbo.h"
+#if defined(CINDER_COCOA)
+#include <sstream>
+#include <boost/uuid/sha1.hpp>
+#include <mach-o/getsect.h>
+#include <mach-o/dyld.h>
+#endif
 #include "Resources.h"
 #include "Environment.h"
 #include "UserInterface.h"
@@ -80,6 +86,35 @@ private:
   void loadIcons();
   void loadShapes();
   void loadLogos();
+  
+#if defined(CINDER_COCOA)
+  ci::DataSourceRef loadResource(const std::string& macPath) {
+    try {
+      return ci::app::loadResource(macPath);
+    } catch (...) {
+      boost::uuids::detail::sha1 sha1;
+      uint32_t hash[5];
+      sha1.process_bytes(macPath.data(), macPath.size());
+      sha1.get_digest(hash);
+      std::ostringstream oss;
+      oss << std::setfill('0') << std::setw(sizeof(hash[0]*2)) << std::hex;
+      for (size_t i = 0; i < sizeof(hash)/sizeof(hash[0]); i++) {
+        oss << hash[i];
+      }
+      const std::string symbol = "__" + oss.str().substr(0, 14); // Max 16 characters long
+      const auto* sect = getsectbyname("__DATA", symbol.c_str());
+      
+      if (sect != nullptr) {
+        const auto size = sect->size;
+        const auto addr = _dyld_get_image_vmaddr_slide(0) + sect->addr;
+        if (size > 0 && addr != 0) {
+          return ci::DataSourceBuffer::create(ci::Buffer(reinterpret_cast<void*>(addr), size));
+        }
+      }
+      throw;
+    }
+  }
+#endif
 
   enum MachineSpeed { LOW, MID, HIGH };
   MachineSpeed parseRenderString(const std::string& render_string);
