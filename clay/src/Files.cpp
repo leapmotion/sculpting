@@ -27,11 +27,12 @@ Mesh* Files::loadSTL(std::istream& stream) const
   triangles.reserve(nbTriangles);
   vertices.reserve(nbTriangles/2);
   int iVer1, iVer2, iVer3;
+  float n[3];
   float x, y, z;
   Vertex v1, v2, v3;
   for (int i=0;i<nbTriangles;++i)
   {
-    stream.read((char*)&x, 12); //normal
+    stream.read((char*)&n, 12); //normal
     stream.read((char*)&x, 4); //vertex 1
     stream.read((char*)&y, 4);
     stream.read((char*)&z, 4);
