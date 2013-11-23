@@ -158,6 +158,8 @@ private:
   AutoSave _auto_save;
   bool _first_environment_load;
   bool _have_shaders;
+  bool _have_entered_immersive;
+  double _immersive_entered_time;
 
   // *** Leap stuff ***
   LeapListener _listener;

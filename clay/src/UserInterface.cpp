@@ -682,6 +682,27 @@ void UserInterface::drawDisconnected() const {
   glPopMatrix();
 }
 
+void UserInterface::drawImmersive(float opacityMult) const {
+  const ci::ColorA titleColor(0.2f, 0.6f, 1.0f, opacityMult);
+  const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, opacityMult);
+  const ci::Vec2f offset = Vec2f(0.0f, Menu::FONT_SIZE/2.0f);
+  const ci::Vec2f pos = getWindowCenter() + Vec2f(0.0f, -getWindowHeight()/3.0f);
+
+  static const std::string IMMERSIVE_MESSAGE = "Move your hands toward each other to bring back the menus";
+
+  glPushMatrix();
+  gl::translate(pos);
+  gl::scale(0.9f, 0.9f);
+  const ci::Vec2f nameSize = Menu::g_boldTextureFont->measureString(IMMERSIVE_MESSAGE);
+  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, 100.0f);
+  gl::color(shadowColor);
+  Menu::g_boldTextureFont->drawString(IMMERSIVE_MESSAGE, nameRect, Menu::g_shadowOffset);
+  gl::color(titleColor);
+  Menu::g_boldTextureFont->drawString(IMMERSIVE_MESSAGE, nameRect);
+
+  glPopMatrix();
+}
+
 void UserInterface::drawShaderError() const {
   const ci::ColorA titleColor(1.0f, 0.2f, 0.1f, 1.0f);
   const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, 1.0f);

@@ -23,7 +23,8 @@ const float MAX_FOV = 90.0f;
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
   drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
-  _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true)
+  _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
+  _immersive_entered_time(0.0)
 {
   _camera_util = new CameraUtil();
   _debug_draw_util = &DebugDrawUtil::getInstance();
@@ -484,7 +485,13 @@ void FreeformApp::update()
 
   _ui_zoom = ci::math<float>::clamp(_ui_zoom + 0.75f*logScale, LOWER_BOUND, UPPER_BOUND);
   const float ratio = (_ui_zoom - LOWER_BOUND) / (UPPER_BOUND - LOWER_BOUND);
-  _ui->setZoomFactor(Utilities::SmootherStep(ratio)*(UPPER_BOUND - LOWER_BOUND) + LOWER_BOUND);
+  const float zoomFactor = Utilities::SmootherStep(ratio)*(UPPER_BOUND - LOWER_BOUND) + LOWER_BOUND;
+  _ui->setZoomFactor(zoomFactor);
+
+  if (!_have_entered_immersive && zoomFactor > 1.25f && !_ui->tutorialActive()) {
+    _have_entered_immersive = true;
+    _immersive_entered_time = curTime;
+  }
 
   _fov_modifier.Update((-_ui->getZoomFactor() * 20.0f) + (-inactivityRatio * 5.0f), curTime, 0.95f);
   _ui->update(_leap_interaction, &sculpt_);
@@ -950,6 +957,23 @@ void FreeformApp::draw() {
 
     if (_draw_ui) {
       _ui->draw(exposureMult);
+    }
+
+    if (_have_entered_immersive) {
+      static const float DISPLAY_TIME = 10.0;
+      static const float FADE_TIME = 1.0f;
+      const float timeSinceEntered = static_cast<float>(curTime - _immersive_entered_time);
+      float mult = 1.0f;
+      if (timeSinceEntered < FADE_TIME) {
+        mult = Utilities::SmootherStep(timeSinceEntered/FADE_TIME);
+      } else if (timeSinceEntered > (DISPLAY_TIME - FADE_TIME)) {
+        mult = Utilities::SmootherStep((DISPLAY_TIME - timeSinceEntered)/FADE_TIME);
+      } else if (timeSinceEntered >= DISPLAY_TIME) {
+        mult = 0.0f;
+      }
+      if (mult > 0.01f) {
+        _ui->drawImmersive(mult);
+      }
     }
 
     if (_environment->haveEnvironment()) {
