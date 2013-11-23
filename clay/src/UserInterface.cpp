@@ -673,7 +673,7 @@ void UserInterface::drawAbout(float opacityMult) const {
   float halfHeight = halfWidth / aspect;
   ci::Rectf area(center.x - halfWidth, center.y - halfHeight + yOffset, center.x + halfWidth, center.y + halfHeight + yOffset);
 
-  const double curTime = ci::app::getElapsedSeconds();
+//  const double curTime = ci::app::getElapsedSeconds();
   const float timeSinceToggle = static_cast<float>(ci::app::getElapsedSeconds() - _last_switch_time);
   const float opacity = opacityMult * Utilities::SmootherStep(ci::math<float>::clamp(timeSinceToggle/IMAGE_FADE_TIME));
 
@@ -931,6 +931,8 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     case Menu::ABOUT_CLOSE:
       _draw_about_menu = false;
       _last_switch_time = curTime;
+      break;
+    default:
       break;
     }
     _about_menu.clearSelection();

@@ -894,7 +894,7 @@ void FreeformApp::draw() {
   const float exposureMult = checkEnvironmentLoading();
 
   const ci::Vec2i size = getWindowSize();
-  const ci::Area bounds = getWindowBounds();
+//  const ci::Area bounds = getWindowBounds();
   const ci::Vec2f center = getWindowCenter();
   const ci::Area viewport = getViewport();
 

@@ -9,7 +9,11 @@
 #ifndef __CRASHREPORT_H__
 #define __CRASHREPORT_H
 
+#if _WIN32
 #define USE_CRASH_REPORTING 1
+#else
+#define USE_CRASH_REPORTING 0
+#endif
 
 #if USE_CRASH_REPORTING
 namespace google_breakpad {
