@@ -524,10 +524,10 @@ void FreeformApp::update()
   Vector4 temp;
   {
     std::unique_lock<std::mutex> lock(_camera_util->referencePointMutex);
-    temp << _camera_util->referencePoint.position, 1.0;
+    temp << _camera_util->isoState.refPosition, 1.0;
   }
   _focus_point = (trans * temp).head<3>();
-  _focus_radius = _camera_util->GetSphereQueryRadius();
+  _focus_radius = _camera_util->IsoQueryRadius(&_camera_util->isoState);
 
   _campos_smoother.Update(campos, curTime, 0.95f);
   _lookat_smoother.Update(ToVec3f(to), curTime, 0.95f);
