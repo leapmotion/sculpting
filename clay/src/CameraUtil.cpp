@@ -94,7 +94,7 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
   if (params.cameraOverrideIso)
   {
     //isoState.refDist = lmClip(isoState.refDist, params.minDist, params.maxDist);
-    isoState.refDist = params.maxDist/(1+params.isoRefDistMultiplier)*1.5f;
+    isoState.refDist = params.maxDist/(1+params.isoRefDistMultiplier)*1.0f;
     isoState.refNormal = referencePoint.normal;
     isoState.refPosition = referencePoint.position + isoState.refDist * referencePoint.normal;
 
@@ -1819,7 +1819,7 @@ void CameraUtil::IsoUpdateCameraTransform( const Vector3& newDirection, IsoCamer
     // just use orbit blending
   } else {
     // use sculpting blending
-    static const lmReal BLEND_IN_TIME_AFTER_CAMERA_IDLE = 2.0f;
+    static const lmReal BLEND_IN_TIME_AFTER_CAMERA_IDLE = 1.0f;
     lmReal blendingFactor2 = lmClip(timeOfMovementSinceLastMeshMofification/BLEND_IN_TIME_AFTER_CAMERA_IDLE, 0.0f, 1.0f);
     blendingFactor2 *= blendingFactor2;
 
