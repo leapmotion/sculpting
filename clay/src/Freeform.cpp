@@ -225,8 +225,6 @@ void FreeformApp::setup()
   _leap_interaction->setBrushRadius(10.0f);
   _leap_interaction->setBrushStrength(0.5f);
 
-  glEnable(GL_FRAMEBUFFER_SRGB);
-
 //#if __APPLE__
 //  if (_mesh_thread.joinable())
 //  {
@@ -409,6 +407,7 @@ void FreeformApp::keyDown( KeyEvent event )
 #else
   case 'y': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
   case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
+  case 'n': if (_ui->haveExitConfirm()) { _ui->clearConfirm(); } break;
 #endif
   case KeyEvent::KEY_ESCAPE:
     if (_first_environment_load) {
@@ -430,7 +429,7 @@ void FreeformApp::keyDown( KeyEvent event )
     setFullScreen(!isFullScreen());
   }
 #endif
-  if (event.getCode() == KeyEvent::KEY_RETURN) {
+  if (event.getCode() == KeyEvent::KEY_RETURN || event.getChar() == 'y') {
     if (_ui->haveExitConfirm()) {
       doQuit();
     }
@@ -766,8 +765,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "ambientFactor", 0.3f );
     _brush_shader.uniform( "diffuseFactor", 0.0f );
     _brush_shader.uniform( "reflectionFactor", 0.0f );
-    gl::disableDepthRead();
-    gl::disableDepthWrite();
+    glDisable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
     if (symmetry_) {
       // draw "ghost" symmetry brush
@@ -781,8 +779,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "ambientFactor", 0.2f );
     _brush_shader.uniform( "diffuseFactor", 0.4f );
     _brush_shader.uniform( "reflectionFactor", 0.15f );
-    gl::enableDepthWrite();
-    gl::enableDepthWrite();
+    glEnable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
     if (symmetry_) {
       // draw regular symmetry brush
@@ -889,6 +886,8 @@ float FreeformApp::checkEnvironmentLoading() {
 }
 
 void FreeformApp::draw() {
+  glDisable(GL_FRAMEBUFFER_SRGB);
+
   clear();
   const double curTime = ci::app::getElapsedSeconds();
   const float exposureMult = checkEnvironmentLoading();
@@ -904,6 +903,8 @@ void FreeformApp::draw() {
     GLBuffer::checkError("After FBO");
     GLBuffer::checkFrameBufferStatus("After FBO");
   }
+
+  glEnable(GL_FRAMEBUFFER_SRGB);
 
   glDisable(GL_CULL_FACE);
   disableDepthRead();

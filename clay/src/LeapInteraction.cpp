@@ -76,7 +76,7 @@ void LeapInteraction::interact(double curTime)
   float cur_dphi = 0;
   float cur_dzoom = 0;
   static const float ORBIT_SPEED = 0.01f;
-  static const float ZOOM_SPEED = 90.0f;
+  static const float ZOOM_SPEED = 75.0f;
   static const float AGE_WARMUP_TIME = 0.75f;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
   static const float LOG_SCALE_SMOOTH_STRENGTH = 0.9f;

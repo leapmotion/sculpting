@@ -108,7 +108,11 @@ private:
 class HandInfo {
 public:
 
-  HandInfo() : m_lastUpdateTime(0.0), m_lastHandOpenChangeTime(0.0), m_handOpen(false), m_firstUpdate(true), m_lastPalmPos(Vector3::Zero()) { }
+  HandInfo() : m_lastUpdateTime(0.0), m_lastHandOpenChangeTime(0.0), m_handOpen(false), m_firstUpdate(true), m_lastPalmPos(Vector3::Zero()) {
+    m_translation.value = Vector3::Zero();
+    m_transRatio.value = 0.5f;
+    m_normalY.value = 0.5f;
+  }
 
   int getNumFingers() const { return m_numFingers.FilteredCategory(); }
   Vector3 getTranslation() const { return m_translation.value; }
@@ -165,8 +169,6 @@ public:
       const Vector3 unitTranslation = translation.normalized();
       const float curRatio = unitTranslation.x()*unitTranslation.x() + unitTranslation.y()*unitTranslation.y();
       m_transRatio.Update(curRatio, curTime, TRANSLATION_RATIO_SMOOTH_STRENGTH);
-    } else {
-      m_transRatio.Update(0.5f, curTime, TRANSLATION_RATIO_SMOOTH_STRENGTH);
     }
 
     // update palm normal Y value
