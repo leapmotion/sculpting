@@ -682,23 +682,21 @@ void UserInterface::drawAbout(float opacityMult) const {
   ci::gl::draw(_about, area);
 }
 
-void UserInterface::drawDisconnected() const {
+void UserInterface::drawError(const std::string& message, int errorNum) const {
   const ci::ColorA titleColor(1.0f, 0.2f, 0.1f, 1.0f);
   const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, 1.0f);
-  const ci::Vec2f offset = Vec2f(0.0f, Menu::FONT_SIZE/2.0f);
+  const ci::Vec2f offset = (errorNum+1)*Vec2f(0.0f, Menu::FONT_SIZE/2.0f);
   const ci::Vec2f pos = getWindowCenter() + Vec2f(0.0f, getWindowHeight()/3.0f);
-
-  static const std::string DISCONNECT_MESSAGE = "Leap Motion Controller is disconnected";
 
   glPushMatrix();
   gl::translate(pos);
   gl::scale(1.25f, 1.25f);
-  const ci::Vec2f nameSize = Menu::g_boldTextureFont->measureString(DISCONNECT_MESSAGE);
-  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, 100.0f);
+  const ci::Vec2f nameSize = Menu::g_boldTextureFont->measureString(message);
+  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, -offset.y + 100.0f);
   gl::color(shadowColor);
-  Menu::g_boldTextureFont->drawString(DISCONNECT_MESSAGE, nameRect, Menu::g_shadowOffset);
+  Menu::g_boldTextureFont->drawString(message, nameRect, Menu::g_shadowOffset);
   gl::color(titleColor);
-  Menu::g_boldTextureFont->drawString(DISCONNECT_MESSAGE, nameRect);
+  Menu::g_boldTextureFont->drawString(message, nameRect);
 
   glPopMatrix();
 }
@@ -720,27 +718,6 @@ void UserInterface::drawImmersive(float opacityMult) const {
   Menu::g_boldTextureFont->drawString(IMMERSIVE_MESSAGE, nameRect, Menu::g_shadowOffset);
   gl::color(titleColor);
   Menu::g_boldTextureFont->drawString(IMMERSIVE_MESSAGE, nameRect);
-
-  glPopMatrix();
-}
-
-void UserInterface::drawShaderError() const {
-  const ci::ColorA titleColor(1.0f, 0.2f, 0.1f, 1.0f);
-  const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, 1.0f);
-  const ci::Vec2f offset = Vec2f(0.0f, Menu::FONT_SIZE/2.0f);
-  const ci::Vec2f pos = getWindowCenter() + Vec2f(0.0f, -getWindowHeight()/3.0f);
-
-  static const std::string SHADER_ERROR_MESSAGE = "Graphics error occurred. Please update drivers and check minimum requirements.";
-
-  glPushMatrix();
-  gl::translate(pos);
-  gl::scale(0.9f, 0.9f);
-  const ci::Vec2f nameSize = Menu::g_boldTextureFont->measureString(SHADER_ERROR_MESSAGE);
-  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, 100.0f);
-  gl::color(shadowColor);
-  Menu::g_boldTextureFont->drawString(SHADER_ERROR_MESSAGE, nameRect, Menu::g_shadowOffset);
-  gl::color(titleColor);
-  Menu::g_boldTextureFont->drawString(SHADER_ERROR_MESSAGE, nameRect);
 
   glPopMatrix();
 }

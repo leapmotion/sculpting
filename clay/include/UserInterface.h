@@ -432,8 +432,7 @@ public:
   void draw(float overallOpacity) const;
   void drawTutorialSlides(float opacityMult) const;
   void drawAbout(float opacityMult) const;
-  void drawDisconnected() const;
-  void drawShaderError() const;
+  void drawError(const std::string& message, int errorNum) const;
   void drawImmersive(float opacityMult) const;
   void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   float maxActivation() const;

@@ -885,6 +885,8 @@ void FreeformApp::draw() {
   disableDepthWrite();
   enableAlphaBlending();
 
+  int errorNum = 0;
+
   if (exposureMult > 0.0f && _have_shaders) {
     if (_bloom_visible) {
       createBloom();
@@ -963,13 +965,14 @@ void FreeformApp::draw() {
       }
     }
 
+
     if (_environment->haveEnvironment()) {
       _ui->drawTutorialSlides(exposureMult);
       _ui->drawAbout(exposureMult);
     }
 
     if (!_listener.isConnected()) {
-      _ui->drawDisconnected();
+      _ui->drawError("Leap Motion Controller is disconnected", errorNum++);
     }
 
     GLBuffer::checkError("After UI");
@@ -1007,7 +1010,11 @@ void FreeformApp::draw() {
   Utilities::drawPartialDisk(ci::Vec2f(-200, -200), 10, 20, 0, 50);
   
   if (!_have_shaders) {
-    _ui->drawShaderError();
+    _ui->drawError("Graphics error occurred. Please update drivers and check minimum requirements.", errorNum++);
+  }
+
+  if (_environment->getLoadingState() == Environment::LOADING_STATE_FAILED) {
+    _ui->drawError("Environment loading failed. Please make sure Freeform is installed correctly.", errorNum++);
   }
 
   GLBuffer::checkError("After logo");

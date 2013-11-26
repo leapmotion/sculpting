@@ -70,6 +70,7 @@ void Environment::beginLoading(const std::string& name) {
 
   if (!env) {
     // environment with this name not found
+    _loading_state = LOADING_STATE_FAILED;
     return;
   }
 
@@ -79,7 +80,7 @@ void Environment::beginLoading(const std::string& name) {
   std::string* filenames = env->_dawn_images;
   if (!loadImageSet(filenames, bitmaps, bitmap_widths, bitmap_heights, internal_formats, formats)) {
     _loading_state_change_time = getElapsedSeconds();
-    _loading_state = LOADING_STATE_NONE;
+    _loading_state = LOADING_STATE_FAILED;
     return;
   }
 
