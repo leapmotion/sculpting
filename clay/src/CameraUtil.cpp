@@ -22,7 +22,7 @@ CameraUtil::CameraUtil() {
   m_transform.setIdentity();
   m_meshTransform.setIdentity();
   m_referencePoint.position.setZero();
-  m_referencePoint.normal.setZero(); // invalid
+  m_referencePoint.normal.setZero();
   m_referenceDistance = 0.0f;
   m_userInput.setZero();
   m_accumulatedUserInput.setZero();
@@ -66,12 +66,13 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
     }
   }
 
-  //std::unique_lock<std::mutex> lock(mutex);
-
   // Set reference point to the selected vertex
-  const Vertex& closest = vertices[idx];
-  m_referencePoint.position = closest;
-  m_referencePoint.normal = closest.normal_;
+  {
+    std::unique_lock<std::mutex> lock(m_referencePointMutex);
+    const Vertex& closest = vertices[idx];
+    m_referencePoint.position = closest;
+    m_referencePoint.normal = closest.normal_;
+  }
 
   // Rotate camera to the new requested direction
   Vector3 currentNegZ = -1.0f * (m_transform.rotation * Vector3::UnitZ());
@@ -195,140 +196,6 @@ lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& pos
   return lmSurfacePoint(closestPoint.position, closestPoint.normal);
 }
 
-void CameraUtil::FindPointsAheadOfMovement(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& movementDirection, std::vector<int>* vertices ) {
-  LM_ASSERT(LM_EPSILON * LM_EPSILON < movementDirection.squaredNorm(), "");
-  Vector3 movementDir = movementDirection.normalized();
-  Vector3 mixedDir = (movementDir + referencePoint.normal).normalized();
-
-  std::vector<int> verts;
-  const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
-  for (size_t vi = 0; vi < verts.size(); vi++) {
-    Vector3 translationToVert = (mesh->getVertex(verts[vi]) - referencePoint.position);
-    Vector3 dirToVert = translationToVert.normalized();
-    lmReal dot = movementDir.dot(dirToVert);
-    lmReal dotMixed = mixedDir.dot(dirToVert);
-    lmReal dotNormal = referencePoint.normal.dot(dirToVert);
-    const lmReal dist = translationToVert.norm();
-    if ((0.707f < dot && 0.3f * radius < dist && -0.2f < dotNormal ) ||
-        (0.707f < dotMixed && 0.1f * radius < dist && dist < 0.3f * radius) ||
-        (0.25f < dotNormal && 0.1f * radius < dist && dist < 0.3f * radius)) {
-      vertices->push_back(vi);
-    }
-  }
-}
-
-void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, bool weightNormals, lmSurfacePoint* avgSurfacePoint, lmSurfacePoint* pureAvgSurfacePoint, Geometry::GetClosestPointOutput* closestPointOut) {
-  LM_ASSERT(lmIsNormalized(cameraDirection), "Camera direction not normalized.");
-
-  avgSurfacePoint->setZero();
-  pureAvgSurfacePoint->setZero();
-  closestPointOut->setInvalid();
-
-  Vector3 normal = Vector3::Zero();
-  Vector3 position = Vector3::Zero();
-  Vector3 pureNormal = Vector3::Zero();
-  Vector3 purePosition = Vector3::Zero();
-
-  Geometry::GetClosestPointOutput closestPoint;
-  closestPoint.setInvalid();
-
-  std::vector<int> verts;
-  const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
-
-  if (m_params.userFaultyTriangles) {
-    std::vector<int> tris;
-    const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts, tris);
-    lmReal area = 0.0f;
-    lmReal pureArea = 0.0f;
-
-    for (size_t ti = 0; ti < tris.size(); ti++) {
-      const Triangle& tri = mesh->getTriangle(tris[ti]);
-
-      // Discard rear-facing triangles
-      lmReal camDotTNormal = cameraDirection.dot(tri.normal_);
-      Vector3 center = TriCenter(mesh, tri);
-      if (camDotTNormal < 0.0f) {
-        lmReal weight = weightNormals ? std::max(0.0f, -camDotTNormal) : 1.0f;
-        // Calc distance and weight
-        lmReal a = tri.area;// TriArea(mesh, tri);
-
-        Geometry::GetClosestPointOutput output;
-        {
-          Geometry::GetClosestPointInput input;
-          input.mesh = mesh;
-          input.tri = &tri;
-          input.point = referencePoint.position;
-          Geometry::getClosestPoint(input, &output);
-          output.triIdx = tris[ti];
-          if (output.distanceSqr < closestPoint.distanceSqr) {
-            closestPoint = output;
-          }
-          if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
-            LM_DRAW_MESH_TRIANGLE(mesh, tri, lmColor::WHITE);
-          }
-        }
-
-        // Calc point weight
-        lmReal t = std::sqrt(closestPoint.distanceSqr) / radius; // todo remove sqrt later
-        t = 1.0f - std::min(1.0f, t);
-        t = t*t;
-
-        // Average taking area into account
-        normal += t * weight * a * tri.normal_;
-        position += t * weight * a * center;
-        area += t * weight * a;
-        pureNormal += t * a * tri.normal_;
-        purePosition += t * a * center;
-        pureArea += t * a;
-      }
-    }
-
-    if (0.0f < area) {
-      avgSurfacePoint->position = position / area;
-      avgSurfacePoint->normal = normal.normalized();
-    }
-    if (0.0f < pureArea) {
-      pureAvgSurfacePoint->position = purePosition / pureArea;
-      pureAvgSurfacePoint->normal = pureNormal.normalized();
-    }
-
-  } else {
-
-    lmReal sumWeight = 0.0f;
-
-    // no pure implenetation
-
-    for (size_t vi = 0; vi < verts.size(); vi++) {
-      const Vertex& vert = mesh->getVertex(verts[vi]);
-
-      // Discard rear-facing triangles
-      lmReal camDotVNormal = cameraDirection.dot(vert.normal_);
-      if (camDotVNormal < 0.0f) {
-        lmReal weight = weightNormals ? std::max(0.0f, -camDotVNormal) : 1.0f;
-        normal += vert.normal_ * weight;
-        position += weight * vert;
-        sumWeight += weight;
-
-        if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
-          LM_DRAW_CROSS(vert, 5.0f, lmColor::WHITE);
-        }
-      }
-    }
-    if (0.0f < sumWeight) {
-      avgSurfacePoint->position = position / sumWeight;
-      avgSurfacePoint->normal = normal.normalized();
-
-      // hack
-      *pureAvgSurfacePoint = *avgSurfacePoint;
-    }
-  }
-
-  if (closestPoint.isValid()) {
-    GetNormalAtPoint(mesh, closestPoint.triIdx, closestPoint.position, &closestPoint.normal);
-  }
-  *closestPointOut = closestPoint;
-}
-
 void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov) {
   std::unique_lock<std::mutex> lock(m_userInputMutex);
   Vector3 movement(50.0f * _DTheta, -50.0f * _DPhi, -_DFov / 100.0f);
@@ -366,29 +233,6 @@ void CameraUtil::GetNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& p
   normal += coords[0] * v1.normal_;
   normal += coords[1] * v2.normal_;
   normal += coords[2] * v3.normal_;
-
-  *normalOut = normal.normalized();
-}
-
-void CameraUtil::GetSmoothedNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, lmReal radius, Vector3* normalOut) {
-  Vector3 coords;
-  GetBarycentricCoordinates(mesh, triIdx, point, &coords);
-  const Triangle& tri = mesh->getTriangle(triIdx);
-  const Vertex& v1 = mesh->getVertex(tri.vIndices_[0]);
-  const Vertex& v2 = mesh->getVertex(tri.vIndices_[1]);
-  const Vertex& v3 = mesh->getVertex(tri.vIndices_[2]);
-
-  lmSurfacePoint avgSurfacePoint[3];
-  lmSurfacePoint pureAvgSurfacePoint[3];
-  Geometry::GetClosestPointOutput closestPoint[3];
-  GetAveragedSurfaceNormal(mesh, lmSurfacePoint(v1, v1.normal_), radius, -1.0f * v1.normal_, true, avgSurfacePoint+0, pureAvgSurfacePoint+0, closestPoint+0);
-  GetAveragedSurfaceNormal(mesh, lmSurfacePoint(v2, v2.normal_), radius, -1.0f * v2.normal_, true, avgSurfacePoint+1, pureAvgSurfacePoint+1, closestPoint+1);
-  GetAveragedSurfaceNormal(mesh, lmSurfacePoint(v3, v3.normal_), radius, -1.0f * v3.normal_, true, avgSurfacePoint+2, pureAvgSurfacePoint+2, closestPoint+2);
-
-  Vector3 normal = Vector3::Zero();
-  normal += coords[0] * avgSurfacePoint[0].normal;
-  normal += coords[1] * avgSurfacePoint[1].normal;
-  normal += coords[2] * avgSurfacePoint[2].normal;
 
   *normalOut = normal.normalized();
 }
@@ -473,34 +317,11 @@ void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
   isoState.closestPointOnMesh.normal = ToMeshSpace(isoState.closestPointOnMesh.normal);
 }
 
-void CameraUtil::EnsureReferencePointIsCloseToMesh(const Mesh* mesh, Params* paramsInOut) {
-  bool resetCamera = false;
-  if (m_params.cameraOverrideIso) {
-    //// Iso camera
-    //std::cout << "Iso cam: dist: " <<
-    //             isoState.refDist << ", pos: " << isoState.refPosition.x() << ", " << isoState.refPosition.y() << ", " <<
-    //             isoState.refPosition.z() << std::endl;
-
-  } else {
-    // Normal camera
-    const lmReal radius = GetSphereQueryRadius();
-    std::vector<int> verts;
-    const_cast<Mesh*>(mesh)->getVerticesInsideSphere(m_referencePoint.position, radius*radius, *&verts);
-    resetCamera = !verts.size();
-  }
-
-  if (resetCamera && m_params.enableCameraReset ) {
-    ResetCamera(mesh, GetCameraDirection());
-  }
-}
-
 static Vector3 lmProjectAlongVec(const Vector3& in, const Vector3& projectionDirection) {
   return in - projectionDirection * in.dot(projectionDirection);
 }
 
 void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
-
-  //std::unique_lock<std::mutex> lock(mutex);
 
   // Horizontal rotate
   static const lmReal ORBIT_RATE = LM_2PI / 40.0f;
@@ -561,15 +382,6 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
   }
 }
 
-void CameraUtil::UpdateParamsToWalkSmoothedNormals(Params* paramsInOut) {
-  paramsInOut->freeRotationEnabled = false;
-  paramsInOut->enableNormalCorrection = false;
-  paramsInOut->useAvgNormal = false;
-  paramsInOut->suppresForwardRotation = false;
-  paramsInOut->tmpSwitch = false;
-  paramsInOut->walkSmoothedNormals = true;
-}
-
 void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   if (mesh->getVertices().empty())
@@ -591,17 +403,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     dt = time - prevTime;
   }
 
-  if (!this->m_params.walkSmoothedNormals && paramsInOut->walkSmoothedNormals)
-  {
-    UpdateParamsToWalkSmoothedNormals(paramsInOut);
-  }
-
-  if (!this->m_params.cameraOverrideIso && paramsInOut->cameraOverrideIso) {
-    InitIsoCamera(mesh, &isoState);
-    paramsInOut->userFaultyTriangles = false;
-    paramsInOut->minDist = 10.0f;
-    paramsInOut->maxDist = 400.0f;
-  }
   this->m_params = *paramsInOut;
 
   static const Mesh* prevMesh = NULL;
@@ -622,9 +423,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     m_timeOfMovementSinceLastMeshMofification = FLT_MAX;
     UpdateCameraInWorldSpace();
     return;
-  } else if (m_params.enableCameraReset) {
-    // Don't do this when orbiting.
-    EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
   }
 
   m_timeSinceOrbitingStarted = 0.0f;
@@ -681,361 +479,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
     return;
   }
-
-  if(!m_params.enableSmoothing) {
-    dt = dtOne;
-  }
-
-
-  const Vector3 oldOldCameraNormal = m_transform.rotation * Vector3::UnitZ();
-
-  // Attempt to calculate new refernce point and normal
-  //
-  bool rayHit = false;
-//  lmReal refDist = 0.0f;
-  const lmTransform oldCamera = this->m_transform;
-
-  if (m_params.sphereCrawlMode) {
-    int attampts = 0;
-
-    const Geometry::GetClosestPointOutput oldClosestPoint = this->m_closestPoint;
-    Geometry::GetClosestPointOutput& newClosestPoint = this->m_closestPoint;
-    const lmSurfacePoint oldReferencePoint = this->m_referencePoint;
-    lmSurfacePoint& newReferencePoint = this->m_referencePoint;
-    const lmTransform oldCamera = this->m_transform;
-    lmTransform& newCamera = this->m_transform;
-    const lmSurfacePoint oldAvgVertex = this->m_avgVertex;
-
-
-    LM_ASSERT(oldReferencePoint.normal.squaredNorm() == 0.0f || lmIsNormalized(oldReferencePoint.normal), "");
-    LM_ASSERT(lmIsNormalized(oldCamera.rotation * Vector3::UnitZ()), "");
-
-    LM_DRAW_ARROW(oldReferencePoint.position, oldReferencePoint.position + oldReferencePoint.normal * 50.0f, lmColor::RED);
-
-    // backwards normal camera snapping.
-    bool backSnapped = false;
-    if (!m_params.useIsoNormal && m_params.enableBackSnapping &&  LM_EPSILON * LM_EPSILON < oldClosestPoint.normal.squaredNorm() &&
-      LM_EPSILON * LM_EPSILON < movementInCam.squaredNorm() ) {
-      Vector3 oldCameraNormal = oldCamera.rotation * Vector3::UnitZ();
-
-      LM_DRAW_ARROW(oldClosestPoint.position, oldClosestPoint.position + oldClosestPoint.normal * 50.0f, lmColor::GREEN);
-
-      // take direction of movement & old contact normal
-      Vector3 movementDir = movementInCam.normalized();
-      Vector3 cross = oldClosestPoint.normal.cross(oldAvgVertex.normal);
-
-      if (LM_EPSILON * LM_EPSILON < cross.squaredNorm()) {
-        cross.normalize();
-        LM_DRAW_ARROW(oldClosestPoint.position, oldClosestPoint.position + cross * 50.0f, lmColor::GREEN);
-
-        Vector3 sideComponent = cross.dot(oldCameraNormal) * cross;
-        Vector3 parallelComponent = oldCameraNormal - sideComponent;
-        parallelComponent.normalize();
-
-        if (movementDir.dot(oldClosestPoint.normal) < -0.707f && parallelComponent.dot(oldClosestPoint.normal) < 0.707f) {
-          // pulling backwards
-
-          std::vector<int> vertices;
-          FindPointsAheadOfMovement(mesh, oldReferencePoint, GetSphereQueryRadius(), movementDir, &vertices);
-          bool forwardVerticesDetected = 0 < vertices.size();
-
-          if (!m_params.enableForwardCheckForBackSnapping || !forwardVerticesDetected) {
-            // now go form contact normal forward 30 deg.
-            lmQuat r(AngleAxis( 3.1415f * 1.0/4.0f, cross));
-            Vector3 newN = r * oldClosestPoint.normal;
-            newN += sideComponent;
-            newN.normalize();
-            LM_DRAW_ARROW(oldClosestPoint.position, oldClosestPoint.position + newN * 50.0f, lmColor::BLUE);
-
-            CorrectCameraOrientation(dtZero, newN);
-            const_cast<lmTransform&>(oldCamera) = newCamera;
-
-#if LM_LOG_CAMERA_LOGIC
-            std::cout << "Normal back-pulled." << std::endl;
-#endif
-            backSnapped = true;
-          }
-        }
-      }
-    }
-
-    // Correct camera back to normal orientation
-    if (!m_params.useIsoNormal && !backSnapped && m_framesFromLastCollisions > 2 && m_params.enableNormalCorrection &&  LM_EPSILON * LM_EPSILON < oldReferencePoint.normal.squaredNorm())
-    {
-      Vector3 oldCameraNormal = oldCamera.rotation * Vector3(0.0f, 0.0f, 1.0f);
-
-      // Plane that connect them, if cross product is significant
-      Vector3 cross = oldCameraNormal.cross(oldReferencePoint.normal);
-
-      if (LM_EPSILON * LM_EPSILON < cross.squaredNorm())
-      {
-        cross.normalize();
-
-        // Decompose motion along those directions (movement is done in oldCamera's plane)
-        LM_ASSERT(movementInCam.squaredNorm() < 100000000.0f, "");
-        Vector3 sideComponent = cross.dot(movementInCam) * cross;
-        Vector3 parallelComponent = movementInCam - sideComponent;
-
-        // Subtract from the 'projected' direction as much as we need, or max.
-        lmReal dotMovement = parallelComponent.dot(cross.cross(oldReferencePoint.normal));
-        if (0.0f < dotMovement) {
-          lmReal maxCameraTranslation = (oldReferencePoint.normal - oldCameraNormal).norm() * m_referenceDistance / m_params.freeRotationRatio;
-          lmReal parallelNorm = parallelComponent.norm();
-
-          if (LM_EPSILON < parallelNorm) {
-            lmReal translationRatio = std::min(1.0f, maxCameraTranslation / parallelNorm);
-            lmReal leftover = 1.0f - translationRatio;
-
-            Vector3 newCameraTransform = m_transform.translation + translationRatio * parallelComponent * m_params.freeRotationRatio ;
-
-            Vector3 newNormal = (newCameraTransform - oldReferencePoint.position).normalized();
-            CorrectCameraOrientation(dtZero, newNormal);
-
-            // !! if we have more than 1 attempts.
-            const_cast<lmTransform&>(oldCamera) = newCamera;
-
-            // Leave the rest as it was.
-            movementInCam = sideComponent + leftover * parallelComponent;
-            LM_ASSERT(movementInCam.squaredNorm() < 100000000.0f, "");
-
-#if LM_LOG_CAMERA_LOGIC
-            std::cout << "Corrected to normal. Leftover: " << leftover << std::endl;
-#endif
-          }
-        }
-      }
-    }
-
-    //
-    Vector3 movementInNml = movementInCam;
-    Vector3 movementInOrgCam = movementInCam;
-    lmQuat normToCamera = lmQuat::Identity();
-    if (m_params.moveInNormalPlane && oldReferencePoint.normal.squaredNorm() != 0.0f)
-    {
-      LM_ASSERT(lmIsNormalized(oldReferencePoint.normal), "");
-
-      // Rotation from camera to surface normal
-      lmQuat toNmlPlane; toNmlPlane.setFromTwoVectors(oldOldCameraNormal, oldReferencePoint.normal);
-      movementInNml = toNmlPlane * movementInCam;
-      movementInCam = movementInNml;
-      normToCamera = toNmlPlane.inverse();
-    }
-
-    const lmReal sphereRadius = GetSphereQueryRadius();
-
-    lmSurfacePoint newAvgVertex;
-    lmSurfacePoint pureNewAvgVertex;
-    bool normalOkay = false;
-    while(!normalOkay && attampts < 16)
-    {
-      LM_ASSERT(oldReferencePoint.normal.squaredNorm() == 0.0f || lmIsNormalized(oldReferencePoint.normal), "");
-      LM_ASSERT(lmIsNormalized(oldCamera.rotation * Vector3::UnitZ()), "");
-
-      // Sphere sweep.
-      newReferencePoint.position += movementInCam;
-      newCamera.translation += movementInCam;
-
-      // Attempt sphere query
-      Vector3 cameraDirection = oldCamera.rotation * Vector3(0.0f, 0.0f, -1.0f);
-      GetAveragedSurfaceNormal(mesh, newReferencePoint, sphereRadius, cameraDirection, m_params.weightNormals, &newAvgVertex, &pureNewAvgVertex, &newClosestPoint);
-      if (!lmIsNormalized(newClosestPoint.normal)) {
-        GetClosestPoint(mesh, newReferencePoint, sphereRadius, cameraDirection, &newClosestPoint);
-      }
-
-      newReferencePoint.normal = m_params.useAvgNormal ? newAvgVertex.normal : newClosestPoint.normal;
-
-      if (m_params.useIsoNormal) {
-//        Vector3 queryPosition = (referencePoint.position + transform.translation) * 0.5f;
-//        Vector3 normal = IsoNormal(mesh, queryPosition, GetSphereQueryRadius());
-      }
-
-      normalOkay = lmIsNormalized(newReferencePoint.normal);
-
-      if (normalOkay && m_params.walkSmoothedNormals) {
-        GetSmoothedNormalAtPoint(mesh, newClosestPoint.triIdx, newClosestPoint.position, sphereRadius, &newClosestPoint.normal);
-        if (lmIsNormalized(oldClosestPoint.normal)) {
-          lmReal rotDist = (oldClosestPoint.normal - newClosestPoint.normal).norm();// * referenceDistance;
-          if (0.2f < rotDist) {
-            movementInCam *= 0.2f / rotDist;
-            newCamera = oldCamera;
-            newReferencePoint = oldReferencePoint;
-          }
-        }
-      }
-
-      if (normalOkay && m_params.overrideNormal) {
-        Vector3 smoothedNormal;
-        GetSmoothedNormalAtPoint(mesh, newClosestPoint.triIdx, newClosestPoint.position, sphereRadius, &smoothedNormal);
-        newReferencePoint.normal = smoothedNormal;
-      }
-
-      bool retryMovement = !normalOkay;
-
-      attampts++;
-      if (retryMovement && attampts < 4) {
-        movementInCam *= 0.5f;
-        newCamera = oldCamera;
-        newReferencePoint = oldReferencePoint;
-      }
-    }
-
-    if (lmIsNormalized(newReferencePoint.normal)) {
-
-      bool forwardVerticesDetected = false;
-
-      // apply quaternion of averaged normals.
-      const lmSurfacePoint& oldCalcPoint = oldReferencePoint;
-      const lmSurfacePoint& newCalcPoint = newReferencePoint;
-
-      if (!m_params.useIsoNormal &&m_params.suppresForwardRotation && lmIsNormalized(oldCalcPoint.normal) && LM_EPSILON * LM_EPSILON < movementInCam.squaredNorm()) {
-        std::vector<int> vertices;
-        FindPointsAheadOfMovement(mesh, oldReferencePoint, sphereRadius, movementInCam.normalized(), &vertices);
-        forwardVerticesDetected = 0 < vertices.size();
-
-        lmQuat normalChange;
-        normalChange.setFromTwoVectors(oldCalcPoint.normal, newCalcPoint.normal);
-
-        // Decompose normal update (if not opposite directions)
-        if (-0.9f < oldCalcPoint.normal.dot(newCalcPoint.normal) ) {
-          Vector3 deltaNormal = newCalcPoint.normal - oldCalcPoint.normal;
-          // Decompose: direction along & perp to motion
-          Vector3 movementDir = movementInCam.normalized();
-          Vector3 deltaNormalAlongMotion = movementDir.dot(deltaNormal) * movementDir;
-          Vector3 deltaNormalPerpMotion = deltaNormal - deltaNormalAlongMotion;
-
-          // Apply the normal delta along only if it's towards the back
-          if (m_params.tmpSwitch || forwardVerticesDetected) {
-            forwardVerticesDetected = true;
-#if LM_LOG_CAMERA_LOGIC
-            std::cout << "ORIENTATION backward detected" << std::endl;
-#endif
-          } else {
-#if LM_LOG_CAMERA_LOGIC
-            std::cout << "ORIENTATION forward, clipped" << std::endl;
-#endif
-            // forward normal change -- let the 'explicity camera movement' code handle that
-            Vector3 clippedNormal = (oldCalcPoint.normal + deltaNormalPerpMotion).normalized();
-            normalChange.setFromTwoVectors(oldCalcPoint.normal, clippedNormal);
-          }
-        }
-
-        // apply to camera transform
-        Vector3 cameraNormal = newCamera.rotation * Vector3::UnitZ();
-        Vector3 newNormal = normalChange * cameraNormal; //-- only have it for backward bending angles ?? or when the above rotation is not engaged...
-        CorrectCameraOrientation(dtZero, newNormal);
-
-        // check
-        Vector3 newCameraNormal = newCamera.rotation * Vector3::UnitZ();
-        lmQuat rotCheck; rotCheck.setFromTwoVectors(cameraNormal, newCameraNormal);
-        int i = 0; i++;
-      }
-
-      // Cast reference point onto the plane(clostestPoint.position, newReferencePoint.normal))
-      {
-        Vector3 diff = newReferencePoint.position - ((m_params.useAvgNormal && !m_params.useClosestPointForEdges) ? m_avgVertex.position : newClosestPoint.position);
-        newReferencePoint.position -= newReferencePoint.normal * diff.dot(newReferencePoint.normal); // smooth it !!
-        // this will drift, but will fix a problem for now (todo)
-        m_transform.translation -= newReferencePoint.normal * diff.dot(newReferencePoint.normal); // smooth it !!
-      }
-
-      if (m_params.freeRotationEnabled) {
-        // Look at reference point movement and closest point movement
-        Vector3 dRefPt;
-        Vector3 dClosestPt;
-        if (!m_params.useAvgNormal || m_params.useClosestPointForEdges) {
-          dRefPt = newReferencePoint.position - oldReferencePoint.position;
-          dRefPt -= m_referencePoint.normal * dRefPt.dot(m_referencePoint.normal);
-          dClosestPt = newClosestPoint.position - oldClosestPoint.position;
-          dClosestPt -= m_referencePoint.normal * dClosestPt.dot(m_referencePoint.normal);
-        } else {
-          dRefPt = newReferencePoint.position - oldReferencePoint.position;
-          dRefPt -= m_referencePoint.normal * dRefPt.dot(m_referencePoint.normal);  /////////
-          dClosestPt = newAvgVertex.position - m_avgVertex.position;
-          dClosestPt -= m_referencePoint.normal * dClosestPt.dot(m_referencePoint.normal);
-        }
-
-        // Project dCloestPt along dRefPt
-        lmReal refDist = dRefPt.norm();
-        if (LM_EPSILON < refDist && m_params.clipTranslationOnFreeRotate && !forwardVerticesDetected) { // && directionDot < 0.0f)
-          Vector3 projected = dRefPt.dot(dClosestPt) / dRefPt.squaredNorm() * dRefPt ;
-          lmReal closestDist = projected.norm();
-
-          // Add camera translation
-          lmReal movedFraction = std::min((closestDist+LM_EPSILON)/(refDist+LM_EPSILON), 1.0f);
-          lmReal rotationFraction = 1.0f - movedFraction;
-
-          // Use the difference in magnitude to
-          // Rotate camera to new position, at the same time: we need to stop updating the normal .....
-          //Vector3 correction = ((!params.useAvgNormal || params.useClosestPointForEdges) ? newClosestPoint.position : avgVertex.position) - referencePoint.position; // check that this is (1-rotationFraction) * dRefPt
-          Vector3 correction = (-1.0f + movedFraction) * dRefPt;
-          {
-            std::unique_lock<std::mutex> lock(m_referencePointMutex);
-            m_referencePoint.position += correction;;
-          }
-          m_transform.translation += correction;
-#if LM_LOG_CAMERA_LOGIC
-          std::cout << "Move fraction: " << movedFraction << std::endl;
-#endif
-          Vector3 newCameraNormal = (m_transform.translation + m_params.freeRotationRatio * (rotationFraction*(normToCamera*dRefPt)) - m_referencePoint.position).normalized();
-          CorrectCameraOrientation(dtZero, newCameraNormal);
-        } else {
-          // Prevent snapping back to the original positon
-//          lmReal rotationFraction = 0.0f;
-          Vector3 newCameraNormal = (m_transform.translation - m_referencePoint.position).normalized();
-          CorrectCameraOrientation(dtZero, newCameraNormal);
-        }
-      }
-
-      if (!m_params.freeRotationEnabled && !m_params.suppresForwardRotation) {
-        CorrectCameraOrientation(dtZero, m_referencePoint.normal);
-      }
-
-      LM_ASSERT(m_referencePoint.normal.squaredNorm() < 2.0f, "Normal exploded.");
-
-      rayHit = true;
-      this->m_closestPoint = newClosestPoint;
-      this->m_avgVertex = newAvgVertex;
-    }
-  }
-
-  // Adjust translation to user input.
-  if (rayHit) {
-    if (m_params.drawDebugLines) {
-      LM_DRAW_CROSS(m_referencePoint.position, 10.0f, lmColor::WHITE);
-      LM_DRAW_ARROW(m_referencePoint.position, m_referencePoint.position + m_referencePoint.normal * 20.0f, lmColor::RED);
-    }
-
-    // clean up:
-    m_referenceDistance -= deltaAngles.z();
-    m_referenceDistance = std::max(m_params.minDist, m_referenceDistance);
-    m_referenceDistance = std::min(m_params.maxDist, m_referenceDistance);
-
-    if (!m_params.sphereCrawlMode && !m_params.freeRotationEnabled) {
-      CorrectCameraOrientation(dtOne, m_referencePoint.normal);
-    }
-    CorrectCameraDistance(dt);
-  }
-
-  // don't update transform when there's no successful raycast
-  if (m_params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
-
-  if (m_params.preventCameraInMesh) {
-    bool validMovement = VerifyCameraMovement(mesh, oldCamera.translation, m_transform.translation, GetSphereQueryRadius());
-    if (!validMovement) {
-#if LM_LOG_CAMERA_LOGIC_2
-      std::cout << "Camera movement clipped." << std::endl;
-#endif
-      // Disallow camera orientation movement, but allow reference point movement.
-      m_transform.translation = oldCamera.translation;
-      UpdateCameraOrientationFromPositions();
-
-      m_framesFromLastCollisions = 0;
-    }
-  }
-
-
-  // Sync reference point & camera transform
-  RealignRefPtAndCamera();
 
   UpdateCameraInWorldSpace();
 }
@@ -1125,29 +568,6 @@ void CameraUtil::UpdateCameraInWorldSpace() {
 #endif
   std::unique_lock<std::mutex> lock(m_transformForGraphicsMutex);
   m_transformInWorldSpaceForGraphics = t;
-}
-
-void CameraUtil::RealignRefPtAndCamera()
-{
-  lmReal dist = (m_transform.translation - m_referencePoint.position).norm();
-  Vector3 cameraNormal = m_transform.rotation * Vector3::UnitZ();
-  m_transform.translation = m_referencePoint.position + dist * cameraNormal;
-}
-
-void CameraUtil::UpdateCameraOrientationFromPositions()
-{
-  Vector3 newCameraNormal = m_transform.translation - m_referencePoint.position;
-  if (!lmIsZero(newCameraNormal)) {
-    newCameraNormal.normalize();
-    Vector3 oldCameraNormal = m_transform.rotation * Vector3::UnitZ();
-    lmQuat correction; correction.setFromTwoVectors(oldCameraNormal, newCameraNormal);
-    m_transform.rotation = correction * m_transform.rotation;
-
-    m_referenceDistance = (m_transform.translation - m_referencePoint.position).norm();
-
-    // Need to clip it though..
-    lmClip(m_referenceDistance, m_params.minDist, m_params.maxDist);
-  }
 }
 
 void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result )
@@ -1249,7 +669,7 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
 
   //int count[2] = {0,0};
 
-  if (m_params.userFaultyTriangles) {
+  if (m_params.queryTriangles) {
     const TriangleVector& triangles = mesh->getTriangles();
 
 
@@ -1322,18 +742,13 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
   m_queryTriangles.clear();
   mesh->getOctree()->intersectSphere(positions[0],queryRadius*queryRadius,leavesHit, m_queryTriangles);
 
-  //lmReal radius = Get
-  for (int i = 0; i < 4; i++)
-  {
-    potentials[i] = 0.0f;
-  }
+  for (int i = 0; i < 4; i++) { potentials[i] = 0.0f; }
+
   // process every n-th point
-  const int striding = 1;
+  static const int striding = 1;
   const lmReal queryRadiusSqr = queryRadius*queryRadius;
 
-  //int count[2] = {0,0};
-
-  if (m_params.userFaultyTriangles) {
+  if (m_params.queryTriangles) {
     const TriangleVector& triangles = mesh->getTriangles();
 
 
@@ -1352,16 +767,11 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
         distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
 
         // avoid calling std::pow
-        lmReal distPowered = distSqr;
-        lmReal weightDenominator = queryRadiusSqr;
+        const lmReal distPowered = distSqr * distSqr * distSqr;
+        const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
         lmReal weight = 1.0f - (distPowered / weightDenominator);
         weight = lmClip(weight, 0.0f, 1.0f);
-        //lmReal area = TriArea(mesh, tri);
         potentials[0] += tri.area * weight / distPowered;
 
         if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
@@ -1373,24 +783,17 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
           distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
 
           // avoid calling std::pow
-          lmReal distPowered = distSqr;
-          lmReal weightDenominator = queryRadiusSqr;
+          const lmReal distPowered = distSqr * distSqr * distSqr;
+          const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
-          distPowered *= distSqr;
-          weightDenominator *= queryRadiusSqr;
-          distPowered *= distSqr;
-          weightDenominator *= queryRadiusSqr;
           lmReal weight = 1.0f - (distPowered / weightDenominator);
           weight = lmClip(weight, 0.0f, 1.0f);
-          //lmReal area = TriArea(mesh, tri);
           potentials[i] += tri.area * weight / distPowered;
-
         }
-
       }
     }
-
   } else {
+
     std::vector<int> selectedVertices;
     mesh->getVerticesFromTriangles(m_queryTriangles, selectedVertices);
 
@@ -1405,17 +808,11 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
 
       if (distSqr < queryRadiusSqr)
       {
-        lmReal distPowered = distSqr;
-        lmReal weightDenominator = queryRadiusSqr;
-
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
+        const lmReal distPowered = distSqr * distSqr * distSqr;
+        const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
         weight = lmClip(weight, 0.0f, 1.0f);
-
         potentials[0] += weight / distPowered;
 
         if (m_params.drawSphereQueryResults) {
@@ -1426,19 +823,12 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
           lmReal distSqr = (positions[i]-vert).squaredNorm();
           distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
 
-          lmReal distPowered = distSqr;
-          lmReal weightDenominator = queryRadiusSqr;
-
-          distPowered *= distSqr;
-          weightDenominator *= queryRadiusSqr;
-          distPowered *= distSqr;
-          weightDenominator *= queryRadiusSqr;
+          const lmReal distPowered = distSqr * distSqr * distSqr;
+          const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
           lmReal weight = 1.0f - (distPowered / weightDenominator);
           weight = lmClip(weight, 0.0f, 1.0f);
-
           potentials[i] += weight / distPowered;
-
         }
       }
     }
@@ -1483,9 +873,6 @@ void CameraUtil::IsoUpdateCameraTransform( const Vector3& newDirection, IsoCamer
 {
   lmQuat qCorrection; qCorrection.setFromTwoVectors(GetCameraDirection(), newDirection);
 
-  //std::unique_lock<std::mutex> lock(mutex);
-
-
   lmTransform newTransform;
   newTransform.rotation = qCorrection * m_transform.rotation;
   newTransform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
@@ -1507,9 +894,6 @@ void CameraUtil::IsoUpdateCameraTransform( const Vector3& newDirection, IsoCamer
 
   m_transform.rotation = m_transform.rotation.slerp(blendingFactor, newTransform.rotation);
   m_transform.translation = lmInterpolate(blendingFactor, m_transform.translation, newTransform.translation);
-
-  //transform.rotation = qCorrection * transform.rotation;
-  //transform.translation = state->refPosition - state->cameraOffsetMultiplier * state->refDist * newDirection;
 }
 
 void CameraUtil::IsoUpdateReferencePoint(IsoCameraState* state ) {
@@ -1534,17 +918,13 @@ void CameraUtil::IsoPreventCameraInMesh( Mesh* mesh, IsoCameraState* state )
     std::cout << "Hugging camera to refPoint (mesh collision)" << std::endl;
 #endif
     LM_ASSERT(lmInRange(raycast.fraction, 0.0f, 1.0f), "Inavlid raycast result returned.");
-    // Don't know why this fails !?
     LM_ASSERT(raycast.dist <= ray.GetLength(), "Raycast result corrupted.");
-    //LM_ASSERT(raycast.dist <= (state->refPosition, transform.translation).norm(), "Camera collision with mesh failed.");
 
     // if clip this
     lmReal refPositionFraction = std::max(raycast.fraction, m_params.minDist / state->refDist);
     refPositionFraction = lmClip(refPositionFraction, 0.0f, 1.0f);
     state->refPosition -= state->refNormal * state->refDist * (1.0f-refPositionFraction);
     state->refDist *= refPositionFraction;
-
-    //std::unique_lock<std::mutex> lock(mutex);
 
     m_transform.translation = raycast.position - ray.GetDirection() * 0.01f;
   }
