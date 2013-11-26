@@ -154,8 +154,7 @@ public:
       grav_k = 0.0001f;
       grav_n = 2.0f;
       numRotationClipIterations = 1;
-      //isoQueryPaddingRadius = 50.0f;
-      isoQueryPaddingRadius = 50.0f; // tmp perf ?
+      isoQueryPaddingRadius = 50.0f;
       clipToIsoSurface = false;
       clipCameraMovement = false;
       refDistForMovemement = 50.0f;
@@ -212,14 +211,6 @@ public:
       enableCameraOrbit = true;
 
       preventCameraInMesh = false;
-// test new method
-      ////freeRotationEnabled = false;
-      ////enableNormalCorrection = false;
-      ////useAvgNormal = false;
-      ////suppresForwardRotation = false;
-      ////tmpSwitch = false;
-      ////walkSmoothedNormals = true;
-//end test new method
     }
   };
 
@@ -296,11 +287,7 @@ public:
   void UpdateCameraInWorldSpace();
 
   // Get radius for mesh spehre queries.
-  inline lmReal GetSphereQueryRadius()
-  {
-    return params.sphereRadiusMultiplier * referenceDistance;
-  }
-
+  inline lmReal GetSphereQueryRadius() { return m_params.sphereRadiusMultiplier * m_referenceDistance; }
 
 private:
 
@@ -352,8 +339,6 @@ private:
   void CorrectCameraOrientation(lmReal dt, const Vector3& newNormal);
 
   // Correct distance from the mesh.
-  //
-  // todo: remove param.
   void CorrectCameraDistance(lmReal dt);
 
   // Correct up vector
@@ -375,58 +360,50 @@ private:
 public:
 
   // Camera's current transform.
-  lmTransform transform;
+  lmTransform m_transform;
 
   // Camera's current transform.
-  lmTransform transformInWorldSpaceForGraphics;
+  lmTransform m_transformInWorldSpaceForGraphics;
 
   // Mesh's transform
-  lmTransform meshTransform;
+  lmTransform m_meshTransform;
 
   // Most recent reference point on the model (used to compute camera's movement).
-  // Unused.
-  lmSurfacePoint referencePoint;
+  lmSurfacePoint m_referencePoint;
 
-  lmSurfacePoint avgVertex;
+  lmSurfacePoint m_avgVertex;
 
-  int framesFromLastCollisions;
+  int m_framesFromLastCollisions;
 
   // Point on the mesh closest to the reference point.
-  Geometry::GetClosestPointOutput closestPoint;
+  Geometry::GetClosestPointOutput m_closestPoint;
 
   // Distance from the surface of the model.
-  // Unused.
-  lmReal referenceDistance;
+  lmReal m_referenceDistance;
 
   // User input from the last call to CameraUpdate().
-  Vector3 userInput;
+  Vector3 m_userInput;
 
   // Accumulated user input, waiting to be used over subsequent frames
-  Vector3 accumulatedUserInput;
-
-  // Momentary velocity vector of user input.
-  Vector3 userInputVelocity;
+  Vector3 m_accumulatedUserInput;
 
   // External debug draw util.
-  DebugDrawUtil* debugDrawUtil;
-
-  // Last time of checking for user input -- specifically from the leap
-  lmReal lastUserInputFromVectorTime;
+  DebugDrawUtil* m_debugDrawUtil;
 
   // Time of last camera udpate
-  lmReal lastCameraUpdateTime;
+  lmReal m_lastCameraUpdateTime;
 
-  lmReal timeSinceOrbitingStarted;
-  lmReal timeSinceOrbitingEnded;
-  lmReal timeSinceCameraUpdateStarted;
-  lmReal timeOfMovementSinceLastMeshMofification;
-  lmReal timeOfLastScupt;
-  lmReal prevTimeOfLastSculpt;
-  bool justSculpted;
-  bool forceVerifyPositionAfterSculpting;
-  int numFramesInsideManifoldMesh;
+  lmReal m_timeSinceOrbitingStarted;
+  lmReal m_timeSinceOrbitingEnded;
+  lmReal m_timeSinceCameraUpdateStarted;
+  lmReal m_timeOfMovementSinceLastMeshMofification;
+  lmReal m_timeOfLastScupt;
+  lmReal m_prevTimeOfLastSculpt;
+  bool m_justSculpted;
+  bool m_forceVerifyPositionAfterSculpting;
+  int m_numFramesInsideManifoldMesh;
 
-  Params params;
+  Params m_params;
 
   enum State {
     STATE_INVALID = -1,
@@ -436,17 +413,13 @@ public:
   // Current state of the camera.
   State state;
 
-  std::mutex transformForGraphicsMutex;
-  std::mutex userInputMutex;
-  std::mutex referencePointMutex;
+  std::mutex m_transformForGraphicsMutex;
+  std::mutex m_userInputMutex;
+  std::mutex m_referencePointMutex;
 
-
-  std::vector<int> queryTriangles;
+  std::vector<int> m_queryTriangles;
 
 public:
-
-  // Settings
-  static const int RAY_CAST_BATCH_SIDE = 1;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };

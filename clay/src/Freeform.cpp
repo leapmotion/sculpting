@@ -514,7 +514,7 @@ void FreeformApp::update()
   if (_camera_util->state == CameraUtil::STATE_INVALID || !mesh_) {
     // Init camera
     _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), _cam_dist); // up vector assumed to be Vec3f(0,1,0)
-    _camera_util->debugDrawUtil = _debug_draw_util;
+    _camera_util->m_debugDrawUtil = _debug_draw_util;
   }
   
   lmTransform tCamera;
@@ -532,7 +532,7 @@ void FreeformApp::update()
   Matrix4x4 trans = mesh_->getTransformation();
   Vector4 temp;
   {
-    std::unique_lock<std::mutex> lock(_camera_util->referencePointMutex);
+    std::unique_lock<std::mutex> lock(_camera_util->m_referencePointMutex);
     temp << _camera_util->isoState.refPosition, 1.0;
   }
   _focus_point = (trans * temp).head<3>();
@@ -574,7 +574,7 @@ void FreeformApp::updateLeapAndMesh() {
 #endif 
     bool haveFrame;
     try {
-      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->m_referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
     } catch (...) {
       haveFrame = false;
     }
@@ -593,7 +593,7 @@ void FreeformApp::updateLeapAndMesh() {
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
           sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
-          _camera_util->timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
+          _camera_util->m_timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
@@ -738,7 +738,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.5 ? 0.25f : 1.0f);
   }
 
-  if (_camera_util->params.drawDebugLines) {
+  if (_camera_util->m_params.drawDebugLines) {
     _wireframe_shader.bind();
     _wireframe_shader.uniform( "transform", transform );
     _wireframe_shader.uniform( "transformit", transformit );
