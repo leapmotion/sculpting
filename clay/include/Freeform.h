@@ -97,7 +97,7 @@ private:
       sha1.process_bytes(macPath.data(), macPath.size());
       sha1.get_digest(hash);
       std::ostringstream oss;
-      oss << std::setfill('0') << std::setw(sizeof(hash[0]*2)) << std::hex;
+      oss << std::setfill('0') << std::setw(sizeof(hash[0])*2) << std::hex;
       for (size_t i = 0; i < sizeof(hash)/sizeof(hash[0]); i++) {
         oss << hash[i];
       }

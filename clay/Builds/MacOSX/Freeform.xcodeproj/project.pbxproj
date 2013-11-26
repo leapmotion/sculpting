@@ -130,7 +130,6 @@
 		8AB190681840111700347357 /* credits.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AB190671840111700347357 /* credits.png */; };
 		8AB1906A18401CE000347357 /* Breakpad.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
 		8AB1906C18401D5000347357 /* breakpadUtilities.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906B18401D5000347357 /* breakpadUtilities.dylib */; };
-		8AB1906D18401D6700347357 /* breakpadUtilities.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8AB1906B18401D5000347357 /* breakpadUtilities.dylib */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -141,7 +140,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 6;
 			files = (
-				8AB1906D18401D6700347357 /* breakpadUtilities.dylib in CopyFiles */,
 				18392F4E179E92EE006709CF /* libLeap.dylib in CopyFiles */,
 				18392F4F179E92EE006709CF /* libfreeimage.dylib in CopyFiles */,
 			);
@@ -1403,15 +1401,20 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LIBRARIES_PATH)/LeapSDK/lib/libc++",
-					"$(LIBRARIES_PATH)/LeapSDK/lib",
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
-					/opt/local/Libraries/cinder_0.8.4/lib/macosx,
 					"/opt/local/Libraries/breakpad-0.1/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
-					"-sectcreate\n__DATA\n__09ffe29c32cd8a\n../../resources/freigsanprobold-webfont.ttf\n-sectcreate\n__DATA\n__274e7ba8743fd6\n../../resources/freigsanpromed-webfont.ttf",
+					"-sectcreate",
+					__DATA,
+					__09ffe29c32cd8a,
+					"../../resources/freigsanprobold-webfont.ttf",
+					"-sectcreate",
+					__DATA,
+					__274e7ba8743fd6,
+					"../../resources/freigsanpromed-webfont.ttf",
 				);
 				PRODUCT_NAME = Freeform;
 				SDKROOT = macosx;
@@ -1458,15 +1461,20 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(LIBRARIES_PATH)/LeapSDK/lib/libc++",
-					"$(LIBRARIES_PATH)/LeapSDK/lib",
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
-					/opt/local/Libraries/cinder_0.8.4/lib/macosx,
 					"/opt/local/Libraries/breakpad-0.1/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
-					"-sectcreate\n__DATA\n__09ffe29c32cd8a\n../../resources/freigsanprobold-webfont.ttf\n-sectcreate\n__DATA\n__274e7ba8743fd6\n../../resources/freigsanpromed-webfont.ttf",
+					"-sectcreate",
+					__DATA,
+					__09ffe29c32cd8a,
+					"../../resources/freigsanprobold-webfont.ttf",
+					"-sectcreate",
+					__DATA,
+					__274e7ba8743fd6,
+					"../../resources/freigsanpromed-webfont.ttf",
 				);
 				PRODUCT_NAME = Freeform;
 				SDKROOT = macosx;
