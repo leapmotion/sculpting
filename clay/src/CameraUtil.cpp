@@ -509,103 +509,6 @@ void CameraUtil::GetSmoothedNormalAtPoint(const Mesh* mesh, int triIdx, const Ve
   *normalOut = normal.normalized();
 }
 
-void CameraUtil::DebugDrawNormals(const Mesh* mesh, const Params& paramsIn) {
-  // Draw normal for every nth triangle
-  TriangleVector trangles = const_cast<Mesh*>(mesh)->getTriangles();
-  VertexVector vertices = const_cast<Mesh*>(mesh)->getVertices();
-
-  for (size_t i = 0; i < vertices.size(); i+= 1) {
-    Vertex vert = vertices[i];
-
-    lmSurfacePoint refPoint(vert, vert.normal_);
-    lmSurfacePoint newAvgVertex;
-    lmSurfacePoint pureNewAvgVertex;
-    Geometry::GetClosestPointOutput newClosestPoint;
-    GetAveragedSurfaceNormal(mesh, refPoint, GetSphereQueryRadius(), -1.0f * vert.normal_, paramsIn.weightNormals, &newAvgVertex, &pureNewAvgVertex, &newClosestPoint);
-
-#if LM_DRAW_DEBUG_OBJECTS
-    if(m_debugDrawUtil) {
-      LM_DRAW_ARROW(vert, vert + newAvgVertex.normal * 10.0f, lmColor::WHITE);
-    }
-#endif
-  }
-
-  for (size_t i = 0; i < trangles.size(); i++) {
-    Triangle tri = trangles[i];
-  }
-}
-
-void CameraUtil::ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut) {
-  lmReal pmin = FLT_MAX;
-  lmReal pmax = 0.0f;
-
-  for (int i = 0; i < 1000; i++) {
-    lmReal min = -200.0f;
-    lmReal max = 200.0f;
-
-    lmReal x = i/1%10 * 0.1f * (max-min) + min;
-    lmReal y = i/10%10 * 0.1f * (max-min) + min;
-    lmReal z = i/100%10 * 0.1f * (max-min) + min;
-
-    Vector3 p(x, y, z);
-    if (LM_EPSILON * LM_EPSILON < p.squaredNorm()) {
-      //LM_PERM_ARROW(p, p + p.normalized() * 20.0f, lmColor::CYAN);
-      LM_DRAW_CROSS(p, 3.0f, lmColor::YELLOW);
-    }
-
-    if (1) {
-      std::vector<int> verts;
-      const_cast<Mesh*>(mesh)->getVerticesInsideSphere(p, 50.0f, verts);
-      std::vector<int> tris;
-      const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts, tris);
-
-      lmReal eps = 0.5f;
-      Vector3 epsXyz[] = { Vector3::Zero(), Vector3::UnitX() * eps, Vector3::UnitY() * eps, Vector3::UnitZ() * eps };
-      lmReal potentialXyz[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-
-      for (size_t ti = 0; ti < tris.size(); ti++) {
-        const Triangle& tri = mesh->getTriangle(tris[ti]);
-        Geometry::GetClosestPointInput input;
-        input.mesh = mesh;
-        input.tri = &tri;
-
-        for (int ei = 0; ei < 4; ei++) {
-          input.point = p + epsXyz[ei];
-          Geometry::GetClosestPointOutput output;
-          Geometry::getClosestPoint(input, &output);
-          lmReal d = std::sqrt(output.distanceSqr) / paramsInOut->isoMultiplier;
-          potentialXyz[ei] += 1.0f / (d*d) * tri.area;// TriArea(mesh, tri);
-          pmin = std::min(pmin, potentialXyz[ei]);
-          pmax = std::max(pmax, potentialXyz[ei]);
-        }
-      }
-
-      lmReal potential = potentialXyz[0];
-      lmReal x = potentialXyz[1] - potential;
-      lmReal y = potentialXyz[2] - potential;
-      lmReal z = potentialXyz[3] - potential;
-
-      if (tris.size()){
-        LM_DRAW_CROSS(p, 3.0f, lmColor::YELLOW);
-      }
-
-      Vector3 n(x, y, z);
-      if (LM_EPSILON * LM_EPSILON < n.squaredNorm()) {
-        n.normalize();
-        LM_DRAW_ARROW(p, p + n * 20.0f, lmColor::CYAN);
-      } else {
-//        int hadTriangles = tris.size();
-//        int i = 0;
-      }
-    }
-  }
-
-#if LM_LOG_CAMERA_LOGIC_3
-  std::cout << "min potential " << pmin << std::endl;
-  std::cout << "max potential " << pmax << std::endl;
-#endif
-}
-
 // Used to collide the camera sphere. Figure out what radius we need ?? maybe same as refence sphere
 // Returns true if the sphere collides with the mesh
 bool CameraUtil::CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal radius )
@@ -886,9 +789,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   m_timeSinceOrbitingStarted = 0.0f;
   m_timeSinceOrbitingEnded += dt;
-
-  //DebugDrawNormals(mesh, paramsIn);
-  //ExperimentWithIsosurfaces(mesh, paramsInOut);
 
   if (m_debugDrawUtil) {
     if (m_params.drawDebugLines) {

@@ -293,8 +293,6 @@ private:
 
   void UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut );
 
-  void ExperimentWithIsosurfaces(const Mesh* mesh, Params* paramsInOut);
-
   // Returns true if sphere collides mesh.
   bool CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal radius);
 
@@ -304,8 +302,6 @@ private:
   void CastOneRay(const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result);
 
   void CastOneRay(const Mesh* mesh, const lmRay& ray, std::vector<lmRayCastOutput>* results, bool collectall = false);
-
-  void DebugDrawNormals(const Mesh* mesh, const Params& paramsIn);
 
   void UpdateParamsToWalkSmoothedNormals(Params* paramsInOut);
 
