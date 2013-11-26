@@ -709,7 +709,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
       _wireframe_shader.unbind();
     }
     glPopMatrix();
-    Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.5 ? 0.25f : 1.0f);
+    Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.1 ? 0.15f : 1.0f);
   }
 
   if (_camera_util->m_params.drawDebugLines) {

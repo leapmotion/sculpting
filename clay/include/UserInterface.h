@@ -352,7 +352,7 @@ public:
   void setAlwaysActivated(bool activated) { m_alwaysActivated = activated; }
 
   static const Vector2& getWindowSize() { return g_windowSize; }
-  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.975f); }
+  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985f); }
 
 private:
 

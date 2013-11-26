@@ -53,6 +53,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   static const float MAX_ACTIVATION_LIMIT = 0.9f; // how high the max activation can be before other menus can't be activated
   static const float ACTIVATION_AMOUNT = 0.333f; // the amount to add when activating or deactivating
   static const float ACTIVATION_REQUIREMENT_ENTRY = 0.1f;
+  static const float MIN_SCULPT_MULT = 0.5f;
   const double lastSculptTime = sculpt->getLastSculptTime();
   const double curTime = ci::app::getElapsedSeconds();
   const int numTips = tips.size();
@@ -63,7 +64,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   float radius = 0.0f;
   const float curRadius = m_activation.value*(m_outerRadius - m_innerRadius) + m_innerRadius;
   float closest = 9999.0f;
-  //if (g_sculptMult.value > 0.5f) {
+  if (g_sculptMult.value > MIN_SCULPT_MULT) {
     for (int i=0; i<numTips; i++) {
       //const Vector2 pos((tips[i].x - 0.5f)*m_windowAspect + 0.5f, 1.0f - tips[i].y);
       const Vector2 pos(tips[i].x, 1.0f - tips[i].y);
@@ -86,7 +87,7 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
       }
       closest = std::min(closest, radius);
     }
-  //}
+  }
   float maxActivation = 0.0f;
   int maxIdx;
 
@@ -232,7 +233,7 @@ void Menu::draw() const {
   const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, menuOpacity);
   const ci::Vec2f textPos = pos - Vec2f(0.0f, FONT_SIZE/2.0f);
   const ci::Vec2f offset = Vec2f(0.0f, FONT_SIZE/2.0f);
-  const float textScale = (0.35f * activation) + relativeToAbsolute(0.04f) / FONT_SIZE;
+  const float textScale = (0.25f * activation) + relativeToAbsolute(0.04f) / FONT_SIZE;
 
   // draw menu title and value
   glPushMatrix();
