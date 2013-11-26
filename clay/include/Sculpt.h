@@ -32,7 +32,7 @@ public:
 
   static void setDetail(float detail) { detail_ = detail; }
   static void smooth(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool limit = true);
-  static void smoothFlat(Mesh* mesh, const std::vector<int> &iVerts, bool limit = true);
+  static void smoothFlat(Mesh* mesh, const std::vector<int> &iVerts);
   static void draw(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush, bool negate = false);
   static void flatten(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
   static void sweep(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brush);
@@ -52,7 +52,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
-  static void setAdaptiveParameters(float radiusSquared, bool clamp = true);
+  static void setAdaptiveParameters(float radiusSquared);
   static Vector3 areaNormal(Mesh* mesh, const std::vector<int> &iVerts);
   static Vector3 areaCenter(Mesh* mesh, const std::vector<int> &iVerts);
   static void laplacianSmooth(Mesh* mesh, const std::vector<int> &iVerts, Vector3Vector &smoothVerts, Vector3Vector &smoothColors);

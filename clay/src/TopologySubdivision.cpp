@@ -86,7 +86,7 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
 
   int nbVNew = vNew.size();
   mesh_->expandVertices(vNew,1);
-  Sculpt::smoothFlat(mesh_, std::vector<int>(vNew.begin() + nbVNew, vNew.end()), false);
+  Sculpt::smoothFlat(mesh_, std::vector<int>(vNew.begin() + nbVNew, vNew.end()));
 
   nbVNew = vNew.size();
 #pragma omp parallel for
