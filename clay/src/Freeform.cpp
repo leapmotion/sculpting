@@ -27,7 +27,6 @@ FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _ph
   _immersive_entered_time(0.0)
 {
   _camera_util = new CameraUtil();
-  _debug_draw_util = &DebugDrawUtil::getInstance();
   Menu::updateSculptMult(0.0, 0.0f);
 }
 
@@ -40,7 +39,6 @@ FreeformApp::~FreeformApp()
   }
 
   delete _camera_util;
-  //delete _debug_draw_util;
 }
 
 void FreeformApp::prepareSettings( Settings *settings )
@@ -508,15 +506,6 @@ void FreeformApp::update()
   campos.y = sinf(_phi)*_cam_dist;
   campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
 
-  // if-conditioning this will disable mouse-based movement, untill we actually handle camera update
-  //if (!mesh_ || _camera_util->state == CameraUtil::STATE_INVALID) {
-
-  if (_camera_util->state == CameraUtil::STATE_INVALID || !mesh_) {
-    // Init camera
-    _camera_util->SetFromStandardCamera(Vector3(campos.ptr()), Vector3(0,0,0), _cam_dist); // up vector assumed to be Vec3f(0,1,0)
-    _camera_util->m_debugDrawUtil = _debug_draw_util;
-  }
-  
   lmTransform tCamera;
   {
     // Hack -- lock access to mesh rotation for a moment
@@ -742,7 +731,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _wireframe_shader.bind();
     _wireframe_shader.uniform( "transform", transform );
     _wireframe_shader.uniform( "transformit", transformit );
-    _debug_draw_util->FlushDebugPrimitives(&_wireframe_shader);
+    DebugDrawUtil::getInstance().FlushDebugPrimitives(&_wireframe_shader);
     _wireframe_shader.unbind();
   }
 

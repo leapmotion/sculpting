@@ -26,7 +26,6 @@
 
 
 class Mesh;
-class DebugDrawUtil;
 
 struct lmRay {
   lmRay() {}
@@ -371,9 +370,6 @@ public:
   // Accumulated user input, waiting to be used over subsequent frames
   Vector3 m_accumulatedUserInput;
 
-  // External debug draw util.
-  DebugDrawUtil* m_debugDrawUtil;
-
   // Time of last camera update
   lmReal m_lastCameraUpdateTime;
 
@@ -388,14 +384,6 @@ public:
   int m_numFramesInsideManifoldMesh;
 
   Params m_params;
-
-  enum State {
-    STATE_INVALID = -1,
-    STATE_FREEFLOATING
-  };
-
-  // Current state of the camera.
-  State state;
 
   std::mutex m_transformForGraphicsMutex;
   std::mutex m_userInputMutex;

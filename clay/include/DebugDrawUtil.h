@@ -4,6 +4,13 @@
 
 #include "DataTypes.h"
 
+#if LM_PRODUCTION_BUILD
+# define LM_DRAW_DEBUG_OBJECTS 0
+#else
+# define LM_DRAW_DEBUG_OBJECTS 1
+#endif
+
+
 
 class Mesh;
 class Triangle;
@@ -79,6 +86,8 @@ public:
   template<bool PERM>
   void DrawTriangle(const Vector3& a, const Vector3& b, const Vector3& c, lmColor color = lmColor::WHITE);
 
+  void DrawMeshTriangle(const Mesh* mesh, const Triangle& tri, lmColor color = lmColor::WHITE);
+
   template<bool PERM>
   void DrawFace(const Vector3& a, const Vector3& b, const Vector3& c, lmColor color = lmColor::WHITE);
 
@@ -88,9 +97,6 @@ public:
   template<bool PERM>
   void DrawArrow(const Vector3& from, const Vector3& to, lmColor color = lmColor::WHITE);
 
-  void DrawTriangle(const Mesh* mesh, const Triangle& tri);
-
-  void DrawFace(const Mesh* mesh, const Triangle& tri);
 
   void SwitchBuffers();
 
@@ -111,21 +117,41 @@ private:
   ~DebugDrawUtil() {}
 };
 
+#if LM_DRAW_DEBUG_OBJECTS
 
-#define LM_DRAW_POINT(v0, color) DebugDrawUtil::getInstance().DrawPoint<false>(v0, color)
-#define LM_DRAW_LINE(v0, v1, color) DebugDrawUtil::getInstance().DrawLine<false>(v0, v1, color)
-#define LM_DRAW_ARROW(v0, v1, color) DebugDrawUtil::getInstance().DrawArrow<false>(v0, v1, color)
-#define LM_DRAW_TRIANGLE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawTriangle<false>(v0, v1, v2)
-#define LM_DRAW_FACE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawFace<false>(v0, v1, v2)
-#define LM_DRAW_CROSS(v0, size, color) DebugDrawUtil::getInstance().DrawCross<false>(v0, size, color)
+# define LM_DRAW_POINT(v0, color) DebugDrawUtil::getInstance().DrawPoint<false>(v0, color)
+# define LM_DRAW_LINE(v0, v1, color) DebugDrawUtil::getInstance().DrawLine<false>(v0, v1, color)
+# define LM_DRAW_ARROW(v0, v1, color) DebugDrawUtil::getInstance().DrawArrow<false>(v0, v1, color)
+# define LM_DRAW_TRIANGLE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawTriangle<false>(v0, v1, v2)
+# define LM_DRAW_MESH_TRIANGLE(mesh, triangle, color) DebugDrawUtil::getInstance().DrawMeshTriangle(mesh, tri, color)
+# define LM_DRAW_FACE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawFace<false>(v0, v1, v2)
+# define LM_DRAW_CROSS(v0, size, color) DebugDrawUtil::getInstance().DrawCross<false>(v0, size, color)
 
-#define LM_PERM_POINT(v0, color) DebugDrawUtil::getInstance().DrawPoint<true>(v0, color)
-#define LM_PERM_LINE(v0, v1, color) DebugDrawUtil::getInstance().DrawLine<true>(v0, v1, color)
-#define LM_PERM_ARROW(v0, v1, color) DebugDrawUtil::getInstance().DrawArrow<true>(v0, v1, color)
-#define LM_PERM_TRIANGLE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawTriangle<true>(v0, v1, v2, color)
-#define LM_PERM_FACE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawFace<true>(v0, v1, v2, color)
-#define LM_PERM_CROSS(v0, size, color) DebugDrawUtil::getInstance().DrawCross<true>(v0, size, color)
+# define LM_PERM_POINT(v0, color) DebugDrawUtil::getInstance().DrawPoint<true>(v0, color)
+# define LM_PERM_LINE(v0, v1, color) DebugDrawUtil::getInstance().DrawLine<true>(v0, v1, color)
+# define LM_PERM_ARROW(v0, v1, color) DebugDrawUtil::getInstance().DrawArrow<true>(v0, v1, color)
+# define LM_PERM_TRIANGLE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawTriangle<true>(v0, v1, v2, color)
+# define LM_PERM_FACE(v0, v1, v2, color) DebugDrawUtil::getInstance().DrawFace<true>(v0, v1, v2, color)
+# define LM_PERM_CROSS(v0, size, color) DebugDrawUtil::getInstance().DrawCross<true>(v0, size, color)
 
+#else
+
+# define LM_DRAW_POINT(v0, color)
+# define LM_DRAW_LINE(v0, v1, color)
+# define LM_DRAW_ARROW(v0, v1, color)
+# define LM_DRAW_TRIANGLE(v0, v1, v2, color)
+# define LM_DRAW_MESH_TRIANGLE(mesh, triangle, color)
+# define LM_DRAW_FACE(v0, v1, v2, color)
+# define LM_DRAW_CROSS(v0, size, color)
+
+# define LM_PERM_POINT(v0, color)
+# define LM_PERM_LINE(v0, v1, color)
+# define LM_PERM_ARROW(v0, v1, color)
+# define LM_PERM_TRIANGLE(v0, v1, v2, color)
+# define LM_PERM_FACE(v0, v1, v2, color)
+# define LM_PERM_CROSS(v0, size, color)
+
+#endif
 
 
 #endif // __DebugDrawUtil_h__

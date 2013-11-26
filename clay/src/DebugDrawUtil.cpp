@@ -7,22 +7,6 @@
 
 
 
-void DebugDrawUtil::DrawTriangle(const Mesh* mesh, const Triangle& tri) {
-  LM_DRAW_TRIANGLE(
-      mesh->getVertex(tri.vIndices_[0]),
-      mesh->getVertex(tri.vIndices_[1]),
-      mesh->getVertex(tri.vIndices_[2]),
-      lmColor::WHITE);
-}
-
-void DebugDrawUtil::DrawFace(const Mesh* mesh, const Triangle& tri) {
-  LM_DRAW_TRIANGLE(
-    mesh->getVertex(tri.vIndices_[0]),
-    mesh->getVertex(tri.vIndices_[1]),
-    mesh->getVertex(tri.vIndices_[2]),
-    lmColor::WHITE);
-}
-
 void DebugDrawUtil::SwitchBuffers() {
   std::unique_lock<std::mutex> lock(m_mutex);
   Buffers& permSrc = GetDrawingPermBuffer();
@@ -107,15 +91,6 @@ void DebugDrawUtil::DrawLine( const Vector3& a, const Vector3& b, lmColor color 
 }
 
 template <bool PERM>
-void DebugDrawUtil::DrawFace( const Vector3& a, const Vector3& b, const Vector3& c, lmColor color /*= lmColor::WHITE*/)
-{
-  DebugDrawUtil::VectorWithColorVector& buffer = PERM ? GetDrawingPermBuffer().m_facesCol : GetDrawingBuffer().m_facesCol;
-  buffer.push_back(VertexAndColor(a, color));
-  buffer.push_back(VertexAndColor(b, color));
-  buffer.push_back(VertexAndColor(c, color));
-}
-
-template <bool PERM>
 void DebugDrawUtil::DrawTriangle( const Vector3& a, const Vector3& b, const Vector3& c, lmColor color /*= lmColor::WHITE*/)
 {
   DebugDrawUtil::VectorWithColorVector& buffer = PERM ? GetDrawingPermBuffer().m_trianglesCol : GetDrawingBuffer().m_trianglesCol;
@@ -124,6 +99,22 @@ void DebugDrawUtil::DrawTriangle( const Vector3& a, const Vector3& b, const Vect
   buffer.push_back(VertexAndColor(c, color));
 }
 
+void DebugDrawUtil::DrawMeshTriangle(const Mesh* mesh, const Triangle& tri, lmColor color) {
+  LM_DRAW_TRIANGLE(
+    mesh->getVertex(tri.vIndices_[0]),
+    mesh->getVertex(tri.vIndices_[1]),
+    mesh->getVertex(tri.vIndices_[2]),
+    color);
+}
+
+template <bool PERM>
+void DebugDrawUtil::DrawFace( const Vector3& a, const Vector3& b, const Vector3& c, lmColor color /*= lmColor::WHITE*/)
+{
+  DebugDrawUtil::VectorWithColorVector& buffer = PERM ? GetDrawingPermBuffer().m_facesCol : GetDrawingBuffer().m_facesCol;
+  buffer.push_back(VertexAndColor(a, color));
+  buffer.push_back(VertexAndColor(b, color));
+  buffer.push_back(VertexAndColor(c, color));
+}
 
 template<bool PERM>
 void DebugDrawUtil::DrawCross( const Vector3& position, lmReal size, lmColor color /*= lmColor::WHITE*/ )
@@ -140,7 +131,11 @@ void DebugDrawUtil::DrawCross( const Vector3& position, lmReal size, lmColor col
 
 template<bool PERM>
 void DebugDrawUtil::DrawArrow(const Vector3& from, const Vector3& to, lmColor color /*= lmColor::WHITE*/ ) {
-  PERM ? LM_PERM_LINE(from, to, color) : LM_DRAW_LINE(from, to, color);
+  if (PERM) {
+    LM_PERM_LINE(from, to, color);
+  } else {
+    LM_DRAW_LINE(from, to, color);
+  }
 
   // Draw arrow head
   lmQuat r; r.setFromTwoVectors(Vector3::UnitZ(), (to-from).normalized());
@@ -156,7 +151,11 @@ void DebugDrawUtil::DrawArrow(const Vector3& from, const Vector3& to, lmColor co
   for (int i = 0; i < 4; i++)
   {
     Vector3 line = r * lines[i] * scale;
-    PERM ? LM_PERM_LINE(to, to+line, color) : LM_DRAW_LINE(to, to+line, color);
+    if (PERM ) {
+      LM_PERM_LINE(to, to+line, color);
+    } else {
+      LM_DRAW_LINE(to, to+line, color);
+    }
   }
 }
 

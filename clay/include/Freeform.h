@@ -31,7 +31,6 @@ using namespace ci::gl;
 using namespace ci::app;
 
 class CameraUtil;
-class DebugDrawUtil;
 
 #if LM_PRODUCTION_BUILD
 #define LM_DISABLE_THREADING_AND_ENVIRONMENT 0
@@ -206,10 +205,6 @@ private:
 
   // camera control settings
   CameraUtil::Params _camera_params;
-
-  // Debug drawing utility;
-  DebugDrawUtil* _debug_draw_util;
-
 };
 
 #endif

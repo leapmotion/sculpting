@@ -26,8 +26,6 @@ CameraUtil::CameraUtil() {
   m_referenceDistance = 0.0f;
   m_userInput.setZero();
   m_accumulatedUserInput.setZero();
-  state = STATE_INVALID;
-  m_debugDrawUtil = NULL;
   m_lastCameraUpdateTime = -1.0f;
   m_avgVertex.position.setZero();
   m_avgVertex.normal.setZero();
@@ -41,13 +39,6 @@ CameraUtil::CameraUtil() {
   m_justSculpted = false;
   m_forceVerifyPositionAfterSculpting = false;
   m_numFramesInsideManifoldMesh = 0;
-}
-
-void CameraUtil::SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance) {
-  //std::unique_lock<std::mutex> lock(transformForGraphicsMutex);
-  //GetTransformFromStandardCamera(from, to, transform);
-  //this->referenceDistance = referenceDistance;
-  state = STATE_FREEFLOATING;
 }
 
 void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
@@ -272,11 +263,9 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
           if (output.distanceSqr < closestPoint.distanceSqr) {
             closestPoint = output;
           }
-#if LM_DRAW_DEBUG_OBJECTS
-          if (m_debugDrawUtil && m_params.drawDebugLines && m_params.drawSphereQueryResults) {
-            m_debugDrawUtil->DrawTriangle(mesh, tri);
+          if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
+            LM_DRAW_MESH_TRIANGLE(mesh, tri, lmColor::WHITE);
           }
-#endif
         }
 
         // Calc point weight
@@ -319,11 +308,10 @@ void CameraUtil::GetAveragedSurfaceNormal(const Mesh* mesh, const lmSurfacePoint
         normal += vert.normal_ * weight;
         position += weight * vert;
         sumWeight += weight;
-#if LM_DRAW_DEBUG_OBJECTS
-        if (m_debugDrawUtil && m_params.drawDebugLines && m_params.drawSphereQueryResults) {
+
+        if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
           LM_DRAW_CROSS(vert, 5.0f, lmColor::WHITE);
         }
-#endif
       }
     }
     if (0.0f < sumWeight) {
@@ -618,8 +606,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   static const Mesh* prevMesh = NULL;
   if (mesh != prevMesh) {
-    // Init camera, and all
-    //EnsureReferencePointIsCloseToMesh(mesh, paramsInOut);
+    // Init Iso Camera
     ResetCamera(mesh, -(Vector3::UnitZ() + -0.3f * Vector3::UnitX() + 0.2f * Vector3::UnitY()).normalized());
     InitIsoCamera(mesh, &isoState);
     m_timeSinceCameraUpdateStarted = FLT_MAX;
@@ -643,15 +630,13 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   m_timeSinceOrbitingStarted = 0.0f;
   m_timeSinceOrbitingEnded += dt;
 
-  if (m_debugDrawUtil) {
-    if (m_params.drawDebugLines) {
-      LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitX()), lmColor::RED );
-      LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitY()), lmColor::GREEN );
-      LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitZ()), lmColor::BLUE );
-      LM_DRAW_ARROW(m_transform.translation, m_referencePoint.position, lmColor::YELLOW );
-    }
-    m_debugDrawUtil->SwitchBuffers();
+  if (m_params.drawDebugLines) {
+    LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitX()), lmColor::RED );
+    LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitY()), lmColor::GREEN );
+    LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitZ()), lmColor::BLUE );
+    LM_DRAW_ARROW(m_transform.translation, m_referencePoint.position, lmColor::YELLOW );
   }
+  DebugDrawUtil::getInstance().SwitchBuffers();
 
   lmReal dtOne = 1.0f;
   lmReal dtZero = 0.0f;
@@ -725,9 +710,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     LM_ASSERT(oldReferencePoint.normal.squaredNorm() == 0.0f || lmIsNormalized(oldReferencePoint.normal), "");
     LM_ASSERT(lmIsNormalized(oldCamera.rotation * Vector3::UnitZ()), "");
 
-    if (m_debugDrawUtil) {
-      LM_DRAW_ARROW(oldReferencePoint.position, oldReferencePoint.position + oldReferencePoint.normal * 50.0f, lmColor::RED);
-    }
+    LM_DRAW_ARROW(oldReferencePoint.position, oldReferencePoint.position + oldReferencePoint.normal * 50.0f, lmColor::RED);
 
     // backwards normal camera snapping.
     bool backSnapped = false;
@@ -1017,7 +1000,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   // Adjust translation to user input.
   if (rayHit) {
-    if (m_debugDrawUtil && m_params.drawDebugLines) {
+    if (m_params.drawDebugLines) {
       LM_DRAW_CROSS(m_referencePoint.position, 10.0f, lmColor::WHITE);
       LM_DRAW_ARROW(m_referencePoint.position, m_referencePoint.position + m_referencePoint.normal * 20.0f, lmColor::RED);
     }
@@ -1282,58 +1265,23 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
 
       if (distSqr < queryRadiusSqr)
       {
-
         distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
 
-        //lmReal distPowered = std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
-        //const lmReal weightDenominator = std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
-
         // avoid calling std::pow
-        lmReal distPowered = distSqr;//  std std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
-        lmReal weightDenominator = queryRadiusSqr;// std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
-
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
-#if 0
-        if (params.grav_n > 2.0f)
-        {
-          distPowered *= distSqr;
-          weightDenominator *= queryRadiusSqr;
-          if (params.grav_n > 4.0f)
-          {
-            distPowered *= distSqr;
-            weightDenominator *= queryRadiusSqr;
-          }
-        }
-#endif
+        const lmReal distPowered = distSqr * distSqr * distSqr;
+        const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
         weight = lmClip(weight, 0.0f, 1.0f);
-        //lmReal area = TriArea(mesh, tri);
         potential += tri.area * weight / distPowered;
 
-#if LM_DRAW_DEBUG_OBJECTS
-        if (m_debugDrawUtil && m_params.drawDebugLines && m_params.drawSphereQueryResults) {
-          m_debugDrawUtil->DrawTriangle(mesh, tri);
+        if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
+          LM_DRAW_MESH_TRIANGLE(mesh, tri, lmColor::WHITE);
         }
-#endif
-
-        //count[1]++;
       }
-      //else
-      //{
-      //  count[0]++;
-      //}
     }
-    //std::cout << "triangles detailDist / octTreeQueryt: " << count[1] << " / " << count[0]+count[1] << std::endl;
 
   } else {
-    //lmReal minw = 1000000000.0f;
-    //lmReal maxw = -1000000000.0f;
-    //lmReal mind = 1000000000.0f;
-    //lmReal maxd = -1000000000.0f;
 
     std::vector<int> selectedVertices;
     mesh->getVerticesFromTriangles(m_queryTriangles, selectedVertices);
@@ -1345,44 +1293,24 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
       const Vertex& vert = vertices[selectedVertices[vi]];
 
       lmReal distSqr = (position-vert).squaredNorm();
-      //static const lmReal K = 0.0001f;
+
       distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
 
       if (distSqr < queryRadiusSqr)
       {
-
-        //static const lmReal N = 6.0f;
-        //lmReal distPowered = std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
-        //const lmReal weightDenominator = std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
-
-        lmReal distPowered = distSqr;// std::pow(distSqr, (lmReal)params.grav_n/2.0f); // slow?
-        lmReal weightDenominator = queryRadiusSqr;//std::pow((lmReal)queryRadius, (lmReal)params.grav_n);
-
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
-        distPowered *= distSqr;
-        weightDenominator *= queryRadiusSqr;
+        const lmReal distPowered = distSqr * distSqr * distSqr;
+        const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
-        //minw = std::min(minw, weight);
-        //maxw = std::max(maxw, weight);
-        //lmReal dist = std::sqrt(distSqr);
-        //mind = std::min(mind, dist);
-        //maxd = std::max(maxd, dist);
         weight = lmClip(weight, 0.0f, 1.0f);
 
         potential += weight / distPowered;
-        //potential += 1.0 / distPowered;
 
-#if LM_DRAW_DEBUG_OBJECTS
         if (m_params.drawSphereQueryResults) {
           LM_DRAW_CROSS(vert, 3.0f, lmColor::WHITE);
         }
-#endif
       }
     }
-    //std::cout << "weight min/max: " << minw << " / " << maxw << std::endl;
-    //std::cout << "dist min/max/queryr: " << mind << " / " << maxd << " / " << queryRadius << std::endl;
   }
 
   return potential;
@@ -1436,11 +1364,10 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
         //lmReal area = TriArea(mesh, tri);
         potentials[0] += tri.area * weight / distPowered;
 
-#if LM_DRAW_DEBUG_OBJECTS
-        if (m_debugDrawUtil && m_params.drawDebugLines && m_params.drawSphereQueryResults) {
-          m_debugDrawUtil->DrawTriangle(mesh, tri);
+        if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
+          LM_DRAW_MESH_TRIANGLE(mesh, tri, lmColor::WHITE);
         }
-#endif
+
         for (int i = 1; i < 4; i++) {
           lmReal distSqr =  (positions[i]-output.position).squaredNorm();
           distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
@@ -1491,11 +1418,10 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
 
         potentials[0] += weight / distPowered;
 
-#if LM_DRAW_DEBUG_OBJECTS
         if (m_params.drawSphereQueryResults) {
           LM_DRAW_CROSS(vert, 3.0f, lmColor::WHITE);
         }
-#endif
+
         for(int i = 1; i < 4; i++) {
           lmReal distSqr = (positions[i]-vert).squaredNorm();
           distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
