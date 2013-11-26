@@ -590,7 +590,6 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
   if (m_params.queryTriangles) {
     const TriangleVector& triangles = mesh->getTriangles();
 
-
     for (unsigned ti = 0; ti < m_queryTriangles.size(); ti+= striding)
     {
       const Triangle& tri = triangles[m_queryTriangles[ti]];
@@ -603,14 +602,14 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
 
       if (distSqr < queryRadiusSqr)
       {
-        distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
+        distSqr += m_params.grav_k*m_params.grav_k;
 
         // avoid calling std::pow
         const lmReal distPowered = distSqr * distSqr * distSqr;
         const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
-        weight = lmClip(weight, 0.0f, 1.0f);
+        weight = std::max(0.0f, weight);
         potential += tri.area * weight / distPowered;
 
         if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
@@ -632,7 +631,7 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
 
       lmReal distSqr = (position-vert).squaredNorm();
 
-      distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
+      distSqr += m_params.grav_k*m_params.grav_k;
 
       if (distSqr < queryRadiusSqr)
       {
@@ -640,7 +639,7 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
         const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
-        weight = lmClip(weight, 0.0f, 1.0f);
+        weight = std::max(0.0f, weight);
 
         potential += weight / distPowered;
 
@@ -682,14 +681,14 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
 
       if (distSqr < queryRadiusSqr)
       {
-        distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
+        distSqr += m_params.grav_k*m_params.grav_k;
 
         // avoid calling std::pow
         const lmReal distPowered = distSqr * distSqr * distSqr;
         const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
-        weight = lmClip(weight, 0.0f, 1.0f);
+        weight = std::max(0.0f, weight);
         potentials[0] += tri.area * weight / distPowered;
 
         if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
@@ -698,14 +697,14 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
 
         for (int i = 1; i < 4; i++) {
           lmReal distSqr =  (positions[i]-output.position).squaredNorm();
-          distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
+          distSqr += m_params.grav_k*m_params.grav_k;
 
           // avoid calling std::pow
           const lmReal distPowered = distSqr * distSqr * distSqr;
           const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
           lmReal weight = 1.0f - (distPowered / weightDenominator);
-          weight = lmClip(weight, 0.0f, 1.0f);
+          weight = std::max(0.0f, weight);
           potentials[i] += tri.area * weight / distPowered;
         }
       }
@@ -722,7 +721,7 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
       const Vertex& vert = vertices[selectedVertices[vi]];
 
       lmReal distSqr = (positions[0]-vert).squaredNorm();
-      distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
+      distSqr += m_params.grav_k*m_params.grav_k;
 
       if (distSqr < queryRadiusSqr)
       {
@@ -730,7 +729,7 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
         const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
-        weight = lmClip(weight, 0.0f, 1.0f);
+        weight = std::max(0.0f, weight);
         potentials[0] += weight / distPowered;
 
         if (m_params.drawSphereQueryResults) {
@@ -739,13 +738,13 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
 
         for(int i = 1; i < 4; i++) {
           lmReal distSqr = (positions[i]-vert).squaredNorm();
-          distSqr = lmClip(distSqr, m_params.grav_k*m_params.grav_k, 1000000.0f*1000000.0f);
+          distSqr += m_params.grav_k*m_params.grav_k;
 
           const lmReal distPowered = distSqr * distSqr * distSqr;
           const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
           lmReal weight = 1.0f - (distPowered / weightDenominator);
-          weight = lmClip(weight, 0.0f, 1.0f);
+          weight = std::max(0.0f, weight);
           potentials[i] += weight / distPowered;
         }
       }
