@@ -270,15 +270,6 @@ public:
   // Accumulates data for later processing in UpdateCamera.
   void RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov);
 
-#if 0
-  // Records user Leap's pinching drag events.
-  // 
-  // Accumulates data for later processing in UpdateCamera.
-  // 
-  // todo: record velocity, for inertial movement too?
-  void RecordUserInput(const Vector3& deltaPosition, bool controlOn);
-#endif
-
   // Update camera position.
   void UpdateCamera(Mesh* mesh, Params* paramsInOut);
 
@@ -307,9 +298,6 @@ private:
 
   // Compute camera transform from standard camera vectors: from, to, & assumed up along y-axis.
   static void GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut);
-
-  // todo: Move to an utility.
-  void CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std::vector<lmRayCastOutput>* results);
 
   // Gets closest point to the refernce point, given that:
   // the triangle containing the cloest point has at least one of it's veritces withing the radius' distance from the reference point.
@@ -386,7 +374,7 @@ public:
   // External debug draw util.
   DebugDrawUtil* m_debugDrawUtil;
 
-  // Time of last camera udpate
+  // Time of last camera update
   lmReal m_lastCameraUpdateTime;
 
   lmReal m_timeSinceOrbitingStarted;

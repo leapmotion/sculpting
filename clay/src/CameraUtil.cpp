@@ -118,74 +118,6 @@ void CameraUtil::GetTransformFromStandardCamera(const Vector3& from, const Vecto
   tOut.rotation = (q1 * q2).normalized();
 }
 
-void CameraUtil::CastRays(const Mesh* mesh, const std::vector<lmRay>& rays, std::vector<lmRayCastOutput>* results) {
-  for (size_t ri = 0; ri < rays.size(); ri++) {
-    const lmRay& ray = rays[ri];
-    m_queryTriangles.clear();
-    mesh->getOctree()->intersectRay(ray.start, ray.GetDirection(), m_queryTriangles);
-
-    int numAabbSuccess = 0;
-    int numTriSuccess = 0;
-
-    std::vector<int> tris2; 
-    lmReal minDist = FLT_MAX;
-    int minDistIdx = -1;
-    lmRayCastOutput rayCastOutput;
-    // 0. cast ray for each triangle's aabb
-    for (size_t ti = 0; ti < m_queryTriangles.size(); ti++) {
-      const Triangle& tri = mesh->getTriangle(m_queryTriangles[ti]);
-      Vector3 rayOnPlane;
-      bool result = tri.aabb_.intersectRay(ray.start, ray.GetDirection());
-      if (result) {
-        numAabbSuccess++;
-        result = Geometry::intersectionRayTriangle(
-          ray.start, ray.end, 
-          mesh->getVertex(tri.vIndices_[0]),
-          mesh->getVertex(tri.vIndices_[1]),
-          mesh->getVertex(tri.vIndices_[2]),
-          tri.normal_, rayOnPlane);
-      }
-      if (result) {
-        numTriSuccess++;
-        //if (tri.aabb_.intersectRay(f, dir)) {
-        tris2.push_back(m_queryTriangles[ti]);
-        lmReal dist = (rayOnPlane-ray.start).dot(ray.GetDirection());
-        if (dist < minDist) {
-          minDistIdx = m_queryTriangles[ti];
-          minDist = dist;
-
-          rayCastOutput.triangleIdx = minDistIdx;
-          rayCastOutput.position = rayOnPlane;
-          rayCastOutput.normal = tri.normal_;
-          rayCastOutput.dist = minDist;
-          rayCastOutput.fraction = minDist / ray.GetLength();
-        }
-      }
-    }
-
-    const bool drawClosestOnly = true;
-    if (drawClosestOnly) {
-      m_queryTriangles.clear();
-      results->push_back(rayCastOutput);
-      if (minDistIdx != -1) {
-        // for debug display only
-        m_queryTriangles.push_back(minDistIdx);
-      }
-    } else {
-      m_queryTriangles = tris2; // fix: append
-    }
-
-    //// Display debug triangles
-    //if (debugDrawUtil) {
-    //  std::unique_lock<std::mutex> lock(debugDrawUtil->m_mutex);
-    //  for (size_t ti = 0; ti < triangles.size(); ti++) {
-    //    const Triangle& tri = mesh->getTriangle(triangles[ti]);
-    //    debugDrawUtil->DrawTriangle(mesh, tri);
-    //  }
-    //}
-  }
-}
-
 //inline static lmReal TriArea(const Mesh* mesh, const Triangle& tri) {
 //  const Vertex& v0 = mesh->getVertex(tri.vIndices_[0]);
 //  const Vertex& v1 = mesh->getVertex(tri.vIndices_[1]);
@@ -415,42 +347,6 @@ void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const flo
   m_userInput += (m_params.invertCameraInput?-1.0f:1.0f) * m_params.inputMultiplier * movement;
 }
 
-#if 0
-void CameraUtil::RecordUserInput(const Vector3& deltaPosition, bool controlOn) {
-  std::unique_lock<std::mutex> lock(mutex);
-  lmReal prevTime = lastUserInputFromVectorTime;
-  lmReal time = lmReal(ci::app::getElapsedSeconds());
-  lastUserInputFromVectorTime = time;
-  if (prevTime < 0.0001f) { prevTime = time; }
-  lmReal deltaTime = time-prevTime;
-
-  userInput += deltaPosition;
-
-  if (!controlOn) {
-    // fade of velocity
-    userInputVelocity = userInputVelocity * 0.9f; // plus constant subtract fro quick 
-    LM_LOG << "User input velocity [" << userInputVelocity.x() << ", " << userInputVelocity.y() << ", " << userInputVelocity.z() << "]" << std::endl;
-
-    // fading should be actually along the squared curve
-    lmReal newSpeed = std::sqrt(std::max(0.0f, userInputVelocity.squaredNorm() - 1.0f));
-    userInputVelocity *= (newSpeed / (userInputVelocity.squaredNorm() + 0.00001f));
-
-    userInput.setZero();
-    accumulatedUserInput.setZero();
-
-    userInput = userInputVelocity * deltaTime;
-  }
-
-  if (controlOn) {
-    if (prevTime < 0.0001f) {
-      userInputVelocity.setZero();
-    } else {
-      userInputVelocity = deltaPosition / deltaTime;
-    }
-  }
-}
-#endif
-
 void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut) {
   const Triangle& tri = mesh->getTriangle(triIdx);
   Vector3 pointToVertex[3];
@@ -625,37 +521,6 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
   lmSurfacePoint referencePointNew = m_referencePoint;
   referencePointNew.mul(q);
 
-#if 0
-  {
-    // Vertical correction & oscillation
-    static lmReal phase = 0.0f;
-    static lmReal oscillationRate = 1.0f / 20.0f;
-    phase += LM_2PI * oscillationRate * deltaTime;
-    lmReal angleFromYPlane = std::cos(phase);
-
-    {
-      Vector3 refPtDir = referencePointNew.position.normalized(); refPtDir.y() = 0.0f;
-      if (lmIsZero(refPtDir)) { refPtDir = Vector3::UnitX(); }
-      refPtDir.normalize();
-      Vector3 newRefPtDir = std::cos(angleFromYPlane) * refPtDir + std::sin(angleFromYPlane) * Vector3::UnitY();
-      newRefPtDir.normalize();
-      newRefPtDir *= referencePointNew.position.norm();
-      referencePointNew.position = newRefPtDir;
-    }
-
-    Vector3 camDir = GetCameraDirection(); camDir.y() = 0.0f;
-    if (lmIsZero(camDir)) { camDir = Vector3::UnitX(); }
-    camDir.normalize();
-    Vector3 newCamDir = std::cos(angleFromYPlane) * camDir - std::sin(angleFromYPlane) * Vector3::UnitY();
-    newCamDir.normalize();
-
-    lmQuat correction; correction.setFromTwoVectors(GetCameraDirection(), newCamDir);
-    transform.rotation = correction * transform.rotation;
-    transform.translation = referencePointNew.position - GetCameraDirection() * referenceDistance;
-    referencePointNew.normal = correction * referencePointNew.normal;
-  }
-#endif
-
   // Orbit camera with raycast
   if (1) {
     // Camera position in horizontal plane
@@ -666,19 +531,11 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
       q0.setFromTwoVectors(Vector3::UnitZ(), camXZ.normalized()); q0.normalize();
     }
 
-    // Rotation around X
-    Vector3 camInYZ = q0.inverse() * m_transform.translation; camInYZ.normalize();
-    lmQuat q1Ref; q1Ref.setFromTwoVectors(Vector3::UnitZ(), camInYZ);
-
     // Oscillating vertical rotation
     static lmReal phase = 0.0f;
     const static lmReal OSCILLATION_RATE = 1.0f / 20.0f;
     phase += LM_2PI * OSCILLATION_RATE * deltaTime;
-    //lmReal angleFromYPlane = std::cos(phase);
     lmQuat q1(AngleAxis(std::cos(phase) * 30.0f * LM_DEG, Vector3::UnitX()));
-
-    //// Blend vertical camera movemnt
-    //q1.slerp(1.0f - (0.1f * deltaTime), q1Ref);q1.normalize();
 
     // Desired camera direction
     lmQuat q = q0 * q1; q.normalize();
@@ -686,19 +543,16 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
     lmReal refPtDistFromOrigin = referencePointNew.position.norm();
     // Do raycast
     if (mesh) {
-      Vector3 rayStart = (q * Vector3::UnitZ()) * m_params.maxDist;
-      std::vector<lmRay> rays; rays.push_back(lmRay(rayStart, Vector3::Zero()));
-      std::vector<lmRayCastOutput> hits;
-      CastRays(mesh, rays, &hits);
+      Vector3 rayStart = (q * Vector3::UnitZ()) * m_params.maxDist; // + max aabb
+      lmRayCastOutput raycastHit;
+      CastOneRay(mesh, lmRay(rayStart, Vector3::Zero()), &raycastHit);
+
       // if raycast hit (move last reference point, remember last point)
-      if (hits[0].isSuccess()) {
-        lmReal distFromOrigin = hits[0].position.norm();
+      if (raycastHit.isSuccess()) {
+        lmReal distFromOrigin = raycastHit.position.norm();
         if (distFromOrigin + m_params.minDist > refPtDistFromOrigin + m_referenceDistance ) {
           m_referenceDistance = distFromOrigin + m_params.minDist - refPtDistFromOrigin;
         }
-
-        //// Update reference point.
-        //refPtDistFromOrigin = hits[0].position.norm();
       }
     }
 
@@ -708,7 +562,7 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
       m_referencePoint.position = (q * Vector3::UnitZ()) * refPtDistFromOrigin;
       m_referencePoint.normal = q * Vector3::UnitZ();
     }
-    // Fix cameara direction & position
+    // Fix camera direction & position
     static const lmReal ORBITING_BLEND_IN_TIME = 5.0f;
     const lmReal blendingFactor = lmClip(m_timeSinceOrbitingStarted / ORBITING_BLEND_IN_TIME, 0.0f, 1.0f);
 
@@ -717,7 +571,6 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
     Vector3 targetTranslation = (m_transform.rotation * Vector3::UnitZ()) * (refPtDistFromOrigin + m_referenceDistance);
     m_transform.translation = lmInterpolate(blendingFactor*deltaTime, m_transform.translation, targetTranslation);
   }
-
 }
 
 void CameraUtil::UpdateParamsToWalkSmoothedNormals(Params* paramsInOut) {
