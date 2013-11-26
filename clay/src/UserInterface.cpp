@@ -240,7 +240,7 @@ void Menu::draw() const {
   gl::translate(textPos);
   gl::scale(textScale, textScale);
   const ci::Vec2f nameSize = g_boldTextureFont->measureString(m_name);
-  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f, 100.0f);
+  const ci::Rectf nameRect(-nameSize.x/2.0f, -offset.y, nameSize.x/2.0f + g_shadowOffset.x, 100.0f);
   gl::color(shadowColor);
   g_boldTextureFont->drawString(m_name, nameRect, g_shadowOffset);
   gl::color(titleColor);
@@ -253,7 +253,7 @@ void Menu::draw() const {
       gl::drawSolidCircle(3.0f*offset, relativeToAbsolute(0.02f), 40);
     } else {
       const ci::Vec2f size = g_textureFont->measureString(m_activeName);
-      const ci::Rectf rect(-size.x/2.0f, 2.0f*offset.y, size.x/2.0f, 100.0f);
+      const ci::Rectf rect(-size.x/2.0f, 2.0f*offset.y, size.x/2.0f + g_shadowOffset.x, 100.0f);
       gl::color(shadowColor);
       glPushMatrix();
       glScalef(0.75f, 0.75f, 0.75f);

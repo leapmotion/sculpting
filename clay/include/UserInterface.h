@@ -143,7 +143,7 @@ public:
         glScalef(scale, scale, scale);
         const std::string str = toString();
         const ci::Vec2f stringSize = g_textureFont->measureString(str);
-        const ci::Rectf stringRect(-stringSize.x/2.0f, -Menu::FONT_SIZE/2.0f, stringSize.x/2.0f, 100.0f);
+        const ci::Rectf stringRect(-stringSize.x/2.0f, -Menu::FONT_SIZE/2.0f, stringSize.x/2.0f + g_shadowOffset.x, 100.0f);
         gl::color(shadowColor);
         g_textureFont->drawString(str, stringRect, g_shadowOffset);
         gl::color(color);
