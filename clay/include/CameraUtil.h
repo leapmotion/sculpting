@@ -236,12 +236,6 @@ private:
   // unused
   static void GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut);
 
-  // Gets closest point to the refernce point, given that:
-  // the triangle containing the cloest point has at least one of it's veritces withing the radius' distance from the reference point.
-  //
-  // Unused
-  void GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, Geometry::GetClosestPointOutput* closestPointOut);
-
   lmSurfacePoint GetClosestSurfacePoint(Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
   // Helper functions.
@@ -250,12 +244,6 @@ private:
   static void GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut);
 
   static void GetNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* normalOut);
-
-  // Correct orientation.
-  void CorrectCameraOrientation(lmReal dt, const Vector3& newNormal);
-
-  // Correct distance from the mesh.
-  void CorrectCameraDistance(lmReal dt);
 
   // Correct up vector
   void CorrectCameraUpVector(lmReal dt, const Vector3& up);
@@ -283,12 +271,7 @@ public:
   // Most recent reference point on the model (used to compute camera's movement).
   lmSurfacePoint m_referencePoint;
 
-  lmSurfacePoint m_avgVertex;
-
   int m_framesFromLastCollisions;
-
-  // Point on the mesh closest to the reference point.
-  Geometry::GetClosestPointOutput m_closestPoint;
 
   // Distance from the surface of the model.
   lmReal m_referenceDistance;

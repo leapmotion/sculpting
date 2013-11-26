@@ -27,8 +27,6 @@ CameraUtil::CameraUtil() {
   m_userInput.setZero();
   m_accumulatedUserInput.setZero();
   m_lastCameraUpdateTime = -1.0f;
-  m_avgVertex.position.setZero();
-  m_avgVertex.normal.setZero();
   m_framesFromLastCollisions = 1000;
   m_timeSinceOrbitingStarted = FLT_MAX;
   m_timeSinceOrbitingEnded = FLT_MAX;
@@ -126,46 +124,6 @@ inline static Vector3 TriCenter(const Mesh* mesh, const Triangle& tri) {
 
   Vector3 center = (v0 + v1 + v2) / 3.0f;
   return center;
-}
-
-void CameraUtil::GetClosestPoint(const Mesh* mesh, const lmSurfacePoint& referencePoint, lmReal radius, const Vector3& cameraDirection, Geometry::GetClosestPointOutput* closestPointOut) {
-  std::vector<int> verts;
-  std::vector<int> tris;
-  const_cast<Mesh*>(mesh)->getVerticesInsideSphere(referencePoint.position, radius*radius, *&verts);
-  const_cast<Mesh*>(mesh)->getTrianglesFromVertices(verts, tris);
-
-  Geometry::GetClosestPointOutput closestPoint;
-  closestPoint.distanceSqr = FLT_MAX;
-  int closestTriangleIdx = -1;;
-
-  for (size_t ti = 0; ti < tris.size(); ti++) {
-    const Triangle& tri = mesh->getTriangle(tris[ti]);
-
-    // Discard rear-facing triangles
-    lmReal camDotTNormal = cameraDirection.dot(tri.normal_);
-    if (camDotTNormal < 0.0f) {
-      Geometry::GetClosestPointOutput output;
-      {
-        Geometry::GetClosestPointInput input;
-        input.mesh = mesh;
-        input.tri = &tri;
-        input.point = referencePoint.position;
-        Geometry::getClosestPoint(input, &output);
-        output.triIdx = tris[ti];
-        if (output.distanceSqr < closestPoint.distanceSqr) {
-          closestPoint = output;
-          closestPoint.normal = tri.normal_;
-          closestTriangleIdx = tris[ti];
-        }
-      }
-    }
-  }
-
-  if (closestPoint.distanceSqr < FLT_MAX) {
-    GetNormalAtPoint(mesh, closestTriangleIdx, closestPoint.position, &closestPoint.normal);
-  }
-
-  *closestPointOut = closestPoint;
 }
 
 lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& position, lmReal queryRadius) {
@@ -291,8 +249,6 @@ Vector3 CameraUtil::ToWorldSpace(const Vector3& v) { return m_meshTransform.rota
 Vector3 CameraUtil::GetCameraDirection() const { return -1.0f * (m_transform.rotation * Vector3::UnitZ()); };
 
 void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
-  //std::unique_lock<std::mutex> lock(mutex);
-
   m_transform.rotation = m_meshTransform.rotation * m_transform.rotation;
   m_transform.translation = ToWorldSpace(m_transform.translation);
   m_referencePoint.position = ToWorldSpace(m_referencePoint.position);
@@ -437,7 +393,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   DebugDrawUtil::getInstance().SwitchBuffers();
 
   lmReal dtOne = 1.0f;
-  lmReal dtZero = 0.0f;
 
   Vector3 usedUserInput = m_userInput;
   // Multiply motion by distance:
@@ -481,39 +436,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   }
 
   UpdateCameraInWorldSpace();
-}
-
-
-void CameraUtil::CorrectCameraOrientation(lmReal dt, const Vector3& newNormal) {
-  LM_ASSERT(lmIsNormalized(newNormal), "");
-
-  lmReal adjustOrientationRate = 0.0f;
-  if (m_params.enableSmoothing && 0.0f < dt) {
-    adjustOrientationRate = std::pow(m_params.smoothingFactor, dt);
-  }
-
-  // Roation quaternion.
-  Vector3 oldZ = m_transform.rotation * Vector3::UnitZ();
-  Vector3 newZ = newNormal;
-
-  // Target orientation
-  lmQuat dQ; dQ.setFromTwoVectors(oldZ, newZ);
-
-  // Modify camera transform
-  dQ = dQ.slerp(adjustOrientationRate, lmQuat::Identity());
-  m_transform.rotation = dQ * m_transform.rotation;
-
-  Vector3 cameraFromRefPoint = m_transform.translation - m_referencePoint.position;
-  m_transform.translation = m_referencePoint.position + dQ * cameraFromRefPoint;
-}
-
-void CameraUtil::CorrectCameraDistance( lmReal dt )
-{
-  lmReal currentDist = (m_referencePoint.position - m_transform.translation).norm();
-  lmReal smoothingValue = std::pow(0.8f, dt);
-  lmReal deltaDist = m_referenceDistance - currentDist;
-  Vector3 deltaTranslation = (1.0f-smoothingValue) * deltaDist * (m_transform.rotation * Vector3::UnitZ());
-  m_transform.translation += deltaTranslation;
 }
 
 void CameraUtil::CorrectCameraUpVector(lmReal dt, const Vector3& up) {
@@ -661,13 +583,9 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
 
   //lmReal radius = Get
   lmReal potential = 0.0;
-
   // process every n-th point
   const int striding = 1;
-
   const lmReal queryRadiusSqr = queryRadius*queryRadius;
-
-  //int count[2] = {0,0};
 
   if (m_params.queryTriangles) {
     const TriangleVector& triangles = mesh->getTriangles();
