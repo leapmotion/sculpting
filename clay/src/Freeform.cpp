@@ -50,7 +50,9 @@ void FreeformApp::prepareSettings( Settings *settings )
   ci::app::Window::Format fmt;
   fmt.setTitle("Freeform");
   fmt.setSize(1024, 768);
+#if LM_PRODUCTION_BUILD
   fmt.setFullScreen(true);
+#endif
   settings->prepareWindow(fmt);
 
   enableVerticalSync(true);
@@ -430,6 +432,7 @@ void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float
 
 void FreeformApp::update()
 {
+  this->getRenderer()->copyWindowSurface(getWindowBounds());
   static int updateCount = 0;
   LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
   LM_ASSERT_IDENTICAL(updateCount++);
@@ -939,7 +942,7 @@ void FreeformApp::draw() {
     setMatricesWindow( size );
     setViewport( viewport );
 
-    if (_draw_ui) {
+    if (_screenshot_path.empty() && _draw_ui) {
       _ui->draw(exposureMult);
     }
 
@@ -1015,6 +1018,13 @@ void FreeformApp::draw() {
 #endif
 
   glFlush();
+
+  if (!_screenshot_path.empty()) {
+    try {
+      writeImage(_screenshot_path, copyWindowSurface());
+      _screenshot_path = "";
+    } catch (...) { }
+  }
 }
 
 void FreeformApp::loadIcons() {
@@ -1383,6 +1393,28 @@ int FreeformApp::saveFile()
     err = 1;
   }
   return err; // error
+}
+
+int FreeformApp::saveScreenshot() {
+  std::vector<std::string> file_extensions;
+  file_extensions.push_back("png");
+  file_extensions.push_back("jpg");
+
+  bool toggleFull = isFullScreen();
+  if (toggleFull) {
+    setFullScreen(false);
+  }
+#if _WIN32
+  fs::path path = getSaveFilePathCustom("", file_extensions);
+#else
+  fs::path path = getSaveFilePath("", file_extensions);
+#endif
+  if (toggleFull) {
+    setFullScreen(true);
+  }
+
+  _screenshot_path = path.string();
+  return 1;
 }
 
 #if !LM_PRODUCTION_BUILD

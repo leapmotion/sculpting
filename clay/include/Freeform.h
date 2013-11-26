@@ -74,6 +74,7 @@ public:
   void toggleSound();
   int loadFile();
   int saveFile();
+  int saveScreenshot();
   int loadShape(Shape shape);
 
   void doQuit();
@@ -159,6 +160,7 @@ private:
   bool _have_shaders;
   bool _have_entered_immersive;
   double _immersive_entered_time;
+  std::string _screenshot_path;
 
   // *** Leap stuff ***
   LeapListener _listener;

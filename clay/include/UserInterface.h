@@ -69,6 +69,7 @@ public:
     GENERAL_TUTORIAL,
     GENERAL_ABOUT,
     GENERAL_EXIT,
+    GENERAL_SCREENSHOT,
     GENERAL_TOGGLE_SOUND,
 
     // object
@@ -187,6 +188,7 @@ public:
         case Menu::GENERAL_ABOUT: return "About"; break;
         case Menu::GENERAL_TUTORIAL: return "Tutorial"; break;
         case Menu::GENERAL_TOGGLE_SOUND: return "Toggle Sound"; break;
+        case Menu::GENERAL_SCREENSHOT: return "Screenshot"; break;
         case Menu::GENERAL_EXIT: return "Exit"; break;
         case Menu::OBJECT_LOAD: return "Load"; break;
         case Menu::OBJECT_EXPORT: return "Save"; break;

@@ -414,7 +414,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const int NUM_GENERAL_ENTRIES = 3;
+  const int NUM_GENERAL_ENTRIES = 4;
   _general_menu.setName("General");
   _general_menu.setPosition(Vector2(0.075f, 0.3f));
   _general_menu.setNumEntries(NUM_GENERAL_ENTRIES);
@@ -853,6 +853,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
       case Menu::GENERAL_ABOUT: _draw_about_menu = !_draw_about_menu; _last_switch_time = curTime; break;
       case Menu::GENERAL_TUTORIAL: _draw_tutorial_menu = true; _last_switch_time = curTime; break;
       case Menu::GENERAL_TOGGLE_SOUND: app->toggleSound(); break;
+      case Menu::GENERAL_SCREENSHOT: app->saveScreenshot(); break;
       case Menu::GENERAL_EXIT: showConfirm(Menu::GENERAL_EXIT); break;
       default: break;
     }
