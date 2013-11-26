@@ -45,7 +45,6 @@ public:
     float _bloom_strength;
     float _bloom_threshold;
     float _exposure;
-    float _contrast;
   };
 
   Environment();
@@ -91,7 +90,7 @@ private:
   void saveImagesToCubemap(GLuint cubemap, GLint internal_format, int miplevel, unsigned int width, unsigned int height, GLenum format, float** images);
   
   static void preparePaths(const std::string& path, std::string* filenames);
-  static EnvironmentInfo prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure, float contrast);
+  static EnvironmentInfo prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure);
   static void createEnvironmentInfos();
   static void createWorkingDirectory();
 

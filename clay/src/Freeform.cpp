@@ -21,7 +21,7 @@ const float MAX_FOV = 90.0f;
 
 //*********************************************************
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
-  _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), _contrast(1.2f), mesh_(0), symmetry_(false), _last_update_time(0.0),
+  _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), symmetry_(false), _last_update_time(0.0),
   drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
   _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
   _immersive_entered_time(0.0)
@@ -142,7 +142,6 @@ void FreeformApp::setup()
   _params->addSeparator();
   _params->addText( "text", "label=`HDR parameters:`" );
   _params->addParam( "Exposure", &_exposure, "min=0.05 max=8.0 step=0.01" );
-  _params->addParam( "Contrast", &_contrast, "min=0.33, max=3.0, step=0.01" );
   _params->addParam( "Show bloom", &_bloom_visible, "" );
   _params->addParam( "Bloom size", &_bloom_size, "min=0.0 max=4.0 step=0.01" );
   _params->addParam( "Bloom strength", &_bloom_strength, "min=0.0 max=1.0 step=0.01" );
@@ -840,7 +839,6 @@ float FreeformApp::checkEnvironmentLoading() {
       _bloom_strength = info->_bloom_strength;
       _bloom_light_threshold = info->_bloom_threshold;
       _exposure = info->_exposure;
-      _contrast = info->_contrast;
     }
     _first_environment_load = false;
   } else if (loadingState == Environment::LOADING_STATE_PROCESSING) {
@@ -909,7 +907,6 @@ void FreeformApp::draw() {
     _screen_shader.uniform( "width", width );
     _screen_shader.uniform( "height", height );
     _screen_shader.uniform( "exposure", _exposure * exposureMult * overlayMult);
-    _screen_shader.uniform( "contrast", _contrast );
     _screen_shader.uniform( "bloom_strength", _bloom_strength * static_cast<float>(_bloom_visible) );
     _screen_shader.uniform( "vignette_radius", static_cast<float>(0.9f * sqrt((width/2)*(width/2) + (height/2)*(height/2))) );
     _screen_shader.uniform( "vignette_strength", 0.75f );
@@ -1028,8 +1025,8 @@ void FreeformApp::draw() {
   if (!_screenshot_path.empty()) {
     try {
       writeImage(_screenshot_path, copyWindowSurface());
-      _screenshot_path = "";
     } catch (...) { }
+    _screenshot_path = "";
   }
 }
 

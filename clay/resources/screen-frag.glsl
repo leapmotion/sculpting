@@ -3,7 +3,6 @@ uniform sampler2D bloom_texture;
 uniform sampler2D depth_texture;
 uniform float exposure;
 uniform float bloom_strength;
-uniform float contrast;
 uniform float width;
 uniform float height;
 uniform float vignette_radius;
@@ -19,8 +18,6 @@ void main(void)
   color *= (1.0 - (vignette_strength * vignette));
 
   color = 1.0 - exp2(-color * exposure);
-  color = contrast*(color - vec3(0.5)) + vec3(0.5);
-  vec3 final = color;
 
-  gl_FragColor = vec4(final, 1.0); 
+  gl_FragColor = vec4(color, 1.0);
 }

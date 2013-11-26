@@ -368,7 +368,7 @@ void Environment::saveImagesToCubemap(GLuint cubemap, GLint internal_format, int
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 }
 
-Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure, float contrast) {
+Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure) {
 #if _WIN32  
 
 #if LM_PRODUCTION_BUILD
@@ -388,7 +388,6 @@ Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::stri
   info._bloom_strength = strength;
   info._bloom_threshold = thresh;
   info._exposure = exposure;
-  info._contrast = contrast;
   return info;
 }
 
@@ -405,13 +404,13 @@ void Environment::createEnvironmentInfos() {
   static bool created = false;
   if (!created) {
     // set up filenames for the different supported environments
-    _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.5f, 1.0f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Arctic", 0.2f, 2.5f, 2.25f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.5f, 0.75f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.5f, 0.75f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.5f, 0.75f, 4.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("Desert", 0.5f, 1.5f, 3.5f, 1.01f));
-    _environment_infos.push_back(prepareEnvironmentInfo("River", 0.5f, 0.75f, 3.5f, 1.01f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Islands", 0.5f, 1.0f, 4.5f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Arctic", 0.2f, 2.5f, 2.25f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Jungle", 0.5f, 0.75f, 4.5f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Jungle-Cliff", 0.5f, 0.75f, 4.5f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Redwood", 0.5f, 0.75f, 4.5f));
+    _environment_infos.push_back(prepareEnvironmentInfo("Desert", 0.5f, 1.5f, 3.5f));
+    _environment_infos.push_back(prepareEnvironmentInfo("River", 0.5f, 0.75f, 3.5f));
     created = true;
   }
 }

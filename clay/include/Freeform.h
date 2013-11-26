@@ -190,7 +190,6 @@ private:
   GlslProg _screen_shader;
   GlslProg _bloom_shader;
   float _exposure; // hdr exposure
-  float _contrast;
   bool _bloom_visible;
   float _bloom_size;
   float _bloom_strength;

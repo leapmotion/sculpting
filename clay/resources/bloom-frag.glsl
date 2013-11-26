@@ -16,7 +16,7 @@ float weights[11] = float[](0.0181588,
                             0.0408404,
                             0.0181588);
 
-const float BLOOM_MULT = 1.1;
+const float BLOOM_MULT = 1.08;
 
 void main() {
   vec3 sum = vec3(0.0, 0.0, 0.0);
