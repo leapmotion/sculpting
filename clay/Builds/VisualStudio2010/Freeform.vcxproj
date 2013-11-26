@@ -65,14 +65,14 @@
       <AdditionalIncludeDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;..\..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder_d.lib;Leapd.lib;glu32.lib;FreeImaged.lib;common.lib;exception_handler.lib;crash_generation_client.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\lib;$(LIBRARIES_PATH)\glew-1.9.0-mt\lib;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder_d.lib;Leapd.lib;glu32.lib;FreeImaged.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Debug;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
-      <IgnoreSpecificDefaultLibraries>VCOMPD.lib;LIBCMT;msvcprt;</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>VCOMPD.lib;LIBCMT;</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "$(LIBRARIES_PATH)\LeapSDK\lib\x86\Leapd.dll" "$(OutDir)\"</Command>
@@ -101,7 +101,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>cinder.lib;Leap.lib;FreeImage.lib;glu32.lib;common.lib;exception_handler.lib;crash_generation_client.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Release;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>

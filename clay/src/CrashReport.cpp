@@ -34,6 +34,14 @@
 #include <string>
 #include <sstream>
 
+
+#if USE_CRASH_REPORTING && _WIN32
+#pragma comment (lib,"common.lib")
+#pragma comment (lib,"exception_handler.lib")
+#pragma comment (lib,"crash_generation_client.lib")
+#endif
+
+
 namespace CrashReportCallbacks {
 
 #if _WIN32

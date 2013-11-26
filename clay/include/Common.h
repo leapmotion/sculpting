@@ -85,6 +85,14 @@ inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= 
 # define LM_ASSERT(condition, message)
 #endif
 
+
+#if _WIN32
+#define USE_CRASH_REPORTING LM_PRODUCTION_BUILD
+#else
+#define USE_CRASH_REPORTING 0
+#endif
+
+
 #if _WIN32
 # pragma warning(disable : 4996) // 'scanf': This function or variable may be unsafe. Consider using scanf_s instead
 # define LM_MEM_PREFETCH(address) _mm_prefetch((const char*)(address), _MM_HINT_T0)
