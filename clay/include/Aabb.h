@@ -14,6 +14,7 @@ public:
   Aabb(const Vector3& min = Vector3::Zero(), const Vector3& max = Vector3::Zero());
   ~Aabb();
   Vector3 getCenter() const;
+  lmReal getDiagonalLength() const;
 
   bool pointInside(const Vector3& vert) const;
   bool isOutside(const Aabb &aabb) const;

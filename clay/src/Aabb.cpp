@@ -13,6 +13,10 @@ Aabb::~Aabb()
 /** Setters/Getters */
 Vector3 Aabb::getCenter() const { return (max_+min_)/2; }
 
+lmReal Aabb::getDiagonalLength() const {
+  return (max_-min_).norm();
+}
+
 /** Collision detection) */
 bool Aabb::isOutside(const Aabb &aabb) const
 {

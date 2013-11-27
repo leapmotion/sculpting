@@ -74,7 +74,7 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
   // Set camera position
   m_transform.translation = closestVertex + GetReferenceDistance() * (m_transform.rotation * Vector3::UnitZ());
 
-  isoState.refDist = m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.0f;
+  isoState.refDist = GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.0f;
   isoState.refNormal = closestVertex.normal_;
   isoState.refPosition = closestVertex + isoState.refDist * closestVertex.normal_;
 
@@ -299,7 +299,8 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
   lmReal refPtDistFromOrigin = referencePointNew.position.norm();
   // Do raycast
   if (mesh) {
-    Vector3 rayStart = (q * Vector3::UnitZ()) * m_params.maxDist; // + max aabb
+    const lmReal aabbDiagonal = mesh->getOctree()->getAabbSplit().getDiagonalLength();
+    Vector3 rayStart = (q * Vector3::UnitZ()) *  aabbDiagonal;
     lmRayCastOutput raycastHit;
     CastOneRay(mesh, lmRay(rayStart, Vector3::Zero()), &raycastHit);
 
@@ -407,12 +408,12 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   }
 
   // Process smoothed user input
-  const lmReal distFraction = (GetReferenceDistance()-m_params.minDist)/(m_params.maxDist-m_params.minDist);
+  const lmReal distFraction = (GetReferenceDistance()-m_params.minDist)/(m_params.maxDist/*intentionaly static value and not GetMaxDistFromMesh()*/-m_params.minDist);
   const lmReal movementRatio = m_params.speedAtMinDist + distFraction * (m_params.speedAtMaxDist-m_params.speedAtMinDist);
-  Vector3 movementInWorld = - usedUserInput * movementRatio;
+  Vector3 movementInCamSpace = - usedUserInput * movementRatio;
 
   isoState.cameraOffsetMultiplier = m_params.isoRefDistMultiplier;
-  IsoCamera(mesh, &isoState, movementInWorld, dt);
+  IsoCamera(mesh, &isoState, movementInCamSpace, dt);
   if (m_params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
   UpdateCameraInWorldSpace();
   m_prevTimeOfLastSculpt = m_timeOfLastScupt;
@@ -768,8 +769,11 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
   return normal;
 }
 
-lmReal CameraUtil::IsoQueryRadius(IsoCameraState* state) const {
-  return std::max(state->refDist + m_params.isoQueryPaddingRadius, m_params.isoQueryPaddingRadius);
+lmReal CameraUtil::IsoQueryRadius( const Mesh* mesh, IsoCameraState* state ) const
+{
+  const lmReal meshSize = m_mesh->getOctree()->getAabbSplit().getDiagonalLength();
+  const lmReal multiplier = 0.5 * meshSize / Mesh::globalScale_;
+  return std::max(state->refDist + m_params.isoQueryPaddingRadius * multiplier, m_params.isoQueryPaddingRadius * multiplier);
 }
 
 void CameraUtil::IsoUpdateCameraTransform( const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime )
@@ -839,7 +843,7 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
   state->closestPointOnMesh = GetClosestSurfacePoint(mesh, state->refPosition, queryRadius);
   state->refDist = (state->closestPointOnMesh.position - state->refPosition).norm();
 
-  state->refPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(state));
+  state->refPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(mesh, state));
 
   state->numFailedUpdates = 0;
   // Remember closest point distance
@@ -949,16 +953,16 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   }
 
   // Saftey clip movement so that the camera doesn't go past the safety distance.
-  if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.5f) {
+  if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.5f) {
     // Clip to the closest point
     Vector3 newRelPos = (state->refPosition - state->closestPointOnMesh.position) + clippedMovement;
     newRelPos.normalize();
-    newRelPos *= m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.5f;
+    newRelPos *= GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.5f;
     Vector3 newPos = state->closestPointOnMesh.position + newRelPos;
     clippedMovement = newPos - state->refPosition;
   }
 
-  Vector3 newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+  Vector3 newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(mesh, state));
   if (!lmIsNormalized(newNormal)) {
 #if LM_LOG_CAMERA_LOGIC_4
     std::cout << "New IsoNormal not found, broadening the search." << std::endl;
@@ -971,7 +975,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
       return;
     }
     state->refDist = (closestPoint.position - (state->refPosition + clippedMovement)).norm();
-    newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+    newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(mesh, state));
     if (!lmIsNormalized(newNormal)) {
 #if LM_LOG_CAMERA_LOGIC_4
       std::cout << "Now IsoNormal failed (while closest point was ok)." << std::endl;
@@ -990,7 +994,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
       // Scale movement
       lmReal scale = clippedMovement.norm() / surfaceDist;
       clippedMovement *= scale;
-      newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
+      newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(mesh, state));
 #if LM_LOG_CAMERA_LOGIC_3
       if (scale > 0.0f) {
         std::cout << "Movement scaling: " << scale << std::endl;
@@ -1164,4 +1168,11 @@ lmSurfacePoint CameraUtil::GetReferencePoint() const
 lmReal CameraUtil::GetReferenceDistance() const
 {
   return isoState.refDist * (1 + m_params.isoRefDistMultiplier);
+}
+
+lmReal CameraUtil::GetMaxDistanceForMesh(const Mesh* mesh) const
+{
+  const lmReal meshSize = mesh->getOctree()->getAabbSplit().getDiagonalLength();
+  const lmReal maxDistScale = 0.5f * meshSize / Mesh::globalScale_;
+  return m_params.maxDist * maxDistScale;
 }

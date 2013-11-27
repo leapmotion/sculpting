@@ -185,7 +185,7 @@ public:
 
   Vector3 IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
-  lmReal IsoQueryRadius(IsoCameraState* state) const;
+  lmReal IsoQueryRadius(const Mesh* mesh, IsoCameraState* state) const;
 
   void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime);
 
@@ -216,6 +216,8 @@ public:
   lmSurfacePoint GetReferencePoint() const;
 
   lmReal GetReferenceDistance() const;
+
+  lmReal GetMaxDistanceForMesh(const Mesh* mesh) const;
 
 private:
 

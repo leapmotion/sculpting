@@ -508,7 +508,12 @@ void FreeformApp::update()
     temp << _camera_util->isoState.refPosition, 1.0;
   }
   _focus_point = (trans * temp).head<3>();
-  _focus_radius = _camera_util->IsoQueryRadius(&_camera_util->isoState);
+  // if mesh
+  if (mesh_) {
+    _focus_radius = _camera_util->IsoQueryRadius(mesh_, &_camera_util->isoState);
+  } else {
+    _focus_radius = 0.0f;
+  }
 
   _campos_smoother.Update(campos, curTime, 0.95f);
   _lookat_smoother.Update(ToVec3f(to), curTime, 0.95f);
