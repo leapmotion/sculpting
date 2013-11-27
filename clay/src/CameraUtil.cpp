@@ -771,7 +771,7 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
 
 lmReal CameraUtil::IsoQueryRadius( const Mesh* mesh, IsoCameraState* state ) const
 {
-  const lmReal meshSize = m_mesh->getOctree()->getAabbSplit().getDiagonalLength();
+  const lmReal meshSize = mesh->getOctree()->getAabbSplit().getDiagonalLength();
   const lmReal multiplier = 0.5 * meshSize / Mesh::globalScale_;
   return std::max(state->refDist + m_params.isoQueryPaddingRadius * multiplier, m_params.isoQueryPaddingRadius * multiplier);
 }
