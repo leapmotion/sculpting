@@ -9,12 +9,14 @@
 #define LM_LOG_CAMERA_LOGIC_2 0
 #define LM_LOG_CAMERA_LOGIC_3 0
 #define LM_LOG_CAMERA_LOGIC_4 0
+#define LM_LOG_CAMERA_LOGIC_5 0
 #define LM_DRAW_DEBUG_OBJECTS 0
 #else
 #define LM_LOG_CAMERA_LOGIC 0
 #define LM_LOG_CAMERA_LOGIC_2 0
 #define LM_LOG_CAMERA_LOGIC_3 0
 #define LM_LOG_CAMERA_LOGIC_4 0
+#define LM_LOG_CAMERA_LOGIC_5 0
 #define LM_DRAW_DEBUG_OBJECTS 1
 #endif
 
@@ -741,7 +743,7 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
   }
 }
 
-Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius )
+Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* potentialOut /*= NULL*/, lmReal* gradientMagOut /*= NULL*/ )
 {
   lmReal epsilon = 0.1f;
   const Vector3& pos = position;
@@ -763,11 +765,17 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
 
 
   Vector3 negNormal(dPotentialX, dPotentialY, dPotentialZ);
-  negNormal.normalize();
+  lmReal gradientMag = negNormal.norm();
+  negNormal /= gradientMag;
+  gradientMag /= epsilon;
 
   //std::cout << "Iso potential: " << potential << std::endl;
 
   Vector3 normal((float)-negNormal.x(), (float)-negNormal.y(), (float)-negNormal.z());
+
+  if (potentialOut) { *potentialOut = potential; }
+  if (gradientMagOut) { *gradientMagOut = gradientMag; }
+
   return normal;
 }
 
@@ -844,7 +852,8 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
   state->closestPointOnMesh = GetClosestSurfacePoint(mesh, state->refPosition, queryRadius);
   state->refDist = (state->closestPointOnMesh.position - state->refPosition).norm();
 
-  state->refPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(mesh, state));
+  state->refNormal = IsoNormal(mesh, state->refPosition, IsoQueryRadius(mesh, state), &state->refPotential, &state->currGradientMag);
+  //state->refPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(mesh, state));
 
   state->numFailedUpdates = 0;
   // Remember closest point distance
@@ -1071,6 +1080,11 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   IsoPreventCameraInMesh(mesh, state);
 
   state->numFailedUpdates = 0;
+
+  lmReal currPotential = 0.0f;
+#if LM_LOG_CAMERA_LOGIC_5
+  std::cout << "Ref/curr potential: " << state->refPotential << " \ " << currPotential << std::endl;
+#endif
 }
 
 void CameraUtil::IsoCameraConstrainWhenSpinning( Mesh* mesh, IsoCameraState* state )

@@ -176,6 +176,7 @@ public:
     Vector3 refNormal;
     lmSurfacePoint closestPointOnMesh;
     lmReal refPotential; // used when clipping to isosurface
+    lmReal currGradientMag;
     int numFailedUpdates;
   } isoState;
 
@@ -183,7 +184,7 @@ public:
 
   void IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials );
 
-  Vector3 IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius);
+  Vector3 IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* potential = NULL, lmReal* gradientMag = NULL);
 
   lmReal IsoQueryRadius(const Mesh* mesh, IsoCameraState* state) const;
 
