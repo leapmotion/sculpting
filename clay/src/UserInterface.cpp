@@ -867,6 +867,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
       case Menu::OBJECT_CAN: showConfirm(Menu::OBJECT_CAN); break;
       case Menu::OBJECT_DONUT: showConfirm(Menu::OBJECT_DONUT); break;
       case Menu::OBJECT_SHEET: showConfirm(Menu::OBJECT_SHEET); break;
+      case Menu::OBJECT_TURKEY: showConfirm(Menu::OBJECT_TURKEY); break;
       case Menu::OBJECT_CUBE: showConfirm(Menu::OBJECT_CUBE); break;
       default: break;
     }
@@ -894,6 +895,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
         case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
         case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
         case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
+        case Menu::OBJECT_TURKEY: app->loadShape(FreeformApp::TURKEY); break;
         case Menu::OBJECT_CUBE: app->loadShape(FreeformApp::CUBE); break;
         default: break;
       }

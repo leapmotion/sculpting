@@ -1065,16 +1065,19 @@ void FreeformApp::loadShapes() {
   ci::DataSourceRef donut = loadResource(RES_DONUT_OBJ);
   ci::DataSourceRef sheet = loadResource(RES_SHEET_OBJ);
   ci::DataSourceRef cube = loadResource(RES_CUBE_OBJ);
+  ci::DataSourceRef turkey = loadResource(RES_TURKEY_OBJ);
   ci::Buffer& ballBuf = ball->getBuffer();
   ci::Buffer& canBuf = can->getBuffer();
   ci::Buffer& donutBuf = donut->getBuffer();
   ci::Buffer& sheetBuf = sheet->getBuffer();
   ci::Buffer& cubeBuf = cube->getBuffer();
+  ci::Buffer& turkeyBuf = turkey->getBuffer();
   shapes_[BALL] = std::string((char*)ballBuf.getData(), ballBuf.getDataSize());
   shapes_[CAN] = std::string((char*)canBuf.getData(), canBuf.getDataSize());
   shapes_[DONUT] = std::string((char*)donutBuf.getData(), donutBuf.getDataSize());
   shapes_[SHEET] = std::string((char*)sheetBuf.getData(), sheetBuf.getDataSize());
   shapes_[CUBE] = std::string((char*)cubeBuf.getData(), cubeBuf.getDataSize());
+  shapes_[TURKEY] = std::string((char*)turkeyBuf.getData(), turkeyBuf.getDataSize());
 }
 
 void FreeformApp::loadImages() {
@@ -1306,61 +1309,61 @@ int FreeformApp::loadShape(Shape shape) {
 #if _WIN32
 fs::path getSaveFilePathCustom( const fs::path &initialPath, const std::vector<std::string>& extensions )
 {
-	OPENFILENAMEA ofn;       // common dialog box structure
-	char szFile[260];       // buffer for file name
+  OPENFILENAMEA ofn;       // common dialog box structure
+  char szFile[260];       // buffer for file name
 
-	// Initialize OPENFILENAME
-	ZeroMemory( &ofn, sizeof(ofn) );
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = App::get()->getRenderer()->getHwnd();
-	ofn.lpstrFile = szFile;
+  // Initialize OPENFILENAME
+  ZeroMemory( &ofn, sizeof(ofn) );
+  ofn.lStructSize = sizeof(ofn);
+  ofn.hwndOwner = App::get()->getRenderer()->getHwnd();
+  ofn.lpstrFile = szFile;
 
-	ofn.lpstrFile[0] = '\0';
-	ofn.nMaxFile = sizeof( szFile );
+  ofn.lpstrFile[0] = '\0';
+  ofn.nMaxFile = sizeof( szFile );
 
-	if( extensions.empty() ) {
-		ofn.lpstrFilter = "All\0*.*\0";
-	} else {
-		char extensionStr[10000];
-		size_t offset = 0;
+  char extensionStr[10000];
+  if( extensions.empty() ) {
+    ofn.lpstrFilter = "All\0*.*\0";
+  } else {
+    size_t offset = 0;
 
-		for( std::vector<std::string>::const_iterator strIt = extensions.begin(); strIt != extensions.end(); ++strIt ) {
+    for( std::vector<std::string>::const_iterator strIt = extensions.begin(); strIt != extensions.end(); ++strIt ) {
       strcpy( extensionStr + offset, strIt->c_str() );
       offset += strIt->length();
       extensionStr[offset++] = '\0';
       extensionStr[offset++] = '*';
       extensionStr[offset++] = '.';
-			strcpy( extensionStr + offset, strIt->c_str() );
-			offset += strIt->length();
+      strcpy( extensionStr + offset, strIt->c_str() );
+      offset += strIt->length();
       extensionStr[offset++] = '\0';
-		}
+    }
 
-		extensionStr[offset++] = '\0';
-		ofn.lpstrFilter = extensionStr;
-	}
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	if( initialPath.empty() ) {
-		ofn.lpstrInitialDir = NULL;
+    extensionStr[offset++] = '\0';
+    ofn.lpstrFilter = extensionStr;
+  }
+  ofn.nFilterIndex = 1;
+  ofn.lpstrFileTitle = NULL;
+  ofn.nMaxFileTitle = 0;
+  if( initialPath.empty() ) {
+    ofn.lpstrInitialDir = NULL;
   } else {
-		char initialPathStr[MAX_PATH];
-		strcpy( initialPathStr, initialPath.string().c_str() );
-		ofn.lpstrInitialDir = initialPathStr;
-	}
-	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
+    char initialPathStr[MAX_PATH];
+    strcpy( initialPathStr, initialPath.string().c_str() );
+    ofn.lpstrInitialDir = initialPathStr;
+  }
+  ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
 
-	// Display the Open dialog box.
-	std::string result;
-	if( GetSaveFileNameA( &ofn ) == TRUE ) {
+  // Display the Open dialog box.
+  std::string result;
+  if( GetSaveFileNameA( &ofn ) == TRUE ) {
     std::string ext = "." + extensions[ofn.nFilterIndex-1];
-		result = std::string( ofn.lpstrFile );
+    result = std::string( ofn.lpstrFile );
     if (result.find(ext) == std::string::npos) {
       result += ext;
     }
-	}
+  }
 
-	return result;
+  return result;
 }
 #endif
 
