@@ -310,18 +310,31 @@ void Geometry::getClosestPoint(const Geometry::GetClosestPointInput& input, Geom
 
 void Geometry::getClosestPoint_noNormal(const Geometry::GetClosestPointInput& input, Geometry::GetClosestPointOutput* output) {
   // Get input
-  const Vector3& v0 = input.mesh->getVertex(input.tri->vIndices_[0]);
-  const Vector3& v1 = input.mesh->getVertex(input.tri->vIndices_[1]);
-  const Vector3& v2 = input.mesh->getVertex(input.tri->vIndices_[2]);
+  const Vector3 v[] =
+  {
+    input.mesh->getVertex(input.tri->vIndices_[0]),
+    input.mesh->getVertex(input.tri->vIndices_[1]),
+    input.mesh->getVertex(input.tri->vIndices_[2]),
+    input.mesh->getVertex(input.tri->vIndices_[0]),
+    input.mesh->getVertex(input.tri->vIndices_[1])
+  };
+  const Vector3& v0 = v[0];
+  const Vector3& v1 = v[1];
+  const Vector3& v2 = v[2];
   const Vector3& pt = input.point;
 
   // Projected point
-  const Vector3 pr = pt - input.tri->normal_.dot(pt-v0) * input.tri->normal_;
+  const Vector3 ptLessV0 = pt-v0;
+  const float dot = input.tri->normal_.dot(ptLessV0);
+  Vector3 pr = input.tri->normal_;
+  pr *= -dot;
+  pr += pt;
+  //const Vector3 pr = pt - input.tri->normal_.dot(ptLessV0) * input.tri->normal_;
 
   // Triangle edges
-  const Vector3& e0 = v1-v0;
-  const Vector3& e1 = v2-v1;
-  const Vector3& e2 = v0-v2;
+  const Vector3 e0 = v1-v0;
+  const Vector3 e1 = v2-v1;
+  const Vector3 e2 = v0-v2;
 
   // Get front direction of the triangle
   const Vector3 n = e0.cross(e1);
@@ -333,9 +346,13 @@ void Geometry::getClosestPoint_noNormal(const Geometry::GetClosestPointInput& in
   //}
 
   // Cross point's project with every other edge
-  const Vector3 cr0 = e0.cross(pr - v0);
-  const Vector3 cr1 = e1.cross(pr - v1);
-  const Vector3 cr2 = e2.cross(pr - v2);
+  const Vector3 prLessV0 = pr - v0;
+  const Vector3 prLessV1 = pr - v1;
+  const Vector3 prLessV2 = pr - v2;
+
+  const Vector3 cr0 = e0.cross(prLessV0);
+  const Vector3 cr1 = e1.cross(prLessV1);
+  const Vector3 cr2 = e2.cross(prLessV2);
 
   int numNeg = 0;
   int numPos = 0;
@@ -350,29 +367,40 @@ void Geometry::getClosestPoint_noNormal(const Geometry::GetClosestPointInput& in
   if (0 <= dot1) { numPos++; lastPosIdx = 1; } else { numNeg++; lastNegIdx = 1; }
   if (0 <= dot2) { numPos++; lastPosIdx = 2; } else { numNeg++; lastNegIdx = 2; }
 
-  if (numPos == 3) {
-    // inside triangle
-    output->position = pr;
-    output->normal = input.tri->normal_;
-    lmReal distanceSigned = input.tri->normal_.dot(pt-pr);
-    output->distanceSqr = distanceSigned * distanceSigned;
-  } else if (numPos == 2) {
-    // outside triangle, closest to an edge
-    const Vector3& edgeStart = input.mesh->getVertex(input.tri->vIndices_[lastNegIdx]); // edge start
-    const Vector3& edgeEnd = input.mesh->getVertex(input.tri->vIndices_[(lastNegIdx+1)%3]); // edge end
-    Vector3 edge = edgeEnd - edgeStart;
-    lmReal edgeLengthSqr = edge.squaredNorm();
-    Vector3 toPoint = pt - edgeStart;
-    lmReal dotTimesEdgeLength = edge.dot(toPoint);
-    dotTimesEdgeLength = lmClip(dotTimesEdgeLength, 0.0f, edgeLengthSqr);
-    Vector3 pointProjectedOnSegmet = edgeStart + dotTimesEdgeLength * edge / edgeLengthSqr;
-    output->position = pointProjectedOnSegmet;
-    output->normal = (pt - output->position); // if not zero
-    output->distanceSqr = output->normal.squaredNorm();
-  } else {
-    assert (numPos == 1 && "Error finding closest point");
-    output->position = input.mesh->getVertex(input.tri->vIndices_[(lastPosIdx-1+3)%3]); // index of the vertex
-    output->normal = (pt - output->position); // if not zero
-    output->distanceSqr = output->normal.squaredNorm();
+  switch(numPos) {
+  case 1: {
+      output->position = v[(lastPosIdx-1+3)]; // index of the vertex
+      output->normal = (pt - output->position); // if not zero
+      output->distanceSqr = output->normal.squaredNorm();
+    }
+    break;
+  case 2: {
+      // outside triangle, closest to an edge
+      const Vector3& edgeStart = v[lastNegIdx]; // edge start
+      const Vector3& edgeEnd = v[lastNegIdx+1]; // edge end
+      Vector3 edge = edgeEnd - edgeStart;
+      lmReal edgeLengthSqr = edge.squaredNorm();
+      Vector3 toPoint = pt - edgeStart;
+      lmReal dotTimesEdgeLength = edge.dot(toPoint);
+      dotTimesEdgeLength = lmClip(dotTimesEdgeLength, 0.0f, edgeLengthSqr);
+      Vector3 pointProjectedOnSegmet = edge;
+      pointProjectedOnSegmet *= dotTimesEdgeLength / edgeLengthSqr;
+      pointProjectedOnSegmet += edgeStart;
+      output->position = pointProjectedOnSegmet;
+      output->normal = (pt - output->position); // if not zero
+      output->distanceSqr = output->normal.squaredNorm();
+    }
+    break;
+  case 3: {
+      // inside triangle
+      output->position = pr;
+      output->normal = input.tri->normal_;
+      lmReal distanceSigned = input.tri->normal_.dot(pt-pr);
+      output->distanceSqr = distanceSigned * distanceSigned;
+    }
+    break;
+  default:
+    assert (false && "Error finding closest point");
+    break;
   }
 }
