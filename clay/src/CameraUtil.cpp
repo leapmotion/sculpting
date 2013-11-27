@@ -668,9 +668,15 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
   if (m_params.queryTriangles) {
     const TriangleVector& triangles = mesh->getTriangles();
 
-
     for (unsigned ti = 0; ti < m_queryTriangles.size(); ti+= striding)
     {
+      if (ti < m_queryTriangles.size()-striding) {
+        const Triangle& nextTri = triangles[m_queryTriangles[ti+striding]];
+        LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[0]);
+        LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[1]);
+        LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[2]);
+      }
+
       const Triangle& tri = triangles[m_queryTriangles[ti]];
 
       Geometry::GetClosestPointInput input(mesh, &tri, positions[0]);
