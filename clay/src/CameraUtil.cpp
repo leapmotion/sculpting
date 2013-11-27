@@ -938,11 +938,10 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 //  lmReal oldRefDist = state->refDist;
 
   // Dummy & temp: clip z movement
-  Vector3 clippedMovement = movement * std::sqrt(std::sqrt(state->refDist / m_params.refDistForMovemement));
+  Vector3 scaledMovement = movement * std::sqrt(std::sqrt(state->refDist / m_params.refDistForMovemement));
+  scaledMovement.z() *= m_params.scaleZMovement;
 
-  clippedMovement.z() *= m_params.scaleZMovement;
-
-  clippedMovement = m_transform.rotation * clippedMovement;
+  Vector3 clippedMovement = m_transform.rotation * scaledMovement;
 
   // Verify movement
   lmReal radiusForCameraSphereCollision = m_params.minDist;
@@ -952,7 +951,33 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #if LM_LOG_CAMERA_LOGIC_4
     std::cout << "Invalid camera movement (collision)." << std::endl;
 #endif
-    return;
+
+    const int numCorrections = 5;
+    const Vector3 originalMovement = clippedMovement;
+    const lmReal originalLength = clippedMovement.norm();
+    const Vector3 originalMovementDir = clippedMovement / originalLength;
+    lmQuat rotToZ; rotToZ.setFromTwoVectors(originalMovementDir, -GetCameraDirection());
+    int i;
+    for (i = 0; i < numCorrections && !validMovement; i++)
+    {
+      const lmReal t = (i+1.0f)/numCorrections;
+      lmQuat correction = lmQuat::Identity().slerp(t, rotToZ);
+      clippedMovement = correction * originalMovementDir;
+      clippedMovement *= (1.0f-(lmReal(i+1.0f)/lmReal(numCorrections+1.0f))) * originalLength;
+      //LM_DRAW_ARROW(Vector3::UnitY()*10.0f + state->refPosition, Vector3::UnitY()*10.0f + state->refPosition + clippedMovement*10.0f, lmColor::BLUE);
+      validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
+    }
+
+    if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
+#if LM_LOG_CAMERA_LOGIC_4
+      std::cout << "Invalid camera movement (after correcting z)." << std::endl;
+#endif
+      return;
+    } else {
+#if LM_LOG_CAMERA_LOGIC_4
+      std::cout << "Corrected movement " << i << " times." << std::endl;
+#endif
+    }
   }
 
   // Saftey clip movement so that the camera doesn't go past the safety distance.
