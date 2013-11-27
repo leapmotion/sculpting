@@ -95,7 +95,6 @@ void FreeformApp::setup()
   _params->addSeparator();
   _params->addText( "text", "label=`Camera parameters:`" );
 
-  _params->addParam( "Iso cam", &_camera_params.cameraOverrideIso, "" );
   _params->addParam( "Use triangles.", &_camera_params.queryTriangles, "" );
   _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
   _params->addParam( "Draw sphere query", &_camera_params.drawSphereQueryResults, "" );
@@ -548,7 +547,7 @@ void FreeformApp::updateLeapAndMesh() {
 #endif 
     bool haveFrame;
     try {
-      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->m_referenceDistance, Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
     } catch (...) {
       haveFrame = false;
     }

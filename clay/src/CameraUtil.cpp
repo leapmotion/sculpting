@@ -21,9 +21,6 @@
 CameraUtil::CameraUtil() {
   m_transform.setIdentity();
   m_meshTransform.setIdentity();
-  m_referencePoint.position.setZero();
-  m_referencePoint.normal.setZero();
-  m_referenceDistance = 0.0f;
   m_userInput.setZero();
   m_accumulatedUserInput.setZero();
   m_lastCameraUpdateTime = -1.0f;
@@ -37,6 +34,8 @@ CameraUtil::CameraUtil() {
   m_justSculpted = false;
   m_forceVerifyPositionAfterSculpting = false;
   m_numFramesInsideManifoldMesh = 0;
+  m_orbitRefPoint.setZero();
+  m_orbitDistance = 0.0f;
 }
 
 void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
@@ -65,12 +64,7 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
   }
 
   // Set reference point to the selected vertex
-  {
-    std::unique_lock<std::mutex> lock(m_referencePointMutex);
-    const Vertex& closest = vertices[idx];
-    m_referencePoint.position = closest;
-    m_referencePoint.normal = closest.normal_;
-  }
+  const Vertex& closestVertex = vertices[idx];
 
   // Rotate camera to the new requested direction
   Vector3 currentNegZ = -1.0f * (m_transform.rotation * Vector3::UnitZ());
@@ -78,18 +72,13 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
   m_transform.rotation = correction * m_transform.rotation;
 
   // Set camera position
-  m_transform.translation = m_referencePoint.position + m_referenceDistance * (m_transform.rotation * Vector3::UnitZ());
+  m_transform.translation = closestVertex + GetReferenceDistance() * (m_transform.rotation * Vector3::UnitZ());
 
-  // reset iso camera
-  if (m_params.cameraOverrideIso)
-  {
-    //isoState.refDist = lmClip(isoState.refDist, params.minDist, params.maxDist);
-    isoState.refDist = m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.0f;
-    isoState.refNormal = m_referencePoint.normal;
-    isoState.refPosition = m_referencePoint.position + isoState.refDist * m_referencePoint.normal;
+  isoState.refDist = m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.0f;
+  isoState.refNormal = closestVertex.normal_;
+  isoState.refPosition = closestVertex + isoState.refDist * closestVertex.normal_;
 
-    m_transform.translation = isoState.refPosition + isoState.refDist * m_params.isoRefDistMultiplier * (m_transform.rotation * Vector3::UnitZ());
-  }
+  m_transform.translation = isoState.refPosition + isoState.refDist * m_params.isoRefDistMultiplier * (m_transform.rotation * Vector3::UnitZ());
 
   UpdateCameraInWorldSpace();
 }
@@ -251,8 +240,8 @@ Vector3 CameraUtil::GetCameraDirection() const { return -1.0f * (m_transform.rot
 void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
   m_transform.rotation = m_meshTransform.rotation * m_transform.rotation;
   m_transform.translation = ToWorldSpace(m_transform.translation);
-  m_referencePoint.position = ToWorldSpace(m_referencePoint.position);
-  m_referencePoint.normal = ToWorldSpace(m_referencePoint.normal);
+  m_orbitRefPoint.position = ToWorldSpace(m_orbitRefPoint.position);
+  m_orbitRefPoint.normal = ToWorldSpace(m_orbitRefPoint.normal);
 
   isoState.refPosition = ToWorldSpace(isoState.refPosition);
   isoState.refNormal = ToWorldSpace(isoState.refNormal);
@@ -264,8 +253,8 @@ void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
 
   m_transform.rotation = m_meshTransform.rotation.inverse() * m_transform.rotation;
   m_transform.translation = ToMeshSpace(m_transform.translation);
-  m_referencePoint.position = ToMeshSpace(m_referencePoint.position);
-  m_referencePoint.normal = ToMeshSpace(m_referencePoint.normal);
+  m_orbitRefPoint.position = ToMeshSpace(m_orbitRefPoint.position);
+  m_orbitRefPoint.normal = ToMeshSpace(m_orbitRefPoint.normal);
 
   isoState.refPosition = ToMeshSpace(isoState.refPosition);
   isoState.refNormal = ToMeshSpace(isoState.refNormal);
@@ -281,61 +270,59 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
 
   // Horizontal rotate
   static const lmReal ORBIT_RATE = LM_2PI / 40.0f;
-  lmQuat q(AngleAxis( - ORBIT_RATE * deltaTime, Vector3::UnitY()));
-  m_transform.mul(q);
-  lmSurfacePoint referencePointNew = m_referencePoint;
-  referencePointNew.mul(q);
+  lmSurfacePoint referencePointNew = m_orbitRefPoint;
+  {
+    lmQuat q(AngleAxis( - ORBIT_RATE * deltaTime, Vector3::UnitY()));
+    m_transform.mul(q);
+    referencePointNew.mul(q);
+  }
 
   // Orbit camera with raycast
-  if (1) {
-    // Camera position in horizontal plane
-    Vector3 camXZ = lmProjectAlongVec(m_transform.translation, Vector3::UnitY());
-    // Rotation around Y
-    lmQuat q0 = lmQuat::Identity();
-    if (!lmIsZero(camXZ)) {
-      q0.setFromTwoVectors(Vector3::UnitZ(), camXZ.normalized()); q0.normalize();
-    }
 
-    // Oscillating vertical rotation
-    static lmReal phase = 0.0f;
-    const static lmReal OSCILLATION_RATE = 1.0f / 20.0f;
-    phase += LM_2PI * OSCILLATION_RATE * deltaTime;
-    lmQuat q1(AngleAxis(std::cos(phase) * 30.0f * LM_DEG, Vector3::UnitX()));
+  // Camera position in horizontal plane
+  Vector3 camXZ = lmProjectAlongVec(m_transform.translation, Vector3::UnitY());
+  // Rotation around Y
+  lmQuat q0 = lmQuat::Identity();
+  if (!lmIsZero(camXZ)) {
+    q0.setFromTwoVectors(Vector3::UnitZ(), camXZ.normalized()); q0.normalize();
+  }
 
-    // Desired camera direction
-    lmQuat q = q0 * q1; q.normalize();
+  // Oscillating vertical rotation
+  static lmReal phase = 0.0f;
+  const static lmReal OSCILLATION_RATE = 1.0f / 20.0f;
+  phase += LM_2PI * OSCILLATION_RATE * deltaTime;
+  lmQuat q1(AngleAxis(std::cos(phase) * 30.0f * LM_DEG, Vector3::UnitX()));
 
-    lmReal refPtDistFromOrigin = referencePointNew.position.norm();
-    // Do raycast
-    if (mesh) {
-      Vector3 rayStart = (q * Vector3::UnitZ()) * m_params.maxDist; // + max aabb
-      lmRayCastOutput raycastHit;
-      CastOneRay(mesh, lmRay(rayStart, Vector3::Zero()), &raycastHit);
+  // Desired camera direction
+  lmQuat q = q0 * q1; q.normalize();
 
-      // if raycast hit (move last reference point, remember last point)
-      if (raycastHit.isSuccess()) {
-        lmReal distFromOrigin = raycastHit.position.norm();
-        if (distFromOrigin + m_params.minDist > refPtDistFromOrigin + m_referenceDistance ) {
-          m_referenceDistance = distFromOrigin + m_params.minDist - refPtDistFromOrigin;
-        }
+  lmReal refPtDistFromOrigin = referencePointNew.position.norm();
+  // Do raycast
+  if (mesh) {
+    Vector3 rayStart = (q * Vector3::UnitZ()) * m_params.maxDist; // + max aabb
+    lmRayCastOutput raycastHit;
+    CastOneRay(mesh, lmRay(rayStart, Vector3::Zero()), &raycastHit);
+
+    // if raycast hit (move last reference point, remember last point)
+    if (raycastHit.isSuccess()) {
+      lmReal distFromOrigin = raycastHit.position.norm();
+      if (distFromOrigin + m_params.minDist > refPtDistFromOrigin + m_orbitDistance ) {
+        m_orbitDistance = distFromOrigin + m_params.minDist - refPtDistFromOrigin;
       }
     }
-
-    // Fix reference point
-    {
-      std::unique_lock<std::mutex> lock(m_referencePointMutex);
-      m_referencePoint.position = (q * Vector3::UnitZ()) * refPtDistFromOrigin;
-      m_referencePoint.normal = q * Vector3::UnitZ();
-    }
-    // Fix camera direction & position
-    static const lmReal ORBITING_BLEND_IN_TIME = 5.0f;
-    const lmReal blendingFactor = lmClip(m_timeSinceOrbitingStarted / ORBITING_BLEND_IN_TIME, 0.0f, 1.0f);
-
-    //transform.rotation = q;
-    m_transform.rotation = m_transform.rotation.slerp(blendingFactor*deltaTime, q);
-    Vector3 targetTranslation = (m_transform.rotation * Vector3::UnitZ()) * (refPtDistFromOrigin + m_referenceDistance);
-    m_transform.translation = lmInterpolate(blendingFactor*deltaTime, m_transform.translation, targetTranslation);
   }
+
+  m_orbitRefPoint.position = (q * Vector3::UnitZ()) * refPtDistFromOrigin;
+  m_orbitRefPoint.normal = q * Vector3::UnitZ();
+
+  // Fix camera direction & position
+  static const lmReal ORBITING_BLEND_IN_TIME = 5.0f;
+  const lmReal blendingFactor = lmClip(m_timeSinceOrbitingStarted / ORBITING_BLEND_IN_TIME, 0.0f, 1.0f);
+
+  //transform.rotation = q;
+  m_transform.rotation = m_transform.rotation.slerp(blendingFactor*deltaTime, q);
+  Vector3 targetTranslation = (m_transform.rotation * Vector3::UnitZ()) * (refPtDistFromOrigin + m_orbitDistance);
+  m_transform.translation = lmInterpolate(blendingFactor*deltaTime, m_transform.translation, targetTranslation);
 }
 
 void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
@@ -373,6 +360,11 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   m_framesFromLastCollisions++;
 
   if (m_params.forceCameraOrbit && m_params.enableCameraOrbit) {
+    if (m_timeSinceOrbitingStarted == 0.0f) {
+      m_orbitRefPoint = GetReferencePoint();
+      m_orbitDistance = GetReferenceDistance();
+    }
+
     OrbitCamera(mesh, dt);
     m_timeSinceOrbitingStarted += dt;
     m_timeSinceOrbitingEnded = 0.0f;
@@ -388,7 +380,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitX()), lmColor::RED );
     LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitY()), lmColor::GREEN );
     LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitZ()), lmColor::BLUE );
-    LM_DRAW_ARROW(m_transform.translation, m_referencePoint.position, lmColor::YELLOW );
+    LM_DRAW_ARROW(m_transform.translation, isoState.refPosition, lmColor::YELLOW );
   }
   DebugDrawUtil::getInstance().SwitchBuffers();
 
@@ -396,8 +388,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   Vector3 usedUserInput = m_userInput;
   // Multiply motion by distance:
-  const lmReal distFraction = (m_referenceDistance-m_params.minDist)/(m_params.maxDist-m_params.minDist);
-  const lmReal movementRatio = m_params.speedAtMinDist + distFraction * (m_params.speedAtMaxDist-m_params.speedAtMinDist);
   {
     std::unique_lock<std::mutex> lock(m_userInputMutex);
     // Accumulate userInput in 2d
@@ -409,10 +399,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     }
     m_userInput.setZero();
 
-    Vector3 movementInCam = usedUserInput * movementRatio; movementInCam.z() = 0.0f;
-    movementInCam = -1.0f * (m_transform.rotation * usedUserInput);
-
-    if (100000000.0f <= movementInCam.squaredNorm()) {
+    if (100000000.0f <= usedUserInput.squaredNorm()) {
       // This actually happened when stopping the Leap Service, and starting a different version.
       m_accumulatedUserInput.setZero();
       usedUserInput.setZero();
@@ -420,22 +407,15 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   }
 
   // Process smoothed user input
-  Vector3 deltaAngles = usedUserInput * movementRatio;
-  Vector3 movementInCam = usedUserInput * movementRatio; movementInCam.z() = 0.0f;
+  const lmReal distFraction = (GetReferenceDistance()-m_params.minDist)/(m_params.maxDist-m_params.minDist);
+  const lmReal movementRatio = m_params.speedAtMinDist + distFraction * (m_params.speedAtMaxDist-m_params.speedAtMinDist);
   Vector3 movementInWorld = - usedUserInput * movementRatio;
-  movementInCam = -1.0f * (m_transform.rotation * usedUserInput);
 
-  if (m_params.cameraOverrideIso) {
-    isoState.cameraOffsetMultiplier = m_params.isoRefDistMultiplier;
-    IsoCamera(mesh, &isoState, movementInWorld, dt);
-    if (m_params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
-    UpdateCameraInWorldSpace();
-    m_prevTimeOfLastSculpt = m_timeOfLastScupt;
-
-    return;
-  }
-
+  isoState.cameraOffsetMultiplier = m_params.isoRefDistMultiplier;
+  IsoCamera(mesh, &isoState, movementInWorld, dt);
+  if (m_params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
   UpdateCameraInWorldSpace();
+  m_prevTimeOfLastSculpt = m_timeOfLastScupt;
 }
 
 void CameraUtil::CorrectCameraUpVector(lmReal dt, const Vector3& up) {
@@ -819,13 +799,6 @@ void CameraUtil::IsoUpdateCameraTransform( const Vector3& newDirection, IsoCamer
   m_transform.translation = lmInterpolate(blendingFactor, m_transform.translation, newTransform.translation);
 }
 
-void CameraUtil::IsoUpdateReferencePoint(IsoCameraState* state ) {
-  std::unique_lock<std::mutex> lock(m_referencePointMutex);
-  m_referencePoint.position = state->refPosition - state->refNormal * state->refDist;
-  m_referencePoint.normal = state->refNormal;
-  m_referenceDistance = state->refDist * (1 + m_params.isoRefDistMultiplier);
-}
-
 void CameraUtil::IsoPreventCameraInMesh( Mesh* mesh, IsoCameraState* state )
 {
   // Raycast from refPoint to camera.
@@ -857,7 +830,8 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
 {
   // get field potential from current position
   lmReal t = 0.5f;
-  state->refPosition = lmInterpolate(t, m_referencePoint.position, m_transform.translation);
+  //state->refPosition = lmInterpolate(t, m_referencePoint.position, m_transform.translation);
+  //state->refNormal
   //state->refPotential = IsoPotential(mesh, state->refPosition);
   state->cameraOffsetMultiplier = 1.0f;
 
@@ -869,8 +843,6 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
 
   state->numFailedUpdates = 0;
   // Remember closest point distance
-
-  IsoUpdateReferencePoint(state);
 }
 
 void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& movement, lmReal deltaTime )
@@ -891,7 +863,6 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
     }
 
     IsoUpdateCameraTransform(-state->refNormal, state, deltaTime);
-    IsoUpdateReferencePoint(state);
     UpdateCameraInWorldSpace();
 
     // do nothing.
@@ -948,7 +919,6 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
       if (++attemptCount > 10 ||  (state->refPosition - m_transform.translation).dot(GetCameraDirection()) < 0.0f ) {
         ResetCamera(mesh, GetCameraDirection());
-        state->refPosition = m_referencePoint.position + m_params.minDist * m_referencePoint.normal;
         break;
       }
 
@@ -979,24 +949,14 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   }
 
   // Saftey clip movement so that the camera doesn't go past the safety distance.
-  if (0) {
-    if ((state->refPosition + clippedMovement).norm() > m_params.maxDist) {
-      Vector3 newPos = state->refPosition + clippedMovement;
-      newPos.normalize();
-      newPos *= m_params.maxDist;
-      clippedMovement = newPos - state->refPosition;
-    }
-  } else  {
-    if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.5f) {
-      // Clip to the closest point
-      Vector3 newRelPos = (state->refPosition - state->closestPointOnMesh.position) + clippedMovement;
-      newRelPos.normalize();
-      newRelPos *= m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.5f;
-      Vector3 newPos = state->closestPointOnMesh.position + newRelPos;
-      clippedMovement = newPos - state->refPosition;
-    }
+  if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.5f) {
+    // Clip to the closest point
+    Vector3 newRelPos = (state->refPosition - state->closestPointOnMesh.position) + clippedMovement;
+    newRelPos.normalize();
+    newRelPos *= m_params.maxDist/(1+m_params.isoRefDistMultiplier)*1.5f;
+    Vector3 newPos = state->closestPointOnMesh.position + newRelPos;
+    clippedMovement = newPos - state->refPosition;
   }
-
 
   Vector3 newNormal = IsoNormal(mesh, state->refPosition + clippedMovement, IsoQueryRadius(state));
   if (!lmIsNormalized(newNormal)) {
@@ -1077,9 +1037,6 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   LM_ASSERT(state->refDist < 10000, "Reference distance exploded.")
 
   IsoPreventCameraInMesh(mesh, state);
-
-  // Display reference sphere (updating point & radius):
-  IsoUpdateReferencePoint(state);
 
   state->numFailedUpdates = 0;
 }
@@ -1194,4 +1151,17 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
 
     m_forceVerifyPositionAfterSculpting = false;
   }
+}
+
+lmSurfacePoint CameraUtil::GetReferencePoint() const
+{
+  lmSurfacePoint result;
+  result.position = isoState.refPosition - isoState.refNormal * isoState.refDist;
+  result.normal = isoState.refNormal;
+  return result;
+}
+
+lmReal CameraUtil::GetReferenceDistance() const
+{
+  return isoState.refDist * (1 + m_params.isoRefDistMultiplier);
 }

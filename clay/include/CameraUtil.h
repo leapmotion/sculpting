@@ -81,7 +81,6 @@ struct lmSurfacePoint {
 class CameraUtil {
 public:
   struct Params {
-    bool cameraOverrideIso; // rem
     lmReal isoRefDistMultiplier;
     lmReal grav_k;
     lmReal grav_n;
@@ -123,7 +122,6 @@ public:
     bool preventCameraInMesh;
 
     Params() {
-      cameraOverrideIso = true;
       isoRefDistMultiplier = 2.0f;
       grav_k = 0.0001f;
       grav_n = 2.0f;
@@ -191,8 +189,6 @@ public:
 
   void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime);
 
-  void IsoUpdateReferencePoint(IsoCameraState* state );
-
   void IsoPreventCameraInMesh(Mesh* mesh, IsoCameraState* state);
 
   void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
@@ -216,6 +212,10 @@ public:
   lmTransform GetCameraInWorldSpace();
 
   void UpdateCameraInWorldSpace();
+
+  lmSurfacePoint GetReferencePoint() const;
+
+  lmReal GetReferenceDistance() const;
 
 private:
 
@@ -268,13 +268,11 @@ public:
   // Mesh's transform
   lmTransform m_meshTransform;
 
-  // Most recent reference point on the model (used to compute camera's movement).
-  lmSurfacePoint m_referencePoint;
-
   int m_framesFromLastCollisions;
 
   // Distance from the surface of the model.
-  lmReal m_referenceDistance;
+  lmSurfacePoint m_orbitRefPoint;
+  lmReal m_orbitDistance;
 
   // User input from the last call to CameraUpdate().
   Vector3 m_userInput;
