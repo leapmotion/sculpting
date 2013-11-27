@@ -1157,6 +1157,38 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
   }
 }
 
+void CameraUtil::IsoMoveTowardsPotential( Mesh* mesh, IsoCameraState* state )
+{
+  // use precomputed normal & move reference point towards there
+
+  lmReal currPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(mesh, state));
+  lmReal err = currPotential - state->refPotential;
+
+  const static lmReal LM_POTENTIAL_QUERY_EPSILON = 0.1f;
+  Vector3 testPosition = state->refPosition + state->refNormal * LM_POTENTIAL_QUERY_EPSILON;
+  lmReal testPotential = IsoPotential(mesh, testPosition, IsoQueryRadius(mesh, state));
+
+  lmReal deltaPotential = testPotential - currPotential;
+
+  lmReal smoothing = 0.8f; // 1.0f explodes easily
+  float correctionRatio = - err / deltaPotential * LM_POTENTIAL_QUERY_EPSILON * smoothing;
+  correctionRatio = lmClip(correctionRatio, -10.0f, 10.0f); // use min(minDist, current distance to closest point)
+
+  Vector3 correction = state->refNormal * correctionRatio;
+  state->refPosition += correction;
+
+  // todo: udpate query radius ?? can simply add correctionRatio for now & update later.
+
+  state->refNormal = IsoNormal(mesh, state->refPosition, IsoQueryRadius(mesh, state));
+
+  // test: disable z movement from from the hand
+
+
+  // todo:
+  //  - update refPotential whenever needed
+  //    - after camera is moved.
+}
+
 lmSurfacePoint CameraUtil::GetReferencePoint() const
 {
   lmSurfacePoint result;

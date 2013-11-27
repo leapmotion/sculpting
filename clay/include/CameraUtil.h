@@ -201,6 +201,8 @@ public:
 
   void IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state);
 
+  void IsoMoveTowardsPotential(Mesh* mesh, IsoCameraState* state);
+
   // Records user mouse input from mouse events.
   // 
   // Accumulates data for later processing in UpdateCamera.
