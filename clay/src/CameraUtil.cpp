@@ -38,7 +38,8 @@ CameraUtil::CameraUtil() {
   m_orbitDistance = 0.0f;
 }
 
-void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
+void CameraUtil::ResetCamera( const Mesh* mesh, const Vector3& cameraDirection, bool keepCloseToMesh /*= false*/ )
+{
 #if LM_LOG_CAMERA_LOGIC_4
   std::cout << "CAMERA RESET!" << std::endl;
 #endif
@@ -69,15 +70,16 @@ void CameraUtil::ResetCamera(const Mesh* mesh, const Vector3& cameraDirection) {
   // Rotate camera to the new requested direction
   Vector3 currentNegZ = -1.0f * (m_transform.rotation * Vector3::UnitZ());
   lmQuat correction; correction.setFromTwoVectors(currentNegZ, cameraDirection);
-  m_transform.rotation = correction * m_transform.rotation;
 
   // Set camera position
-  m_transform.translation = closestVertex + GetReferenceDistance() * (m_transform.rotation * Vector3::UnitZ());
-
-  isoState.refDist = GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.0f;
   isoState.refNormal = closestVertex.normal_;
+  isoState.closestPointOnMesh = lmSurfacePoint(closestVertex, closestVertex.normal_);
+
+  // Hack back the camera prositino after reseting
+  isoState.refDist = keepCloseToMesh ? m_params.minDist : (GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.0f);
   isoState.refPosition = closestVertex + isoState.refDist * closestVertex.normal_;
 
+  m_transform.rotation = correction * m_transform.rotation;
   m_transform.translation = isoState.refPosition + isoState.refDist * m_params.isoRefDistMultiplier * (m_transform.rotation * Vector3::UnitZ());
 
   UpdateCameraInWorldSpace();
@@ -892,7 +894,8 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   static const int MAX_NUM_FAILED_UPDATED_BEFORE_CAMERA_RESET = 60;
   if (state->numFailedUpdates++ > MAX_NUM_FAILED_UPDATED_BEFORE_CAMERA_RESET) {
-    ResetCamera(mesh, -Vector3::UnitZ());
+    bool keepCloseToMesh = true;
+    ResetCamera(mesh, -Vector3::UnitZ(), keepCloseToMesh);
     state->numFailedUpdates = 0;
   }
 
@@ -921,7 +924,8 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #endif
 
       if (++attemptCount > 10 ||  (state->refPosition - m_transform.translation).dot(GetCameraDirection()) < 0.0f ) {
-        ResetCamera(mesh, GetCameraDirection());
+        const bool dontKeepCloseToMesh = false;
+        ResetCamera(mesh, GetCameraDirection(), dontKeepCloseToMesh);
         break;
       }
 

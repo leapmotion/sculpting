@@ -164,7 +164,7 @@ public:
 
   // Reset camera on the model. 
   // This finds the forwad-facing supporting vertex along the camera directino and relocates the reference point and camera translation.
-  void ResetCamera(const Mesh* mesh, const Vector3& cameraDirection);
+  void ResetCamera(const Mesh* mesh, const Vector3& cameraDirection, bool keepCloseToMesh = false);
 
   // Orbit camera around the mesh
   void OrbitCamera(const Mesh* mesh, lmReal deltaTime);
