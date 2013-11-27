@@ -159,6 +159,7 @@ void FreeformApp::setup()
     _wireframe_shader = gl::GlslProg( loadResource( RES_MATERIAL_VERT_GLSL ), loadResource( RES_WIREFRAME_FRAG_GLSL ) );
     _sky_shader = gl::GlslProg( loadResource( RES_SKY_VERT_GLSL ), loadResource( RES_SKY_FRAG_GLSL ) );
     _bloom_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_BLOOM_FRAG_GLSL ) );
+    Menu::g_previewShader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_PREVIEWS_FRAG_GLSL) );
   } catch (gl::GlslProgCompileExc e) {
     std::cout << e.what() << std::endl;
     _have_shaders = false;
@@ -218,7 +219,7 @@ void FreeformApp::setup()
 
   loadIcons();
   loadShapes();
-  loadLogos();
+  loadImages();
 
   if (_auto_save.haveAutoSave()) {
     Files files;
@@ -1056,13 +1057,6 @@ void FreeformApp::loadIcons() {
   icons[Menu::MATERIAL_GLASS] = ci::gl::Texture(loadImage(loadResource(RES_GLASS_PNG)));
   icons[Menu::MATERIAL_METAL] = ci::gl::Texture(loadImage(loadResource(RES_STEEL_PNG)));
   icons[Menu::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
-
-  _ui->setTutorialTextures(ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_1))),
-                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2))),
-                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3))),
-                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_4))));
-
-  _ui->setAboutTexture(ci::gl::Texture(loadImage(loadResource(RES_CREDITS))));
 }
 
 void FreeformApp::loadShapes() {
@@ -1083,9 +1077,27 @@ void FreeformApp::loadShapes() {
   shapes_[CUBE] = std::string((char*)cubeBuf.getData(), cubeBuf.getDataSize());
 }
 
-void FreeformApp::loadLogos() {
+void FreeformApp::loadImages() {
   _logo_on_black = ci::gl::Texture(loadImage(loadResource(RES_LOGO_ON_BLACK)));
   _logo_on_image = ci::gl::Texture(loadImage(loadResource(RES_LOGO_ON_IMAGE)));
+
+  std::vector<ci::gl::Texture>& previews = Menu::g_previews;
+  previews.resize(Menu::NUM_ICONS);
+
+  previews[Menu::ENVIRONMENT_JUNGLE_CLIFF] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_JUNGLE_CLIFF)));
+  previews[Menu::ENVIRONMENT_JUNGLE] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_JUNGLE)));
+  previews[Menu::ENVIRONMENT_ISLANDS] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_ISLANDS)));
+  previews[Menu::ENVIRONMENT_REDWOOD] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_REDWOOD)));
+  previews[Menu::ENVIRONMENT_DESERT] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_DESERT)));
+  previews[Menu::ENVIRONMENT_ARCTIC] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_ARCTIC)));
+  previews[Menu::ENVIRONMENT_RIVER] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_RIVER)));
+
+  _ui->setTutorialTextures(ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_1))),
+                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2))),
+                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_3))),
+                           ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_4))));
+
+  _ui->setAboutTexture(ci::gl::Texture(loadImage(loadResource(RES_CREDITS))));
 }
 
 FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& render_string) {

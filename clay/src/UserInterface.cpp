@@ -6,11 +6,9 @@
 #include "LeapInteraction.h"
 #include "Environment.h"
 #include "Freeform.h"
+#include <cinder/gl/GlslProg.h>
 
 #include "ReplayUtil.h"
-
-using namespace ci;
-using namespace ci::gl;
 
 const float Menu::FONT_SIZE = 36.0f;
 const float Menu::RING_THICKNESS_RATIO = 0.3f;
@@ -28,6 +26,7 @@ float Menu::g_windowDiagonal = 1.0f;
 float Menu::g_windowAspect = 1.0f;
 Vector2 Menu::g_windowCenter = Vector2::Constant(1.0f);
 std::vector<ci::gl::Texture> Menu::g_icons;
+std::vector<ci::gl::Texture> Menu::g_previews;
 ci::Vec2f Menu::g_shadowOffset = ci::Vec2f(1.5f, 2.0f);
 float Menu::g_zoomFactor = 1.0f;
 float Menu::g_maxMenuActivation = 0.0f;
@@ -35,6 +34,7 @@ Utilities::ExponentialFilter<float> Menu::g_maxMenuActivationSmoother;
 Vector2 Menu::g_forceCenter(Vector2(0.5f, 0.5f));
 float Menu::g_timeSinceSculpting = 0.0f;
 float Menu::g_menuOpacityCap = 1.0f;
+ci::gl::GlslProg Menu::g_previewShader;
 Utilities::ExponentialFilter<float> Menu::g_sculptMult;
 
 Menu::Menu() : m_outerRadius(BASE_OUTER_RADIUS), m_innerRadius(BASE_INNER_RADIUS), m_sweepAngle(SWEEP_ANGLE),
@@ -221,7 +221,27 @@ void Menu::draw() const {
         const float green = 0.6f * entryActivation;
         glColor4f(brightness, brightness + green, brightness, entryOpacity);
       }
+
+      ci::gl::Texture* tex = 0;
+      if (m_entries[i].drawMethod == MenuEntry::TEXTURE) {
+        Menu::g_previewShader.bind();
+        tex = &g_previews[m_entries[i].m_entryType];
+        tex->bind(0);
+        const float size = Menu::relativeToAbsolute(0.15f);
+        Menu::g_previewShader.uniform("preview_texture", 0);
+        Menu::g_previewShader.uniform("centerX", m_entries[i].m_position.x());
+        Menu::g_previewShader.uniform("centerY", Menu::g_windowSize.y() - m_entries[i].m_position.y());
+        Menu::g_previewShader.uniform("sizeX", size);
+        Menu::g_previewShader.uniform("sizeY", size);
+        Menu::g_previewShader.uniform("alpha", entryOpacity);
+      }
+
       Utilities::drawPartialDisk(pos, wedgeStart, wedgeEnd, angleStart, angleWidth);
+
+      if (m_entries[i].drawMethod == MenuEntry::TEXTURE) {
+        Menu::g_previewShader.unbind();
+        tex->unbind();
+      }
 
       m_entries[i].draw(this, isSelected);
     }
@@ -412,7 +432,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_ENVIRONMENT_ENTRIES; i++) {
     Menu::MenuEntry& entry = _environment_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.drawMethod = Menu::MenuEntry::TEXTURE;
   }
 
   const int NUM_GENERAL_ENTRIES = 4;

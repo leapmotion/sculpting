@@ -13,20 +13,9 @@
 #define RES_SCREEN_FRAG_GLSL                  CINDER_RESOURCE( ../resources/, screen-frag.glsl, 131, GLSL )
 #define RES_WIREFRAME_FRAG_GLSL               CINDER_RESOURCE( ../resources/, wireframe-frag.glsl, 134, GLSL )
 #define RES_BLOOM_FRAG_GLSL                   CINDER_RESOURCE( ../resources/, bloom-frag.glsl, 135, GLSL )
+#define RES_PREVIEWS_FRAG_GLSL                CINDER_RESOURCE( ../resources/, previews-frag.glsl, 146, GLSL )
 
 // menu icons
-#define RES_BRUSH_SVG                         CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 200, SVG )
-#define RES_STRENGTH_SVG                      CINDER_RESOURCE( ../resources/menu-icons/, brush-strength-2.svg, 201, SVG )
-#define RES_SIZE_SVG                          CINDER_RESOURCE( ../resources/menu-icons/, brush-strength-3.svg, 202, SVG )
-#define RES_TYPE_SVG                          CINDER_RESOURCE( ../resources/menu-icons/, brush-type.svg, 203, SVG )
-#define RES_PAINT_PNG                         CINDER_RESOURCE( ../resources/menu-icons/, paint.png, 204, PNG )
-#define RES_PUSH_PNG                          CINDER_RESOURCE( ../resources/menu-icons/, press.png, 205, PNG )
-#define RES_SWEEP_PNG                         CINDER_RESOURCE( ../resources/menu-icons/, sweep.png, 206, PNG )
-#define RES_FLATTEN_PNG                       CINDER_RESOURCE( ../resources/menu-icons/, flatten.png, 207, PNG )
-#define RES_SMOOTH_PNG                        CINDER_RESOURCE( ../resources/menu-icons/, smooth.png, 208, PNG )
-#define RES_SHRINK_PNG                        CINDER_RESOURCE( ../resources/menu-icons/, repel.png, 209, PNG )
-#define RES_GROW_PNG                          CINDER_RESOURCE( ../resources/menu-icons/, grow.png, 210, PNG )
-#define RES_SIZE_AUTO_SVG                     CINDER_RESOURCE( ../resources/menu-icons/, brush.svg, 211, SVG )
 #define RES_PAINT_SELECTED_PNG                CINDER_RESOURCE( ../resources/menu-icons/, paint-selected.png, 224, PNG )
 #define RES_PUSH_SELECTED_PNG                 CINDER_RESOURCE( ../resources/menu-icons/, press-selected.png, 225, PNG )
 #define RES_SWEEP_SELECTED_PNG                CINDER_RESOURCE( ../resources/menu-icons/, sweep-selected.png, 226, PNG )
@@ -68,3 +57,12 @@
 
 // about image
 #define RES_CREDITS                           CINDER_RESOURCE( ../resources/, credits.png, 280, PNG )
+
+// environment previews
+#define RES_PREVIEW_JUNGLE_CLIFF              CINDER_RESOURCE( ../resources/previews/, jungle-cliff.png, 290, PNG )
+#define RES_PREVIEW_JUNGLE                    CINDER_RESOURCE( ../resources/previews/, jungle.png, 291, PNG )
+#define RES_PREVIEW_ISLANDS                   CINDER_RESOURCE( ../resources/previews/, islands.png, 292, PNG )
+#define RES_PREVIEW_REDWOOD                   CINDER_RESOURCE( ../resources/previews/, redwood.png, 293, PNG )
+#define RES_PREVIEW_DESERT                    CINDER_RESOURCE( ../resources/previews/, desert.png, 294, PNG )
+#define RES_PREVIEW_ARCTIC                    CINDER_RESOURCE( ../resources/previews/, arctic.png, 295, PNG )
+#define RES_PREVIEW_RIVER                     CINDER_RESOURCE( ../resources/previews/, river.png, 296, PNG )

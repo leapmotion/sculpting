@@ -103,7 +103,7 @@ public:
   };
 
   struct MenuEntry {
-    enum DrawMethod { ICON, COLOR, STRING, CIRCLE };
+    enum DrawMethod { ICON, COLOR, STRING, CIRCLE, TEXTURE };
     MenuEntry() : m_position(Vector2::Zero()), m_radius(0.02f), m_value(0.0f) {
       m_hoverStrength.value = 0.0f;
       m_activationStrength.value = 0.0f;
@@ -149,10 +149,12 @@ public:
         gl::color(color);
         g_textureFont->drawString(str, stringRect);
         glPopMatrix();
+      } else if (drawMethod == TEXTURE) {
+        // nothing to do, the wedge is drawn with the desired texture elsewhere
       }
     }
     std::string toString() const {
-      if (drawMethod == ICON || drawMethod == STRING) {
+      if (drawMethod == ICON || drawMethod == STRING || drawMethod == TEXTURE) {
         switch(m_entryType) {
         case Menu::STRENGTH: return "Strength"; break;
         case Menu::SIZE: return "Size"; break;
@@ -309,6 +311,7 @@ public:
   static ci::gl::TextureFontRef g_textureFont;
   static ci::gl::TextureFontRef g_boldTextureFont;
   static std::vector<ci::gl::Texture> g_icons;
+  static std::vector<ci::gl::Texture> g_previews;
   static ci::Vec2f g_shadowOffset;
   static float g_zoomFactor;
   static float g_maxMenuActivation;
@@ -316,6 +319,7 @@ public:
   static Vector2 g_forceCenter;
   static float g_timeSinceSculpting;
   static float g_menuOpacityCap;
+  static ci::gl::GlslProg g_previewShader;
 
   Menu();
   void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);

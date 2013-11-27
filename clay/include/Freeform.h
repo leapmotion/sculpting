@@ -85,7 +85,7 @@ private:
   float checkEnvironmentLoading();
   void loadIcons();
   void loadShapes();
-  void loadLogos();
+  void loadImages();
   
 #if defined(CINDER_COCOA)
   ci::DataSourceRef loadResource(const std::string& macPath) {
