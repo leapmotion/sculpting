@@ -952,43 +952,6 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   Vector3 clippedMovement = m_transform.rotation * scaledMovement;
 
-  // Verify movement
-  lmReal radiusForCameraSphereCollision = m_params.minDist;
-  //lmReal radiusForCameraSphereCollision = 0.0f;
-  bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
-  if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
-#if LM_LOG_CAMERA_LOGIC_4
-    std::cout << "Invalid camera movement (collision)." << std::endl;
-#endif
-
-    const int numCorrections = 5;
-    const Vector3 originalMovement = clippedMovement;
-    const lmReal originalLength = clippedMovement.norm();
-    const Vector3 originalMovementDir = clippedMovement / originalLength;
-    lmQuat rotToZ; rotToZ.setFromTwoVectors(originalMovementDir, -GetCameraDirection());
-    int i;
-    for (i = 0; i < numCorrections && !validMovement; i++)
-    {
-      const lmReal t = (i+1.0f)/numCorrections;
-      lmQuat correction = lmQuat::Identity().slerp(t, rotToZ);
-      clippedMovement = correction * originalMovementDir;
-      clippedMovement *= (1.0f-(lmReal(i+1.0f)/lmReal(numCorrections+1.0f))) * originalLength;
-      //LM_DRAW_ARROW(Vector3::UnitY()*10.0f + state->refPosition, Vector3::UnitY()*10.0f + state->refPosition + clippedMovement*10.0f, lmColor::BLUE);
-      validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
-    }
-
-    if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
-#if LM_LOG_CAMERA_LOGIC_4
-      std::cout << "Invalid camera movement (after correcting z)." << std::endl;
-#endif
-      return;
-    } else {
-#if LM_LOG_CAMERA_LOGIC_4
-      std::cout << "Corrected movement " << i << " times." << std::endl;
-#endif
-    }
-  }
-
   // Saftey clip movement so that the camera doesn't go past the safety distance.
   if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.5f) {
     // Clip to the closest point
@@ -1045,6 +1008,46 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
       }
     }
   }
+
+  // Verify movement
+  {
+    lmReal radiusForCameraSphereCollision = m_params.minDist;
+    //lmReal radiusForCameraSphereCollision = 0.0f;
+    bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
+    if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
+#if LM_LOG_CAMERA_LOGIC_4
+      std::cout << "Invalid camera movement (collision)." << std::endl;
+#endif
+
+      const int numCorrections = 5;
+      const Vector3 originalMovement = clippedMovement;
+      const lmReal originalLength = clippedMovement.norm();
+      const Vector3 originalMovementDir = clippedMovement / originalLength;
+      lmQuat rotToZ; rotToZ.setFromTwoVectors(originalMovementDir, -GetCameraDirection());
+      int i;
+      for (i = 0; i < numCorrections && !validMovement; i++)
+      {
+        const lmReal t = (i+1.0f)/numCorrections;
+        lmQuat correction = lmQuat::Identity().slerp(t, rotToZ);
+        clippedMovement = correction * originalMovementDir;
+        clippedMovement *= (1.0f-(lmReal(i+1.0f)/lmReal(numCorrections+1.0f))) * originalLength;
+        //LM_DRAW_ARROW(Vector3::UnitY()*10.0f + state->refPosition, Vector3::UnitY()*10.0f + state->refPosition + clippedMovement*10.0f, lmColor::BLUE);
+        validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
+      }
+
+      if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
+#if LM_LOG_CAMERA_LOGIC_4
+        std::cout << "Invalid camera movement (after correcting z)." << std::endl;
+#endif
+        return;
+      } else {
+#if LM_LOG_CAMERA_LOGIC_4
+        std::cout << "Corrected movement " << i << " times." << std::endl;
+#endif
+      }
+    }
+  }
+
 
   // Update closest distance: last check
   lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, state->refDist + clippedMovement.norm());
