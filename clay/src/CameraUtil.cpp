@@ -300,7 +300,7 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
   // Do raycast
   if (mesh) {
     const lmReal aabbDiagonal = mesh->getOctree()->getAabbSplit().getDiagonalLength();
-    Vector3 rayStart = (q * Vector3::UnitZ()) *  aabbDiagonal;
+    Vector3 rayStart = (q * Vector3::UnitZ()) * aabbDiagonal;
     lmRayCastOutput raycastHit;
     CastOneRay(mesh, lmRay(rayStart, Vector3::Zero()), &raycastHit);
 
@@ -771,8 +771,7 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
 
 lmReal CameraUtil::IsoQueryRadius( const Mesh* mesh, IsoCameraState* state ) const
 {
-  const lmReal meshSize = mesh->getOctree()->getAabbSplit().getDiagonalLength();
-  const lmReal multiplier = 0.5 * meshSize / Mesh::globalScale_;
+  const lmReal multiplier = 0.5f * GetMeshSize(mesh) / Mesh::globalScale_;
   return std::max(state->refDist + m_params.isoQueryPaddingRadius * multiplier, m_params.isoQueryPaddingRadius * multiplier);
 }
 
@@ -839,7 +838,7 @@ void CameraUtil::InitIsoCamera( Mesh* mesh, IsoCameraState* state )
   //state->refPotential = IsoPotential(mesh, state->refPosition);
   state->cameraOffsetMultiplier = 1.0f;
 
-  lmReal queryRadius = 10000.0f; // everything
+  lmReal queryRadius = 10.0f * GetMeshSize(mesh); // everything
   state->closestPointOnMesh = GetClosestSurfacePoint(mesh, state->refPosition, queryRadius);
   state->refDist = (state->closestPointOnMesh.position - state->refPosition).norm();
 
@@ -967,7 +966,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #if LM_LOG_CAMERA_LOGIC_4
     std::cout << "New IsoNormal not found, broadening the search." << std::endl;
 #endif
-    lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, 10000.0f);
+    lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, 10.0f*GetMeshSize(mesh));
     if (!lmIsNormalized(closestPoint.normal)) {
 #if LM_LOG_CAMERA_LOGIC_4
       std::cout << "Now IsoNormal failed (closest point not found)." << std::endl;
@@ -1015,7 +1014,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #if LM_LOG_CAMERA_LOGIC_4
     std::cout << "Ref Dist too small for queries" << std::endl;
 #endif
-    closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, 10000.0f);
+    closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, 10.0f * GetMeshSize(mesh));
     if (!lmIsNormalized(closestPoint.normal)) {
 #if LM_LOG_CAMERA_LOGIC_
       std::cout << "ClosestPoint normal wrong." << std::endl;
@@ -1038,7 +1037,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   // Update camera
   IsoUpdateCameraTransform(-state->refNormal, state, deltaTime);
 
-  LM_ASSERT(state->refDist < 10000, "Reference distance exploded.")
+  LM_ASSERT(state->refDist < 10 * GetMeshSize(mesh), "Reference distance exploded.");
 
   IsoPreventCameraInMesh(mesh, state);
 
@@ -1071,7 +1070,7 @@ void CameraUtil::IsoCameraConstrainWhenSpinning( Mesh* mesh, IsoCameraState* sta
   }
 
   // raycast from camera & move back the refPoint if needed.
-  Vector3 rayStart = state->refPosition + state->refNormal * 1000.0f;
+  Vector3 rayStart = state->refPosition + state->refNormal * 2.0f * GetMeshSize(mesh);
   Vector3 rayEnd = state->refPosition - state->refNormal * state->refDist;
   lmRayCastOutput raycastOutput;
   lmRay ray(rayStart, rayEnd);
@@ -1084,8 +1083,8 @@ void CameraUtil::IsoCameraConstrainWhenSpinning( Mesh* mesh, IsoCameraState* sta
 
 void CameraUtil::IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoState) {
   // Only use for manifold meshes..
-  lmRay ray0(isoState->refPosition, isoState->refPosition - 10000.0f * isoState->refNormal);
-  lmRay ray1(isoState->refPosition, isoState->refPosition + 10000.0f * isoState->refNormal);
+  lmRay ray0(isoState->refPosition, isoState->refPosition - 10.0f * GetMeshSize(mesh) * isoState->refNormal);
+  lmRay ray1(isoState->refPosition, isoState->refPosition + 10.0f * GetMeshSize(mesh) * isoState->refNormal);
   std::vector<lmRayCastOutput> results0;
   std::vector<lmRayCastOutput> results1;
   const bool collectAll = true;
@@ -1204,7 +1203,13 @@ lmReal CameraUtil::GetReferenceDistance() const
 
 lmReal CameraUtil::GetMaxDistanceForMesh(const Mesh* mesh) const
 {
-  const lmReal meshSize = mesh->getOctree()->getAabbSplit().getDiagonalLength();
-  const lmReal maxDistScale = 0.5f * meshSize / Mesh::globalScale_;
+  const lmReal maxDistScale = 0.5f * GetMeshSize(mesh) / Mesh::globalScale_;
   return m_params.maxDist * maxDistScale;
+}
+
+lmReal CameraUtil::GetMeshSize(const Mesh* mesh) const {
+  lmReal meshSize = mesh->getOctree()->getAabbSplit().getDiagonalLength();
+  // Clip max mesh size used for computations.
+  meshSize = std::min(meshSize, 3.0f * (2.0f * Mesh::globalScale_));
+  return meshSize;
 }

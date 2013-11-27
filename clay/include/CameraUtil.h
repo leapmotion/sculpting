@@ -221,6 +221,8 @@ public:
 
   lmReal GetMaxDistanceForMesh(const Mesh* mesh) const;
 
+  lmReal GetMeshSize(const Mesh* mesh) const;
+
 private:
 
   void UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut );
