@@ -1306,9 +1306,142 @@ int FreeformApp::loadShape(Shape shape) {
   return -1;
 }
 
-#if _WIN32
-fs::path getSaveFilePathCustom( const fs::path &initialPath, const std::vector<std::string>& extensions )
+#if __APPLE__
+@interface SavePanelProtocol : NSObject <NSOpenSavePanelDelegate>
 {
+  NSArray* m_extensions;
+  NSPopUpButton* m_pulldown;
+}
+- (id)initWithPopUpButton:(NSPopUpButton*)pulldown extensions:(NSArray*)extensions;
+- (NSString *)panel:(id)sender userEnteredFilename:(NSString *)filename confirmed:(BOOL)okFlag;
+@end
+
+@implementation SavePanelProtocol
+- (id)initWithPopUpButton:(NSPopUpButton*)pulldown extensions:(NSArray*)extensions
+{
+  if ((self = [super init])) {
+    m_extensions = extensions;
+    m_pulldown = pulldown;
+  }
+  return self;
+}
+
+- (NSString *)panel:(id)sender userEnteredFilename:(NSString *)filename confirmed:(BOOL)okFlag
+{
+  if (okFlag && m_pulldown && m_extensions) {
+    NSMutableString* returnFileName = [[NSMutableString alloc] initWithString: filename];
+    NSString* extension = [returnFileName pathExtension];
+    if (extension) {
+      for (NSString* ext in m_extensions) {
+        if ([extension caseInsensitiveCompare:ext] == NSOrderedSame) {
+          return filename;
+        }
+      }
+    }
+    NSInteger index = [m_pulldown indexOfSelectedItem];
+    if (index >= 0) {
+      [returnFileName appendString:@"."];
+      [returnFileName appendString:[m_extensions objectAtIndex:index]];
+    }
+    return returnFileName;
+  }
+  return filename;
+}
+@end
+#endif
+
+fs::path FreeformApp::getSaveFilePathCustom(const fs::path &initialPath,
+                                            const std::vector<std::string>& extensions,
+                                            const std::vector<std::string>& descriptions)
+{
+#if __APPLE__
+  NSSavePanel *cinderSave = [NSSavePanel savePanel];
+  NSWindow *win = [reinterpret_cast<NSView*>(getWindow()->getNative()) window];
+  NSPopUpButton* pulldown = nil;
+  SavePanelProtocol* savePanelProtocol = nil;
+
+  NSMutableArray *typesArray = nil;
+  if (!extensions.empty()) {
+    typesArray = [NSMutableArray arrayWithCapacity:extensions.size()];
+    for (auto iter = extensions.cbegin(); iter != extensions.cend(); ++iter) {
+      [typesArray addObject:[NSString stringWithUTF8String:iter->c_str()]];
+    }
+    if (extensions.size() > 1) {
+      NSArray* xib = nil;
+      [[NSBundle mainBundle] loadNibNamed:@"SavePanelFormatView" owner:nil topLevelObjects:&xib];
+      if (xib) {
+        NSView* view = nil;
+        for (id obj in xib) {
+          if ([obj isKindOfClass:[NSView class]]) {
+            view = obj;
+            for (id child in [view subviews]) {
+              if ([child isKindOfClass:[NSPopUpButton class]]) {
+                pulldown = child;
+                break;
+              }
+            }
+            break;
+          }
+        }
+        if (view && pulldown) {
+          [pulldown removeAllItems];
+          int index = 0;
+          if (descriptions.size() == extensions.size()) {
+            savePanelProtocol = [[SavePanelProtocol alloc] initWithPopUpButton:pulldown extensions:typesArray];
+          }
+          for (auto iter = extensions.cbegin(); iter != extensions.cend(); ++iter) {
+            std::string message;
+            if (savePanelProtocol) {
+              message = descriptions[index] + " (." + (*iter) + ")";
+            } else {
+              message = (*iter);
+            }
+            [pulldown addItemWithTitle:[NSString stringWithUTF8String:message.c_str()]];
+            index++;
+          }
+          if (savePanelProtocol) {
+            [cinderSave setDelegate:savePanelProtocol];
+          }
+          [cinderSave setAccessoryView:view];
+        }
+      }
+    }
+    [cinderSave setAllowedFileTypes:typesArray];
+  }
+
+  if (!initialPath.empty()) {
+    NSString *directory, *file = nil;
+    directory = [[NSString stringWithUTF8String:initialPath.c_str()] stringByExpandingTildeInPath];
+    BOOL isDir = NO;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:directory isDirectory:&isDir]) {
+      if (!isDir) { // a file exists at this path, so directory is its parent
+        file = [directory lastPathComponent];
+        directory = [directory stringByDeletingLastPathComponent];
+      }
+    } else {
+      file = [directory lastPathComponent];
+      directory = [directory stringByDeletingLastPathComponent];
+    }
+
+    [cinderSave setDirectoryURL:[NSURL fileURLWithPath:directory]];
+    if (file) {
+      [cinderSave setNameFieldStringValue:file];
+    }
+  }
+
+  fs::path path, *pathPtr = &path;
+  [cinderSave beginSheetModalForWindow:win completionHandler:^(NSInteger result) {
+    if (result == NSFileHandlingPanelOKButton) {
+      fs::path userPath = fs::path([[[cinderSave URL] path] UTF8String]);
+      *pathPtr = userPath; // "path" is const, but we can use a pointer to it
+    }
+    [NSApp stopModal];
+  }];
+  [NSApp runModalForWindow:win];
+  [cinderSave orderOut:win];
+  restoreWindowContext();
+  return path;
+#elif _WIN32
   OPENFILENAMEA ofn;       // common dialog box structure
   char szFile[260];       // buffer for file name
 
@@ -1327,6 +1460,7 @@ fs::path getSaveFilePathCustom( const fs::path &initialPath, const std::vector<s
   } else {
     size_t offset = 0;
 
+    (void)descriptions; // If !descriptions.empty(), use the descriptions (and remove this line) -- FIXME
     for( std::vector<std::string>::const_iterator strIt = extensions.begin(); strIt != extensions.end(); ++strIt ) {
       strcpy( extensionStr + offset, strIt->c_str() );
       offset += strIt->length();
@@ -1364,8 +1498,11 @@ fs::path getSaveFilePathCustom( const fs::path &initialPath, const std::vector<s
   }
 
   return result;
-}
+#else
+  (void)descriptions;
+  return FreeformApp::getSaveFilePath(initialPath, extensions);
 #endif
+}
 
 int FreeformApp::saveFile()
 {
@@ -1381,19 +1518,19 @@ int FreeformApp::saveFile()
 
   Files files;
   std::vector<std::string> file_extensions;
+  std::vector<std::string> file_extension_descriptions;
+  file_extension_descriptions.push_back("Polygon File Format");
   file_extensions.push_back("ply");
+  file_extension_descriptions.push_back("Stereo Lithography");
   file_extensions.push_back("stl");
+  file_extension_descriptions.push_back("Wavefront");
   file_extensions.push_back("obj");
 
   bool toggleFull = isFullScreen();
   if (toggleFull) {
     setFullScreen(false);
   }
-#if _WIN32
-  fs::path path = getSaveFilePathCustom("", file_extensions);
-#else
-  fs::path path = getSaveFilePath("", file_extensions);
-#endif
+  fs::path path = getSaveFilePathCustom("", file_extensions, file_extension_descriptions);
   if (toggleFull) {
     setFullScreen(true);
   }
@@ -1421,18 +1558,17 @@ int FreeformApp::saveFile()
 
 int FreeformApp::saveScreenshot() {
   std::vector<std::string> file_extensions;
+  std::vector<std::string> file_extension_descriptions;
+  file_extension_descriptions.push_back("PNG");
   file_extensions.push_back("png");
+  file_extension_descriptions.push_back("JPEG");
   file_extensions.push_back("jpg");
 
   bool toggleFull = isFullScreen();
   if (toggleFull) {
     setFullScreen(false);
   }
-#if _WIN32
-  fs::path path = getSaveFilePathCustom("", file_extensions);
-#else
-  fs::path path = getSaveFilePath("", file_extensions);
-#endif
+  fs::path path = getSaveFilePathCustom("", file_extensions, file_extension_descriptions);
   if (toggleFull) {
     setFullScreen(true);
   }

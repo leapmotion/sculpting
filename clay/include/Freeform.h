@@ -115,6 +115,9 @@ private:
     }
   }
 #endif
+  fs::path getSaveFilePathCustom(const fs::path &initialPath = "",
+                                const std::vector<std::string>& extensions = std::vector<std::string>(),
+                                const std::vector<std::string>& descriptions = std::vector<std::string>());
 
   enum MachineSpeed { LOW, MID, HIGH };
   MachineSpeed parseRenderString(const std::string& render_string);

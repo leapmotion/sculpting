@@ -52,6 +52,7 @@
 		18392F4D179E91EC006709CF /* libLeap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 18392F4C179E91EC006709CF /* libLeap.dylib */; };
 		18392F4E179E92EE006709CF /* libLeap.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 18392F4C179E91EC006709CF /* libLeap.dylib */; };
 		18392F4F179E92EE006709CF /* libfreeimage.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 18392F4A179E9050006709CF /* libfreeimage.dylib */; };
+		4E243EF718469AB5003C22E8 /* SavePanelFormatView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4E243EF618469AB5003C22E8 /* SavePanelFormatView.xib */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
 		8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 8A24C4B8182D9905005151DA /* brush-vert.glsl */; };
@@ -93,7 +94,6 @@
 		8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
 		8AB190681840111700347357 /* credits.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AB190671840111700347357 /* credits.png */; };
 		8AB1906A18401CE000347357 /* Breakpad.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
-		8AB1906C18401D5000347357 /* breakpadUtilities.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906B18401D5000347357 /* breakpadUtilities.dylib */; };
 		8AE236A4184671B4008BEA30 /* arctic.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE2369D184671B4008BEA30 /* arctic.png */; };
 		8AE236A5184671B4008BEA30 /* desert.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE2369E184671B4008BEA30 /* desert.png */; };
 		8AE236A6184671B4008BEA30 /* islands.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE2369F184671B4008BEA30 /* islands.png */; };
@@ -209,11 +209,12 @@
 		18392F4C179E91EC006709CF /* libLeap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libLeap.dylib; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		4E243EF618469AB5003C22E8 /* SavePanelFormatView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SavePanelFormatView.xib; sourceTree = "<group>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
 		5323E6B50EAFCA7E003A9687 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
 		89C36BE2F0154685A7D47F00 /* Freeform_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Freeform_Prefix.pch; sourceTree = "<group>"; };
 		8A24C4B8182D9905005151DA /* brush-vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "brush-vert.glsl"; path = "../../resources/brush-vert.glsl"; sourceTree = "<group>"; };
-		8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Freeform.cpp; path = ../../src/Freeform.cpp; sourceTree = "<group>"; };
+		8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = Freeform.cpp; path = ../../src/Freeform.cpp; sourceTree = "<group>"; };
 		8A7FDEFE183A8E8400E94B5F /* Freeform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Freeform.h; path = ../../include/Freeform.h; sourceTree = "<group>"; };
 		8A7FDF00183A8ECB00E94B5F /* ball.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ball.obj; sourceTree = "<group>"; };
 		8A7FDF01183A8ECB00E94B5F /* can.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = can.obj; sourceTree = "<group>"; };
@@ -413,7 +414,6 @@
 		8AB1906418400E0D00347357 /* CrashReport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CrashReport.h; path = ../../include/CrashReport.h; sourceTree = "<group>"; };
 		8AB1906518400EF400347357 /* Breakpad.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Breakpad.framework; path = "../../../../../../../../opt/local/Libraries/breakpad-0.1/lib/Breakpad.framework"; sourceTree = "<group>"; };
 		8AB190671840111700347357 /* credits.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = credits.png; path = ../../resources/credits.png; sourceTree = "<group>"; };
-		8AB1906B18401D5000347357 /* breakpadUtilities.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = breakpadUtilities.dylib; path = "../../../../../../../../opt/local/Libraries/breakpad-0.1/lib/breakpadUtilities.dylib"; sourceTree = "<group>"; };
 		8AE2369D184671B4008BEA30 /* arctic.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = arctic.png; path = ../../resources/previews/arctic.png; sourceTree = "<group>"; };
 		8AE2369E184671B4008BEA30 /* desert.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = desert.png; path = ../../resources/previews/desert.png; sourceTree = "<group>"; };
 		8AE2369F184671B4008BEA30 /* islands.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = islands.png; path = ../../resources/previews/islands.png; sourceTree = "<group>"; };
@@ -434,7 +434,6 @@
 			files = (
 				18392F4B179E9050006709CF /* libfreeimage.dylib in Frameworks */,
 				18392F4D179E91EC006709CF /* libLeap.dylib in Frameworks */,
-				8AB1906C18401D5000347357 /* breakpadUtilities.dylib in Frameworks */,
 				8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				0091D8F90E81B9330029341E /* OpenGL.framework in Frameworks */,
@@ -507,6 +506,7 @@
 		29B97314FDCFA39411CA2CEA /* claydemo */ = {
 			isa = PBXGroup;
 			children = (
+				4E243EF618469AB5003C22E8 /* SavePanelFormatView.xib */,
 				8A84A922182ADD59001CD625 /* assets */,
 				01B97315FEAEA392516A2CEA /* Blocks */,
 				29B97315FDCFA39411CA2CEA /* Headers */,
@@ -589,7 +589,6 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				8AB1906B18401D5000347357 /* breakpadUtilities.dylib */,
 				18392F4C179E91EC006709CF /* libLeap.dylib */,
 				18392F4A179E9050006709CF /* libfreeimage.dylib */,
 				8AB1906518400EF400347357 /* Breakpad.framework */,
@@ -1168,6 +1167,7 @@
 				8AE236AF1846A654008BEA30 /* turkey.obj in Resources */,
 				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
 				8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */,
+				4E243EF718469AB5003C22E8 /* SavePanelFormatView.xib in Resources */,
 				01C5D793181A482D00194132 /* wireframe-frag.glsl in Resources */,
 				01C5D78F181A482D00194132 /* passthrough-vert.glsl in Resources */,
 				8A9B822E1832D38000AA2EA3 /* repel-selected.png in Resources */,
