@@ -102,6 +102,7 @@
 		8AE236A9184671B4008BEA30 /* redwood.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236A2184671B4008BEA30 /* redwood.png */; };
 		8AE236AA184671B4008BEA30 /* river.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236A3184671B4008BEA30 /* river.png */; };
 		8AE236AD184671D3008BEA30 /* previews-frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236AC184671D3008BEA30 /* previews-frag.glsl */; };
+		8AE236AF1846A654008BEA30 /* turkey.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236AE1846A654008BEA30 /* turkey.obj */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -421,6 +422,7 @@
 		8AE236A2184671B4008BEA30 /* redwood.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = redwood.png; path = ../../resources/previews/redwood.png; sourceTree = "<group>"; };
 		8AE236A3184671B4008BEA30 /* river.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = river.png; path = ../../resources/previews/river.png; sourceTree = "<group>"; };
 		8AE236AC184671D3008BEA30 /* previews-frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "previews-frag.glsl"; path = "../../resources/previews-frag.glsl"; sourceTree = "<group>"; };
+		8AE236AE1846A654008BEA30 /* turkey.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = turkey.obj; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Freeform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeform.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEAF09CCD9054AE5A257591B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -608,6 +610,7 @@
 		8A7FDEFF183A8ECB00E94B5F /* shapes */ = {
 			isa = PBXGroup;
 			children = (
+				8AE236AE1846A654008BEA30 /* turkey.obj */,
 				8A7FDF00183A8ECB00E94B5F /* ball.obj */,
 				8A7FDF01183A8ECB00E94B5F /* can.obj */,
 				8A7FDF02183A8ECB00E94B5F /* cube.obj */,
@@ -1162,6 +1165,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A7FDF08183A8ECB00E94B5F /* donut.obj in Resources */,
+				8AE236AF1846A654008BEA30 /* turkey.obj in Resources */,
 				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
 				8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */,
 				01C5D793181A482D00194132 /* wireframe-frag.glsl in Resources */,
