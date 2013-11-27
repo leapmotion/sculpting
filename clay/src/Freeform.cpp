@@ -1258,6 +1258,11 @@ int FreeformApp::loadFile()
 }
 
 int FreeformApp::loadShape(Shape shape) {
+  Mesh::stateMask_= 1;
+  Vertex::tagMask_ = 1;
+  Vertex::sculptMask_ = 1;
+  Triangle::tagMask_ = 1;
+
   std::stringstream ss(shapes_[shape]);
   Files files;
   Mesh* newMesh = files.loadOBJ(ss);
@@ -1265,10 +1270,6 @@ int FreeformApp::loadShape(Shape shape) {
     return 0;
   }
   std::unique_lock<std::mutex> lock(_mesh_mutex);
-  Mesh::stateMask_= 1;
-  Vertex::tagMask_ = 1;
-  Vertex::sculptMask_ = 1;
-  Triangle::tagMask_ = 1;
   float rotationVel = 0.0f;
   if (mesh_) {
     rotationVel = mesh_->getRotationVelocity();

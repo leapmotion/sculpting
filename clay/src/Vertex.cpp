@@ -27,9 +27,6 @@ Vertex& Vertex::operator=(const Vector3& vec)
 Vertex::~Vertex()
 {}
 
-void Vertex::addTriangle(int iTri) { tIndices_.push_back(iTri); }
-void Vertex::addRingVertex(int iVer) { ringVertices_.push_back(iVer); }
-
 /** Replace triangle */
 void Vertex::replaceTriangle(int iTriOld, int iTriNew)
 {
@@ -42,6 +39,7 @@ void Vertex::replaceTriangle(int iTriOld, int iTriNew)
       return;
     }
   }
+  LM_ASSERT(false, "Triangle not found");
 }
 
 /** Replace ring vertex */
@@ -56,6 +54,7 @@ void Vertex::replaceRingVertex(int iVerOld, int iVerNew)
       return;
     }
   }
+  LM_ASSERT(false, "Ring vertex not found");
 }
 
 /** Remove triangle */
@@ -71,6 +70,7 @@ void Vertex::removeTriangle(int iTri)
       return;
     }
   }
+  LM_ASSERT(false, "Triangle not found");
 }
 
 /** Remove ring vertex */
@@ -86,6 +86,7 @@ void Vertex::removeRingVertex(int iVer)
       return;
     }
   }
+  LM_ASSERT(false, "Ring vertex not found");
 }
 
 /** < operator */

@@ -43,6 +43,9 @@ public :
     iVertsDecimated_.clear();
     iTrisToDelete_.clear();
     iVertsToDelete_.clear();
+    iTrisSubd_.clear();
+    iVertsSubd_.clear();
+    split_.clear();
   }
   void subdivision(std::vector<int> &iTris, float detailMaxSquared);
   void decimation(std::vector<int> &iTris, float detailMinSquared);
@@ -96,6 +99,9 @@ private:
   std::vector<int> iVertsDecimated_; //vertices to be updated (mainly for the VBO's, used in decimation and adaptive topo)
   std::vector<int> iTrisToDelete_; //triangles to be deleted
   std::vector<int> iVertsToDelete_; //vertices to be deleted
+  std::vector<int> iTrisSubd_;
+  std::vector<int> iVertsSubd_;
+  std::vector<int> split_;
   Grid grid_;
 };
 

@@ -24,8 +24,8 @@ public:
   Vertex(const Vector3& vec, int id=-1);
   Vertex& operator=(const Vector3& vec);
   ~Vertex();
-  void addTriangle(int iTri);
-  void addRingVertex(int iVer);
+  inline void addTriangle(int iTri) { tIndices_.push_back(iTri); }
+  inline void addRingVertex(int iVer) { ringVertices_.push_back(iVer); }
   void replaceTriangle(int iTriOld, int iTriNew);
   void replaceRingVertex(int iVerOld, int iVerNew);
   void removeTriangle(int iTri);
