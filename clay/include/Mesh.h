@@ -127,7 +127,6 @@ private:
   bool reallocateVerticesBuffer_;
   bool reallocateIndicesBuffer_;
   int pendingGPUTriangles;
-  int lastIndexInitGPUTriangles;
   int nbGPUTriangles;
   int pendingGPUVertices;
   Vector3 center_; //center of mesh

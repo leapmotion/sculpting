@@ -396,12 +396,13 @@ void Sculpt::addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3
   brush._position = pos;
   brush._direction = dir;
   brush._velocity = vel;
-  brush._activation = ci::math<float>::clamp(activation);
-  LM_ASSERT(radius > 0.00001f && radius < 9999999.0f, "Bad radius");
-  LM_ASSERT(strength >= 0.0f && strength <= 1.0f, "Bad strength");
-  LM_ASSERT(fabs(dir.norm() - 1.0f) < 0.0001f, "Bad direction");
-  LM_ASSERT(vel.norm() > 0.00001f && vel.norm() < 9999999.0f, "Bad velocity");
-  LM_ASSERT(activation >= 0.0f && activation <= 1.0f, "Bad activation");
+  brush._activation = ci::math<float>::clamp(activation, 0.00001f, 0.99999f);
+
+  LM_ASSERT(brush._radius > 0.00001f && radius < 9999999.0f, "Bad radius");
+  LM_ASSERT(brush._strength >= 0.0f && strength <= 1.0f, "Bad strength");
+  LM_ASSERT(fabs(brush._direction.norm() - 1.0f) < 0.0001f, "Bad direction");
+  LM_ASSERT(brush._velocity.norm() > 0.00001f && brush._velocity.norm() < 9999999.0f, "Bad velocity");
+  LM_ASSERT(brush._activation >= 0.0f && brush._activation <= 1.0f, "Bad activation");
 }
 
 void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)

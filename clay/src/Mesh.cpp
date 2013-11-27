@@ -27,8 +27,7 @@ Mesh::Mesh() : center_(Vector3::Zero()), scale_(1), lastUpdateTime_(0.0), transl
   normalsBuffer_(GL_ARRAY_BUFFER), indicesBuffer_(GL_ELEMENT_ARRAY_BUFFER), colorsBuffer_(GL_ARRAY_BUFFER),
   rotationOrigin_(Vector3::Zero()), rotationAxis_(Vector3::UnitY()), rotationVelocity_(0.0f), curRotation_(0.0f),
   verticesBufferCount_(0), indicesBufferCount_(0), reallocateVerticesBuffer_(true), reallocateIndicesBuffer_(true),
-  undoPending_(false), redoPending_(false), nbGPUTriangles(0), pendingGPUTriangles(0), lastIndexInitGPUTriangles(0),
-  pendingGPUVertices(0)
+  undoPending_(false), redoPending_(false), nbGPUTriangles(0), pendingGPUTriangles(0), pendingGPUVertices(0)
 {
   rotationVelocitySmoother_.Update(0.0f, 0.0, 0.5f);
 }
@@ -379,7 +378,6 @@ void Mesh::initVertexVBO() {
 
 void Mesh::initIndexVBO() {
   const int nbTriangles = pendingGPUTriangles;
-  lastIndexInitGPUTriangles = pendingGPUTriangles;
   indicesBufferCount_ = 2*nbTriangles;
   const int indicesBytes = indicesBufferCount_*3*sizeof(GLuint);
 
@@ -522,8 +520,7 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
   pendingGPUTriangles = totalTris;
   pendingGPUVertices = totalVerts;
 
-  // HACK: this causes flickering on some machines so disable it for now and force reallocation
-  if (0) { //totalTris < indicesBufferCount_) {
+  if (totalTris < indicesBufferCount_) {
     // within storage bounds, so it's OK to only update part of the buffer
     const int nbTris=iTris.size();
     for (int i=0; i<nbTris; i++) {
@@ -561,7 +558,7 @@ void Mesh::updateMesh(const std::vector<int> &iTris, const std::vector<int> &iVe
 void Mesh::updateGPUBuffers() {
   std::unique_lock<std::mutex> lock(bufferMutex_);
 
-  if (lastIndexInitGPUTriangles < pendingGPUTriangles || reallocateIndicesBuffer_) {
+  if (reallocateIndicesBuffer_) {
     initIndexVBO();
   }
 
