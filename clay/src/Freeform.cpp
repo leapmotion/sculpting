@@ -434,7 +434,6 @@ void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float
 
 void FreeformApp::update()
 {
-  this->getRenderer()->copyWindowSurface(getWindowBounds());
   static int updateCount = 0;
   LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
   LM_ASSERT_IDENTICAL(updateCount++);
@@ -849,13 +848,13 @@ float FreeformApp::checkEnvironmentLoading() {
       _bloom_light_threshold = info->_bloom_threshold;
       _exposure = info->_exposure;
     }
-    _first_environment_load = false;
   } else if (loadingState == Environment::LOADING_STATE_PROCESSING) {
     exposureMult = 0.0f;
   } else if (loadingState == Environment::LOADING_STATE_DONE_PROCESSING) {
     exposureMult = 0.0f;
     _environment->finishProcessing();
     _loading_thread.join();
+    _first_environment_load = false;
   }
 
   if (_first_environment_load) {
