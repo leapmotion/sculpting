@@ -933,8 +933,8 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #endif
 
       if (++attemptCount > 10 ||  (state->refPosition - m_transform.translation).dot(GetCameraDirection()) < 0.0f ) {
-        const bool dontKeepCloseToMesh = false;
-        ResetCamera(mesh, GetCameraDirection(), dontKeepCloseToMesh);
+        const bool keepCloseToMesh = true;
+        ResetCamera(mesh, GetCameraDirection(), keepCloseToMesh);
         break;
       }
 
