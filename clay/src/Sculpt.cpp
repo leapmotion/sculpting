@@ -320,7 +320,7 @@ void Sculpt::sweep(Mesh* mesh, const std::vector<int> &iVerts, const Brush& brus
 {
   VertexVector &vertices = mesh->getVertices();
   int nbVerts = iVerts.size();
-  float deformationIntensity = brush._radius*0.0005f;
+  float deformationIntensity = 0.05f;
   const float velMag = brush._velocity.norm();
   const Vector3 normalizedVel = brush._velocity / velMag;
   const float dMove = std::sqrt(d2Move_);
