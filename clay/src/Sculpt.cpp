@@ -411,7 +411,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
     return;
   }
 
-  static const float DESIRED_ANGLE_PER_SAMPLE = 0.03f;
+  static const float DESIRED_ANGLE_PER_SAMPLE = 0.02f;
 
   std::unique_lock<std::mutex> lock(brushMutex_);
   if (remeshRadius_ > 0) {
@@ -426,7 +426,7 @@ void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
   const float angle = deltaTime * velocity;
   const int numSamples = velocity > 0.001f ? static_cast<int>(std::ceil(angle / DESIRED_ANGLE_PER_SAMPLE)) : 1;
   const float timePerSample = deltaTime / numSamples;
-  const float strengthMult = (1.0f + velocity) / numSamples;
+  const float strengthMult = std::min(1.0f, (1.0f + velocity) / numSamples);
 
   bool haveSculpt = false;
 
