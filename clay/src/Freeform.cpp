@@ -27,7 +27,7 @@ FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _ph
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), symmetry_(false), _last_update_time(0.0),
   drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
   _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
-  _immersive_entered_time(0.0)
+  _immersive_entered_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false)
 {
   _camera_util = new CameraUtil();
   Menu::updateSculptMult(0.0, 0.0f);
@@ -223,6 +223,7 @@ void FreeformApp::setup()
   loadIcons();
   loadShapes();
   loadImages();
+  loadSounds();
 
   if (_auto_save.haveAutoSave()) {
     Files files;
@@ -273,6 +274,9 @@ void FreeformApp::shutdown() {
     _loading_thread.detach();
   }
   FreeImage_DeInitialise();
+  if (_have_audio && m_soundEngine) {
+    m_soundEngine->stopAllSounds();
+  }
 }
 
 void FreeformApp::resize()
@@ -842,11 +846,15 @@ float FreeformApp::checkEnvironmentLoading() {
     _environment->finishLoading();
     _loading_thread.join();
     _loading_thread = std::thread(&Environment::beginProcessing, _environment);
-    Environment::EnvironmentInfo* info = Environment::getEnvironmentInfoFromString(_environment->getPendingEnvironmentString());
+    const std::string& name = _environment->getPendingEnvironmentString();
+    Environment::EnvironmentInfo* info = Environment::getEnvironmentInfoFromString(name);
     if (info) {
       _bloom_strength = info->_bloom_strength;
       _bloom_light_threshold = info->_bloom_threshold;
       _exposure = info->_exposure;
+    }
+    if (_have_audio) {
+      m_activeLoop = m_audioLoops[name];
     }
   } else if (loadingState == Environment::LOADING_STATE_PROCESSING) {
     exposureMult = 0.0f;
@@ -870,6 +878,16 @@ void FreeformApp::draw() {
   clear();
   const double curTime = ci::app::getElapsedSeconds();
   const float exposureMult = checkEnvironmentLoading();
+
+  if (_have_audio) {
+    if (m_activeLoop.first && m_activeLoop.second) {
+      m_activeLoop.first->setVolume(0.3f*exposureMult);
+      m_activeLoop.second->setVolume(0.3f*exposureMult);
+    }
+    if (m_soundEngine) {
+      m_soundEngine->update();
+    }
+  }
 
   const ci::Vec2i size = getWindowSize();
 //  const ci::Area bounds = getWindowBounds();
@@ -1105,6 +1123,72 @@ void FreeformApp::loadImages() {
   _ui->setAboutTexture(ci::gl::Texture(loadImage(loadResource(RES_CREDITS))));
 }
 
+void FreeformApp::loadSounds() {
+  m_soundEngine = irrklang::createIrrKlangDevice();
+  if (!m_soundEngine) {
+    std::cout << "Error loading sound engine" << std::endl;
+    _have_audio = false;
+  }
+
+  if (_have_audio) {
+    LoopPair pair;
+    pair.first = createSoundResource(loadResource(RES_AUDIO_JUNGLE_CLIFF_1), "jungle-cliff1.ogg");
+    pair.second = createSoundResource(loadResource(RES_AUDIO_JUNGLE_CLIFF_2), "jungle-cliff2.ogg");
+    if (pair.first) { pair.first->setVolume(0.0f); }
+    if (pair.second) { pair.second->setVolume(0.0f); }
+    m_audioLoops["Jungle-Cliff"] = pair;
+
+    pair.first = createSoundResource(loadResource(RES_AUDIO_JUNGLE_1), "jungle1.ogg");
+    pair.second = createSoundResource(loadResource(RES_AUDIO_JUNGLE_2), "jungle2.ogg");
+    if (pair.first) { pair.first->setVolume(0.0f); }
+    if (pair.second) { pair.second->setVolume(0.0f); }
+    m_audioLoops["Jungle"] = pair;
+
+    pair.first = createSoundResource(loadResource(RES_AUDIO_ISLANDS_1), "islands1.ogg");
+    pair.second = createSoundResource(loadResource(RES_AUDIO_ISLANDS_2), "islands2.ogg");
+    if (pair.first) { pair.first->setVolume(0.0f); }
+    if (pair.second) { pair.second->setVolume(0.0f); }
+    m_audioLoops["Islands"] = pair;
+
+    pair.first = createSoundResource(loadResource(RES_AUDIO_REDWOOD_1), "redwood1.ogg");
+    pair.second = createSoundResource(loadResource(RES_AUDIO_REDWOOD_2), "redwood2.ogg");
+    if (pair.first) { pair.first->setVolume(0.0f); }
+    if (pair.second) { pair.second->setVolume(0.0f); }
+    m_audioLoops["Redwood"] = pair;
+
+    pair.first = createSoundResource(loadResource(RES_AUDIO_DESERT_1), "desert1.ogg");
+    pair.second = createSoundResource(loadResource(RES_AUDIO_DESERT_2), "desert2.ogg");
+    if (pair.first) { pair.first->setVolume(0.0f); }
+    if (pair.second) { pair.second->setVolume(0.0f); }
+    m_audioLoops["Desert"] = pair;
+
+    pair.first = createSoundResource(loadResource(RES_AUDIO_ARCTIC_1), "arctic1.ogg");
+    pair.second = createSoundResource(loadResource(RES_AUDIO_ARCTIC_2), "arctic2.ogg");
+    if (pair.first) { pair.first->setVolume(0.0f); }
+    if (pair.second) { pair.second->setVolume(0.0f); }
+    m_audioLoops["Arctic"] = pair;
+
+    pair.first = createSoundResource(loadResource(RES_AUDIO_RIVER_1), "river1.ogg");
+    pair.second = createSoundResource(loadResource(RES_AUDIO_RIVER_2), "river2.ogg");
+    if (pair.first) { pair.first->setVolume(0.0f); }
+    if (pair.second) { pair.second->setVolume(0.0f); }
+    m_audioLoops["River"] = pair;
+
+    m_soundEngine->setAllSoundsPaused(false);
+  }
+}
+
+irrklang::ISound* FreeformApp::createSoundResource(ci::DataSourceRef ref, const char* name) {
+  if (m_soundEngine) {
+    ci::Buffer& buf = ref->getBuffer();
+    irrklang::ISoundSource* ss = m_soundEngine->addSoundSourceFromMemory(buf.getData(), buf.getDataSize(), name, false);
+    ss->setForcedStreamingThreshold(300000);
+    return m_soundEngine->play2D(ss, true, true, true);
+  }
+
+  return NULL;
+}
+
 FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& render_string) {
   if (render_string.find("Intel HD") != std::string::npos) {
     return FreeformApp::LOW;
@@ -1208,6 +1292,10 @@ void FreeformApp::setEnvironment(const std::string& str) {
 }
 
 void FreeformApp::toggleSound() {
+  if (_have_audio && m_soundEngine) {
+    _audio_paused = !_audio_paused;
+    m_soundEngine->setAllSoundsPaused(_audio_paused);
+  }
 }
 
 int FreeformApp::loadFile()

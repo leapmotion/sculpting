@@ -85,7 +85,6 @@ inline bool lmIsInRange(const T& v, const T& min, const T& max) { return min <= 
 # define LM_ASSERT(condition, message)
 #endif
 
-
 #if _WIN32
 #define USE_CRASH_REPORTING LM_PRODUCTION_BUILD
 #else

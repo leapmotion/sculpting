@@ -26,6 +26,9 @@
 #include "CameraUtil.h"
 #include "AutoSave.h"
 
+#define IRRKLANG_STATIC
+#include <irrklang.h>
+
 using namespace ci;
 using namespace ci::gl;
 using namespace ci::app;
@@ -86,7 +89,9 @@ private:
   void loadIcons();
   void loadShapes();
   void loadImages();
-  
+  void loadSounds();
+  irrklang::ISound* createSoundResource(ci::DataSourceRef ref, const char* name);
+
 #if defined(CINDER_COCOA)
   ci::DataSourceRef loadResource(const std::string& macPath) {
     try {
@@ -198,6 +203,14 @@ private:
   float _bloom_strength;
   float _bloom_light_threshold;
   bool _draw_background;
+
+  // audio stuff
+  bool _have_audio;
+  bool _audio_paused;
+  typedef std::pair<irrklang::ISound*, irrklang::ISound*> LoopPair;
+  irrklang::ISoundEngine* m_soundEngine;
+  LoopPair m_activeLoop;
+  std::map<std::string, LoopPair> m_audioLoops;
 
   // new mesh
   Mesh* mesh_;

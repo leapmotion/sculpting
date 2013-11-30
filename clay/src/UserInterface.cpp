@@ -435,7 +435,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::TEXTURE;
   }
 
-  const int NUM_GENERAL_ENTRIES = 4;
+  const int NUM_GENERAL_ENTRIES = 5;
   _general_menu.setName("General");
   _general_menu.setPosition(Vector2(0.075f, 0.3f));
   _general_menu.setNumEntries(NUM_GENERAL_ENTRIES);
