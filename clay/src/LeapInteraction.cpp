@@ -124,7 +124,7 @@ void LeapInteraction::interact(double curTime)
         continue;
       }
       const float timeSinceHandOpenChange = static_cast<float>(curTime - cur.getLastHandOpenChangeTime());
-      if (cur.handOpen() || normalY < 0.35f) {
+      if (cur.handOpen() || normalY < 0.1f) {
         // camera interaction
         const Vector3 movement = LM_RETURN_TRACKED(cur.getModifiedTranslation());
         cur_dtheta += ORBIT_SPEED * movement.x();
