@@ -2,9 +2,6 @@
 #include "Freeform.h"
 #include "Files.h"
 #include <time.h>
-#if __APPLE__
-#include <sys/sysctl.h>
-#endif
 
 #include "cinder/app/App.h"
 
@@ -1358,109 +1355,101 @@ fs::path FreeformApp::getSaveFilePathCustom(const fs::path &initialPath,
                                             const std::vector<std::string>& descriptions)
 {
 #if __APPLE__
-  bool MountainLionOrNewer = false;
+  NSSavePanel *cinderSave = [NSSavePanel savePanel];
+  NSWindow *win = [reinterpret_cast<NSView*>(getWindow()->getNative()) window];
+  NSPopUpButton* pulldown = nil;
+  SavePanelProtocol* savePanelProtocol = nil;
 
-  char str[256];
-  size_t size = sizeof(str);
-  if (!sysctlbyname("kern.osrelease", str, &size, nullptr, 0)) {
-    MountainLionOrNewer = (atoi(str) >= 12);
-  }
-
-
-  if (!MountainLionOrNewer)
-  {
-    (void)descriptions;
-    return FreeformApp::getSaveFilePath(initialPath, extensions);
-  }
-  else
-  {
-    NSSavePanel *cinderSave = [NSSavePanel savePanel];
-    NSWindow *win = [reinterpret_cast<NSView*>(getWindow()->getNative()) window];
-    NSPopUpButton* pulldown = nil;
-    SavePanelProtocol* savePanelProtocol = nil;
-
-    NSMutableArray *typesArray = nil;
-    if (!extensions.empty()) {
-      typesArray = [NSMutableArray arrayWithCapacity:extensions.size()];
-      for (auto iter = extensions.cbegin(); iter != extensions.cend(); ++iter) {
-        [typesArray addObject:[NSString stringWithUTF8String:iter->c_str()]];
-      }
-      if (extensions.size() > 1) {
-        NSArray* xib = nil;
-        [[NSBundle mainBundle] loadNibNamed:@"SavePanelFormatView" owner:nil topLevelObjects:&xib];
-        if (xib) {
-          NSView* view = nil;
-          for (id obj in xib) {
-            if ([obj isKindOfClass:[NSView class]]) {
-              view = obj;
-              for (id child in [view subviews]) {
-                if ([child isKindOfClass:[NSPopUpButton class]]) {
-                  pulldown = child;
-                  break;
-                }
-              }
-              break;
-            }
-          }
-          if (view && pulldown) {
-            [pulldown removeAllItems];
-            int index = 0;
-            if (descriptions.size() == extensions.size()) {
-              savePanelProtocol = [[SavePanelProtocol alloc] initWithPopUpButton:pulldown extensions:typesArray];
-            }
-            for (auto iter = extensions.cbegin(); iter != extensions.cend(); ++iter) {
-              std::string message;
-              if (savePanelProtocol) {
-                message = descriptions[index] + " (." + (*iter) + ")";
-              } else {
-                message = (*iter);
-              }
-              [pulldown addItemWithTitle:[NSString stringWithUTF8String:message.c_str()]];
-              index++;
-            }
-            if (savePanelProtocol) {
-              [cinderSave setDelegate:savePanelProtocol];
-            }
-            [cinderSave setAccessoryView:view];
-          }
-        }
-      }
-      [cinderSave setAllowedFileTypes:typesArray];
+  NSMutableArray *typesArray = nil;
+  if (!extensions.empty()) {
+    typesArray = [NSMutableArray arrayWithCapacity:extensions.size()];
+    for (auto iter = extensions.cbegin(); iter != extensions.cend(); ++iter) {
+      [typesArray addObject:[NSString stringWithUTF8String:iter->c_str()]];
     }
+    if (extensions.size() > 1) {
+      NSArray* xib = nil;
 
-    if (!initialPath.empty()) {
-      NSString *directory, *file = nil;
-      directory = [[NSString stringWithUTF8String:initialPath.c_str()] stringByExpandingTildeInPath];
-      BOOL isDir = NO;
-      if ([[NSFileManager defaultManager] fileExistsAtPath:directory isDirectory:&isDir]) {
-        if (!isDir) { // a file exists at this path, so directory is its parent
-          file = [directory lastPathComponent];
-          directory = [directory stringByDeletingLastPathComponent];
-        }
+      if ([[NSBundle mainBundle] respondsToSelector:@selector(loadNibNamed:owner:topLevelObjects:)]) {
+        // Introduced in Mac OS X 10.8
+        [[NSBundle mainBundle] loadNibNamed:@"SavePanelFormatView" owner:nil topLevelObjects:&xib];
       } else {
+        NSNib* nib = [[NSNib alloc] initWithNibNamed:@"SavePanelFormatView" bundle:nil];
+        if (nib) {
+          [nib instantiateNibWithOwner:nil topLevelObjects:&xib];
+        }
+      }
+      if (xib) {
+        NSView* view = nil;
+        for (id obj in xib) {
+          if ([obj isKindOfClass:[NSView class]]) {
+            view = obj;
+            for (id child in [view subviews]) {
+              if ([child isKindOfClass:[NSPopUpButton class]]) {
+                pulldown = child;
+                break;
+              }
+            }
+            break;
+          }
+        }
+        if (view && pulldown) {
+          [pulldown removeAllItems];
+          int index = 0;
+          if (descriptions.size() == extensions.size()) {
+            savePanelProtocol = [[SavePanelProtocol alloc] initWithPopUpButton:pulldown extensions:typesArray];
+          }
+          for (auto iter = extensions.cbegin(); iter != extensions.cend(); ++iter) {
+            std::string message;
+            if (savePanelProtocol) {
+              message = descriptions[index] + " (." + (*iter) + ")";
+            } else {
+              message = (*iter);
+            }
+            [pulldown addItemWithTitle:[NSString stringWithUTF8String:message.c_str()]];
+            index++;
+          }
+          if (savePanelProtocol) {
+            [cinderSave setDelegate:savePanelProtocol];
+          }
+          [cinderSave setAccessoryView:view];
+        }
+      }
+    }
+    [cinderSave setAllowedFileTypes:typesArray];
+  }
+
+  if (!initialPath.empty()) {
+    NSString *directory, *file = nil;
+    directory = [[NSString stringWithUTF8String:initialPath.c_str()] stringByExpandingTildeInPath];
+    BOOL isDir = NO;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:directory isDirectory:&isDir]) {
+      if (!isDir) { // a file exists at this path, so directory is its parent
         file = [directory lastPathComponent];
         directory = [directory stringByDeletingLastPathComponent];
       }
-
-      [cinderSave setDirectoryURL:[NSURL fileURLWithPath:directory]];
-      if (file) {
-        [cinderSave setNameFieldStringValue:file];
-      }
+    } else {
+      file = [directory lastPathComponent];
+      directory = [directory stringByDeletingLastPathComponent];
     }
 
-    fs::path path, *pathPtr = &path;
-    [cinderSave beginSheetModalForWindow:win completionHandler:^(NSInteger result) {
-      if (result == NSFileHandlingPanelOKButton) {
-        fs::path userPath = fs::path([[[cinderSave URL] path] UTF8String]);
-        *pathPtr = userPath; // "path" is const, but we can use a pointer to it
-      }
-      [NSApp stopModal];
-    }];
-    [NSApp runModalForWindow:win];
-    [cinderSave orderOut:win];
-    restoreWindowContext();
-    return path;
+    [cinderSave setDirectoryURL:[NSURL fileURLWithPath:directory]];
+    if (file) {
+      [cinderSave setNameFieldStringValue:file];
+    }
   }
+
+  fs::path path, *pathPtr = &path;
+  [cinderSave beginSheetModalForWindow:win completionHandler:^(NSInteger result) {
+    if (result == NSFileHandlingPanelOKButton) {
+      fs::path userPath = fs::path([[[cinderSave URL] path] UTF8String]);
+      *pathPtr = userPath; // "path" is const, but we can use a pointer to it
+    }
+    [NSApp stopModal];
+  }];
+  [NSApp runModalForWindow:win];
+  [cinderSave orderOut:win];
+  restoreWindowContext();
+  return path;
 #elif _WIN32
   OPENFILENAMEA ofn;       // common dialog box structure
   char szFile[260];       // buffer for file name

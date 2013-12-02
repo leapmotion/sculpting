@@ -1303,7 +1303,7 @@
 					"$(LIBRARIES_PATH)/LeapSDK/lib/libc++",
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
-					"/opt/local/Libraries/breakpad-0.1/lib",
+					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
@@ -1363,7 +1363,7 @@
 					"$(LIBRARIES_PATH)/LeapSDK/lib/libc++",
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
-					"/opt/local/Libraries/breakpad-0.1/lib",
+					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
