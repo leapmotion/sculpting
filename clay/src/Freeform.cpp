@@ -1213,30 +1213,22 @@ FreeformApp::MachineSpeed FreeformApp::parseRenderString(const std::string& rend
   }
   if (it == render_string.end()) {
     std::cout << render_string << std::endl;
-    return FreeformApp::MID;
+    return FreeformApp::LOW;
   }
   int model_number = atoi(render_string.substr(it - render_string.begin()).c_str());
 
   if (render_string.find("GeForce") != std::string::npos) {
     if (model_number > 1000) {
-      if (render_string.find("M OpenGL") != std::string::npos) {
-        // mobile GPU
-        if (model_number < 9000) {
-          return FreeformApp::LOW;
-        }
-      }
-      if (model_number < 6000) {
-        // GeForce FX (5000) series or older, DirectX 8
+      // old GPU
+      if (model_number < 9800) {
         return FreeformApp::LOW;
-      }
-      // GeForce 6000, 7000 series
-      if (model_number < 8000) {
-        // GeForce 6000 series first to support DirectX 9
+      } else {
         return FreeformApp::MID;
       }
+    } else {
+      // 200, 300 (GT200), 400 (Fermi)... 600 or higher series
+      return FreeformApp::HIGH;
     }
-    // GeForce 8000 == 9000, 200, 300 (GT200), 400 (Fermi)... 600 or higher series
-    return FreeformApp::HIGH;
   }
   if (render_string.find("Radeon X") != std::string::npos) {
     // Radeon X300, X600, X700, X800, X1000, wide range of all DirectX 9
