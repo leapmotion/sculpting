@@ -67,7 +67,11 @@ public:
   template <typename T> void trackConstValue(const T& item);
 
   template <typename T> T returnTrackedValue(const T& value);
+  template <typename T, int N> void returnTrackedValue(const T (&value)[N], T (&recorded)[N]);
   template <typename T> T returnTrackedValue();
+
+  template <typename T, int N>
+  void assertIdentical(const T (&value)[N]);
 
   template <typename T>
   void assertIdentical(const T& value);
@@ -156,6 +160,7 @@ void ReplayUtil::getObject(T* obj)
 {
   // assert in bounds
   const T* result = reinterpret_cast<const T*>(&m_historyStream[0]+m_historyStreamIdx);
+  LM_ASSERT(m_historyStreamIdx+sizeof(T)<=m_historyStream.size(), "Run out of recorded data.");
   m_historyStreamIdx += sizeof(T);
   std::memcpy(obj, result, sizeof(T));
   //std::memcpy(const_cast<void*>(reinterpret_cast<const void*>(obj)), result, sizeof(T));
@@ -219,6 +224,21 @@ T ReplayUtil::returnTrackedValue(const T& value) {
 #endif
 }
 
+template <typename T, int N>
+void ReplayUtil::returnTrackedValue(const T (&value)[N], T (&recorded)[N]) {
+#if LM_USE_ITEMS
+# error "not implemented"
+#else
+  T result[N];
+  std::memcpy(result, value, sizeof(T)*N);
+  for (int i = 0; i < N; i++)
+  {
+    trackObject(result[i]);
+    recorded[i] = result[i];
+  }
+#endif
+}
+
 template <typename T>
 T ReplayUtil::returnTrackedValue() {
   LM_ASSERT(m_mode == MODE_REPLAY, "Trying to extract recorded value (condition not met) during recording.")
@@ -233,8 +253,18 @@ T ReplayUtil::returnTrackedValue() {
 #endif
 }
 
+template <typename T, int N>
+void ReplayUtil::assertIdentical(const T (&value)[N]) {
+  const T copy[N] = {};
+  std::memcpy(const_cast<T*>(&copy[0]), const_cast<T*>(&value[0]), sizeof(T)*N);
+  T recorded[N]; returnTrackedValue(value, recorded);
+  LM_ASSERT(m_mode != MODE_REPLAY || copy == recorded, "LM_ASSERT_IDENTICAL failed.");
+}
+
 template <typename T>
 void ReplayUtil::assertIdentical(const T& value) {
+  //T copy = value; // doesn't work for arrays
+  //T copy(value); // doesn't work for const types
   T copy;
   std::memcpy(&copy, &value, sizeof(T));
   T recorded = returnTrackedValue(value);
