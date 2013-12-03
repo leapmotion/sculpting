@@ -3,6 +3,7 @@
 #include "DebugDrawUtil.h"
 #include "Geometry.h"
 #include "DataTypes.h"
+#include "ReplayUtil.h"
 
 #if LM_PRODUCTION_BUILD
 #define LM_LOG_CAMERA_LOGIC 0
@@ -337,6 +338,8 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     // mesh has no vertices. do nothing.
     return; 
   }
+  LM_TRACK_VALUE(m_transformInWorldSpaceForGraphics);
+  LM_TRACK_VALUE(isoState);
 
   LM_ASSERT(mesh, "Can't upate the camera without a mesh");
   UpdateMeshTransform(mesh, paramsInOut);
@@ -346,6 +349,8 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   {
     lmReal prevTime = m_lastCameraUpdateTime;
     lmReal time = lmReal(ci::app::getElapsedSeconds());
+    LM_TRACK_VALUE(time);
+    LM_ASSERT_IDENTICAL(prevTime);
     m_lastCameraUpdateTime = time;
     if (prevTime < 0.0f) { prevTime = time; }
     dt = time - prevTime;
@@ -363,6 +368,11 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   prevMesh = mesh;
 
   m_framesFromLastCollisions++;
+  LM_TRACK_VALUE(m_framesFromLastCollisions);
+  LM_TRACK_VALUE(m_timeSinceOrbitingStarted);
+  LM_TRACK_VALUE(m_timeSinceOrbitingEnded);
+  LM_TRACK_VALUE(m_timeOfMovementSinceLastMeshMofification);
+  LM_TRACK_VALUE(m_timeOfLastScupt);
 
   if (m_params.forceCameraOrbit && m_params.enableCameraOrbit) {
     if (m_timeSinceOrbitingStarted == 0.0f) {
@@ -375,6 +385,8 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     m_timeSinceOrbitingEnded = 0.0f;
     m_timeOfMovementSinceLastMeshMofification = FLT_MAX;
     UpdateCameraInWorldSpace();
+    LM_TRACK_VALUE(m_transformInWorldSpaceForGraphics);
+    LM_TRACK_VALUE(isoState);
     return;
   }
 
@@ -391,6 +403,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
 
   lmReal dtOne = 1.0f;
 
+  LM_TRACK_VALUE(m_userInput);
   Vector3 usedUserInput = m_userInput;
   // Multiply motion by distance:
   {
@@ -421,6 +434,11 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   if (m_params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
   UpdateCameraInWorldSpace();
   m_prevTimeOfLastSculpt = m_timeOfLastScupt;
+
+  LM_TRACK_VALUE(m_transformInWorldSpaceForGraphics);
+  LM_TRACK_VALUE(isoState);
+
+  LM_ASSERT_IDENTICAL(GetReferenceDistance());
 }
 
 void CameraUtil::CorrectCameraUpVector(lmReal dt, const Vector3& up) {
@@ -866,6 +884,11 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
     m_timeOfMovementSinceLastMeshMofification = 0.0f;
     m_forceVerifyPositionAfterSculpting = true;
   }
+  LM_TRACK_VALUE(m_justSculpted);
+  LM_TRACK_VALUE(m_timeOfMovementSinceLastMeshMofification);
+  LM_TRACK_VALUE(m_forceVerifyPositionAfterSculpting);
+  LM_ASSERT_IDENTICAL(movement);
+  LM_ASSERT_IDENTICAL(deltaTime);
 
   LM_DRAW_CROSS(state->refPosition, 20.0f, lmColor::GREEN);
   LM_DRAW_CROSS(state->closestPointOnMesh.position, 20.0f, lmColor::RED);
@@ -884,7 +907,9 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   }
 
   m_timeOfMovementSinceLastMeshMofification += deltaTime;
+  LM_TRACK_VALUE(m_timeOfMovementSinceLastMeshMofification);
 
+  LM_TRACK_VALUE(state->numFailedUpdates);
 
   if(state->numFailedUpdates) {
 #if LM_LOG_CAMERA_LOGIC_4
@@ -951,6 +976,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
   scaledMovement.z() *= m_params.scaleZMovement;
 
   Vector3 clippedMovement = m_transform.rotation * scaledMovement;
+  //BREAKS: LM_ASSERT_IDENTICAL(clippedMovement);
 
   // Saftey clip movement so that the camera doesn't go past the safety distance.
   if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.5f) {
@@ -1048,7 +1074,6 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
     }
   }
 
-
   // Update closest distance: last check
   lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition + clippedMovement, state->refDist + clippedMovement.norm());
   if (!lmIsNormalized(closestPoint.normal)) {
@@ -1086,7 +1111,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   lmReal currPotential = 0.0f;
 #if LM_LOG_CAMERA_LOGIC_5
-  std::cout << "Ref/curr potential: " << state->refPotential << " \ " << currPotential << std::endl;
+  std::cout << "Ref/curr potential: " << state->refPotential << " / " << currPotential << std::endl;
 #endif
 }
 
@@ -1137,6 +1162,7 @@ void CameraUtil::IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoSta
   CastOneRay(mesh, ray0, &results0, collectAll);
   CastOneRay(mesh, ray1, &results1, collectAll);
 
+  LM_TRACK_VALUE(m_numFramesInsideManifoldMesh);
   if ((results0.size() % 2) && (results1.size() % 2)) {
     // Inside mesh && first output
 #if LM_LOG_CAMERA_LOGIC_4

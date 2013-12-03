@@ -439,9 +439,10 @@ void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float
 void FreeformApp::update()
 {
   static int updateCount = 0;
-  LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
+  LM_ASSERT_IDENTICAL(1243);
+  //LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
   LM_ASSERT_IDENTICAL(updateCount++);
-  LM_ASSERT_IDENTICAL("\r\n");
+  //LM_ASSERT_IDENTICAL("\r\n");
 #if LM_LOG_CAMERA_LOGIC_4
   std::cout << std::endl << "Frm#" << updateCount << " ";
 #endif
@@ -550,6 +551,7 @@ void FreeformApp::updateLeapAndMesh() {
 #endif
   {
     const double curTime = ci::app::getElapsedSeconds();
+    LM_TRACK_CONST_VALUE(curTime);
 #if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
     bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
     suppress = suppress || (curTime - _last_load_time) < BRUSH_DISABLE_TIME_AFTER_LOAD;
@@ -565,6 +567,7 @@ void FreeformApp::updateLeapAndMesh() {
 
     if (haveFrame) {
       const double lastSculptTime = sculpt_.getLastSculptTime();
+      LM_TRACK_CONST_VALUE(lastSculptTime);
 
       std::unique_lock<std::mutex> lock(_mesh_mutex);
       if (mesh_) {
@@ -681,7 +684,11 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _material_shader.uniform( "campos", _Camera.getEyePoint() );
     _material_shader.uniform( "irradiance", 0 );
     _material_shader.uniform( "radiance", 1 );
+#if !LM_DISABLE_THREADING_AND_ENVIRONMENT
     _material_shader.uniform( "ambientFactor", _material.ambientFactor);
+#else
+    _material_shader.uniform( "ambientFactor", 0.27f);
+#endif
     _material_shader.uniform( "diffuseFactor", _material.diffuseFactor);
     _material_shader.uniform( "reflectionFactor", _material.reflectionFactor);
     _material_shader.uniform( "surfaceColor", surface);
@@ -830,9 +837,11 @@ float FreeformApp::checkEnvironmentLoading() {
   const double curTime = ci::app::getElapsedSeconds();
   const float timeSinceStateChange = static_cast<float>(curTime - _environment->getLastStateChangeTime());
 
+#if !LM_DISABLE_THREADING_AND_ENVIRONMENT
   if (!_environment->haveEnvironment()) {
     Menu::updateSculptMult(curTime, 0.0f);
   }
+#endif
 
   float exposureMult = 1.0f;
   if (loadingState == Environment::LOADING_STATE_NONE) {
@@ -865,9 +874,11 @@ float FreeformApp::checkEnvironmentLoading() {
     _first_environment_load = false;
   }
 
+#if !LM_DISABLE_THREADING_AND_ENVIRONMENT
   if (_first_environment_load) {
     exposureMult = 0.0f;
   }
+#endif
 
   return exposureMult;
 }

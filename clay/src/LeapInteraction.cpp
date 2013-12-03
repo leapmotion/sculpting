@@ -27,9 +27,6 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
 {
   LM_ASSERT_IDENTICAL(124);
   LM_ASSERT_IDENTICAL(aspect);
-  //LM_ASSERT_IDENTICAL(modelView);
-  //LM_ASSERT_IDENTICAL(projection);
-  //LM_ASSERT_IDENTICAL(viewport);
   LM_ASSERT_IDENTICAL(referenceDistance);
   LM_ASSERT_IDENTICAL(suppress);
 
@@ -59,8 +56,8 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
       _sculpt->clearBrushes();
       _tips.clear();
       updateHandInfos(time);
-      interact(time);
       cleanUpHandInfos(time);
+      interact(time);
     }
     _last_frame = _cur_frame;
     return true;
@@ -166,9 +163,12 @@ void LeapInteraction::interact(double curTime)
 
             float strength = strengthMult*ui_mult*_desired_brush_strength;
             strength = std::min(1.0f, strength * dtMult);
+            LM_TRACK_VALUE(strength);
 
             Vec3f transPos = _projection.transformPoint(pos);
             Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));
+            LM_TRACK_VALUE(transPos);
+            LM_TRACK_VALUE(radPos);
 
             // compute screen-space coordinate of this finger
             transPos.x = (transPos.x + 1)/2;
@@ -192,6 +192,7 @@ void LeapInteraction::interact(double curTime)
               }
               transPos.z = rad;
               Vec4f tip(transPos.x, transPos.y, transPos.z, fromCameraMult*strengthMult);
+              LM_ASSERT_IDENTICAL(tip);
               _tips.push_back(tip);
             } else {
               strength = 0.0f;
@@ -289,16 +290,14 @@ Vec3f LeapInteraction::getPinchDeltaFromLastCall() {
 void LeapInteraction::updateHandInfos(double curTime) {
   LM_ASSERT_IDENTICAL(123454);
   const Leap::HandList hands = _cur_frame.hands();
-  for (int i=0; i<hands.count(); i++) {
-    int id = hands[i].id();
-    _hand_infos[id].update(hands[i], _last_frame, curTime);
+  if (LM_TRACK_IS_RECORDING()) {
+    for (int i=0; i<hands.count(); i++) {
+      int id = hands[i].id();
+      _hand_infos[id].update(hands[i], _last_frame, curTime);
+    }
   }
 
   int numHands = LM_RETURN_TRACKED(hands.count());
-  if (LM_TRACK_IS_REPLAYING())
-  {
-    _hand_infos.clear();
-  }
 
   { // tracking code only:
     for (int i = 0; i < numHands; i++)
@@ -311,15 +310,18 @@ void LeapInteraction::updateHandInfos(double curTime) {
 
 void LeapInteraction::cleanUpHandInfos(double curTime) {
   LM_ASSERT_IDENTICAL(122354);
+  LM_ASSERT_IDENTICAL(curTime);
+  LM_ASSERT_IDENTICAL(_hand_infos.size());
   static const float MAX_HAND_INFO_AGE = 0.1f; // seconds since last update until hand info gets cleaned up
   HandInfoMap::iterator it = _hand_infos.begin();
   while (it != _hand_infos.end()) {
     HandInfo& cur = it->second;
-    const float curAge = fabs(static_cast<float>(curTime - LM_RETURN_TRACKED(cur.getLastUpdateTime())));
+    const float curAge = fabs(static_cast<float>(curTime - cur.getLastUpdateTime()));
     if (curAge > MAX_HAND_INFO_AGE) {
       _hand_infos.erase(it++);
     } else {
       ++it;
     }
   }
+  LM_ASSERT_IDENTICAL(_hand_infos.size());
 }
