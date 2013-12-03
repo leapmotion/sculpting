@@ -1026,7 +1026,7 @@ void Mesh::checkNormals() {
 }
 
 void Mesh::checkVertices(const std::vector<int>& iVerts, float d2Min) {
-#if !LM_PRODUCTION_BUILD
+#if 0 && !LM_PRODUCTION_BUILD
   for (size_t i=0; i<iVerts.size(); i++) {
     const Vertex v1 = vertices_[iVerts[i]];
     for (size_t j=i+1; j<iVerts.size(); j++) {
