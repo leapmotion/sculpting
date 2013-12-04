@@ -440,9 +440,9 @@ void FreeformApp::update()
 {
   static int updateCount = 0;
   LM_ASSERT_IDENTICAL(1243);
-  //LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
+  LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
   LM_ASSERT_IDENTICAL(updateCount++);
-  //LM_ASSERT_IDENTICAL("\r\n");
+  LM_ASSERT_IDENTICAL("\r\n");
 #if LM_LOG_CAMERA_LOGIC_4
   std::cout << std::endl << "Frm#" << updateCount << " ";
 #endif

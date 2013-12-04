@@ -255,16 +255,13 @@ T ReplayUtil::returnTrackedValue() {
 
 template <typename T, int N>
 void ReplayUtil::assertIdentical(const T (&value)[N]) {
-  const T copy[N] = {};
-  std::memcpy(const_cast<T*>(&copy[0]), const_cast<T*>(&value[0]), sizeof(T)*N);
-  T recorded[N]; returnTrackedValue(value, recorded);
-  LM_ASSERT(m_mode != MODE_REPLAY || copy == recorded, "LM_ASSERT_IDENTICAL failed.");
+  for (int i = 0; i < N; i++) {
+    assertIdentical(value[i]);
+  }
 }
 
 template <typename T>
 void ReplayUtil::assertIdentical(const T& value) {
-  //T copy = value; // doesn't work for arrays
-  //T copy(value); // doesn't work for const types
   T copy;
   std::memcpy(&copy, &value, sizeof(T));
   T recorded = returnTrackedValue(value);
