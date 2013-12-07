@@ -290,7 +290,7 @@ Vec3f LeapInteraction::getPinchDeltaFromLastCall() {
 void LeapInteraction::updateHandInfos(double curTime) {
   LM_ASSERT_IDENTICAL(123454);
   const Leap::HandList hands = _cur_frame.hands();
-  if (LM_TRACK_IS_RECORDING()) {
+  if (!LM_TRACK_IS_REPLAYING()) {
     for (int i=0; i<hands.count(); i++) {
       int id = hands[i].id();
       _hand_infos[id].update(hands[i], _last_frame, curTime);
