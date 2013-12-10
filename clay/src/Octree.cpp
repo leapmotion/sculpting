@@ -124,7 +124,7 @@ void Octree::intersectRay(const Vector3& vert, const Vector3& dir, std::vector<i
 
 /** Return triangles inside a sphere */
 void Octree::intersectSphere(const Vector3& vert, float radiusSquared, std::vector<Octree*> &leavesHit, std::vector<int>& trisHit) {
-  if(aabbSplit_.intersectSphere(vert,radiusSquared)) {
+  if(aabbLoose_.intersectSphere(vert,radiusSquared)) {
     if (child_[0]!=0) {
       for (int i=0;i<8;++i) {
         child_[i]->intersectSphere(vert, radiusSquared,leavesHit, trisHit);
