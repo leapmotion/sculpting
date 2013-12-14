@@ -1266,7 +1266,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				CINDER_PATH = "$(LIBRARIES_PATH)/cinder_0.8.5_mac";
+				CINDER_PATH = "$(LIBRARIES_PATH)/cinder_0.8.5";
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -1303,7 +1303,7 @@
 					"$(LIBRARIES_PATH)/LeapSDK/lib/libc++",
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
-					"/opt/local/Libraries/breakpad-0.1/lib",
+					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
@@ -1328,7 +1328,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				CINDER_PATH = "$(LIBRARIES_PATH)/cinder_0.8.5_mac";
+				CINDER_PATH = "$(LIBRARIES_PATH)/cinder_0.8.5";
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -1363,7 +1363,7 @@
 					"$(LIBRARIES_PATH)/LeapSDK/lib/libc++",
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
-					"/opt/local/Libraries/breakpad-0.1/lib",
+					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
