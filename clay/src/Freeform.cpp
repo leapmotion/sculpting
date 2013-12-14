@@ -25,7 +25,7 @@ FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _ph
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), symmetry_(false), _last_update_time(0.0),
   drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
   _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
-  _immersive_entered_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false)
+  _immersive_entered_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false), _wheel_zoom(0.0f)
 {
   _camera_util = new CameraUtil();
   Menu::updateSculptMult(0.0, 0.0f);
@@ -356,9 +356,7 @@ void FreeformApp::mouseDrag( MouseEvent event )
 
 void FreeformApp::mouseWheel( MouseEvent event)
 {
-  //float off = event.getWheelIncrement();
-  _cam_dist -= 0.1f*event.getWheelIncrement();
-  _cam_dist = std::min(MAX_CAMERA_DIST, std::max(0.5f, _cam_dist));
+  _wheel_zoom = -300.0f * event.getWheelIncrement();
 }
 
 void FreeformApp::mouseMove( MouseEvent event)
@@ -454,8 +452,10 @@ void FreeformApp::update()
 
   const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
   const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
-  const float dZoom = deltaTime*_leap_interaction->getDZoomVel();
+  const float dZoom = deltaTime*_leap_interaction->getDZoomVel() + _wheel_zoom;
   const float logScale = _leap_interaction->getLogScale();
+
+  _wheel_zoom = 0.0f;
 
   updateCamera(dTheta, dPhi, dZoom);
 

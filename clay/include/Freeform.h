@@ -135,6 +135,7 @@ private:
   float _fov;
   float _cam_dist;
   Utilities::ExponentialFilter<float> _fov_modifier;
+  float _wheel_zoom;
 
   // Free-floating camera utility.
   CameraUtil* _camera_util;
