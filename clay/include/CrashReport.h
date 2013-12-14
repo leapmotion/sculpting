@@ -7,7 +7,7 @@
 \******************************************************************************/
 
 #ifndef __CRASHREPORT_H__
-#define __CRASHREPORT_H
+#define __CRASHREPORT_H__
 
 #include "Common.h"
 

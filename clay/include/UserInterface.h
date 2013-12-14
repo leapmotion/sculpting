@@ -75,6 +75,7 @@ public:
     // object
     OBJECT_LOAD,
     OBJECT_EXPORT,
+    OBJECT_UPLOAD,
     OBJECT_BALL,
     OBJECT_CAN,
     OBJECT_DONUT,
@@ -195,6 +196,7 @@ public:
         case Menu::GENERAL_EXIT: return "Exit"; break;
         case Menu::OBJECT_LOAD: return "Load"; break;
         case Menu::OBJECT_EXPORT: return "Save"; break;
+        case Menu::OBJECT_UPLOAD: return "3D Print"; break;
         case Menu::OBJECT_BALL: return "Sphere"; break;
         case Menu::OBJECT_CAN: return "Cylinder"; break;
         case Menu::OBJECT_DONUT: return "Torus"; break;
@@ -333,7 +335,6 @@ public:
   float getActivation() const { return m_activation.value; }
   bool hasSelectedEntry() const { return m_haveSelection; }
   void clearSelection() { m_haveSelection = false; }
-  static void setWindowSize(const ci::Vec2i& size);
   float getSweepStart() const { return static_cast<float>(-m_sweepAngle/2.0f + m_angleOffset); }
   float getSweepEnd() const { return getSweepStart() + m_sweepAngle; }
   MenuEntry& getEntry(int idx) { return m_entries[idx]; }
@@ -357,6 +358,7 @@ public:
   ci::Color getActiveColor() const { return m_activeColor; }
   void setAlwaysActivated(bool activated) { m_alwaysActivated = activated; }
 
+  static void setWindowSize(const ci::Vec2i& size);
   static const Vector2& getWindowSize() { return g_windowSize; }
   static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985f); }
 

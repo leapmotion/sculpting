@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include "UserInterface.h"
-#include "cinder/app/App.h"
 #include "Utilities.h"
 #include "Sculpt.h"
 #include "LeapInteraction.h"
@@ -449,7 +448,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const int NUM_OBJECT_ENTRIES = 7;
+  const int NUM_OBJECT_ENTRIES = 8;
   _object_menu.setName("Object");
   _object_menu.setPosition(Vector2(0.25f, 0.075f));
   _object_menu.setNumEntries(NUM_OBJECT_ENTRIES);
@@ -863,6 +862,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     switch (entry.m_entryType) {
       case Menu::OBJECT_LOAD: showConfirm(Menu::OBJECT_LOAD); break;
       case Menu::OBJECT_EXPORT: app->saveFile(); break;
+      case Menu::OBJECT_UPLOAD: app->print3D(); break;
       case Menu::OBJECT_BALL: showConfirm(Menu::OBJECT_BALL); break;
       case Menu::OBJECT_CAN: showConfirm(Menu::OBJECT_CAN); break;
       case Menu::OBJECT_DONUT: showConfirm(Menu::OBJECT_DONUT); break;

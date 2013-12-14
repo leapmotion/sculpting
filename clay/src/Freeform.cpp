@@ -1,17 +1,15 @@
 #include "StdAfx.h"
 #include "Freeform.h"
 #include "Files.h"
+#include "Print3D.h"
 #include <time.h>
 #if __APPLE__
 #include <sys/sysctl.h>
 #endif
 
-#include "cinder/app/App.h"
-
 #include "CameraUtil.h"
 #include "DebugDrawUtil.h"
 #include "ReplayUtil.h"
-#include "CrashReport.h"
 
 const float CAMERA_SPEED = 0.005f;
 
@@ -75,6 +73,7 @@ void FreeformApp::setup()
 #endif
 
   FreeImage_Initialise();
+  Print3D::Init();
   enableAlphaBlending();
   enableDepthRead();
   enableDepthWrite();
@@ -274,6 +273,7 @@ void FreeformApp::shutdown() {
     _loading_thread.detach();
   }
   FreeImage_DeInitialise();
+  Print3D::Cleanup();
   if (_have_audio && m_soundEngine) {
     m_soundEngine->stopAllSounds();
   }
@@ -1614,12 +1614,6 @@ int FreeformApp::saveFile()
     return -1;
   }
 
-#if 0
-  const Aabb& boundingBox = mesh_->getOctree()->getAabbSplit();
-  std::cout << "min: " << boundingBox.min_.transpose() << std::endl;
-  std::cout << "max: " << boundingBox.max_.transpose() << std::endl;
-#endif
-
   Files files;
   std::vector<std::string> file_extensions;
   std::vector<std::string> file_extension_descriptions;
@@ -1647,11 +1641,13 @@ int FreeformApp::saveFile()
         if (ext == ".OBJ" || ext == ".obj") {
           std::ofstream file(path.c_str());
           files.saveOBJ(mesh_, file);
+          file.close();
         } else if (ext == ".STL" || ext == ".stl") {
           files.saveSTL(mesh_, path.string());
         } else if (ext == ".PLY" || ext == ".ply") {
           std::ofstream file(path.c_str());
           files.savePLY(mesh_, file);
+          file.close();
         }
       } catch (...) { }
     }
@@ -1679,6 +1675,35 @@ int FreeformApp::saveScreenshot() {
 
   _screenshot_path = path.string();
   return 1;
+}
+
+void FreeformApp::print3D() {
+  static const std::string TEMP_FILENAME = "upload.ply";
+  Files files;
+
+  // save current mesh to a temporary file
+  std::ofstream file(TEMP_FILENAME.c_str());
+  if (!file) {
+    return;
+  }
+  files.savePLY(mesh_, file);
+  file.close();
+
+  // upload to our server using HTTP PUT
+  Print3D print;
+  print.Upload(TEMP_FILENAME);
+
+  while (print.Progress() < 1.0) {
+    std::cout << "Progress: " << print.Progress() << std::endl;
+    Sleep(200);
+  }
+
+  // load minimal form in browser
+  /*if (isFullScreen()) {
+    setFullScreen(false);
+  }*/
+  print.LaunchForm(TEMP_FILENAME, "MyCreation", "FreeformCreation");
+  ci::deleteFile(TEMP_FILENAME);
 }
 
 #if !LM_PRODUCTION_BUILD

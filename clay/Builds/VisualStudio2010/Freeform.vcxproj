@@ -49,7 +49,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\opensubdiv-1.2.3-mt\include;$(LIBRARIES_PATH)\glew-1.9.0-mt\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\openssl\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2;$(LIBRARIES_PATH)\curl-7.32.0\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -65,8 +65,8 @@
       <AdditionalIncludeDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;..\..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder_d.lib;Leapd.lib;glu32.lib;FreeImaged.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Debug_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder_d.lib;Leapd.lib;glu32.lib;FreeImaged.lib;irrKlang.lib;libcurl.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Debug_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\debug;$(LIBRARIES_PATH)\openssl\lib\debug</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -80,7 +80,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\openssl\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2;$(LIBRARIES_PATH)\curl-7.32.0\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -100,8 +100,8 @@
       <AdditionalIncludeDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;..\..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;Leap.lib;FreeImage.lib;glu32.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Release_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;Leap.lib;FreeImage.lib;glu32.lib;irrKlang.lib;libcurl.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Release_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\release;$(LIBRARIES_PATH)\openssl\lib\release</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
@@ -142,6 +142,7 @@
     <ClCompile Include="..\..\src\Mesh.cpp" />
     <ClCompile Include="..\..\src\Octree.cpp" />
     <ClCompile Include="..\..\src\Picking.cpp" />
+    <ClCompile Include="..\..\src\Print3D.cpp" />
     <ClCompile Include="..\..\src\ReplayUtil.cpp" />
     <ClCompile Include="..\..\src\Sculpt.cpp" />
     <ClCompile Include="..\..\src\State.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="..\..\include\Mesh.h" />
     <ClInclude Include="..\..\include\Octree.h" />
     <ClInclude Include="..\..\include\Picking.h" />
+    <ClInclude Include="..\..\include\Print3D.h" />
     <ClInclude Include="..\..\include\ReplayUtil.h" />
     <ClInclude Include="..\..\include\Resources.h" />
     <ClInclude Include="..\..\include\Sculpt.h" />

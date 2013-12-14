@@ -79,6 +79,7 @@ public:
   int saveFile();
   int saveScreenshot();
   int loadShape(Shape shape);
+  void print3D();
 
   void doQuit();
 
