@@ -1693,15 +1693,6 @@ void FreeformApp::print3D() {
   Print3D print;
   print.Upload(TEMP_FILENAME);
 
-  while (print.Progress() < 1.0) {
-    std::cout << "Progress: " << print.Progress() << std::endl;
-    Sleep(200);
-  }
-
-  // load minimal form in browser
-  /*if (isFullScreen()) {
-    setFullScreen(false);
-  }*/
   print.LaunchForm(TEMP_FILENAME, "MyCreation", "FreeformCreation");
   ci::deleteFile(TEMP_FILENAME);
 }
