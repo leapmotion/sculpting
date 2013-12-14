@@ -324,13 +324,7 @@ void FreeformApp::resize()
   _screen_fbo = Fbo(width, height, screenFormat);
   GLBuffer::checkError("Screen FBO");
 
-  Vec3f campos;
-  campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
-  campos.y = sinf(_phi)*_cam_dist;
-  campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
-  _camera.lookAt(campos,Vec3f(0,0,0),Vec3f(0,1,0));
-  _camera.setPerspective( _fov, getWindowAspectRatio(), 1.0f, 100000.f );
-  setMatrices( _camera );
+  _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
   _ui->setWindowSize( Vec2i(width, height) );
 
   glEnable(GL_FRAMEBUFFER_SRGB);
