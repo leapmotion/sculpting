@@ -8,6 +8,8 @@
 #include "DebugDrawUtil.h"
 #include "ReplayUtil.h"
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 const float CAMERA_SPEED = 0.005f;
 
 const float MIN_CAMERA_DIST = 250.0f;
@@ -1667,11 +1669,15 @@ int FreeformApp::saveScreenshot() {
 }
 
 void FreeformApp::print3D() {
-  static const std::string TEMP_FILENAME = "upload.ply";
+  boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
+  std::string fileName = boost::posix_time::to_iso_string(now) + ".ply";
+  if (fileName.find(',') != std::string::npos) {
+    fileName = fileName.substr(0, fileName.find(','));
+  }
   Files files;
 
   // save current mesh to a temporary file
-  std::ofstream file(TEMP_FILENAME.c_str());
+  std::ofstream file(fileName.c_str());
   if (!file) {
     return;
   }
@@ -1680,10 +1686,10 @@ void FreeformApp::print3D() {
 
   // upload to our server using HTTP PUT
   Print3D print;
-  print.Upload(TEMP_FILENAME);
+  print.Upload(fileName);
 
-  print.LaunchForm(TEMP_FILENAME, "MyCreation", "FreeformCreation");
-  ci::deleteFile(TEMP_FILENAME);
+  print.LaunchForm(fileName, "MyCreation", "FreeformCreation");
+  ci::deleteFile(fileName);
 }
 
 #if !LM_PRODUCTION_BUILD
