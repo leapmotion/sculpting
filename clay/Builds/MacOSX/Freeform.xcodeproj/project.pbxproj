@@ -103,6 +103,21 @@
 		8AE236AA184671B4008BEA30 /* river.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236A3184671B4008BEA30 /* river.png */; };
 		8AE236AD184671D3008BEA30 /* previews-frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236AC184671D3008BEA30 /* previews-frag.glsl */; };
 		8AE236AF1846A654008BEA30 /* turkey.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236AE1846A654008BEA30 /* turkey.obj */; };
+		8AEA3971185FE0AC0012F8B6 /* arctic1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3963185FE0AB0012F8B6 /* arctic1.ogg */; };
+		8AEA3972185FE0AC0012F8B6 /* arctic2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3964185FE0AC0012F8B6 /* arctic2.ogg */; };
+		8AEA3973185FE0AC0012F8B6 /* desert1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3965185FE0AC0012F8B6 /* desert1.ogg */; };
+		8AEA3974185FE0AC0012F8B6 /* desert2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3966185FE0AC0012F8B6 /* desert2.ogg */; };
+		8AEA3975185FE0AC0012F8B6 /* islands1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3967185FE0AC0012F8B6 /* islands1.ogg */; };
+		8AEA3976185FE0AC0012F8B6 /* islands2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3968185FE0AC0012F8B6 /* islands2.ogg */; };
+		8AEA3977185FE0AC0012F8B6 /* jungle-cliff1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3969185FE0AC0012F8B6 /* jungle-cliff1.ogg */; };
+		8AEA3978185FE0AC0012F8B6 /* jungle-cliff2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA396A185FE0AC0012F8B6 /* jungle-cliff2.ogg */; };
+		8AEA3979185FE0AC0012F8B6 /* jungle1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA396B185FE0AC0012F8B6 /* jungle1.ogg */; };
+		8AEA397A185FE0AC0012F8B6 /* jungle2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA396C185FE0AC0012F8B6 /* jungle2.ogg */; };
+		8AEA397B185FE0AC0012F8B6 /* redwood1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA396D185FE0AC0012F8B6 /* redwood1.ogg */; };
+		8AEA397C185FE0AC0012F8B6 /* redwood2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA396E185FE0AC0012F8B6 /* redwood2.ogg */; };
+		8AEA397D185FE0AC0012F8B6 /* river1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA396F185FE0AC0012F8B6 /* river1.ogg */; };
+		8AEA397E185FE0AC0012F8B6 /* river2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA3970185FE0AC0012F8B6 /* river2.ogg */; };
+		8AEA3981185FE5C30012F8B6 /* Print3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8AEA3980185FE5C30012F8B6 /* Print3D.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -423,6 +438,22 @@
 		8AE236A3184671B4008BEA30 /* river.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = river.png; path = ../../resources/previews/river.png; sourceTree = "<group>"; };
 		8AE236AC184671D3008BEA30 /* previews-frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "previews-frag.glsl"; path = "../../resources/previews-frag.glsl"; sourceTree = "<group>"; };
 		8AE236AE1846A654008BEA30 /* turkey.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = turkey.obj; sourceTree = "<group>"; };
+		8AEA3963185FE0AB0012F8B6 /* arctic1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = arctic1.ogg; sourceTree = "<group>"; };
+		8AEA3964185FE0AC0012F8B6 /* arctic2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = arctic2.ogg; sourceTree = "<group>"; };
+		8AEA3965185FE0AC0012F8B6 /* desert1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = desert1.ogg; sourceTree = "<group>"; };
+		8AEA3966185FE0AC0012F8B6 /* desert2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = desert2.ogg; sourceTree = "<group>"; };
+		8AEA3967185FE0AC0012F8B6 /* islands1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = islands1.ogg; sourceTree = "<group>"; };
+		8AEA3968185FE0AC0012F8B6 /* islands2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = islands2.ogg; sourceTree = "<group>"; };
+		8AEA3969185FE0AC0012F8B6 /* jungle-cliff1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = "jungle-cliff1.ogg"; sourceTree = "<group>"; };
+		8AEA396A185FE0AC0012F8B6 /* jungle-cliff2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = "jungle-cliff2.ogg"; sourceTree = "<group>"; };
+		8AEA396B185FE0AC0012F8B6 /* jungle1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = jungle1.ogg; sourceTree = "<group>"; };
+		8AEA396C185FE0AC0012F8B6 /* jungle2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = jungle2.ogg; sourceTree = "<group>"; };
+		8AEA396D185FE0AC0012F8B6 /* redwood1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = redwood1.ogg; sourceTree = "<group>"; };
+		8AEA396E185FE0AC0012F8B6 /* redwood2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = redwood2.ogg; sourceTree = "<group>"; };
+		8AEA396F185FE0AC0012F8B6 /* river1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = river1.ogg; sourceTree = "<group>"; };
+		8AEA3970185FE0AC0012F8B6 /* river2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = river2.ogg; sourceTree = "<group>"; };
+		8AEA397F185FE5B60012F8B6 /* Print3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Print3D.h; path = ../../include/Print3D.h; sourceTree = "<group>"; };
+		8AEA3980185FE5C30012F8B6 /* Print3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Print3D.cpp; path = ../../src/Print3D.cpp; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Freeform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeform.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEAF09CCD9054AE5A257591B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -480,6 +511,7 @@
 				01C5D74F181A480600194132 /* Mesh.cpp */,
 				01C5D750181A480600194132 /* Octree.cpp */,
 				01C5D751181A480600194132 /* Picking.cpp */,
+				8AEA3980185FE5C30012F8B6 /* Print3D.cpp */,
 				8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */,
 				01C5D752181A480600194132 /* Sculpt.cpp */,
 				01C5D753181A480600194132 /* State.cpp */,
@@ -545,6 +577,7 @@
 				01C5D798181A4C3A00194132 /* Mesh.h */,
 				01C5D799181A4C3A00194132 /* Octree.h */,
 				01C5D79A181A4C3A00194132 /* Picking.h */,
+				8AEA397F185FE5B60012F8B6 /* Print3D.h */,
 				8A7FDF18183E940D00E94B5F /* ReplayUtil.h */,
 				01C5D79B181A4C3A00194132 /* Resources.h */,
 				01C5D79C181A4C3A00194132 /* Sculpt.h */,
@@ -566,6 +599,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8AEA3962185FE0AB0012F8B6 /* audio */,
 				01C5D77A181A482D00194132 /* bloom-frag.glsl */,
 				8A24C4B8182D9905005151DA /* brush-vert.glsl */,
 				BEAF09CCD9054AE5A257591B /* Info.plist */,
@@ -1108,6 +1142,28 @@
 			name = previews;
 			sourceTree = "<group>";
 		};
+		8AEA3962185FE0AB0012F8B6 /* audio */ = {
+			isa = PBXGroup;
+			children = (
+				8AEA3963185FE0AB0012F8B6 /* arctic1.ogg */,
+				8AEA3964185FE0AC0012F8B6 /* arctic2.ogg */,
+				8AEA3965185FE0AC0012F8B6 /* desert1.ogg */,
+				8AEA3966185FE0AC0012F8B6 /* desert2.ogg */,
+				8AEA3967185FE0AC0012F8B6 /* islands1.ogg */,
+				8AEA3968185FE0AC0012F8B6 /* islands2.ogg */,
+				8AEA3969185FE0AC0012F8B6 /* jungle-cliff1.ogg */,
+				8AEA396A185FE0AC0012F8B6 /* jungle-cliff2.ogg */,
+				8AEA396B185FE0AC0012F8B6 /* jungle1.ogg */,
+				8AEA396C185FE0AC0012F8B6 /* jungle2.ogg */,
+				8AEA396D185FE0AC0012F8B6 /* redwood1.ogg */,
+				8AEA396E185FE0AC0012F8B6 /* redwood2.ogg */,
+				8AEA396F185FE0AC0012F8B6 /* river1.ogg */,
+				8AEA3970185FE0AC0012F8B6 /* river2.ogg */,
+			);
+			name = audio;
+			path = ../../resources/audio;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1164,18 +1220,27 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A7FDF08183A8ECB00E94B5F /* donut.obj in Resources */,
+				8AEA3976185FE0AC0012F8B6 /* islands2.ogg in Resources */,
 				8AE236AF1846A654008BEA30 /* turkey.obj in Resources */,
 				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
 				8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */,
+				8AEA397A185FE0AC0012F8B6 /* jungle2.ogg in Resources */,
 				4E243EF718469AB5003C22E8 /* SavePanelFormatView.xib in Resources */,
 				01C5D793181A482D00194132 /* wireframe-frag.glsl in Resources */,
 				01C5D78F181A482D00194132 /* passthrough-vert.glsl in Resources */,
+				8AEA3979185FE0AC0012F8B6 /* jungle1.ogg in Resources */,
 				8A9B822E1832D38000AA2EA3 /* repel-selected.png in Resources */,
 				01C5D792181A482D00194132 /* sky-vert.glsl in Resources */,
 				01C5D78D181A482D00194132 /* material-vert.glsl in Resources */,
 				8A9B821D1832D38000AA2EA3 /* glass.png in Resources */,
+				8AEA397D185FE0AC0012F8B6 /* river1.ogg in Resources */,
 				01C5D791181A482D00194132 /* sky-frag.glsl in Resources */,
+				8AEA3978185FE0AC0012F8B6 /* jungle-cliff2.ogg in Resources */,
 				8AE236AD184671D3008BEA30 /* previews-frag.glsl in Resources */,
+				8AEA397E185FE0AC0012F8B6 /* river2.ogg in Resources */,
+				8AEA3974185FE0AC0012F8B6 /* desert2.ogg in Resources */,
+				8AEA3971185FE0AC0012F8B6 /* arctic1.ogg in Resources */,
+				8AEA3973185FE0AC0012F8B6 /* desert1.ogg in Resources */,
 				8A9B82381832D38000AA2EA3 /* steel.png in Resources */,
 				8A7FDF05183A8ECB00E94B5F /* ball.obj in Resources */,
 				8A9B823A1832D38000AA2EA3 /* strength-high.png in Resources */,
@@ -1184,8 +1249,10 @@
 				8A9B823E1832D38000AA2EA3 /* strength-medium.png in Resources */,
 				8AE236A9184671B4008BEA30 /* redwood.png in Resources */,
 				8A9B82391832D38000AA2EA3 /* strength-high-selected.png in Resources */,
+				8AEA3977185FE0AC0012F8B6 /* jungle-cliff1.ogg in Resources */,
 				8AE236A6184671B4008BEA30 /* islands.png in Resources */,
 				8AE236A7184671B4008BEA30 /* jungle-cliff.png in Resources */,
+				8AEA3972185FE0AC0012F8B6 /* arctic2.ogg in Resources */,
 				8A9B823F1832D38000AA2EA3 /* sweep-selected.png in Resources */,
 				01C5D78C181A482D00194132 /* material-frag.glsl in Resources */,
 				8A9B82481832D38A00AA2EA3 /* tutorial-camera.png in Resources */,
@@ -1194,10 +1261,12 @@
 				8A9B822B1832D38000AA2EA3 /* porcelain.png in Resources */,
 				8A9B821E1832D38000AA2EA3 /* grow-selected.png in Resources */,
 				8A7FDF06183A8ECB00E94B5F /* can.obj in Resources */,
+				8AEA397B185FE0AC0012F8B6 /* redwood1.ogg in Resources */,
 				8A9B82351832D38000AA2EA3 /* smooth-selected.png in Resources */,
 				8A9B822C1832D38000AA2EA3 /* press-selected.png in Resources */,
 				8A7FDF07183A8ECB00E94B5F /* cube.obj in Resources */,
 				8A9B82161832D38000AA2EA3 /* clay.png in Resources */,
+				8AEA397C185FE0AC0012F8B6 /* redwood2.ogg in Resources */,
 				01C5D787181A482D00194132 /* bloom-frag.glsl in Resources */,
 				8A9B824A1832D38A00AA2EA3 /* tutorial-tools.png in Resources */,
 				8A7FDF13183D44AF00E94B5F /* tutorial-immersive.png in Resources */,
@@ -1205,6 +1274,7 @@
 				8AE236AA184671B4008BEA30 /* river.png in Resources */,
 				8AB190681840111700347357 /* credits.png in Resources */,
 				8A9B822A1832D38000AA2EA3 /* plastic.png in Resources */,
+				8AEA3975185FE0AC0012F8B6 /* islands1.ogg in Resources */,
 				8A9B82491832D38A00AA2EA3 /* tutorial-menu.png in Resources */,
 				8AE236A4184671B4008BEA30 /* arctic.png in Resources */,
 				8AE236A5184671B4008BEA30 /* desert.png in Resources */,
@@ -1246,6 +1316,7 @@
 				01C5D76E181A480600194132 /* Picking.cpp in Sources */,
 				01C5D76B181A480600194132 /* LeapListener.cpp in Sources */,
 				01C5D763181A480600194132 /* CImageSurface.cpp in Sources */,
+				8AEA3981185FE5C30012F8B6 /* Print3D.cpp in Sources */,
 				01C5D768181A480600194132 /* GLBuffer.cpp in Sources */,
 				01C5D769181A480600194132 /* Grid.cpp in Sources */,
 				01C5D75E181A480600194132 /* Brush.cpp in Sources */,
@@ -1265,7 +1336,7 @@
 		C01FCF4B08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CINDER_PATH = "$(LIBRARIES_PATH)/cinder_0.8.5";
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -1293,6 +1364,9 @@
 					"$(LIBRARIES_PATH)/eigen-3.1.2",
 					"$(CINDER_PATH)/include",
 					"$(LIBRARIES_PATH)/breakpad-0.1/include",
+					"$(LIBRARIES_PATH)/irrKlang-1.4.0/include",
+					"$(LIBRARIES_PATH)/curl-7.32.0/include",
+					"$(LIBRARIES_PATH)/openssl/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
@@ -1304,9 +1378,16 @@
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
 					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
+					"$(LIBRARIES_PATH)/irrKlang-1.4.0/bin/macosx-gcc",
+					"$(LIBRARIES_PATH)/curl-7.32.0/lib",
+					"$(LIBRARIES_PATH)/openssl/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
+					"-lirrklang",
+					"-lcurl",
+					"-lssl",
+					"-lcrypto",
 					"-sectcreate",
 					__DATA,
 					__09ffe29c32cd8a,
@@ -1327,7 +1408,7 @@
 		C01FCF4C08A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CINDER_PATH = "$(LIBRARIES_PATH)/cinder_0.8.5";
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -1353,6 +1434,9 @@
 					"$(LIBRARIES_PATH)/eigen-3.1.2",
 					"$(CINDER_PATH)/include",
 					"$(LIBRARIES_PATH)/breakpad-0.1/include",
+					"$(LIBRARIES_PATH)/irrKlang-1.4.0/include",
+					"$(LIBRARIES_PATH)/curl-7.32.0/include",
+					"$(LIBRARIES_PATH)/openssl/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
@@ -1364,9 +1448,16 @@
 					"$(SRCROOT)",
 					"$(CINDER_PATH)/lib",
 					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
+					"$(LIBRARIES_PATH)/irrKlang-1.4.0/bin/macosx-gcc",
+					"$(LIBRARIES_PATH)/curl-7.32.0/lib",
+					"$(LIBRARIES_PATH)/openssl/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
+					"-lirrklang",
+					"-lcurl",
+					"-lssl",
+					"-lcrypto",
 					"-sectcreate",
 					__DATA,
 					__09ffe29c32cd8a,
