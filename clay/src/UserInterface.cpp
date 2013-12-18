@@ -955,7 +955,7 @@ void UserInterface::showConfirm(Menu::MenuEntryType entryType) {
   case Menu::OBJECT_SNOWMAN:
   case Menu::OBJECT_CUBE: _confirm_menu.setName("Discard changes and load a new object?"); break;
   case Menu::GENERAL_EXIT: _confirm_menu.setName("Are you sure you would like to exit?"); break;
-  case Menu::OBJECT_UPLOAD: _confirm_menu.setName("This will open a browser and upload to Sculpteo. Continue?"); break;
+  case Menu::OBJECT_UPLOAD: _confirm_menu.setName("This will open a browser and upload to a public gallery. Continue?"); break;
   default: _confirm_menu.setName("Are you sure?"); break;
   }
 }
