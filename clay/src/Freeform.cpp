@@ -1666,14 +1666,18 @@ int FreeformApp::saveScreenshot() {
 
 void FreeformApp::print3D() {
   boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
-  std::string fileName = boost::posix_time::to_iso_string(now) + ".ply";
+  std::string fileName = boost::posix_time::to_iso_string(now);
   if (fileName.find(',') != std::string::npos) {
     fileName = fileName.substr(0, fileName.find(','));
   }
+  fileName = fileName + ".ply";
+
+  std::string filePath = AutoSave::getUserPath(fileName);
+
   Files files;
 
   // save current mesh to a temporary file
-  std::ofstream file(fileName.c_str());
+  std::ofstream file(filePath.c_str());
   if (!file) {
     return;
   }
@@ -1682,10 +1686,10 @@ void FreeformApp::print3D() {
 
   // upload to our server using HTTP PUT
   Print3D print;
-  print.Upload(fileName);
+  print.Upload(filePath, fileName);
 
   print.LaunchForm(fileName, "MyCreation", "FreeformCreation");
-  ci::deleteFile(fileName);
+  ci::deleteFile(filePath);
 }
 
 #if !LM_PRODUCTION_BUILD

@@ -10,7 +10,7 @@ public:
   Print3D();
   ~Print3D();
 
-  bool Upload(const std::string& filename);
+  bool Upload(const std::string& filepath, const std::string& filename);
   void Cancel() { m_abort = true; }
   double Progress() const { return m_progress; }
   void LaunchForm(const std::string& filename, const std::string& name, const std::string& description);

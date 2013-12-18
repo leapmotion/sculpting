@@ -21,6 +21,7 @@ public:
   void deleteAutoSave();
 
   static bool isFirstRun();
+  static std::string getUserPath(const std::string& filename);
 
   static const char PATH_SEPARATOR;
 
@@ -30,7 +31,6 @@ private:
   void checkAutoSave();
 
   static std::string getUserAppDirectory();
-  static std::string getUserPath(const std::string& filename);
 
   bool m_shutdown;
   VertexVector m_vertices;

@@ -10,7 +10,7 @@ Print3D::~Print3D() {
   curl_easy_cleanup(m_curl);
 }
 
-bool Print3D::Upload(const std::string& filename) {
+bool Print3D::Upload(const std::string& filepath, const std::string& filename) {
   // set callbacks
   curl_easy_setopt(m_curl, CURLOPT_READFUNCTION, readContentStatic);
   curl_easy_setopt(m_curl, CURLOPT_READDATA, this);
@@ -25,7 +25,7 @@ bool Print3D::Upload(const std::string& filename) {
   curl_easy_setopt(m_curl, CURLOPT_PUT, 1L);
 
   // load file
-  std::ifstream fileInput(filename.c_str());
+  std::ifstream fileInput(filepath.c_str());
   if (!fileInput) {
     return false;
   }
