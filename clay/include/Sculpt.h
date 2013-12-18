@@ -26,6 +26,8 @@ public:
   void setTopoMode(TopoMode mode) { topoMode_ = mode; }
   bool isSweep() { return sculptMode_==SWEEP; }
   void setMaterialColor(const Vector3& color) { materialColor_ = color; }
+  void setSymmetry(bool symmetry) { symmetry_ = symmetry; }
+  bool symmetry() const { return symmetry_; }
 
   void setRemeshRadius(float remeshRadius) { remeshRadius_ = remeshRadius; }
   void sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush);
@@ -43,7 +45,7 @@ public:
   int getNumBrushes() const { return (int)_brushes.size(); }
   void addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3& dir, const Vector3& vel, float radius, float strength, float activation);
   void clearBrushes() { _brushes.clear(); }
-  void applyBrushes(double curTime, bool symmetry, AutoSave* autoSave);
+  void applyBrushes(double curTime, AutoSave* autoSave);
   BrushVector getBrushes() const;
   double getLastSculptTime() const { return lastSculptTime_; }
 
@@ -88,6 +90,7 @@ private:
   double lastUpdateTime_;
   Topology topo_;
   float remeshRadius_;
+  bool symmetry_;
 
   BrushVector _brushes;
 };

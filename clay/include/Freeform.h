@@ -71,7 +71,6 @@ public:
   void setMaterial(const Material& mat);
   void setWireframe(bool wireframe);
   void toggleWireframe();
-  void setSymmetry(bool symmetry);
   void toggleSymmetry();
   void setEnvironment(const std::string& str);
   void toggleSound();
@@ -217,7 +216,6 @@ private:
   // new mesh
   Mesh* mesh_;
   Sculpt sculpt_;
-  bool symmetry_;
   bool drawOctree_;
   std::string shapes_[NUM_SHAPES];
   float remeshRadius_;

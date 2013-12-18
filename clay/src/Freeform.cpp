@@ -21,7 +21,7 @@ const float MAX_FOV = 90.0f;
 
 //*********************************************************
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
-  _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), symmetry_(false), _last_update_time(0.0),
+  _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), _last_update_time(0.0),
   drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
   _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
   _immersive_entered_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false), _wheel_zoom(0.0f)
@@ -376,7 +376,7 @@ void FreeformApp::keyDown( KeyEvent event )
 #if !LM_PRODUCTION_BUILD
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
-  case 's': symmetry_ = !symmetry_; break;
+  case 's': toggleSymmetry(); break;
   case 'r': sculpt_.setRemeshRadius(remeshRadius_); break;
 #endif
 #if __APPLE__
@@ -572,7 +572,7 @@ void FreeformApp::updateLeapAndMesh() {
           _camera_util->UpdateCamera(mesh_, &_camera_params);
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
-          sculpt_.applyBrushes(curTime, symmetry_, &_auto_save);
+          sculpt_.applyBrushes(curTime, &_auto_save);
           _camera_util->m_timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
         }
       }
@@ -751,7 +751,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "reflectionFactor", 0.0f );
     glDisable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
-    if (symmetry_) {
+    if (sculpt_.symmetry()) {
       // draw "ghost" symmetry brush
       _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
       brushes[i].reflected(0).draw(uiMult);
@@ -765,7 +765,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "reflectionFactor", 0.15f );
     glEnable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
-    if (symmetry_) {
+    if (sculpt_.symmetry()) {
       // draw regular symmetry brush
       _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
       brushes[i].reflected(0).draw(uiMult);
@@ -1266,12 +1266,8 @@ void FreeformApp::toggleWireframe() {
   _draw_edges = !_draw_edges;
 }
 
-void FreeformApp::setSymmetry(bool symmetry) {
-  symmetry_ = symmetry;
-}
-
 void FreeformApp::toggleSymmetry() {
-  symmetry_ = !symmetry_;
+  sculpt_.setSymmetry(!sculpt_.symmetry());
 }
 
 void FreeformApp::setEnvironment(const std::string& str) {

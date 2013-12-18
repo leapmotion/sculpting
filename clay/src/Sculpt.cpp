@@ -14,7 +14,7 @@ float Sculpt::d2Move_ = 0.0f;
 /** Constructor */
 Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), lastSculptTime_(0.0),
   prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f),
-  remeshRadius_(-1.0f), lastUpdateTime_(0.0)
+  remeshRadius_(-1.0f), lastUpdateTime_(0.0), symmetry_(false)
 {}
 
 /** Destructor */
@@ -398,6 +398,10 @@ void Sculpt::addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3
   brush._velocity = vel;
   brush._activation = ci::math<float>::clamp(activation, 0.00001f, 0.99999f);
 
+  if (symmetry_) {
+    _brushes.push_back(_brushes.back().reflected(0));
+  }
+
   LM_ASSERT(brush._radius > 0.00001f && radius < 9999999.0f, "Bad radius");
   LM_ASSERT(brush._strength >= 0.0f && strength <= 1.0f, "Bad strength");
   LM_ASSERT(fabs(brush._direction.norm() - 1.0f) < 0.0001f, "Bad direction");
@@ -405,7 +409,7 @@ void Sculpt::addBrush(const Vector3& worldPos, const Vector3& pos, const Vector3
   LM_ASSERT(brush._activation >= 0.0f && brush._activation <= 1.0f, "Bad activation");
 }
 
-void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
+void Sculpt::applyBrushes(double curTime, AutoSave* autoSave)
 {
   if (sculptMode_ == INVALID) {
     return;
@@ -421,40 +425,27 @@ void Sculpt::applyBrushes(double curTime, bool symmetry, AutoSave* autoSave)
 
   const Vector3& origin = mesh_->getRotationOrigin();
   const Vector3& axis = mesh_->getRotationAxis();
-  const float velocity = mesh_->getRotationVelocity();
+
+  const float rotVelocity = mesh_->getRotationVelocity();
   const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
-  const float angle = deltaTime * velocity;
-  const int numSamples = velocity > 0.001f ? static_cast<int>(std::ceil(angle / DESIRED_ANGLE_PER_SAMPLE)) : 1;
-  const float timePerSample = deltaTime / numSamples;
-  const float strengthMult = std::min(1.0f, (1.0f + velocity) / numSamples);
+  const float angle = deltaTime * rotVelocity;
+  const int numRotSamples = rotVelocity > 0.001f ? static_cast<int>(std::ceil(angle / DESIRED_ANGLE_PER_SAMPLE)) : 1;
+  const float timePerSample = deltaTime / numRotSamples;
+  const float rotStrengthMult = std::min(1.0f, (1.0f + rotVelocity) / numRotSamples);
 
   bool haveSculpt = false;
 
-  double sampleTime = lastUpdateTime_;
-  for (int i=0; i<numSamples; i++) {
-    sampleTime += timePerSample;
-    const Matrix4x4 transformInv = mesh_->getTransformation(sampleTime).inverse();
+  for (size_t b=0; b<_brushes.size(); ++b) {
+    const int numSamples = numRotSamples;
+    double sampleTime = lastUpdateTime_;
+    for (int i=0; i<numSamples; i++) {
+      sampleTime += timePerSample;
+      const Matrix4x4 transformInv = mesh_->getTransformation(sampleTime).inverse();
 
-    for (size_t b=0; b<_brushes.size(); ++b) {
-      if (symmetry) {
-        brushVertices_.clear();
-        Brush brush = _brushes[b].reflected(0).transformed(transformInv).withSpinVelocity(origin, axis, velocity);
-        brush._strength *= strengthMult;
-
-        mesh_->getVerticesInsideBrush(brush, brushVertices_);
-        if (!brushVertices_.empty()) {
-          if (!haveSculpt && !prevSculpt_) {
-            mesh_->startPushState();
-          }
-          haveSculpt = true;
-          sculptMesh(brushVertices_, brush);
-        }
-      }
+      Brush brush = _brushes[b].transformed(transformInv).withSpinVelocity(origin, axis, rotVelocity);
+      brush._strength *= rotStrengthMult;
 
       brushVertices_.clear();
-      Brush brush = _brushes[b].transformed(transformInv).withSpinVelocity(origin, axis, velocity);
-      brush._strength *= strengthMult;
-
       mesh_->getVerticesInsideBrush(brush, brushVertices_);
       if (!brushVertices_.empty()) {
         if (!haveSculpt && !prevSculpt_) {
