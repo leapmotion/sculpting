@@ -80,7 +80,7 @@ public:
     OBJECT_CAN,
     OBJECT_DONUT,
     OBJECT_SHEET,
-    OBJECT_TURKEY,
+    OBJECT_SNOWMAN,
     OBJECT_CUBE,
 
     // editing
@@ -201,7 +201,7 @@ public:
         case Menu::OBJECT_CAN: return "Cylinder"; break;
         case Menu::OBJECT_DONUT: return "Torus"; break;
         case Menu::OBJECT_SHEET: return "Sheet"; break;
-        case Menu::OBJECT_TURKEY: return "Turkey"; break;
+        case Menu::OBJECT_SNOWMAN: return "Snowman"; break;
         case Menu::OBJECT_CUBE: return "Cube"; break;
         case Menu::EDITING_TOGGLE_SYMMETRY: return "Symmetry"; break;
         case Menu::EDITING_TOGGLE_WIREFRAME: return "Wireframe"; break;

@@ -46,7 +46,7 @@ class FreeformApp : public AppNative
 public:
 
   enum AAMode { NONE, MSAA };
-  enum Shape { BALL, CAN, DONUT, SHEET, CUBE, TURKEY, NUM_SHAPES };
+  enum Shape { BALL, CAN, DONUT, SHEET, CUBE, SNOWMAN, NUM_SHAPES };
 
   FreeformApp();
   ~FreeformApp();

@@ -867,7 +867,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
       case Menu::OBJECT_CAN: showConfirm(Menu::OBJECT_CAN); break;
       case Menu::OBJECT_DONUT: showConfirm(Menu::OBJECT_DONUT); break;
       case Menu::OBJECT_SHEET: showConfirm(Menu::OBJECT_SHEET); break;
-      case Menu::OBJECT_TURKEY: showConfirm(Menu::OBJECT_TURKEY); break;
+      case Menu::OBJECT_SNOWMAN: showConfirm(Menu::OBJECT_SNOWMAN); break;
       case Menu::OBJECT_CUBE: showConfirm(Menu::OBJECT_CUBE); break;
       default: break;
     }
@@ -895,7 +895,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
         case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
         case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
         case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
-        case Menu::OBJECT_TURKEY: app->loadShape(FreeformApp::TURKEY); break;
+        case Menu::OBJECT_SNOWMAN: app->loadShape(FreeformApp::SNOWMAN); break;
         case Menu::OBJECT_CUBE: app->loadShape(FreeformApp::CUBE); break;
         default: break;
       }
@@ -951,6 +951,7 @@ void UserInterface::showConfirm(Menu::MenuEntryType entryType) {
   case Menu::OBJECT_CAN:
   case Menu::OBJECT_DONUT:
   case Menu::OBJECT_SHEET:
+  case Menu::OBJECT_SNOWMAN:
   case Menu::OBJECT_CUBE: _confirm_menu.setName("Discard changes and load a new object?"); break;
   case Menu::GENERAL_EXIT: _confirm_menu.setName("Are you sure you would like to exit?"); break;
   default: _confirm_menu.setName("Are you sure?"); break;

@@ -44,7 +44,7 @@
 #define RES_DONUT_OBJ                         CINDER_RESOURCE( ../resources/shapes/, donut.obj, 252, OBJ )
 #define RES_SHEET_OBJ                         CINDER_RESOURCE( ../resources/shapes/, sheet.obj, 253, OBJ )
 #define RES_CUBE_OBJ                          CINDER_RESOURCE( ../resources/shapes/, cube.obj, 254, OBJ )
-#define RES_TURKEY_OBJ                        CINDER_RESOURCE( ../resources/shapes/, turkey.obj, 255, OBJ )
+#define RES_SNOWMAN_OBJ                       CINDER_RESOURCE( ../resources/shapes/, snowman.obj, 255, OBJ )
 
 // tutorial images
 #define RES_TUTORIAL_1                        CINDER_RESOURCE( ../resources/tutorial/, tutorial-menu.png, 260, PNG )

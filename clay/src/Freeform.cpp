@@ -1089,19 +1089,19 @@ void FreeformApp::loadShapes() {
   ci::DataSourceRef donut = loadResource(RES_DONUT_OBJ);
   ci::DataSourceRef sheet = loadResource(RES_SHEET_OBJ);
   ci::DataSourceRef cube = loadResource(RES_CUBE_OBJ);
-  ci::DataSourceRef turkey = loadResource(RES_TURKEY_OBJ);
+  ci::DataSourceRef snowman = loadResource(RES_SNOWMAN_OBJ);
   ci::Buffer& ballBuf = ball->getBuffer();
   ci::Buffer& canBuf = can->getBuffer();
   ci::Buffer& donutBuf = donut->getBuffer();
   ci::Buffer& sheetBuf = sheet->getBuffer();
   ci::Buffer& cubeBuf = cube->getBuffer();
-  ci::Buffer& turkeyBuf = turkey->getBuffer();
+  ci::Buffer& snowmanBuf = snowman->getBuffer();
   shapes_[BALL] = std::string((char*)ballBuf.getData(), ballBuf.getDataSize());
   shapes_[CAN] = std::string((char*)canBuf.getData(), canBuf.getDataSize());
   shapes_[DONUT] = std::string((char*)donutBuf.getData(), donutBuf.getDataSize());
   shapes_[SHEET] = std::string((char*)sheetBuf.getData(), sheetBuf.getDataSize());
   shapes_[CUBE] = std::string((char*)cubeBuf.getData(), cubeBuf.getDataSize());
-  shapes_[TURKEY] = std::string((char*)turkeyBuf.getData(), turkeyBuf.getDataSize());
+  shapes_[SNOWMAN] = std::string((char*)snowmanBuf.getData(), snowmanBuf.getDataSize());
 }
 
 void FreeformApp::loadImages() {
