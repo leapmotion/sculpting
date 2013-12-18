@@ -66,6 +66,33 @@ void FreeformApp::toggleFullscreen(const std::string& str)
 
 void FreeformApp::setup()
 {
+// osx path stuff
+#ifdef __APPLE__
+
+  char exec_path[PATH_MAX] = {0};
+  uint32_t pathSize = sizeof(exec_path);
+  if (!_NSGetExecutablePath(exec_path, &pathSize)) {
+    char fullpath[PATH_MAX] = {0};
+    if (realpath(exec_path, fullpath)) {
+      std::string path(fullpath);
+      size_t pos = path.find_last_of('/');
+
+      if (pos != std::string::npos) {
+        path.erase(pos+1);
+      }
+      if (!path.empty()) {
+        chdir(path.c_str());
+      }
+      const char* resources = "../Resources";
+      if (!access(resources, R_OK)) {
+        chdir(resources);
+      }
+    }
+  }
+
+#endif
+
+
 #if _WIN32
   HMODULE instance = ::GetModuleHandle(0);
   SetClassLongPtr(getRenderer()->getHwnd(), GCLP_HICON, (LONG)::LoadImage(instance, MAKEINTRESOURCE(ICON_IDX), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE));
@@ -1186,8 +1213,9 @@ irrklang::ISound* FreeformApp::createSoundResource(ci::DataSourceRef ref, const 
   if (m_soundEngine) {
     ci::Buffer& buf = ref->getBuffer();
     irrklang::ISoundSource* ss = m_soundEngine->addSoundSourceFromMemory(buf.getData(), buf.getDataSize(), name, false);
+    m_audioSourceRefs.push_back(ref);
     ss->setForcedStreamingThreshold(300000);
-    return m_soundEngine->play2D(ss, true, true, true);
+    return m_soundEngine->play2D(ss, true, true, true, true);
   }
 
   return NULL;

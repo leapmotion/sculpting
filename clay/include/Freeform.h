@@ -208,6 +208,7 @@ private:
   // audio stuff
   bool _have_audio;
   bool _audio_paused;
+  std::vector<ci::DataSourceRef> m_audioSourceRefs;
   typedef std::pair<irrklang::ISound*, irrklang::ISound*> LoopPair;
   irrklang::ISoundEngine* m_soundEngine;
   LoopPair m_activeLoop;
