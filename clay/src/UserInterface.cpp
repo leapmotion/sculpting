@@ -862,7 +862,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
     switch (entry.m_entryType) {
       case Menu::OBJECT_LOAD: showConfirm(Menu::OBJECT_LOAD); break;
       case Menu::OBJECT_EXPORT: app->saveFile(); break;
-      case Menu::OBJECT_UPLOAD: app->print3D(); break;
+      case Menu::OBJECT_UPLOAD: showConfirm(Menu::OBJECT_UPLOAD); break;
       case Menu::OBJECT_BALL: showConfirm(Menu::OBJECT_BALL); break;
       case Menu::OBJECT_CAN: showConfirm(Menu::OBJECT_CAN); break;
       case Menu::OBJECT_DONUT: showConfirm(Menu::OBJECT_DONUT); break;
@@ -896,6 +896,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
         case Menu::OBJECT_DONUT: app->loadShape(FreeformApp::DONUT); break;
         case Menu::OBJECT_SHEET: app->loadShape(FreeformApp::SHEET); break;
         case Menu::OBJECT_SNOWMAN: app->loadShape(FreeformApp::SNOWMAN); break;
+        case Menu::OBJECT_UPLOAD: app->print3D(); break;
         case Menu::OBJECT_CUBE: app->loadShape(FreeformApp::CUBE); break;
         default: break;
       }
@@ -954,6 +955,7 @@ void UserInterface::showConfirm(Menu::MenuEntryType entryType) {
   case Menu::OBJECT_SNOWMAN:
   case Menu::OBJECT_CUBE: _confirm_menu.setName("Discard changes and load a new object?"); break;
   case Menu::GENERAL_EXIT: _confirm_menu.setName("Are you sure you would like to exit?"); break;
+  case Menu::OBJECT_UPLOAD: _confirm_menu.setName("This will open a browser and upload to Sculpteo. Continue?"); break;
   default: _confirm_menu.setName("Are you sure?"); break;
   }
 }
