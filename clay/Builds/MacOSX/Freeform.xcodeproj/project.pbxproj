@@ -102,7 +102,6 @@
 		8AE236A9184671B4008BEA30 /* redwood.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236A2184671B4008BEA30 /* redwood.png */; };
 		8AE236AA184671B4008BEA30 /* river.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236A3184671B4008BEA30 /* river.png */; };
 		8AE236AD184671D3008BEA30 /* previews-frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236AC184671D3008BEA30 /* previews-frag.glsl */; };
-		8AE236AF1846A654008BEA30 /* turkey.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8AE236AE1846A654008BEA30 /* turkey.obj */; };
 		8AEA3981185FE5C30012F8B6 /* Print3D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8AEA3980185FE5C30012F8B6 /* Print3D.cpp */; };
 		8AEA39C9186137C30012F8B6 /* arctic1.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA39BB186137C30012F8B6 /* arctic1.ogg */; };
 		8AEA39CA186137C30012F8B6 /* arctic2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA39BC186137C30012F8B6 /* arctic2.ogg */; };
@@ -120,6 +119,7 @@
 		8AEA39D6186137C30012F8B6 /* river2.ogg in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA39C8186137C30012F8B6 /* river2.ogg */; };
 		8AEA39DB18613F7D0012F8B6 /* libirrklang.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AEA39DA18613F7D0012F8B6 /* libirrklang.dylib */; };
 		8AEA39DC18613F890012F8B6 /* libirrklang.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8AEA39DA18613F7D0012F8B6 /* libirrklang.dylib */; };
+		8AEA39DE1861433E0012F8B6 /* snowman.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8AEA39DD1861433E0012F8B6 /* snowman.obj */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
@@ -280,7 +280,6 @@
 		8AE236A2184671B4008BEA30 /* redwood.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = redwood.png; path = ../../resources/previews/redwood.png; sourceTree = "<group>"; };
 		8AE236A3184671B4008BEA30 /* river.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = river.png; path = ../../resources/previews/river.png; sourceTree = "<group>"; };
 		8AE236AC184671D3008BEA30 /* previews-frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "previews-frag.glsl"; path = "../../resources/previews-frag.glsl"; sourceTree = "<group>"; };
-		8AE236AE1846A654008BEA30 /* turkey.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = turkey.obj; sourceTree = "<group>"; };
 		8AEA397F185FE5B60012F8B6 /* Print3D.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Print3D.h; path = ../../include/Print3D.h; sourceTree = "<group>"; };
 		8AEA3980185FE5C30012F8B6 /* Print3D.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Print3D.cpp; path = ../../src/Print3D.cpp; sourceTree = "<group>"; };
 		8AEA39BB186137C30012F8B6 /* arctic1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = arctic1.ogg; sourceTree = "<group>"; };
@@ -298,6 +297,7 @@
 		8AEA39C7186137C30012F8B6 /* river1.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = river1.ogg; sourceTree = "<group>"; };
 		8AEA39C8186137C30012F8B6 /* river2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = river2.ogg; sourceTree = "<group>"; };
 		8AEA39DA18613F7D0012F8B6 /* libirrklang.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libirrklang.dylib; sourceTree = "<group>"; };
+		8AEA39DD1861433E0012F8B6 /* snowman.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = snowman.obj; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Freeform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeform.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEAF09CCD9054AE5A257591B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -488,12 +488,12 @@
 		8A7FDEFF183A8ECB00E94B5F /* shapes */ = {
 			isa = PBXGroup;
 			children = (
-				8AE236AE1846A654008BEA30 /* turkey.obj */,
 				8A7FDF00183A8ECB00E94B5F /* ball.obj */,
 				8A7FDF01183A8ECB00E94B5F /* can.obj */,
 				8A7FDF02183A8ECB00E94B5F /* cube.obj */,
 				8A7FDF03183A8ECB00E94B5F /* donut.obj */,
 				8A7FDF04183A8ECB00E94B5F /* sheet.obj */,
+				8AEA39DD1861433E0012F8B6 /* snowman.obj */,
 			);
 			name = shapes;
 			path = ../../resources/shapes;
@@ -546,8 +546,8 @@
 		8A9B82441832D38A00AA2EA3 /* tutorial */ = {
 			isa = PBXGroup;
 			children = (
-				8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */,
 				8A9B82451832D38A00AA2EA3 /* tutorial-camera.png */,
+				8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */,
 				8A9B82461832D38A00AA2EA3 /* tutorial-menu.png */,
 				8A9B82471832D38A00AA2EA3 /* tutorial-tools.png */,
 			);
@@ -559,15 +559,15 @@
 			isa = PBXGroup;
 			children = (
 				8AE2369D184671B4008BEA30 /* arctic.png */,
+				8AB190671840111700347357 /* credits.png */,
 				8AE2369E184671B4008BEA30 /* desert.png */,
+				8A7FDF14183DAFA400E94B5F /* freeform.icns */,
+				8A7FDF15183DAFA400E94B5F /* freeform.ico */,
 				8AE2369F184671B4008BEA30 /* islands.png */,
 				8AE236A0184671B4008BEA30 /* jungle-cliff.png */,
 				8AE236A1184671B4008BEA30 /* jungle.png */,
 				8AE236A2184671B4008BEA30 /* redwood.png */,
 				8AE236A3184671B4008BEA30 /* river.png */,
-				8AB190671840111700347357 /* credits.png */,
-				8A7FDF14183DAFA400E94B5F /* freeform.icns */,
-				8A7FDF15183DAFA400E94B5F /* freeform.ico */,
 			);
 			name = previews;
 			sourceTree = "<group>";
@@ -651,7 +651,6 @@
 			files = (
 				8A7FDF08183A8ECB00E94B5F /* donut.obj in Resources */,
 				8AEA39CE186137C30012F8B6 /* islands2.ogg in Resources */,
-				8AE236AF1846A654008BEA30 /* turkey.obj in Resources */,
 				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
 				8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */,
 				8AEA39D2186137C30012F8B6 /* jungle2.ogg in Resources */,
@@ -671,6 +670,7 @@
 				8AEA39CC186137C30012F8B6 /* desert2.ogg in Resources */,
 				8AEA39C9186137C30012F8B6 /* arctic1.ogg in Resources */,
 				8AEA39CB186137C30012F8B6 /* desert1.ogg in Resources */,
+				8AEA39DE1861433E0012F8B6 /* snowman.obj in Resources */,
 				8A9B82381832D38000AA2EA3 /* steel.png in Resources */,
 				8A7FDF05183A8ECB00E94B5F /* ball.obj in Resources */,
 				8A9B823A1832D38000AA2EA3 /* strength-high.png in Resources */,
