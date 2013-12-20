@@ -56,3 +56,9 @@ bool LeapListener::waitForFrame(Leap::Frame& _Frame, int _MillisecondsTimeout) {
 bool LeapListener::isConnected() const {
   return _is_connected;
 }
+
+bool LeapListener::isReceivingFrames() const {
+  static const double FRAME_RECEIVE_TIMEOUT = 0.5;
+  const double curTime = ci::app::getElapsedSeconds();
+  return (curTime - _last_frame_time) < FRAME_RECEIVE_TIMEOUT;
+}

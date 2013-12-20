@@ -16,6 +16,7 @@ public:
   virtual void onFrame( const Leap::Controller& );
   bool waitForFrame(Leap::Frame& _Frame, int _MillisecondsTimeout);
   bool isConnected() const;
+  bool isReceivingFrames() const;
 
 private:
 

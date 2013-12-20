@@ -311,6 +311,16 @@ void FreeformApp::resize()
 
   int width = getWindowWidth();
   int height = getWindowHeight();
+
+  if (_have_audio && m_soundEngine) {
+    if (width == 0 || height == 0) {
+      // app is minimized, pause all sounds
+      m_soundEngine->setAllSoundsPaused(true);
+    } else {
+      m_soundEngine->setAllSoundsPaused(_audio_paused);
+    }
+  }
+
   width = std::max(BLUR_DOWNSCALE_FACTOR, width);
   height = std::max(BLUR_DOWNSCALE_FACTOR, height);
   const int blurWidth = width / BLUR_DOWNSCALE_FACTOR;
@@ -911,9 +921,10 @@ void FreeformApp::draw() {
   const float exposureMult = checkEnvironmentLoading();
 
   if (_have_audio) {
+    const float backgroundMult = _listener.isReceivingFrames() ? 1.0f : 0.0f;
     if (m_activeLoop.first && m_activeLoop.second) {
-      m_activeLoop.first->setVolume(0.3f*exposureMult);
-      m_activeLoop.second->setVolume(0.3f*exposureMult);
+      m_activeLoop.first->setVolume(0.3f*exposureMult*backgroundMult);
+      m_activeLoop.second->setVolume(0.3f*exposureMult*backgroundMult);
     }
     if (m_soundEngine) {
       m_soundEngine->update();
