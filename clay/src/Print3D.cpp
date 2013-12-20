@@ -45,7 +45,7 @@ bool Print3D::Upload(const std::string& filepath, const std::string& filename) {
 }
 
 void Print3D::LaunchForm(const std::string& filename, const std::string& name, const std::string& description) {
-  const std::string url = "http://clay-motion-2013.herokuapp.com/sculpteo/aws_to_store/freeform/" + filename + "?name=" + name + "&description=" + description;
+  const std::string url = "http://leapmotion-freeform.herokuapp.com/sculpteo/aws_to_store/freeform/" + filename + "?name=" + name + "&description=" + description;
   ci::launchWebBrowser(ci::Url(url));
 }
 
@@ -90,7 +90,7 @@ int Print3D::progressFunctionStatic(void* clientp, double dltotal, double dlnow,
 
 std::string Print3D::createUploadURL(const std::string& username, const std::string& filename, size_t numBytes) {
   std::stringstream ss;
-  ss << "http://dave_leapmotion-clay-motion-2013.nodejitsu.com/item/";
+  ss << "http://leapmotion-freeform.herokuapp.com/item/";
   ss << username << "/" << filename << "?size=" << numBytes;
   return ss.str();
 }
