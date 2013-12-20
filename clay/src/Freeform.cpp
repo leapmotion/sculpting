@@ -932,7 +932,11 @@ void FreeformApp::draw() {
   const float exposureMult = checkEnvironmentLoading();
 
   if (_have_audio) {
-    const float backgroundMult = _listener.isReceivingFrames() ? 1.0f : 0.0f;
+    float backgroundMult = _listener.isReceivingFrames() ? 1.0f : 0.0f;
+#if __APPLE__
+    NSWindow *win = [reinterpret_cast<NSView*>(getWindow()->getNative()) window];
+    backgroundMult *= ([win isVisible] && [win isOnActiveSpace]) ? 1.0f : 0.0f;
+#endif
     if (m_activeLoop.first && m_activeLoop.second) {
       m_activeLoop.first->setVolume(0.3f*exposureMult*backgroundMult);
       m_activeLoop.second->setVolume(0.3f*exposureMult*backgroundMult);
