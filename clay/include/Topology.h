@@ -49,7 +49,6 @@ public :
   }
   void subdivision(std::vector<int> &iTris, float detailMaxSquared);
   void decimation(std::vector<int> &iTris, float detailMinSquared);
-  void uniformisation(std::vector<int> &iTris, float detailMinSquared, float detailMaxSquared);
   void adaptTopology(std::vector<int> &iTris, float d2Thickness);
 
 private :

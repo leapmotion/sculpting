@@ -2,13 +2,6 @@
 #include "Topology.h"
 #include "Sculpt.h"
 
-/** Uniformisation operation, we subdivide... and then decimate */
-void Topology::uniformisation(std::vector<int> &iTris, float detailMinSquared, float detailMaxSquared)
-{
-  subdivision(iTris, detailMaxSquared);
-  decimation(iTris, detailMinSquared);
-}
-
 /** Adapt topology */
 void Topology::adaptTopology(std::vector<int> &iTris, float d2Thickness)
 {

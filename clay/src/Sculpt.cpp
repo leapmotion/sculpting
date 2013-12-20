@@ -48,14 +48,23 @@ void Sculpt::remesh(float remeshRadius) {
   setAdaptiveParameters(remeshRadius*remeshRadius);
 
   switch(topoMode_) {
-  case ADAPTIVE :
-  case UNIFORMISATION : topo_.uniformisation(iTris, d2Min_, d2Max_); break;
-  case DECIMATION : topo_.decimation(iTris, d2Min_); break;
-  case SUBDIVISION : topo_.subdivision(iTris, d2Max_); break;
-  default : break;
+  case ADAPTIVE:
+  case UNIFORMISATION:
+    topo_.subdivision(iTris, d2Max_);
+    if (sculptMode_ != PAINT) {
+      topo_.decimation(iTris, d2Min_);
+    }
+    break;
+  case DECIMATION:
+    topo_.decimation(iTris, d2Min_);
+    break;
+  case SUBDIVISION:
+    topo_.subdivision(iTris, d2Max_);
+    break;
+  default: break;
   }
 
-  if(topoMode_==ADAPTIVE) {
+  if(topoMode_ == ADAPTIVE && sculptMode_ != PAINT) {
     topo_.adaptTopology(iTris, d2Thickness_);
   }
 
@@ -87,11 +96,20 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   setAdaptiveParameters(brush._radius_squared);
 
   switch(topoMode_) {
-  case ADAPTIVE :
-  case UNIFORMISATION : topo_.uniformisation(iTris_, d2Min_, d2Max_); break;
-  case DECIMATION : topo_.decimation(iTris_, d2Min_); break;
-  case SUBDIVISION : topo_.subdivision(iTris_, d2Max_); break;
-  default : break;
+  case ADAPTIVE:
+  case UNIFORMISATION:
+    topo_.subdivision(iTris_, d2Max_);
+    if (sculptMode_ != PAINT) {
+      topo_.decimation(iTris_, d2Min_);
+    }
+    break;
+  case DECIMATION:
+    topo_.decimation(iTris_, d2Min_);
+    break;
+  case SUBDIVISION:
+    topo_.subdivision(iTris_, d2Max_);
+    break;
+  default: break;
   }
 
   mesh_->computeTriangleNormals(iTris_);
@@ -122,7 +140,7 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
     }
   }
 
-  if (topoMode_==ADAPTIVE) {
+  if (topoMode_==ADAPTIVE && sculptMode_ != PAINT) {
     topo_.adaptTopology(iTris_, d2Thickness_);
   }
 
