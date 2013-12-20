@@ -17,10 +17,10 @@ LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sc
   _desired_brush_radius(0.4f), _is_pinched(false), _last_camera_update_time(0.0), _autoBrush(true),
   _last_activity_time(0.0)
 {
-  _dphi.value = 0.0f;
-  _dtheta.value = 0.0f;
-  _dzoom.value = 0.0f;
-  _logScale.Update(0.0f, 0.0, 0.95f);
+  _dphi.Update(0.0f, 0.0, 0.95f);
+  _dtheta.Update(0.0f, 0.0, 0.95f);
+  _dzoom.Update(0.0f, 0.0, 0.95f);
+  _scaleFactor.Update(1.0f, 0.0, 0.95f);
 }
 
 bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress)
@@ -37,7 +37,7 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
   _window_size = viewport;
   _reference_distance = referenceDistance;
   _fov = fov;
-  if (suppress || !LM_RETURN_TRACKED(listener.isConnected()))
+  if (suppress || !LM_RETURN_TRACKED(listener.isConnected()) || !listener.isReceivingFrames())
   {
     _cur_frame = Leap::Frame::invalid();
     _last_frame = Leap::Frame::invalid();
@@ -45,6 +45,10 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
     std::unique_lock<std::mutex> tipsLock(_tips_mutex);
     _sculpt->clearBrushes();
     _tips.clear();
+    _dphi.value = 0.0f;
+    _dtheta.value = 0.0f;
+    _dzoom.value = 0.0f;
+    _scaleFactor.value = 1.0f;
   }
   else if (LM_RETURN_TRACKED(listener.waitForFrame(_cur_frame, 33)))
   {
@@ -76,7 +80,7 @@ void LeapInteraction::interact(double curTime)
   static const float ZOOM_SPEED = 75.0f;
   static const float AGE_WARMUP_TIME = 0.75f;
   static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
-  static const float LOG_SCALE_SMOOTH_STRENGTH = 0.9f;
+  static const float SCALE_FACTOR_SMOOTH_STRENGTH = 0.5f;
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 250, 100);
@@ -109,9 +113,9 @@ void LeapInteraction::interact(double curTime)
   LM_TRACK_VALUE(numOpenHands);
 
   if (numOpenHands >= 2) {
-    _logScale.Update(std::log(frameScale), curTime, LOG_SCALE_SMOOTH_STRENGTH);
+    _scaleFactor.Update(frameScale, curTime, SCALE_FACTOR_SMOOTH_STRENGTH);
   } else {
-    _logScale.Update(0.0f, curTime, LOG_SCALE_SMOOTH_STRENGTH);
+    _scaleFactor.Update(1.0f, curTime, SCALE_FACTOR_SMOOTH_STRENGTH);
     for (HandInfoMap::iterator it = _hand_infos.begin(); it != _hand_infos.end(); ++it) {
       LM_ASSERT_IDENTICAL(0x12345678);
       const int id = it->first;

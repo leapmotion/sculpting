@@ -22,10 +22,12 @@ const float MAX_FOV = 90.0f;
 //*********************************************************
 FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
   _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), _last_update_time(0.0),
-  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()), _ui_zoom(1.0f), remeshRadius_(100.0f),
+  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()),remeshRadius_(100.0f),
   _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
-  _immersive_entered_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false), _wheel_zoom(0.0f)
+  _immersive_changed_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false), _wheel_zoom(0.0f),
+  _immersive_mode(false), _immersive_entered_time(0.0)
 {
+  _fov_modifier.Update(0.0f, 0.0, 0.5f);
   _camera_util = new CameraUtil();
   Menu::updateSculptMult(0.0, 0.0f);
 }
@@ -489,7 +491,21 @@ void FreeformApp::update()
   const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
   const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
   const float dZoom = deltaTime*_leap_interaction->getDZoomVel() + _wheel_zoom;
-  const float logScale = _leap_interaction->getLogScale();
+  const float scaleFactor = _leap_interaction->getScaleFactor();
+
+  if (curTime - _immersive_changed_time > 0.5) {
+    if (_immersive_mode && scaleFactor < 0.95f) {
+      _immersive_mode = false;
+      _immersive_changed_time = curTime;
+    } else if (!_immersive_mode && scaleFactor > 1.05f && !_ui->tutorialActive()) {
+      _immersive_mode = true;
+      if (!_have_entered_immersive) {
+        _immersive_entered_time = curTime;
+        _have_entered_immersive = true;
+      }
+      _immersive_changed_time = curTime;
+    }
+  }
 
   _wheel_zoom = 0.0f;
 
@@ -502,19 +518,14 @@ void FreeformApp::update()
   _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
   static const float LOWER_BOUND = 1.0f;
-  static const float UPPER_BOUND = 1.3f;
+  static const float UPPER_BOUND = 1.32f;
+  static const float IMMERSIVE_MODE_SMOOTH_STRENGTH = 0.9f;
 
-  _ui_zoom = ci::math<float>::clamp(_ui_zoom + 0.75f*logScale, LOWER_BOUND, UPPER_BOUND);
-  const float ratio = (_ui_zoom - LOWER_BOUND) / (UPPER_BOUND - LOWER_BOUND);
-  const float zoomFactor = Utilities::SmootherStep(ratio)*(UPPER_BOUND - LOWER_BOUND) + LOWER_BOUND;
-  _ui->setZoomFactor(zoomFactor);
+  _ui_zoom.Update(_immersive_mode ? UPPER_BOUND : LOWER_BOUND, curTime, IMMERSIVE_MODE_SMOOTH_STRENGTH);
 
-  if (!_have_entered_immersive && zoomFactor > 1.25f && !_ui->tutorialActive()) {
-    _have_entered_immersive = true;
-    _immersive_entered_time = curTime;
-  }
+  _ui->setZoomFactor(_ui_zoom.value);
 
-  _fov_modifier.Update((-_ui->getZoomFactor() * 20.0f) + (-inactivityRatio * 5.0f), curTime, 0.95f);
+  _fov_modifier.Update((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime, 0.95f);
   _ui->update(_leap_interaction, &sculpt_);
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 

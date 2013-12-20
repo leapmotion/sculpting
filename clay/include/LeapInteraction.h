@@ -22,7 +22,7 @@ public:
   float getDPhiVel() const { return _dphi.value; }
   float getDThetaVel() const { return _dtheta.value; }
   float getDZoomVel() const { return _dzoom.value; }
-  float getLogScale() const { return _logScale.value; }
+  float getScaleFactor() const { return _scaleFactor.value; }
   Vec3f getPinchDeltaFromLastCall();
   bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
@@ -79,7 +79,7 @@ private:
   Utilities::ExponentialFilter<float> _dphi;
   Utilities::ExponentialFilter<float> _dtheta;
   Utilities::ExponentialFilter<float> _dzoom;
-  Utilities::ExponentialFilter<float> _logScale;
+  Utilities::ExponentialFilter<float> _scaleFactor;
   std::mutex _tips_mutex;
   double _last_camera_update_time;
   float _reference_distance;

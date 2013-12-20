@@ -167,8 +167,6 @@ private:
   AutoSave _auto_save;
   bool _first_environment_load;
   bool _have_shaders;
-  bool _have_entered_immersive;
-  double _immersive_entered_time;
   std::string _screenshot_path;
 
   // *** Leap stuff ***
@@ -186,9 +184,13 @@ private:
   Color _brush_color;
   bool _draw_edges;
   Material _material;
-  float _ui_zoom;
   ci::gl::Texture _logo_on_black;
   ci::gl::Texture _logo_on_image;
+  bool _immersive_mode;
+  bool _have_entered_immersive;
+  double _immersive_changed_time;
+  double _immersive_entered_time;
+  Utilities::ExponentialFilter<float> _ui_zoom;
 
   UserInterface* _ui;
   bool _draw_ui;
