@@ -1,0 +1,211 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7CC1556F-90B6-4054-82AC-241DBD630142}</ProjectGuid>
+    <RootNamespace>claydemo</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>Freeform</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\openssl\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2;$(LIBRARIES_PATH)\curl-7.32.0\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ShowIncludes>false</ShowIncludes>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;..\..\include</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>cinder_d.lib;Leapd.lib;glu32.lib;FreeImaged.lib;irrKlang.lib;libcurl.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Debug_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\debug;$(LIBRARIES_PATH)\openssl\lib\debug</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+      <IgnoreSpecificDefaultLibraries>VCOMPD.lib;LIBCMT;</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(LIBRARIES_PATH)\LeapSDK\lib\x86\Leapd.dll" "$(OutDir)\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\openssl\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2;$(LIBRARIES_PATH)\curl-7.32.0\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <Optimization>Full</Optimization>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <AdditionalOptions>/Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <OpenMPSupport>false</OpenMPSupport>
+    </ClCompile>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;..\..\include</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>cinder.lib;Leap.lib;FreeImage.lib;glu32.lib;irrKlang.lib;libcurl.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Release_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\release;$(LIBRARIES_PATH)\openssl\lib\release</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding />
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(LIBRARIES_PATH)\LeapSDK\lib\x86\Leap.dll" "$(OutDir)\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resources.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\Aabb.cpp" />
+    <ClCompile Include="..\..\src\AutoSave.cpp" />
+    <ClCompile Include="..\..\src\Brush.cpp" />
+    <ClCompile Include="..\..\src\Camera.cpp" />
+    <ClCompile Include="..\..\src\CameraUtil.cpp" />
+    <ClCompile Include="..\..\src\CBBoxInt32.cpp" />
+    <ClCompile Include="..\..\src\CCubeMapProcessor.cpp" />
+    <ClCompile Include="..\..\src\CImageSurface.cpp" />
+    <ClCompile Include="..\..\src\CrashReport.cpp" />
+    <ClCompile Include="..\..\src\DebugDrawUtil.cpp" />
+    <ClCompile Include="..\..\src\Environment.cpp" />
+    <ClCompile Include="..\..\src\Files.cpp" />
+    <ClCompile Include="..\..\src\Freeform.cpp" />
+    <ClCompile Include="..\..\src\Geometry.cpp" />
+    <ClCompile Include="..\..\src\GLBuffer.cpp" />
+    <ClCompile Include="..\..\src\Grid.cpp" />
+    <ClCompile Include="..\..\src\LeapInteraction.cpp" />
+    <ClCompile Include="..\..\src\LeapListener.cpp" />
+    <ClCompile Include="..\..\src\Mesh.cpp" />
+    <ClCompile Include="..\..\src\Octree.cpp" />
+    <ClCompile Include="..\..\src\Picking.cpp" />
+    <ClCompile Include="..\..\src\Print3D.cpp" />
+    <ClCompile Include="..\..\src\ReplayUtil.cpp" />
+    <ClCompile Include="..\..\src\Sculpt.cpp" />
+    <ClCompile Include="..\..\src\State.cpp" />
+    <ClCompile Include="..\..\src\StdAfx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Tools.cpp" />
+    <ClCompile Include="..\..\src\TopologyAdaptive.cpp" />
+    <ClCompile Include="..\..\src\TopologyDecimation.cpp" />
+    <ClCompile Include="..\..\src\TopologySubdivision.cpp" />
+    <ClCompile Include="..\..\src\Triangle.cpp" />
+    <ClCompile Include="..\..\src\UserInterface.cpp" />
+    <ClCompile Include="..\..\src\Vertex.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\Aabb.h" />
+    <ClInclude Include="..\..\include\AutoSave.h" />
+    <ClInclude Include="..\..\include\Brush.h" />
+    <ClInclude Include="..\..\include\Camera.h" />
+    <ClInclude Include="..\..\include\CameraUtil.h" />
+    <ClInclude Include="..\..\include\CBBoxInt32.h" />
+    <ClInclude Include="..\..\include\CCubeMapProcessor.h" />
+    <ClInclude Include="..\..\include\CImageSurface.h" />
+    <ClInclude Include="..\..\include\Common.h" />
+    <ClInclude Include="..\..\include\CrashReport.h" />
+    <ClInclude Include="..\..\include\DataTypes.h" />
+    <ClInclude Include="..\..\include\DebugDrawUtil.h" />
+    <ClInclude Include="..\..\include\Environment.h" />
+    <ClInclude Include="..\..\include\Files.h" />
+    <ClInclude Include="..\..\include\Freeform.h" />
+    <ClInclude Include="..\..\include\Geometry.h" />
+    <ClInclude Include="..\..\include\GLBuffer.h" />
+    <ClInclude Include="..\..\include\Grid.h" />
+    <ClInclude Include="..\..\include\LeapInteraction.h" />
+    <ClInclude Include="..\..\include\LeapListener.h" />
+    <ClInclude Include="..\..\include\Mesh.h" />
+    <ClInclude Include="..\..\include\Octree.h" />
+    <ClInclude Include="..\..\include\Picking.h" />
+    <ClInclude Include="..\..\include\Print3D.h" />
+    <ClInclude Include="..\..\include\ReplayUtil.h" />
+    <ClInclude Include="..\..\include\Resources.h" />
+    <ClInclude Include="..\..\include\Sculpt.h" />
+    <ClInclude Include="..\..\include\State.h" />
+    <ClInclude Include="..\..\include\StdAfx.h" />
+    <ClInclude Include="..\..\include\Tools.h" />
+    <ClInclude Include="..\..\include\Topology.h" />
+    <ClInclude Include="..\..\include\Triangle.h" />
+    <ClInclude Include="..\..\include\UserInterface.h" />
+    <ClInclude Include="..\..\include\Utilities.h" />
+    <ClInclude Include="..\..\include\VectorMacros.h" />
+    <ClInclude Include="..\..\include\Vertex.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\resources\bloom-frag.glsl" />
+    <None Include="..\..\resources\brush-vert.glsl" />
+    <None Include="..\..\resources\material-frag.glsl" />
+    <None Include="..\..\resources\material-vert.glsl" />
+    <None Include="..\..\resources\screen-frag.glsl" />
+    <None Include="..\..\resources\sky-frag.glsl" />
+    <None Include="..\..\resources\sky-vert.glsl" />
+    <None Include="..\..\resources\wireframe-frag.glsl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>
