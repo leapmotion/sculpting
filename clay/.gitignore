@@ -219,3 +219,10 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+#########
+## Xcode
+#########
+
+Builds/MacOSX/Freeform.xcodeproj/project.xcworkspace
+Builds/MacOSX/Freeform.xcodeproj/xcuserdata/
