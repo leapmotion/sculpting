@@ -103,13 +103,15 @@ void AutoSave::checkAutoSave() {
     m_saveCondition.wait(lock);
   }
   if (!m_shutdown) {
-    Files files;
-    const std::string savePath = getAutoSavePath();
-    std::ofstream file(savePath.c_str());
-    if (file) {
-      files.savePLY(m_vertices, m_triangles, m_scale, file);
-      file.close();
-    }
+    try {
+      Files files;
+      const std::string savePath = getAutoSavePath();
+      std::ofstream file(savePath.c_str());
+      if (file) {
+        files.savePLY(m_vertices, m_triangles, m_scale, file);
+        file.close();
+      }
+    } catch (...) {}
   }
   m_savePending = false;
 }
