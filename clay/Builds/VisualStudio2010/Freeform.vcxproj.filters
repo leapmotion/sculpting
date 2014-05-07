@@ -30,9 +30,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\Environment.cpp">
-      <Filter>Application</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\UserInterface.cpp">
       <Filter>Application</Filter>
     </ClCompile>
@@ -129,6 +126,9 @@
     <ClCompile Include="..\..\src\StdAfx.cpp">
       <Filter>PCH</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\CubeMapManager.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\VectorMacros.h">
@@ -224,9 +224,6 @@
     <ClInclude Include="..\..\include\DataTypes.h">
       <Filter>Util</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\Environment.h">
-      <Filter>Application</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\Freeform.h">
       <Filter>Application</Filter>
     </ClInclude>
@@ -238,6 +235,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\StdAfx.h">
       <Filter>PCH</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\CubeMapManager.h">
+      <Filter>Application</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
