@@ -46,7 +46,6 @@ _immersive_mode(false),
 _immersive_entered_time(0.0), 
 m_camera(MIN_CAMERA_DIST)
 {
-  _camera_util = new CameraUtil();
   Menu::updateSculptMult(0.0, 0.0f);
 }
 
@@ -58,7 +57,6 @@ FreeformApp::~FreeformApp()
     delete mesh_;
   }
 
-  delete _camera_util;
 }
 
 void FreeformApp::prepareSettings( Settings *settings )
@@ -411,7 +409,7 @@ void FreeformApp::mouseDrag( MouseEvent event )
   m_camera.OnMouseMove(dMouse.x, dMouse.y);
 
   // New camera update.
-  _camera_util->RecordUserInput(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
+  m_cameraUtil.RecordUserInput(float(_current_mouse_pos.x - _previous_mouse_pos.x)*CAMERA_SPEED, float(_current_mouse_pos.y - _previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
 }
 
 void FreeformApp::mouseWheel( MouseEvent event)
@@ -522,7 +520,7 @@ void FreeformApp::update()
   const double lastSculptTime = sculpt_.getLastSculptTime();
   float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
 
-  _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
+  m_cameraUtil.RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
   static const float LOWER_BOUND = 1.0f;
   static const float UPPER_BOUND = 1.32f;
@@ -537,7 +535,7 @@ void FreeformApp::update()
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
   // Calculate initial camera position
-  lmTransform tCamera = _camera_util->GetCameraInWorldSpace();
+  lmTransform tCamera = m_cameraUtil.GetCameraInWorldSpace();
 
   Vec3f campos = ToVec3f(tCamera.translation);
   Vector3 up = tCamera.rotation * Vector3::UnitY();
@@ -547,13 +545,13 @@ void FreeformApp::update()
   Matrix4x4 trans = mesh_->getTransformation();
   Vector4 temp;
   {
-    std::unique_lock<std::mutex> lock(_camera_util->m_referencePointMutex);
-    temp << _camera_util->isoState.refPosition, 1.0;
+    std::unique_lock<std::mutex> lock(m_cameraUtil.m_referencePointMutex);
+    temp << m_cameraUtil.isoState.refPosition, 1.0;
   }
   _focus_point = (trans * temp).head<3>();
   // if mesh
   if (mesh_) {
-    _focus_radius = _camera_util->IsoQueryRadius(mesh_, &_camera_util->isoState);
+    _focus_radius = m_cameraUtil.IsoQueryRadius(mesh_, &m_cameraUtil.isoState);
   } else {
     _focus_radius = 0.0f;
   }
@@ -595,7 +593,7 @@ void FreeformApp::updateLeapAndMesh() {
 #endif 
     bool haveFrame;
     try {
-      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), m_camera.getModelViewMatrix(), m_camera.getProjectionMatrix(), getWindowSize(), _camera_util->GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), m_camera.getModelViewMatrix(), m_camera.getProjectionMatrix(), getWindowSize(), m_cameraUtil.GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
     } catch (...) {
       haveFrame = false;
     }
@@ -611,18 +609,18 @@ void FreeformApp::updateLeapAndMesh() {
           mesh_->updateRotation(curTime);
         }
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
-          _camera_util->UpdateCamera(mesh_, &_camera_params);
+          m_cameraUtil.UpdateCamera(mesh_, &_camera_params);
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
           sculpt_.applyBrushes(curTime, &_auto_save);
-          _camera_util->m_timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
+          m_cameraUtil.m_timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
     } else if (mesh_) {
       // Allow camera movement when leap is disconnected
       std::unique_lock<std::mutex> lock(_mesh_mutex);
-      _camera_util->UpdateCamera(mesh_, &_camera_params);
+      m_cameraUtil.UpdateCamera(mesh_, &_camera_params);
     }
   }
 }
@@ -764,7 +762,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.1 ? 0.15f : 1.0f);
   }
 
-  if (_camera_util->m_params.drawDebugLines) {
+  if (m_cameraUtil.m_params.drawDebugLines) {
     _wireframe_shader.bind();
     _wireframe_shader.uniform( "transform", transform );
     _wireframe_shader.uniform( "transformit", transformit );

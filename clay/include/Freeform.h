@@ -130,7 +130,7 @@ private:
   OrbiterCamera m_camera;
 
   // Free-floating camera utility.
-  CameraUtil* _camera_util;
+  CameraUtil m_cameraUtil;
 
   // **** mouse stuff ***
   Vec2i _initial_mouse_pos, _current_mouse_pos, _previous_mouse_pos;
