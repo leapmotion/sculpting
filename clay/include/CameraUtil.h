@@ -12,7 +12,7 @@
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Fbo.h"
 #include "Resources.h"
-#include "Environment.h"
+#include "CubeMapManager.h"
 #include "UserInterface.h"
 #include "LeapListener.h"
 #include "Leap.h"

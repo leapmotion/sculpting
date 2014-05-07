@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
@@ -25,31 +17,27 @@
     <Filter Include="CubeMapGenMod">
       <UniqueIdentifier>{12aa0461-e4d1-409d-acb4-15d75e25428a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LeapInteraction">
+      <UniqueIdentifier>{29e1702b-2480-4245-93c5-ee38c142c20f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="PCH">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Environment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LeapInteraction.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\LeapListener.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Application</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\UserInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\CameraUtil.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\StdAfx.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Application</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Freeform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\CrashReport.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Application</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Aabb.cpp">
       <Filter>Sculpt3D</Filter>
@@ -126,38 +114,23 @@
     <ClCompile Include="..\..\src\DebugDrawUtil.cpp">
       <Filter>Util</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\CameraUtil.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\LeapInteraction.cpp">
+      <Filter>LeapInteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\LeapListener.cpp">
+      <Filter>LeapInteraction</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\CrashReport.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\StdAfx.cpp">
+      <Filter>PCH</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\Environment.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\LeapInteraction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\LeapListener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Resources.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\UserInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\DataTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\StdAfx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Freeform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\CrashReport.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\VectorMacros.h">
       <Filter>Util</Filter>
     </ClInclude>
@@ -235,6 +208,36 @@
     </ClInclude>
     <ClInclude Include="..\..\include\DebugDrawUtil.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\LeapInteraction.h">
+      <Filter>LeapInteraction</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\LeapListener.h">
+      <Filter>LeapInteraction</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\CrashReport.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Common.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\DataTypes.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Environment.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Freeform.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\UserInterface.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Resources.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\StdAfx.h">
+      <Filter>PCH</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

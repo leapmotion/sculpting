@@ -6,7 +6,7 @@
 #include "cinder/gl/TextureFont.h"
 #include "cinder/params/Params.h"
 #include "cinder/gl/Texture.h"
-#include "Environment.h"
+#include "CubeMapManager.h"
 #include "Utilities.h"
 #include "Resources.h"
 #include "Sculpt.h"

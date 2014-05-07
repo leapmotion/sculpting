@@ -3,7 +3,7 @@
 #include "Utilities.h"
 #include "Sculpt.h"
 #include "LeapInteraction.h"
-#include "Environment.h"
+#include "CubeMapManager.h"
 #include "Freeform.h"
 #include <cinder/gl/GlslProg.h>
 
@@ -420,7 +420,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
     entry.drawMethod = Menu::MenuEntry::STRING;
   }
 
-  const std::vector<Environment::EnvironmentInfo>& infos = Environment::getEnvironmentInfos();
+  const std::vector<CubeMapManager::CubeMapInfo>& infos = CubeMapManager::getEnvironmentInfos();
   const int NUM_ENVIRONMENT_ENTRIES = infos.size();
   _environment_menu.setName("Scene");
   _environment_menu.setPosition(Vector2(0.75f, 0.075f));

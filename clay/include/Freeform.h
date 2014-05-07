@@ -14,7 +14,7 @@
 #include <mach-o/dyld.h>
 #endif
 #include "Resources.h"
-#include "Environment.h"
+#include "CubeMapManager.h"
 #include "UserInterface.h"
 #include "LeapListener.h"
 #include "Leap.h"
@@ -145,7 +145,7 @@ private:
 
   // *** scene stuff ***
   AAMode _aa_mode;
-  Environment* _environment;
+  CubeMapManager* _environment;
   GlslProg _sky_shader;
   GlslProg _material_shader;
   GlslProg _brush_shader;

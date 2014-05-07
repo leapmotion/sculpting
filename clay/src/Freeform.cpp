@@ -180,7 +180,7 @@ void FreeformApp::setup()
   _params->addParam( "Remesh Radius", &remeshRadius_, "min=20, max=200, step=2.5" );
 #endif
 
-  _environment = new Environment();
+  _environment = new CubeMapManager();
 
   try {
     _screen_shader = gl::GlslProg( loadResource( RES_PASSTHROUGH_VERT_GLSL ), loadResource( RES_SCREEN_FRAG_GLSL ) );
@@ -594,7 +594,7 @@ void FreeformApp::updateLeapAndMesh() {
     const double curTime = ci::app::getElapsedSeconds();
     LM_TRACK_CONST_VALUE(curTime);
 #if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
-    bool suppress = _environment->getLoadingState() != Environment::LOADING_STATE_NONE;
+    bool suppress = _environment->getLoadingState() != CubeMapManager::LOADING_STATE_NONE;
     suppress = suppress || (curTime - _last_load_time) < BRUSH_DISABLE_TIME_AFTER_LOAD;
 #else 
     bool suppress = false;
@@ -660,7 +660,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   setMatrices( _camera );
   if (_draw_background) {
     // draw color pass of skybox
-    _environment->bindCubeMap(Environment::CUBEMAP_SKY, 0);
+    _environment->bindCubeMap(CubeMapManager::CUBEMAP_SKY, 0);
     _sky_shader.bind();
     _sky_shader.uniform("cubemap", 0);
     gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
@@ -676,8 +676,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
 
   GLBuffer::checkFrameBufferStatus("2");
 
-  _environment->bindCubeMap(Environment::CUBEMAP_IRRADIANCE, 0);
-  _environment->bindCubeMap(Environment::CUBEMAP_RADIANCE, 1);
+  _environment->bindCubeMap(CubeMapManager::CUBEMAP_IRRADIANCE, 0);
+  _environment->bindCubeMap(CubeMapManager::CUBEMAP_RADIANCE, 1);
 
   BrushVector brushes = sculpt_.getBrushes();
   int numBrushes = brushes.size();
@@ -874,7 +874,7 @@ float FreeformApp::checkEnvironmentLoading() {
   static const float LOADING_DARKEN_TIME = 0.5f;
   static const float LOADING_LIGHTEN_TIME = 2.0f;
 
-  const Environment::LoadingState loadingState = _environment->getLoadingState();
+  const CubeMapManager::LoadingState loadingState = _environment->getLoadingState();
   const double curTime = ci::app::getElapsedSeconds();
   const float timeSinceStateChange = static_cast<float>(curTime - _environment->getLastStateChangeTime());
 
@@ -885,19 +885,19 @@ float FreeformApp::checkEnvironmentLoading() {
 #endif
 
   float exposureMult = 1.0f;
-  if (loadingState == Environment::LOADING_STATE_NONE) {
+  if (loadingState == CubeMapManager::LOADING_STATE_NONE) {
     const float ratio = math<float>::clamp(timeSinceStateChange/LOADING_LIGHTEN_TIME);
     exposureMult = Utilities::SmootherStep(ratio*ratio);
-  } else if (loadingState == Environment::LOADING_STATE_LOADING) {
+  } else if (loadingState == CubeMapManager::LOADING_STATE_LOADING) {
     const float ratio = 1.0f - math<float>::clamp(timeSinceStateChange/LOADING_DARKEN_TIME);
     exposureMult = Utilities::SmootherStep(ratio*ratio);
-  } else if (loadingState == Environment::LOADING_STATE_DONE_LOADING) {
+  } else if (loadingState == CubeMapManager::LOADING_STATE_DONE_LOADING) {
     exposureMult = 0.0f;
     _environment->finishLoading();
     _loading_thread.join();
-    _loading_thread = std::thread(&Environment::beginProcessing, _environment);
+    _loading_thread = std::thread(&CubeMapManager::beginProcessing, _environment);
     const std::string& name = _environment->getPendingEnvironmentString();
-    Environment::EnvironmentInfo* info = Environment::getEnvironmentInfoFromString(name);
+    CubeMapManager::CubeMapInfo* info = CubeMapManager::getEnvironmentInfoFromString(name);
     if (info) {
       _bloom_strength = info->_bloom_strength;
       _bloom_light_threshold = info->_bloom_threshold;
@@ -906,9 +906,9 @@ float FreeformApp::checkEnvironmentLoading() {
     if (_have_audio) {
       m_activeLoop = m_audioLoops[name];
     }
-  } else if (loadingState == Environment::LOADING_STATE_PROCESSING) {
+  } else if (loadingState == CubeMapManager::LOADING_STATE_PROCESSING) {
     exposureMult = 0.0f;
-  } else if (loadingState == Environment::LOADING_STATE_DONE_PROCESSING) {
+  } else if (loadingState == CubeMapManager::LOADING_STATE_DONE_PROCESSING) {
     exposureMult = 0.0f;
     _environment->finishProcessing();
     _loading_thread.join();
@@ -1092,8 +1092,8 @@ void FreeformApp::draw() {
     _ui->drawError("Graphics error occurred. Please update drivers and check minimum requirements.", errorNum++);
   }
 
-  if (_environment->getLoadingState() == Environment::LOADING_STATE_FAILED) {
-    _ui->drawError("Environment loading failed. Please make sure Freeform is installed correctly.", errorNum++);
+  if (_environment->getLoadingState() == CubeMapManager::LOADING_STATE_FAILED) {
+    _ui->drawError("CubeMapManager loading failed. Please make sure Freeform is installed correctly.", errorNum++);
   }
 
   GLBuffer::checkError("After logo");
@@ -1325,7 +1325,7 @@ void FreeformApp::toggleSymmetry() {
 }
 
 void FreeformApp::setEnvironment(const std::string& str) {
-  if (!_environment || _environment->getLoadingState() != Environment::LOADING_STATE_NONE) {
+  if (!_environment || _environment->getLoadingState() != CubeMapManager::LOADING_STATE_NONE) {
     return;
   }
 #if __APPLE__
@@ -1334,7 +1334,7 @@ void FreeformApp::setEnvironment(const std::string& str) {
     _loading_thread.detach();
   }
 #endif
-  _loading_thread = std::thread(&Environment::beginLoading, _environment, str);
+  _loading_thread = std::thread(&CubeMapManager::beginLoading, _environment, str);
 }
 
 void FreeformApp::toggleSound() {

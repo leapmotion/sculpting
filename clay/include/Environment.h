@@ -8,6 +8,7 @@
 #include "cinder/Thread.h"
 #include <vector>
 #include <string>
+
 using namespace cinder;
 using namespace cinder::gl;
 
@@ -15,7 +16,7 @@ class CCubeMapProcessor;
 struct FIBITMAP;
 enum FREE_IMAGE_FORMAT;
 
-class Environment
+class CubeMapManager
 {
 public:
 
@@ -35,7 +36,7 @@ public:
     LOADING_STATE_FAILED
   };
 
-  struct EnvironmentInfo {
+  struct CubeMapInfo {
     // images must be arranged in the following order:
     // x-positive, x-negative, y-positive, y-negative, z-positive, z-negative
     std::string _dawn_images[6];
@@ -47,8 +48,8 @@ public:
     float _exposure;
   };
 
-  Environment();
-  virtual ~Environment();
+  CubeMapManager();
+  virtual ~CubeMapManager();
   bool haveEnvironment() const { return !_cur_environment.empty(); }
   void bindCubeMap(CubeMap map, int pos);
   void unbindCubeMap(int pos);
@@ -62,8 +63,8 @@ public:
   LoadingState getLoadingState() const { return _loading_state; }
   double getLastStateChangeTime() const { return _loading_state_change_time; }
   
-  static const std::vector<EnvironmentInfo>& getEnvironmentInfos() { return _environment_infos; }
-  static EnvironmentInfo* getEnvironmentInfoFromString(const std::string& name);
+  static const std::vector<CubeMapInfo>& getEnvironmentInfos() { return _environment_infos; }
+  static CubeMapInfo* getEnvironmentInfoFromString(const std::string& name);
 
 private:
 
@@ -90,7 +91,7 @@ private:
   void saveImagesToCubemap(GLuint cubemap, GLint internal_format, int miplevel, unsigned int width, unsigned int height, GLenum format, float** images);
   
   static void preparePaths(const std::string& path, std::string* filenames);
-  static EnvironmentInfo prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure);
+  static CubeMapInfo prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure);
   static void createEnvironmentInfos();
   static void createWorkingDirectory();
 
@@ -119,7 +120,7 @@ private:
   GLenum formats[6];
 
   static CCubeMapProcessor* _cubemap_processor;
-  static std::vector<EnvironmentInfo> _environment_infos;
+  static std::vector<CubeMapInfo> _environment_infos;
   static std::string working_directory;
 
 };

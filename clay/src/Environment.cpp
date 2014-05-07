@@ -1,5 +1,5 @@
 #include "StdAfx.h"
-#include "Environment.h"
+#include "CubeMapManager.h"
 #include "Resources.h"
 #include "cinder/app/App.h"
 #include "CCubeMapProcessor.h"
@@ -14,13 +14,13 @@
 
 using namespace ci::app;
 
-const int Environment::NUM_CHANNELS = 3;
+const int CubeMapManager::NUM_CHANNELS = 3;
 
-CCubeMapProcessor* Environment::_cubemap_processor = new CCubeMapProcessor();
-std::vector<Environment::EnvironmentInfo> Environment::_environment_infos;
-std::string Environment::working_directory;
+CCubeMapProcessor* CubeMapManager::_cubemap_processor = new CCubeMapProcessor();
+std::vector<CubeMapManager::CubeMapInfo> CubeMapManager::_environment_infos;
+std::string CubeMapManager::working_directory;
 
-Environment::Environment()
+CubeMapManager::CubeMapManager()
   : _cur_environment(""), _loading_state(LOADING_STATE_NONE), _loading_state_change_time(0.0), _use_hdr(true)
 {
   for (int i = 0; i < CUBEMAP_SIDES; ++i)
@@ -31,9 +31,9 @@ Environment::Environment()
   createEnvironmentInfos();
 }
 
-Environment::~Environment() { }
+CubeMapManager::~CubeMapManager() { }
 
-void Environment::bindCubeMap(CubeMap map, int pos) {
+void CubeMapManager::bindCubeMap(CubeMap map, int pos) {
   glActiveTexture(GL_TEXTURE0 + pos);
   switch(map) {
   case CUBEMAP_SKY: glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, _cubemap_sky); break;
@@ -45,13 +45,13 @@ void Environment::bindCubeMap(CubeMap map, int pos) {
   GLBuffer::checkError("Bind cubemap");
 }
 
-void Environment::unbindCubeMap(int pos) {
+void CubeMapManager::unbindCubeMap(int pos) {
   glActiveTexture(GL_TEXTURE0 + pos);
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
   GLBuffer::checkError("Unbind cubemap");
 }
 
-Environment::EnvironmentInfo* Environment::getEnvironmentInfoFromString(const std::string& name) {
+CubeMapManager::CubeMapInfo* CubeMapManager::getEnvironmentInfoFromString(const std::string& name) {
   for (size_t i=0; i<_environment_infos.size(); i++) {
     if (_environment_infos[i]._name == name) {
       return &_environment_infos[i];
@@ -60,13 +60,13 @@ Environment::EnvironmentInfo* Environment::getEnvironmentInfoFromString(const st
   return 0;
 }
 
-void Environment::beginLoading(const std::string& name) {
+void CubeMapManager::beginLoading(const std::string& name) {
   if (name == _cur_environment) {
     return;
   }
 
   // find environment by this name
-  EnvironmentInfo* env = getEnvironmentInfoFromString(name);
+  CubeMapInfo* env = getEnvironmentInfoFromString(name);
 
   if (!env) {
     // environment with this name not found
@@ -90,7 +90,7 @@ void Environment::beginLoading(const std::string& name) {
   _loading_state = LOADING_STATE_DONE_LOADING;
 }
 
-void Environment::finishLoading() {
+void CubeMapManager::finishLoading() {
   std::unique_lock<std::mutex> lock(_loading_mutex);
 
   // free old textures
@@ -149,7 +149,7 @@ void Environment::finishLoading() {
   GLBuffer::checkError("Finish loading");
 }
 
-void Environment::beginProcessing() {
+void CubeMapManager::beginProcessing() {
   _loading_state_change_time = getElapsedSeconds();
   _loading_state = LOADING_STATE_PROCESSING;
 
@@ -160,7 +160,7 @@ void Environment::beginProcessing() {
   _loading_state = LOADING_STATE_DONE_PROCESSING;
 }
 
-void Environment::finishProcessing() {
+void CubeMapManager::finishProcessing() {
   uploadMipmappedCubemap(irradianceImages);
   uploadMipmappedCubemap(radianceImages);
   freeBitmaps(bitmaps);
@@ -174,7 +174,7 @@ void Environment::finishProcessing() {
   GLBuffer::checkError("Finish processing");
 }
 
-bool Environment::loadImageSet(std::string* filenames,
+bool CubeMapManager::loadImageSet(std::string* filenames,
                                FIBITMAP** bitmaps,
                                unsigned int* bitmapWidths,
                                unsigned int* bitmapHeights,
@@ -204,7 +204,7 @@ bool Environment::loadImageSet(std::string* filenames,
   return true;
 }
 
-void Environment::loadBitmap(std::string* filenames,
+void CubeMapManager::loadBitmap(std::string* filenames,
                              int _Idx,
                              FIBITMAP** bitmaps,
                              unsigned int* bitmapWidths,
@@ -241,7 +241,7 @@ void Environment::loadBitmap(std::string* filenames,
   }
 }
 
-void Environment::freeBitmaps(FIBITMAP** bitmaps) {
+void CubeMapManager::freeBitmaps(FIBITMAP** bitmaps) {
   for (int i=0; i<CUBEMAP_SIDES; i++) {
     if (bitmaps[i]) {
       FreeImage_Unload(bitmaps[i]);
@@ -250,8 +250,8 @@ void Environment::freeBitmaps(FIBITMAP** bitmaps) {
   }
 }
 
-//void Environment::generateMipmappedCubemap(GLuint cubemap, GLint internal_format, GLenum format, int input_size, int output_size, float** images, bool irradiance) {
-void Environment::processMipmappedCubemap(CubemapImages& cubemapImages) {
+//void CubeMapManager::generateMipmappedCubemap(GLuint cubemap, GLint internal_format, GLenum format, int input_size, int output_size, float** images, bool irradiance) {
+void CubeMapManager::processMipmappedCubemap(CubemapImages& cubemapImages) {
   const int numLevels = cubemapImages.irradiance ? 1 : MIPMAP_LEVELS;
 
   std::thread threads[CUBEMAP_SIDES];
@@ -332,7 +332,7 @@ void Environment::processMipmappedCubemap(CubemapImages& cubemapImages) {
   }
 }
 
-void Environment::uploadMipmappedCubemap(CubemapImages& cubemapImages) {
+void CubeMapManager::uploadMipmappedCubemap(CubemapImages& cubemapImages) {
   const int numLevels = cubemapImages.irradiance ? 1 : MIPMAP_LEVELS;
 
   int cur_size = cubemapImages.outputSize;
@@ -347,7 +347,7 @@ void Environment::uploadMipmappedCubemap(CubemapImages& cubemapImages) {
   }
 }
 
-void Environment::prepareCubemap(GLuint* cubemap, int numLevels) {
+void CubeMapManager::prepareCubemap(GLuint* cubemap, int numLevels) {
   glGenTextures(1, cubemap);
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, *cubemap);
   glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -360,7 +360,7 @@ void Environment::prepareCubemap(GLuint* cubemap, int numLevels) {
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 }
 
-void Environment::saveImagesToCubemap(GLuint cubemap, GLint internal_format, int miplevel, unsigned int width, unsigned int height, GLenum format, float** images) {
+void CubeMapManager::saveImagesToCubemap(GLuint cubemap, GLint internal_format, int miplevel, unsigned int width, unsigned int height, GLenum format, float** images) {
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubemap);
   for (int i=0; i<CUBEMAP_SIDES; i++) {
     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + i, miplevel, internal_format, width, height, 0, format, GL_FLOAT, images[i]);
@@ -368,7 +368,7 @@ void Environment::saveImagesToCubemap(GLuint cubemap, GLint internal_format, int
   glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 }
 
-Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure) {
+CubeMapManager::CubeMapInfo CubeMapManager::prepareEnvironmentInfo(const std::string& name, float strength, float thresh, float exposure) {
 #if _WIN32  
 
 #if LM_PRODUCTION_BUILD
@@ -381,7 +381,7 @@ Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::stri
   const std::string ASSETS_PATH = working_directory + "/assets/";
 #endif
 
-  EnvironmentInfo info;
+  CubeMapInfo info;
   info._name = name;
   preparePaths(ASSETS_PATH + name + "/dawn/", info._dawn_images);
   preparePaths(ASSETS_PATH + name + "/depth/", info._depth_images);
@@ -391,7 +391,7 @@ Environment::EnvironmentInfo Environment::prepareEnvironmentInfo(const std::stri
   return info;
 }
 
-void Environment::preparePaths(const std::string& path, std::string* filenames) {
+void CubeMapManager::preparePaths(const std::string& path, std::string* filenames) {
   filenames[0] = path + "x-positive.exr";
   filenames[1] = path + "x-negative.exr";
   filenames[2] = path + "y-positive.exr";
@@ -400,7 +400,7 @@ void Environment::preparePaths(const std::string& path, std::string* filenames) 
   filenames[5] = path + "z-negative.exr";
 }
 
-void Environment::createEnvironmentInfos() {
+void CubeMapManager::createEnvironmentInfos() {
   static bool created = false;
   if (!created) {
     // set up filenames for the different supported environments
@@ -415,7 +415,7 @@ void Environment::createEnvironmentInfos() {
   }
 }
 
-void Environment::createWorkingDirectory() {
+void CubeMapManager::createWorkingDirectory() {
   static bool created = false;
   if (!created) {
 #if _WIN32
