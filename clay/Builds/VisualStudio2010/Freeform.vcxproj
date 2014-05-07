@@ -133,7 +133,7 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClCompile Include="..\..\src\CImageSurface.cpp" />
     <ClCompile Include="..\..\src\CrashReport.cpp" />
     <ClCompile Include="..\..\src\DebugDrawUtil.cpp" />
-    <ClCompile Include="..\..\src\Environment.cpp" />
+    <ClCompile Include="..\..\src\CubeMapManager.cpp" />
     <ClCompile Include="..\..\src\Files.cpp" />
     <ClCompile Include="..\..\src\Freeform.cpp" />
     <ClCompile Include="..\..\src\Geometry.cpp" />
@@ -173,7 +173,7 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClInclude Include="..\..\include\CrashReport.h" />
     <ClInclude Include="..\..\include\DataTypes.h" />
     <ClInclude Include="..\..\include\DebugDrawUtil.h" />
-    <ClInclude Include="..\..\include\Environment.h" />
+    <ClInclude Include="..\..\include\CubeMapManager.h" />
     <ClInclude Include="..\..\include\Files.h" />
     <ClInclude Include="..\..\include\Freeform.h" />
     <ClInclude Include="..\..\include\Geometry.h" />
