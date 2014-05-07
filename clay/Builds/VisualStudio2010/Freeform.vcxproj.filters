@@ -16,17 +16,17 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{cb4d2067-274f-49ea-b5bd-ebcd44265a07}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Sculpt3D">
+      <UniqueIdentifier>{d4859d5a-2238-47a2-8bd0-7abe48623d7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{bf9ecc76-77a4-4be9-b903-a72f09f304d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CubeMapGenMod">
+      <UniqueIdentifier>{12aa0461-e4d1-409d-acb4-15d75e25428a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\CBBoxInt32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\CCubeMapProcessor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\CImageSurface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Environment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,95 +39,95 @@
     <ClCompile Include="..\..\src\UserInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Aabb.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Files.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Geometry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Grid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Octree.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Picking.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Sculpt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\State.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Tools.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\TopologyAdaptive.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\TopologyDecimation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\TopologySubdivision.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Triangle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Vertex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Brush.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\GLBuffer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\CameraUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\StdAfx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\DebugDrawUtil.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Freeform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\AutoSave.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\ReplayUtil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CrashReport.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Aabb.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Camera.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Geometry.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Grid.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\State.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Tools.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Triangle.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Vertex.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Files.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Octree.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Mesh.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Picking.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Print3D.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Brush.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\GLBuffer.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\TopologyAdaptive.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\TopologyDecimation.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\TopologySubdivision.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\CBBoxInt32.cpp">
+      <Filter>CubeMapGenMod</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\CCubeMapProcessor.cpp">
+      <Filter>CubeMapGenMod</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\CImageSurface.cpp">
+      <Filter>CubeMapGenMod</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\AutoSave.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ReplayUtil.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Sculpt.cpp">
+      <Filter>Sculpt3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\DebugDrawUtil.cpp">
+      <Filter>Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\CBBoxInt32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\CCubeMapProcessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\CImageSurface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\Environment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -143,61 +143,7 @@
     <ClInclude Include="..\..\include\UserInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\Utilities.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\DataTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Aabb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Files.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Grid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Octree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\State.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Tools.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Topology.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Triangle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Vertex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\VectorMacros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Geometry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Picking.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Sculpt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Brush.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\GLBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\StdAfx.h">
@@ -206,26 +152,89 @@
     <ClInclude Include="..\..\include\Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\CameraUtil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\DebugDrawUtil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\Freeform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\AutoSave.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\ReplayUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\CrashReport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\VectorMacros.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Aabb.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Camera.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Geometry.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Grid.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\State.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Tools.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Triangle.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Vertex.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Utilities.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Mesh.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Octree.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Picking.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\include\Print3D.h">
-      <Filter>Header Files</Filter>
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Brush.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\GLBuffer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\CBBoxInt32.h">
+      <Filter>CubeMapGenMod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\CCubeMapProcessor.h">
+      <Filter>CubeMapGenMod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\CImageSurface.h">
+      <Filter>CubeMapGenMod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\AutoSave.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\CameraUtil.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Topology.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ReplayUtil.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Files.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Sculpt.h">
+      <Filter>Sculpt3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\DebugDrawUtil.h">
+      <Filter>Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
