@@ -49,7 +49,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\openssl\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2;$(LIBRARIES_PATH)\curl-7.32.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\include;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\boost;$(LIBRARIES_PATH)\breakpad-0.1\include;$(LIBRARIES_PATH)\irrKlang-1.4.0\include;$(LIBRARIES_PATH)\LeapSDK\include;$(LIBRARIES_PATH)\openssl\include;$(LIBRARIES_PATH)\FreeImage\dist;$(LIBRARIES_PATH)\eigen-3.1.2;$(LIBRARIES_PATH)\curl-7.32.0\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -66,16 +66,17 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>cinder_d.lib;Leapd.lib;glu32.lib;FreeImaged.lib;irrKlang.lib;libcurl.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Debug_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\debug;$(LIBRARIES_PATH)\openssl\lib\debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-1.4.0\lib\win32-visualstudio;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Debug_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\debug;$(LIBRARIES_PATH)\openssl\lib\debug</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX86</TargetMachine>
-      <IgnoreSpecificDefaultLibraries>VCOMPD.lib;LIBCMT;</IgnoreSpecificDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>VCOMPD.lib;LIBCMT;LIBCMTD</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(LIBRARIES_PATH)\LeapSDK\lib\x86\Leapd.dll" "$(OutDir)\"</Command>
+      <Command>copy /Y "$(LIBRARIES_PATH)\LeapSDK\lib\x86\Leapd.dll" "$(OutDir)\"
+copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "$(OutDir)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -101,7 +102,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>cinder.lib;Leap.lib;FreeImage.lib;glu32.lib;irrKlang.lib;libcurl.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-pro-1.4.0\bin\win32-visualstudio_lib;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Release_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\release;$(LIBRARIES_PATH)\openssl\lib\release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib;$(LIBRARIES_PATH)\irrKlang-1.4.0\lib\win32-visualstudio;$(LIBRARIES_PATH)\cinder_0.8.5_vc2010\lib\msw;$(LIBRARIES_PATH)\breakpad-0.1\lib\Release_mt;$(LIBRARIES_PATH)\LeapSDK\lib\x86;$(LIBRARIES_PATH)\FreeImage\Dist;$(LIBRARIES_PATH)\curl-7.32.0\lib\release;$(LIBRARIES_PATH)\openssl\lib\release</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
@@ -114,7 +115,8 @@
       <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(LIBRARIES_PATH)\LeapSDK\lib\x86\Leap.dll" "$(OutDir)\"</Command>
+      <Command>copy /Y "$(LIBRARIES_PATH)\LeapSDK\lib\x86\Leap.dll" "$(OutDir)\"
+copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "$(OutDir)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
