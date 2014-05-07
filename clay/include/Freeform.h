@@ -3,7 +3,6 @@
 
 #include "cinder/app/AppNative.h"
 #include "cinder/params/Params.h"
-#include "cinder/Camera.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Fbo.h"
@@ -25,6 +24,7 @@
 #include "Sculpt.h"
 #include "CameraUtil.h"
 #include "AutoSave.h"
+#include "OrbiterCamera.h"
 
 #define IRRKLANG_STATIC
 #include <irrklang.h>
@@ -61,7 +61,6 @@ public:
   void mouseWheel( MouseEvent event );
   void mouseMove( MouseEvent event);
   void keyDown( KeyEvent event );
-  void updateCamera(const float dTheta, const float dPhi, const float dFov);
   void update();
   void updateLeapAndMesh();
   void renderSceneToFbo(Camera& camera);
@@ -128,13 +127,7 @@ private:
   MachineSpeed parseRenderString(const std::string& render_string);
 
   // *** camera stuff ***
-  CameraPersp _camera;
-  float _theta;
-  float _phi;
-  float _fov;
-  float _cam_dist;
-  Utilities::ExponentialFilter<float> _fov_modifier;
-  float _wheel_zoom;
+  OrbiterCamera m_camera;
 
   // Free-floating camera utility.
   CameraUtil* _camera_util;

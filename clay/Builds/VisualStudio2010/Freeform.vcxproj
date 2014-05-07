@@ -143,6 +143,7 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClCompile Include="..\..\src\LeapListener.cpp" />
     <ClCompile Include="..\..\src\Mesh.cpp" />
     <ClCompile Include="..\..\src\Octree.cpp" />
+    <ClCompile Include="..\..\src\OrbiterCamera.cpp" />
     <ClCompile Include="..\..\src\Picking.cpp" />
     <ClCompile Include="..\..\src\Print3D.cpp" />
     <ClCompile Include="..\..\src\ReplayUtil.cpp" />
@@ -183,6 +184,7 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClInclude Include="..\..\include\LeapListener.h" />
     <ClInclude Include="..\..\include\Mesh.h" />
     <ClInclude Include="..\..\include\Octree.h" />
+    <ClInclude Include="..\..\include\OrbiterCamera.h" />
     <ClInclude Include="..\..\include\Picking.h" />
     <ClInclude Include="..\..\include\Print3D.h" />
     <ClInclude Include="..\..\include\ReplayUtil.h" />

@@ -20,14 +20,32 @@ const float MAX_FOV = 90.0f;
 
 
 //*********************************************************
-FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
-  _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), _last_update_time(0.0),
-  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()),remeshRadius_(100.0f),
-  _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
-  _immersive_changed_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false), _wheel_zoom(0.0f),
-  _immersive_mode(false), _immersive_entered_time(0.0)
+FreeformApp::FreeformApp() : 
+_environment(0), 
+_aa_mode(MSAA),
+_draw_ui(true), 
+_mouse_down(false),
+_exposure(1.0f),
+mesh_(0), 
+_last_update_time(0.0),
+drawOctree_(false),
+_shutdown(false),
+_draw_background(true), 
+_focus_point(Vector3::Zero()), 
+remeshRadius_(100.0f),
+_lock_camera(false),
+_last_load_time(0.0), 
+_first_environment_load(true), 
+_have_shaders(true), 
+_have_entered_immersive(false),
+_immersive_changed_time(0.0), 
+_have_audio(true), 
+m_activeLoop(nullptr, nullptr), 
+_audio_paused(false),
+_immersive_mode(false),
+_immersive_entered_time(0.0), 
+m_camera(MIN_CAMERA_DIST)
 {
-  _fov_modifier.Update(0.0f, 0.0, 0.5f);
   _camera_util = new CameraUtil();
   Menu::updateSculptMult(0.0, 0.0f);
 }
@@ -362,7 +380,7 @@ void FreeformApp::resize()
   _screen_fbo = Fbo(width, height, screenFormat);
   GLBuffer::checkError("Screen FBO");
 
-  _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
+  m_camera.OnResize( getWindowAspectRatio() );
   _ui->setWindowSize( Vec2i(width, height) );
 
   glEnable(GL_FRAMEBUFFER_SRGB);
@@ -386,7 +404,11 @@ void FreeformApp::mouseDrag( MouseEvent event )
   _previous_mouse_pos = _current_mouse_pos;
   _current_mouse_pos = event.getPos();
 
-  updateCamera(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
+  Vec2f dMouse = _current_mouse_pos - _previous_mouse_pos;
+  dMouse *= CAMERA_SPEED;
+  
+  assert((_current_mouse_pos.x - _previous_mouse_pos.x)*CAMERA_SPEED == dMouse.x);
+  m_camera.OnMouseMove(dMouse.x, dMouse.y);
 
   // New camera update.
   _camera_util->RecordUserInput(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
@@ -394,7 +416,7 @@ void FreeformApp::mouseDrag( MouseEvent event )
 
 void FreeformApp::mouseWheel( MouseEvent event)
 {
-  _wheel_zoom = -300.0f * event.getWheelIncrement();
+  m_camera.SetZoom(event.getWheelIncrement());
 }
 
 void FreeformApp::mouseMove( MouseEvent event)
@@ -454,18 +476,6 @@ void FreeformApp::keyDown( KeyEvent event )
   }
 }
 
-void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
-{
-  _theta -= dTheta;
-  _phi += dPhi;
-  _fov += dFov;
-
-  if( _theta<0.f ) _theta += float(M_PI)*2.f;
-  if( _theta>=M_PI*2.f ) _theta -= float(M_PI)*2.f;
-  _phi = math<float>::clamp(_phi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
-  _fov = math<float>::clamp(_fov, 40.f, 110.f);
-}
-
 void FreeformApp::update()
 {
   static int updateCount = 0;
@@ -490,7 +500,7 @@ void FreeformApp::update()
 
   const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
   const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
-  const float dZoom = deltaTime*_leap_interaction->getDZoomVel() + _wheel_zoom;
+  const float dZoom = deltaTime*_leap_interaction->getDZoomVel();
   const float scaleFactor = _leap_interaction->getScaleFactor();
 
   if (curTime - _immersive_changed_time > 0.5) {
@@ -507,14 +517,11 @@ void FreeformApp::update()
     }
   }
 
-  _wheel_zoom = 0.0f;
-
-  updateCamera(dTheta, dPhi, dZoom);
+  m_camera.Update(dTheta, dPhi, dZoom);
 
   const double lastSculptTime = sculpt_.getLastSculptTime();
   float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
 
-  //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
   _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 
   static const float LOWER_BOUND = 1.0f;
@@ -525,27 +532,14 @@ void FreeformApp::update()
 
   _ui->setZoomFactor(_ui_zoom.value);
 
-  _fov_modifier.Update((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime, 0.95f);
+  m_camera.SetFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
   _ui->update(_leap_interaction, &sculpt_);
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
-  float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
-  _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
-
   // Calculate initial camera position
-  Vec3f campos;
-  campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
-  campos.y = sinf(_phi)*_cam_dist;
-  campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
+  lmTransform tCamera = _camera_util->GetCameraInWorldSpace();
 
-  lmTransform tCamera;
-  {
-    // Hack -- lock access to mesh rotation for a moment
-    std::unique_lock<std::mutex> lock(_mesh_update_rotation_mutex);
-    tCamera = _camera_util->GetCameraInWorldSpace();
-  }
-
-  campos = ToVec3f(tCamera.translation);
+  Vec3f campos = ToVec3f(tCamera.translation);
   Vector3 up = tCamera.rotation * Vector3::UnitY();
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
 
@@ -569,9 +563,9 @@ void FreeformApp::update()
   _up_smoother.Update(ToVec3f(up), curTime, 0.95f);
 
   // Update camera
-  _camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
-  _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
-  _camera.getProjectionMatrix();
+  m_camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
+  m_camera.OnResize(getWindowAspectRatio());
+  m_camera.getProjectionMatrix();
 
   if (mesh_) {
     mesh_->updateGPUBuffers();
@@ -601,7 +595,7 @@ void FreeformApp::updateLeapAndMesh() {
 #endif 
     bool haveFrame;
     try {
-      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), m_camera.getModelViewMatrix(), m_camera.getProjectionMatrix(), getWindowSize(), _camera_util->GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
     } catch (...) {
       haveFrame = false;
     }
@@ -645,7 +639,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   float depth_min;
 
   static const float FOV_TOLERANCE = 5.0f;
-  float blend = (_fov-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
+  float blend = (m_camera.GetFov()-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
   blend = Utilities::SmootherStep(std::sqrt(math<float>::clamp(blend)));
   depth_min = depthMinZoomed*(1.0f-blend) + depthMinOut*blend;
 
@@ -657,7 +651,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   _screen_fbo.bindFramebuffer();
   setViewport( _screen_fbo.getBounds() );
   clear();
-  setMatrices( _camera );
+  setMatrices( m_camera );
   if (_draw_background) {
     // draw color pass of skybox
     _environment->bindCubeMap(CubeMapManager::CUBEMAP_SKY, 0);
@@ -952,7 +946,7 @@ void FreeformApp::draw() {
   const ci::Area viewport = getViewport();
 
   if (exposureMult > 0.0f && _have_shaders) {
-    renderSceneToFbo(_camera);
+    renderSceneToFbo(m_camera);
 
     GLBuffer::checkError("After FBO");
     GLBuffer::checkFrameBufferStatus("After FBO");
@@ -1093,7 +1087,7 @@ void FreeformApp::draw() {
   }
 
   if (_environment->getLoadingState() == CubeMapManager::LOADING_STATE_FAILED) {
-    _ui->drawError("CubeMapManager loading failed. Please make sure Freeform is installed correctly.", errorNum++);
+    _ui->drawError("Environment loading failed. Please make sure Freeform is installed correctly.", errorNum++);
   }
 
   GLBuffer::checkError("After logo");
