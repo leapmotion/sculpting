@@ -12,49 +12,49 @@ const float MIN_FOV = 50.0f;
 const float MAX_FOV = 90.0f;
 
 OrbiterCamera::OrbiterCamera(float initialDistance) :
-m_theta(100.0f), 
-m_phi(0.0f),
-m_wheelZoom(0.0f), 
-m_camDist(initialDistance),
-m_zoom(60.0f)
+mTheta(100.0f), 
+mPhi(0.0f),
+mWheelZoom(0.0f), 
+mCamDist(initialDistance),
+mZoom(60.0f)
 {
-  m_fovModifier.Update(0.0f, 0.0, 0.5f);
+  mFovModifier.Update(0.0f, 0.0, 0.5f);
 }
 
-void OrbiterCamera::SetFovModifier(float mod, double currentTime) {
-  m_fovModifier.Update(mod, currentTime, 0.95f);
+void OrbiterCamera::setFovModifier(float mod, double currentTime) {
+  mFovModifier.Update(mod, currentTime, 0.95f);
 }
 
-void OrbiterCamera::OnMouseMove(float dX, float dY) {
-  m_theta -= dX;
-  m_phi += dY;
+void OrbiterCamera::onMouseMove(float dX, float dY) {
+  mTheta -= dX;
+  mPhi += dY;
 
-  if (m_theta<0.f) m_theta += float(M_PI)*2.f;
-  if (m_theta >= M_PI*2.f) m_theta -= float(M_PI)*2.f;
-  m_phi = math<float>::clamp(m_phi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
+  if (mTheta<0.f) mTheta += float(M_PI)*2.f;
+  if (mTheta >= M_PI*2.f) mTheta -= float(M_PI)*2.f;
+  mPhi = math<float>::clamp(mPhi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
 
   // New camera update.
   util.RecordUserInput(dX, dY, 0.f);
 }
 
-void OrbiterCamera::OnResize(float newAspectRatio) {
-  setPerspective(80.0f + m_fovModifier.value, newAspectRatio, 1.0f, 100000.f);
+void OrbiterCamera::onResize(float newAspectRatio) {
+  setPerspective(80.0f + mFovModifier.value, newAspectRatio, 1.0f, 100000.f);
 }
 
-void OrbiterCamera::Update(float dTheta, float dPhi, float dZoom) {
-  m_theta -= dTheta;
-  m_phi += dPhi;
-  m_zoom += dZoom;
+void OrbiterCamera::update(float dTheta, float dPhi, float dZoom) {
+  mTheta -= dTheta;
+  mPhi += dPhi;
+  mZoom += dZoom;
 
-  m_zoom += m_wheelZoom;
-  m_wheelZoom = 0.0f;
+  mZoom += mWheelZoom;
+  mWheelZoom = 0.0f;
 
-  if (m_theta<0.f) m_theta += float(M_PI)*2.f;
-  if (m_theta >= M_PI*2.f) m_theta -= float(M_PI)*2.f;
-  m_phi = math<float>::clamp(m_phi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
-  m_zoom = math<float>::clamp(m_zoom, 40.f, 110.f);
+  if (mTheta<0.f) mTheta += float(M_PI)*2.f;
+  if (mTheta >= M_PI*2.f) mTheta -= float(M_PI)*2.f;
+  mPhi = math<float>::clamp(mPhi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
+  mZoom = math<float>::clamp(mZoom, 40.f, 110.f);
 
-  const float blend = (m_zoom - MIN_FOV) / (MAX_FOV - MIN_FOV);
-  m_camDist = blend*(MAX_CAMERA_DIST - MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
+  const float blend = (mZoom - MIN_FOV) / (MAX_FOV - MIN_FOV);
+  mCamDist = blend*(MAX_CAMERA_DIST - MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
 
 }

@@ -4,27 +4,30 @@
 #include "Utilities.h"
 #include "CameraUtil.h"
 
+//This is a cinder derived class, so as long as it is, we'll use cinder-style naming conventions
+
 class OrbiterCamera : public cinder::CameraPersp
 {
 public:
   OrbiterCamera(float initialDistance);
-  void OnMouseMove(float dX, float dY);
 
-  void SetZoom(float zoom) { m_wheelZoom = -300.0f * zoom; }
-  void SetFovModifier(float mod, double currentTime);
+  void onMouseMove(float dX, float dY);
 
-  void Update(float dTheta, float dPhi, float dZoom);
+  void setZoom(float zoom) { mWheelZoom = -300.0f * zoom; }
+  void setFovModifier(float mod, double currentTime);
 
-  void OnResize(float newAspectRatio);
+  void update(float dTheta, float dPhi, float dZoom );
 
-  float GetZoom() const { return m_zoom; };
+  void onResize(float newAspectRatio);
+
+  float getZoom() const { return mZoom; };
 
   CameraUtil util;
 private:
-  float m_theta;
-  float m_phi;
-  float m_zoom;
-  float m_camDist;
-  Utilities::ExponentialFilter<float> m_fovModifier;
-  float m_wheelZoom;
+  float mTheta;
+  float mPhi;
+  float mZoom;
+  float mCamDist;
+  Utilities::ExponentialFilter<float> mFovModifier;
+  float mWheelZoom;
 };

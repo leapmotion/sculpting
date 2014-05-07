@@ -378,7 +378,7 @@ void FreeformApp::resize()
   _screen_fbo = Fbo(width, height, screenFormat);
   GLBuffer::checkError("Screen FBO");
 
-  m_camera.OnResize( getWindowAspectRatio() );
+  m_camera.onResize( getWindowAspectRatio() );
   _ui->setWindowSize( Vec2i(width, height) );
 
   glEnable(GL_FRAMEBUFFER_SRGB);
@@ -405,12 +405,12 @@ void FreeformApp::mouseDrag( MouseEvent event )
   Vec2f dMouse = _current_mouse_pos - _previous_mouse_pos;
   dMouse *= CAMERA_SPEED;
   
-  m_camera.OnMouseMove(dMouse.x, dMouse.y);
+  m_camera.onMouseMove(dMouse.x, dMouse.y);
 }
 
 void FreeformApp::mouseWheel( MouseEvent event)
 {
-  m_camera.SetZoom(event.getWheelIncrement());
+  m_camera.setZoom(event.getWheelIncrement());
 }
 
 void FreeformApp::mouseMove( MouseEvent event)
@@ -513,7 +513,7 @@ void FreeformApp::update()
     }
   }
 
-  m_camera.Update(dTheta, dPhi, dZoom);
+  m_camera.update(dTheta, dPhi, dZoom);
 
   const double lastSculptTime = sculpt_.getLastSculptTime();
   float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
@@ -528,7 +528,7 @@ void FreeformApp::update()
 
   _ui->setZoomFactor(_ui_zoom.value);
 
-  m_camera.SetFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
+  m_camera.setFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
   _ui->update(_leap_interaction, &sculpt_);
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
@@ -560,7 +560,7 @@ void FreeformApp::update()
 
   // Update camera
   m_camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
-  m_camera.OnResize(getWindowAspectRatio());
+  m_camera.onResize(getWindowAspectRatio());
   m_camera.getProjectionMatrix();
 
   if (mesh_) {
@@ -635,7 +635,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   float depth_min;
 
   static const float FOV_TOLERANCE = 5.0f;
-  float blend = (m_camera.GetZoom()-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
+  float blend = (m_camera.getZoom()-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
   blend = Utilities::SmootherStep(std::sqrt(math<float>::clamp(blend)));
   depth_min = depthMinZoomed*(1.0f-blend) + depthMinOut*blend;
 
