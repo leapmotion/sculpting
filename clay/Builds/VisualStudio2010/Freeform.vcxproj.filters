@@ -127,13 +127,10 @@
       <Filter>PCH</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CubeMapManager.cpp">
-      <Filter>Application</Filter>
+      <Filter>CubeMapGenMod</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\include\VectorMacros.h">
-      <Filter>Util</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\Aabb.h">
       <Filter>Sculpt3D</Filter>
     </ClInclude>
@@ -237,7 +234,10 @@
       <Filter>PCH</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\CubeMapManager.h">
-      <Filter>Application</Filter>
+      <Filter>CubeMapGenMod</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\VectorMacros.h">
+      <Filter>CubeMapGenMod</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
