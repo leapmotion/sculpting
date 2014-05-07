@@ -22,7 +22,6 @@
 #include "cinder/Thread.h"
 #include "Mesh.h"
 #include "Sculpt.h"
-#include "CameraUtil.h"
 #include "AutoSave.h"
 #include "OrbiterCamera.h"
 
@@ -33,7 +32,6 @@ using namespace ci;
 using namespace ci::gl;
 using namespace ci::app;
 
-class CameraUtil;
 
 #if LM_PRODUCTION_BUILD
 #define LM_DISABLE_THREADING_AND_ENVIRONMENT 0
@@ -128,9 +126,6 @@ private:
 
   // *** camera stuff ***
   OrbiterCamera m_camera;
-
-  // Free-floating camera utility.
-  CameraUtil m_cameraUtil;
 
   // **** mouse stuff ***
   Vec2i _initial_mouse_pos, _current_mouse_pos, _previous_mouse_pos;

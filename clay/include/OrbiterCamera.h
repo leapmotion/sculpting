@@ -2,6 +2,7 @@
 
 #include "cinder/Camera.h"
 #include "Utilities.h"
+#include "CameraUtil.h"
 
 class OrbiterCamera : public cinder::CameraPersp
 {
@@ -18,6 +19,7 @@ public:
 
   float GetFov() const { return m_fov; };
 
+  CameraUtil util;
 private:
   float m_theta;
   float m_phi;

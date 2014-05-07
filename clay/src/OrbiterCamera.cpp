@@ -32,6 +32,9 @@ void OrbiterCamera::OnMouseMove(float dX, float dY) {
   if (m_theta<0.f) m_theta += float(M_PI)*2.f;
   if (m_theta >= M_PI*2.f) m_theta -= float(M_PI)*2.f;
   m_phi = math<float>::clamp(m_phi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
+
+  // New camera update.
+  util.RecordUserInput(dX, dY, 0.f);
 }
 
 void OrbiterCamera::OnResize(float newAspectRatio) {
