@@ -16,7 +16,7 @@ m_theta(100.0f),
 m_phi(0.0f),
 m_wheelZoom(0.0f), 
 m_camDist(initialDistance),
-m_fov(60.0f)
+m_zoom(60.0f)
 {
   m_fovModifier.Update(0.0f, 0.0, 0.5f);
 }
@@ -44,16 +44,17 @@ void OrbiterCamera::OnResize(float newAspectRatio) {
 void OrbiterCamera::Update(float dTheta, float dPhi, float dZoom) {
   m_theta -= dTheta;
   m_phi += dPhi;
-  m_fov += dZoom;
+  m_zoom += dZoom;
 
-  m_fov += m_wheelZoom;
+  m_zoom += m_wheelZoom;
   m_wheelZoom = 0.0f;
 
   if (m_theta<0.f) m_theta += float(M_PI)*2.f;
   if (m_theta >= M_PI*2.f) m_theta -= float(M_PI)*2.f;
   m_phi = math<float>::clamp(m_phi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
-  m_fov = math<float>::clamp(m_fov, 40.f, 110.f);
+  m_zoom = math<float>::clamp(m_zoom, 40.f, 110.f);
 
-  const float blend = (m_fov - MIN_FOV) / (MAX_FOV - MIN_FOV);
+  const float blend = (m_zoom - MIN_FOV) / (MAX_FOV - MIN_FOV);
   m_camDist = blend*(MAX_CAMERA_DIST - MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
+
 }

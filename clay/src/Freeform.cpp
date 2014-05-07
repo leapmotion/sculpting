@@ -635,7 +635,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   float depth_min;
 
   static const float FOV_TOLERANCE = 5.0f;
-  float blend = (m_camera.GetFov()-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
+  float blend = (m_camera.GetZoom()-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
   blend = Utilities::SmootherStep(std::sqrt(math<float>::clamp(blend)));
   depth_min = depthMinZoomed*(1.0f-blend) + depthMinOut*blend;
 

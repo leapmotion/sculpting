@@ -17,13 +17,13 @@ public:
 
   void OnResize(float newAspectRatio);
 
-  float GetFov() const { return m_fov; };
+  float GetZoom() const { return m_zoom; };
 
   CameraUtil util;
 private:
   float m_theta;
   float m_phi;
-  float m_fov;
+  float m_zoom;
   float m_camDist;
   Utilities::ExponentialFilter<float> m_fovModifier;
   float m_wheelZoom;
