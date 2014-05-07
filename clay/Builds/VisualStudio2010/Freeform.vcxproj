@@ -126,7 +126,6 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClCompile Include="..\..\src\Aabb.cpp" />
     <ClCompile Include="..\..\src\AutoSave.cpp" />
     <ClCompile Include="..\..\src\Brush.cpp" />
-    <ClCompile Include="..\..\src\Camera.cpp" />
     <ClCompile Include="..\..\src\CameraUtil.cpp" />
     <ClCompile Include="..\..\src\CBBoxInt32.cpp" />
     <ClCompile Include="..\..\src\CCubeMapProcessor.cpp" />
@@ -165,7 +164,6 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClInclude Include="..\..\include\Aabb.h" />
     <ClInclude Include="..\..\include\AutoSave.h" />
     <ClInclude Include="..\..\include\Brush.h" />
-    <ClInclude Include="..\..\include\Camera.h" />
     <ClInclude Include="..\..\include\CameraUtil.h" />
     <ClInclude Include="..\..\include\CBBoxInt32.h" />
     <ClInclude Include="..\..\include\CCubeMapProcessor.h" />

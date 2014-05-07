@@ -39,9 +39,6 @@
     <ClCompile Include="..\..\src\Aabb.cpp">
       <Filter>Sculpt3D</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Camera.cpp">
-      <Filter>Sculpt3D</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Geometry.cpp">
       <Filter>Sculpt3D</Filter>
     </ClCompile>
@@ -135,9 +132,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\Aabb.h">
-      <Filter>Sculpt3D</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\Camera.h">
       <Filter>Sculpt3D</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\Geometry.h">
