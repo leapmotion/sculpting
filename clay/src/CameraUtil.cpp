@@ -409,10 +409,12 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   {
     std::unique_lock<std::mutex> lock(m_userInputMutex);
     // Accumulate userInput in 2d
+    // If smoothing is enabled, only take a small slice of the accumulated user input
+    // and use it for camera movement per frame.
     if (m_params.enableSmoothing) {
         m_accumulatedUserInput += m_userInput;
-        lmReal smoothingValue = pow(m_params.smoothingFactor, dt);
-        usedUserInput = (1.0f - smoothingValue) * m_accumulatedUserInput;
+        lmReal useInputFraction = pow(m_params.inputSmoothingPerSecond, dt);
+        usedUserInput = (1.0f - useInputFraction) * m_accumulatedUserInput;
         m_accumulatedUserInput -= usedUserInput;
     }
     m_userInput.setZero();

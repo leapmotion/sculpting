@@ -105,7 +105,7 @@ public:
     lmReal speedAtMinDist;
     lmReal speedAtMaxDist;
     bool pinUpVector;
-    lmReal smoothingFactor;
+    lmReal inputSmoothingPerSecond;
     bool drawDebugLines;
     bool drawSphereQueryResults;
 
@@ -142,7 +142,7 @@ public:
       speedAtMinDist = 0.5f;
       speedAtMaxDist = 2.5f;
       pinUpVector = true;
-      smoothingFactor = 0.1f;
+      inputSmoothingPerSecond = 0.1f;
       drawDebugLines = false;
       drawSphereQueryResults = false;
 

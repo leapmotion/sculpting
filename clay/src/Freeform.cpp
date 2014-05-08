@@ -171,7 +171,7 @@ void FreeformApp::setup()
   _params->addParam( "Input multiplier", &_camera_params.inputMultiplier, "min=0.5 max=5.0 step=0.25" );
   _params->addParam( "Invert camera input", &_camera_params.invertCameraInput, "" );
   _params->addParam( "Smoothing", &_camera_params.enableSmoothing, "" );
-  _params->addParam( "Smooth factor", &_camera_params.smoothingFactor, "min=0.0 max=1.0 step=0.05" );
+  _params->addParam("Smooth factor", &_camera_params.inputSmoothingPerSecond, "min=0.0 max=1.0 step=0.05");
   _params->addSeparator();
   _params->addText( "text", "label=`Surface parameters:`" );
   _params->addParam( "Ambient", &_material.ambientFactor, "min=0.0 max=0.5 step=0.01" );
@@ -571,10 +571,11 @@ void FreeformApp::updateLeapAndMesh() {
   {
     const double curTime = ci::app::getElapsedSeconds();
     LM_TRACK_CONST_VALUE(curTime);
-#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
+
     bool suppress = _environment->getLoadingState() != CubeMapManager::LOADING_STATE_NONE;
     suppress = suppress || (curTime - _last_load_time) < BRUSH_DISABLE_TIME_AFTER_LOAD;
-#else 
+
+#if LM_DISABLE_THREADING_AND_ENVIRONMENT
     bool suppress = false;
 #endif 
     bool haveFrame;
