@@ -158,17 +158,7 @@ public:
 
   // Init camera at the origin.
   CameraUtil();
-
-  // Set camera from standard parameters: camera-from, camera-to, and up vector.
-  void SetFromStandardCamera(const Vector3& from, const Vector3& to, lmReal referenceDistance);
-
-  // Reset camera on the model. 
-  // This finds the forwad-facing supporting vertex along the camera directino and relocates the reference point and camera translation.
-  void ResetCamera(const Mesh* mesh, const Vector3& cameraDirection, bool keepCloseToMesh = false);
-
-  // Orbit camera around the mesh
-  void OrbitCamera(const Mesh* mesh, lmReal deltaTime);
-
+  
   struct IsoCameraState {
     lmReal refDist;
     lmReal cameraOffsetMultiplier;
@@ -180,51 +170,40 @@ public:
     int numFailedUpdates;
   } isoState;
 
-  lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
-
-  void IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials );
-
-  Vector3 IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* potential = NULL, lmReal* gradientMag = NULL);
-
   lmReal IsoQueryRadius(const Mesh* mesh, IsoCameraState* state) const;
-
-  void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime);
-
-  void IsoPreventCameraInMesh(Mesh* mesh, IsoCameraState* state);
-
-  void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
-
-  void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement, lmReal deltaTime);
-
-  void IsoCameraConstrainWhenSpinning(Mesh* mesh, IsoCameraState* state);
-
-  void IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoState);
-
-  void IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state);
-
-  void IsoMoveTowardsPotential(Mesh* mesh, IsoCameraState* state);
-
-  // Records user mouse input from mouse events.
-  // 
-  // Accumulates data for later processing in UpdateCamera.
+  
+  //Accumulates user input so it can be smoothed and handled in UpdateCamera
   void RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov);
 
   // Update camera position.
   void UpdateCamera(Mesh* mesh, Params* paramsInOut);
-
   lmTransform GetCameraInWorldSpace();
-
-  void UpdateCameraInWorldSpace();
-
-  lmSurfacePoint GetReferencePoint() const;
-
   lmReal GetReferenceDistance() const;
-
-  lmReal GetMaxDistanceForMesh(const Mesh* mesh) const;
-
-  lmReal GetMeshSize(const Mesh* mesh) const;
+  
+public:
+  std::mutex m_referencePointMutex;
+  lmReal m_timeOfLastScupt;
+  Params m_params;
 
 private:
+  // Reset camera on the model. 
+  // This finds the forwad-facing supporting vertex along the camera directino and relocates the reference point and camera translation.
+  void ResetCamera(const Mesh* mesh, const Vector3& cameraDirection, bool keepCloseToMesh = false);
+  void OrbitCamera(const Mesh* mesh, lmReal deltaTime);
+  lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
+  void IsoPotential_row4(Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials);
+  Vector3 IsoNormal(Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* potential = NULL, lmReal* gradientMag = NULL);
+  void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime);
+  void IsoPreventCameraInMesh(Mesh* mesh, IsoCameraState* state);
+  void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
+  void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement, lmReal deltaTime);
+  void IsoCameraConstrainWhenSpinning(Mesh* mesh, IsoCameraState* state);
+  void IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoState);
+  void IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state);
+  void UpdateCameraInWorldSpace();
+  lmSurfacePoint GetReferencePoint() const;
+  lmReal GetMaxDistanceForMesh(const Mesh* mesh) const;
+  lmReal GetMeshSize(const Mesh* mesh) const;
 
   void UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut );
 
@@ -233,47 +212,24 @@ private:
 
   bool VerifyCameraMovement(Mesh* mesh, const Vector3& from, const Vector3& to, lmReal radius);
 
-  // Helper functions:
   void CastOneRay(const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result);
-
   void CastOneRay(const Mesh* mesh, const lmRay& ray, std::vector<lmRayCastOutput>* results, bool collectall = false);
-
-  // Compute camera transform from standard camera vectors: from, to, & assumed up along y-axis.
-  //
-  // unused
-  static void GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut);
 
   lmSurfacePoint GetClosestSurfacePoint(Mesh* mesh, const Vector3& position, lmReal queryRadius);
 
-  // Helper functions.
-
-  // todo: move to MathUtils ?
   static void GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut);
-
   static void GetNormalAtPoint(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* normalOut);
 
   // Correct up vector
   void CorrectCameraUpVector(lmReal dt, const Vector3& up);
 
-  // Rotate vectors to mesh's space
   inline Vector3 ToWorldSpace(const Vector3& v);
-
-  // Rotate vectors to mesh's space
   inline Vector3 ToMeshSpace(const Vector3& v);
 
   inline Vector3 GetCameraDirection() const;
 
-public:
-  std::mutex m_referencePointMutex;
-  lmReal m_timeOfLastScupt;
-  Params m_params;
-
 private:
-
-  // Camera's current transform.
   lmTransform m_transform;
-
-  // Camera's current transform.
   lmTransform m_transformInWorldSpaceForGraphics;
 
   // Mesh's transform
@@ -287,13 +243,10 @@ private:
 
   // User input from the last call to CameraUpdate().
   Vector3 m_userInput;
-
   // Accumulated user input, waiting to be used over subsequent frames
   Vector3 m_accumulatedUserInput;
-
-  // Time of last camera update
+  
   lmReal m_lastCameraUpdateTime;
-
   lmReal m_timeSinceOrbitingStarted;
   lmReal m_timeSinceOrbitingEnded;
   lmReal m_timeSinceCameraUpdateStarted;
@@ -304,12 +257,9 @@ private:
   bool m_forceVerifyPositionAfterSculpting;
   int m_numFramesInsideManifoldMesh;
 
-  
-
   std::mutex m_transformForGraphicsMutex;
   std::mutex m_userInputMutex;
   
-
   std::vector<int> m_queryTriangles;
 
 public:

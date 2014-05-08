@@ -88,29 +88,6 @@ void CameraUtil::ResetCamera( const Mesh* mesh, const Vector3& cameraDirection, 
   UpdateCameraInWorldSpace();
 }
 
-void CameraUtil::GetTransformFromStandardCamera(const Vector3& from, const Vector3& to, lmTransform& tOut) {
-  Vector3 dir = to - from;
-  Vector3 flat = dir; flat.y() = 0.0f;
-
-  // for orientation: combine rotation around y (vertical) and then adjust pitch
-  Vector3 negZ(0.0f, 0.0f, -1.0f);
-  lmQuat q1; q1.setFromTwoVectors(negZ, flat); q1.normalize();
-  Vector3 pitchV = q1.inverse() * dir;
-  lmQuat q2; q2.setFromTwoVectors(negZ, pitchV); q2.normalize();
-
-  tOut.translation = from;
-  tOut.rotation = (q1 * q2).normalized();
-}
-
-//inline static lmReal TriArea(const Mesh* mesh, const Triangle& tri) {
-//  const Vertex& v0 = mesh->getVertex(tri.vIndices_[0]);
-//  const Vertex& v1 = mesh->getVertex(tri.vIndices_[1]);
-//  const Vertex& v2 = mesh->getVertex(tri.vIndices_[2]);
-//
-//  const lmReal area = 0.5f * (v1-v0).cross(v2-v0).norm();
-//  return area;
-//}
-
 inline static Vector3 TriCenter(const Mesh* mesh, const Triangle& tri) {
   const Vertex& v0 = mesh->getVertex(tri.vIndices_[0]);
   const Vertex& v1 = mesh->getVertex(tri.vIndices_[1]);
@@ -1228,38 +1205,6 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
 
     m_forceVerifyPositionAfterSculpting = false;
   }
-}
-
-void CameraUtil::IsoMoveTowardsPotential( Mesh* mesh, IsoCameraState* state )
-{
-  // use precomputed normal & move reference point towards there
-
-  lmReal currPotential = IsoPotential(mesh, state->refPosition, IsoQueryRadius(mesh, state));
-  lmReal err = currPotential - state->refPotential;
-
-  const static lmReal LM_POTENTIAL_QUERY_EPSILON = 0.1f;
-  Vector3 testPosition = state->refPosition + state->refNormal * LM_POTENTIAL_QUERY_EPSILON;
-  lmReal testPotential = IsoPotential(mesh, testPosition, IsoQueryRadius(mesh, state));
-
-  lmReal deltaPotential = testPotential - currPotential;
-
-  lmReal smoothing = 0.8f; // 1.0f explodes easily
-  float correctionRatio = - err / deltaPotential * LM_POTENTIAL_QUERY_EPSILON * smoothing;
-  correctionRatio = lmClip(correctionRatio, -10.0f, 10.0f); // use min(minDist, current distance to closest point)
-
-  Vector3 correction = state->refNormal * correctionRatio;
-  state->refPosition += correction;
-
-  // todo: udpate query radius ?? can simply add correctionRatio for now & update later.
-
-  state->refNormal = IsoNormal(mesh, state->refPosition, IsoQueryRadius(mesh, state));
-
-  // test: disable z movement from from the hand
-
-
-  // todo:
-  //  - update refPotential whenever needed
-  //    - after camera is moved.
 }
 
 lmSurfacePoint CameraUtil::GetReferencePoint() const
