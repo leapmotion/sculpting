@@ -208,8 +208,6 @@ private:
   std::string shapes_[NUM_SHAPES];
   float remeshRadius_;
 
-  // camera control settings
-  CameraUtil::Params _camera_params;
 };
 
 #endif

@@ -455,7 +455,7 @@ void FreeformApp::update()
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
   //Camera Update
-  _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
+  m_camera.util.m_forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
   const Vec4f deltaVector = _leap_interaction->getDeltaVector();
   
   m_camera.update(deltaVector*deltaTime, curTime, sculpt_.getLastSculptTime());
@@ -534,7 +534,7 @@ void FreeformApp::updateLeapAndMesh() {
           mesh_->updateRotation(curTime);
         }
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
-          m_camera.util.UpdateCamera(mesh_, &_camera_params);
+          m_camera.util.UpdateCamera(mesh_);
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
           sculpt_.applyBrushes(curTime, &_auto_save);
@@ -545,7 +545,7 @@ void FreeformApp::updateLeapAndMesh() {
     } else if (mesh_) {
       // Allow camera movement when leap is disconnected
       std::unique_lock<std::mutex> lock(_mesh_mutex);
-      m_camera.util.UpdateCamera(mesh_, &_camera_params);
+      m_camera.util.UpdateCamera(mesh_);
     }
   }
 }

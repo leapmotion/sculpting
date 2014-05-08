@@ -51,6 +51,7 @@ CameraUtil::CameraUtil() {
   m_numFramesInsideManifoldMesh = 0;
   m_orbitRefPoint.setZero();
   m_orbitDistance = 0.0f;
+  m_forceCameraOrbit = false;
 }
 
 void CameraUtil::ResetCamera( const Mesh* mesh, const Vector3& cameraDirection, bool keepCloseToMesh /*= false*/ )
@@ -320,7 +321,7 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
   m_transform.translation = lmInterpolate(blendingFactor*deltaTime, m_transform.translation, targetTranslation);
 }
 
-void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
+void CameraUtil::UpdateCamera( Mesh* mesh) {
 
   if (mesh->getVertices().empty())
   {
@@ -345,8 +346,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     dt = time - prevTime;
   }
 
-  this->m_params.forceCameraOrbit = paramsInOut->forceCameraOrbit;
-
   static const Mesh* prevMesh = NULL;
   if (mesh != prevMesh) {
     // Init Iso Camera
@@ -363,7 +362,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   LM_TRACK_VALUE(m_timeOfMovementSinceLastMeshMofification);
   LM_TRACK_VALUE(m_timeOfLastScupt);
 
-  if (m_params.forceCameraOrbit) {
+  if (m_forceCameraOrbit) {
     if (m_timeSinceOrbitingStarted == 0.0f) {
       m_orbitRefPoint = GetReferencePoint();
       m_orbitDistance = GetReferenceDistance();

@@ -80,11 +80,6 @@ struct lmSurfacePoint {
 // Camera object. todo: rename.
 class CameraUtil {
 public:
-  struct Params {
-    bool forceCameraOrbit;
-
-    Params() : forceCameraOrbit(false) {}
-  };
 
   // Init camera at the origin.
   CameraUtil();
@@ -106,14 +101,14 @@ public:
   void RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov);
 
   // Update camera position.
-  void UpdateCamera(Mesh* mesh, Params* paramsInOut);
+  void UpdateCamera(Mesh* mesh);
   lmTransform GetCameraInWorldSpace();
   lmReal GetReferenceDistance() const;
   
 public:
   std::mutex m_referencePointMutex;
   lmReal m_timeOfLastScupt;
-  Params m_params;
+  bool m_forceCameraOrbit;
 
 private:
   // Reset camera on the model. 
