@@ -263,8 +263,12 @@ private:
 
   inline Vector3 GetCameraDirection() const;
 
-  // For simplicity.
 public:
+  std::mutex m_referencePointMutex;
+  lmReal m_timeOfLastScupt;
+  Params m_params;
+
+private:
 
   // Camera's current transform.
   lmTransform m_transform;
@@ -294,17 +298,17 @@ public:
   lmReal m_timeSinceOrbitingEnded;
   lmReal m_timeSinceCameraUpdateStarted;
   lmReal m_timeOfMovementSinceLastMeshMofification;
-  lmReal m_timeOfLastScupt;
+  
   lmReal m_prevTimeOfLastSculpt;
   bool m_justSculpted;
   bool m_forceVerifyPositionAfterSculpting;
   int m_numFramesInsideManifoldMesh;
 
-  Params m_params;
+  
 
   std::mutex m_transformForGraphicsMutex;
   std::mutex m_userInputMutex;
-  std::mutex m_referencePointMutex;
+  
 
   std::vector<int> m_queryTriangles;
 
