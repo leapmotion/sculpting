@@ -491,14 +491,11 @@ void FreeformApp::update()
   static const float TIME_UNTIL_AUTOMATIC_FOV = 50.0f;
   const float timeSinceActivity = static_cast<float>(curTime - _leap_interaction->getLastActivityTime());
   LM_TRACK_CONST_VALUE(timeSinceActivity);
-  _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
+  
+  
+  //UI Update
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - TIME_UNTIL_AUTOMATIC_FOV, 0.0f, TIME_UNTIL_AUTOMATIC_FOV)/TIME_UNTIL_AUTOMATIC_FOV);
-
-  const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
-  const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
-  const float dZoom = deltaTime*_leap_interaction->getDZoomVel();
   const float scaleFactor = _leap_interaction->getScaleFactor();
-
   if (curTime - _immersive_changed_time > 0.5) {
     if (_immersive_mode && scaleFactor < 0.95f) {
       _immersive_mode = false;
@@ -512,27 +509,24 @@ void FreeformApp::update()
       _immersive_changed_time = curTime;
     }
   }
-
-  m_camera.update(dTheta, dPhi, dZoom);
-
-  const double lastSculptTime = sculpt_.getLastSculptTime();
-  float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
-
-  m_camera.util.RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
-
   static const float LOWER_BOUND = 1.0f;
   static const float UPPER_BOUND = 1.32f;
   static const float IMMERSIVE_MODE_SMOOTH_STRENGTH = 0.9f;
 
   _ui_zoom.Update(_immersive_mode ? UPPER_BOUND : LOWER_BOUND, curTime, IMMERSIVE_MODE_SMOOTH_STRENGTH);
-
   _ui->setZoomFactor(_ui_zoom.value);
-
-  m_camera.setFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
   _ui->update(_leap_interaction, &sculpt_);
   _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
 
-  // Calculate initial camera position
+  //Camera Update
+  _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
+  const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
+  const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
+  const float dZoom = deltaTime*_leap_interaction->getDZoomVel();
+  
+  m_camera.update(dTheta, dPhi, dZoom, curTime, sculpt_.getLastSculptTime());
+  m_camera.setFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
+
   lmTransform tCamera = m_camera.util.GetCameraInWorldSpace();
 
   Vec3f campos = ToVec3f(tCamera.translation);
@@ -558,7 +552,6 @@ void FreeformApp::update()
   _lookat_smoother.Update(ToVec3f(to), curTime, 0.95f);
   _up_smoother.Update(ToVec3f(up), curTime, 0.95f);
 
-  // Update camera
   m_camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
   m_camera.onResize(getWindowAspectRatio());
   m_camera.getProjectionMatrix();

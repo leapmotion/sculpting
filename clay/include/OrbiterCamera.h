@@ -16,7 +16,7 @@ public:
   void setZoom(float zoom) { mWheelZoom = -300.0f * zoom; }
   void setFovModifier(float mod, double currentTime);
 
-  void update(float dTheta, float dPhi, float dZoom );
+  void update(float dTheta, float dPhi, float dZoom, float curTime, float lastSculptTime );
 
   void onResize(float newAspectRatio);
 

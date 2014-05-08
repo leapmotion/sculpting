@@ -41,7 +41,7 @@ void OrbiterCamera::onResize(float newAspectRatio) {
   setPerspective(80.0f + mFovModifier.value, newAspectRatio, 1.0f, 100000.f);
 }
 
-void OrbiterCamera::update(float dTheta, float dPhi, float dZoom) {
+void OrbiterCamera::update(float dTheta, float dPhi, float dZoom, float curTime, float lastSculptTime) {
   mTheta -= dTheta;
   mPhi += dPhi;
   mZoom += dZoom;
@@ -57,4 +57,6 @@ void OrbiterCamera::update(float dTheta, float dPhi, float dZoom) {
   const float blend = (mZoom - MIN_FOV) / (MAX_FOV - MIN_FOV);
   mCamDist = blend*(MAX_CAMERA_DIST - MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
 
+  const float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime)) / 0.5f);
+  util.RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
 }
