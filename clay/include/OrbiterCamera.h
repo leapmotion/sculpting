@@ -3,6 +3,7 @@
 #include "cinder/Camera.h"
 #include "Utilities.h"
 #include "CameraUtil.h"
+#include "DataTypes.h"
 
 //This is a cinder derived class, so as long as it is, we'll use cinder-style naming conventions
 
@@ -16,7 +17,7 @@ public:
   void setZoom(float zoom) { mWheelZoom = -300.0f * zoom; }
   void setFovModifier(float mod, double currentTime);
 
-  void update(float dTheta, float dPhi, float dZoom, float curTime, float lastSculptTime );
+  void update(const Vec4f &deltaVector, float curTime, float lastSculptTime );
 
   void onResize(float newAspectRatio);
 

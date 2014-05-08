@@ -482,7 +482,6 @@ void FreeformApp::update()
   std::cout << std::endl << "Frm#" << updateCount << " ";
 #endif
 #endif
-
   const double curTime = ci::app::getElapsedSeconds();
   LM_TRACK_CONST_VALUE(curTime);
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
@@ -492,10 +491,10 @@ void FreeformApp::update()
   const float timeSinceActivity = static_cast<float>(curTime - _leap_interaction->getLastActivityTime());
   LM_TRACK_CONST_VALUE(timeSinceActivity);
   
-  
   //UI Update
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - TIME_UNTIL_AUTOMATIC_FOV, 0.0f, TIME_UNTIL_AUTOMATIC_FOV)/TIME_UNTIL_AUTOMATIC_FOV);
   const float scaleFactor = _leap_interaction->getScaleFactor();
+
   if (curTime - _immersive_changed_time > 0.5) {
     if (_immersive_mode && scaleFactor < 0.95f) {
       _immersive_mode = false;
@@ -520,11 +519,9 @@ void FreeformApp::update()
 
   //Camera Update
   _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
-  const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
-  const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
-  const float dZoom = deltaTime*_leap_interaction->getDZoomVel();
+  const Vec4f deltaVector = _leap_interaction->getDeltaVector();
   
-  m_camera.update(dTheta, dPhi, dZoom, curTime, sculpt_.getLastSculptTime());
+  m_camera.update(deltaVector*deltaTime, curTime, sculpt_.getLastSculptTime());
   m_camera.setFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
 
   lmTransform tCamera = m_camera.util.GetCameraInWorldSpace();
@@ -533,7 +530,6 @@ void FreeformApp::update()
   Vector3 up = tCamera.rotation * Vector3::UnitY();
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
 
-  //_focus_point = to;
   Matrix4x4 trans = mesh_->getTransformation();
   Vector4 temp;
   {
