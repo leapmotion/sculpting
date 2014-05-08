@@ -10,7 +10,7 @@
 class OrbiterCamera : public cinder::CameraPersp
 {
 public:
-  OrbiterCamera(float initialDistance);
+  OrbiterCamera();
 
   void onMouseMove(float dX, float dY);
 
@@ -28,7 +28,6 @@ private:
   float mTheta;
   float mPhi;
   float mZoom;
-  float mCamDist;
   Utilities::ExponentialFilter<float> mFovModifier;
   float mWheelZoom;
 };

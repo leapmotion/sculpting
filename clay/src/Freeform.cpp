@@ -43,8 +43,7 @@ _have_audio(true),
 m_activeLoop(nullptr, nullptr), 
 _audio_paused(false),
 _immersive_mode(false),
-_immersive_entered_time(0.0), 
-m_camera(MIN_CAMERA_DIST)
+_immersive_entered_time(0.0)
 {
   Menu::updateSculptMult(0.0, 0.0f);
 }

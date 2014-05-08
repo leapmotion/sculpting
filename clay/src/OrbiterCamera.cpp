@@ -11,11 +11,10 @@ const float MAX_CAMERA_DIST = 350.0f;
 const float MIN_FOV = 50.0f;
 const float MAX_FOV = 90.0f;
 
-OrbiterCamera::OrbiterCamera(float initialDistance) :
+OrbiterCamera::OrbiterCamera() :
 mTheta(100.0f), 
 mPhi(0.0f),
 mWheelZoom(0.0f), 
-mCamDist(initialDistance),
 mZoom(60.0f)
 {
   mFovModifier.Update(0.0f, 0.0, 0.5f);
@@ -53,9 +52,6 @@ void OrbiterCamera::update(const Vec4f &deltaVector, float curTime, float lastSc
   if (mTheta >= M_PI*2.f) mTheta -= float(M_PI)*2.f;
   mPhi = math<float>::clamp(mPhi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
   mZoom = math<float>::clamp(mZoom, 40.f, 110.f);
-
-  const float blend = (mZoom - MIN_FOV) / (MAX_FOV - MIN_FOV);
-  mCamDist = blend*(MAX_CAMERA_DIST - MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
 
   const float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime)) / 0.5f);
   const Vec4f sculptVec = deltaVector*sculptMult;
