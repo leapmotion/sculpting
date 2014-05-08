@@ -315,7 +315,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     // mesh has no vertices. do nothing.
     return; 
   }
-  LM_TRACK_VALUE(m_transformInWorldSpaceForGraphics);
+  LM_TRACK_VALUE(m_transformInWorldSpace);
   LM_TRACK_VALUE(isoState);
 
   LM_ASSERT(mesh, "Can't upate the camera without a mesh");
@@ -362,7 +362,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     m_timeSinceOrbitingEnded = 0.0f;
     m_timeOfMovementSinceLastMeshMofification = FLT_MAX;
     UpdateCameraInWorldSpace();
-    LM_TRACK_VALUE(m_transformInWorldSpaceForGraphics);
+    LM_TRACK_VALUE(m_transformInWorldSpace);
     LM_TRACK_VALUE(isoState);
     return;
   }
@@ -414,7 +414,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   UpdateCameraInWorldSpace();
   m_prevTimeOfLastSculpt = m_timeOfLastScupt;
 
-  LM_TRACK_VALUE(m_transformInWorldSpaceForGraphics);
+  LM_TRACK_VALUE(m_transformInWorldSpace);
   LM_TRACK_VALUE(isoState);
 
   LM_ASSERT_IDENTICAL(GetReferenceDistance());
@@ -447,8 +447,8 @@ void CameraUtil::CorrectCameraUpVector(lmReal dt, const Vector3& up) {
 
 lmTransform CameraUtil::GetCameraInWorldSpace()
 {
-  std::unique_lock<std::mutex> lock(m_transformForGraphicsMutex);
-  lmTransform copy = m_transformInWorldSpaceForGraphics;
+  std::unique_lock<std::mutex> lock(m_transformInWorldSpaceMutex);
+  lmTransform copy = m_transformInWorldSpace;
   return copy;
 }
 
@@ -456,22 +456,9 @@ void CameraUtil::UpdateCameraInWorldSpace() {
   lmTransform t;
   t.translation = ToWorldSpace(m_transform.translation);
   t.rotation = m_meshTransform.rotation * m_transform.rotation;
-#if LM_LOG_CAMERA_LOGIC_4
-  //std::cout <<
-  //  "meshQ: " << meshTransform.rotation.x() <<
-  //  ", " << meshTransform.rotation.y() <<
-  //  ", " << meshTransform.rotation.z() <<
-  //  ", " << meshTransform.rotation.w() <<
-  //  ", camQ: " << t.rotation.x() <<
-  //  ", " << t.rotation.y() <<
-  //  ", " << t.rotation.z() <<
-  //  ", " << t.rotation.w() <<
-  //  ", camT: " << t.translation.x() <<
-  //  ", " << t.translation.y() <<
-  //  ", " << t.translation.z() << std::endl;
-#endif
-  std::unique_lock<std::mutex> lock(m_transformForGraphicsMutex);
-  m_transformInWorldSpaceForGraphics = t;
+
+  std::unique_lock<std::mutex> lock(m_transformInWorldSpaceMutex);
+  m_transformInWorldSpace = t;
 }
 
 void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, lmRayCastOutput* result )

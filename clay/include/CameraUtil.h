@@ -230,7 +230,7 @@ private:
 
 private:
   lmTransform m_transform;
-  lmTransform m_transformInWorldSpaceForGraphics;
+  lmTransform m_transformInWorldSpace;
 
   // Mesh's transform
   lmTransform m_meshTransform;
@@ -257,7 +257,7 @@ private:
   bool m_forceVerifyPositionAfterSculpting;
   int m_numFramesInsideManifoldMesh;
 
-  std::mutex m_transformForGraphicsMutex;
+  std::mutex m_transformInWorldSpaceMutex;
   std::mutex m_userInputMutex;
   
   std::vector<int> m_queryTriangles;
