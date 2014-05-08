@@ -333,7 +333,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
     dt = time - prevTime;
   }
 
-  this->m_params = *paramsInOut;
+  this->m_params.forceCameraOrbit = paramsInOut->forceCameraOrbit;
 
   static const Mesh* prevMesh = NULL;
   if (mesh != prevMesh) {
