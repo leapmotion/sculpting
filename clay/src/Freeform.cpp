@@ -471,12 +471,12 @@ void FreeformApp::update()
   Vector4 temp;
   {
     std::unique_lock<std::mutex> lock(m_camera.util.m_referencePointMutex);
-    temp << m_camera.util.isoState.refPosition, 1.0;
+    temp << m_camera.util.m_isoState.refPosition, 1.0;
   }
   _focus_point = (trans * temp).head<3>();
   // if mesh
   if (mesh_) {
-    _focus_radius = m_camera.util.IsoQueryRadius(mesh_, &m_camera.util.isoState);
+    _focus_radius = m_camera.util.IsoQueryRadius(mesh_);
   } else {
     _focus_radius = 0.0f;
   }

@@ -84,18 +84,9 @@ public:
   // Init camera at the origin.
   CameraUtil();
   
-  struct IsoCameraState {
-    lmReal refDist;
-    lmReal cameraOffsetMultiplier;
-    Vector3 refPosition;
-    Vector3 refNormal;
-    lmSurfacePoint closestPointOnMesh;
-    lmReal refPotential; // used when clipping to isosurface
-    lmReal currGradientMag;
-    int numFailedUpdates;
-  } isoState;
 
-  lmReal IsoQueryRadius(const Mesh* mesh, IsoCameraState* state) const;
+
+  lmReal IsoQueryRadius(const Mesh* mesh) const;
   
   //Accumulates user input so it can be smoothed and handled in UpdateCamera
   void RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov);
@@ -110,6 +101,17 @@ public:
   lmReal m_timeOfLastScupt;
   bool m_forceCameraOrbit;
 
+  struct IsoCameraState {
+    lmReal refDist;
+    lmReal cameraOffsetMultiplier;
+    Vector3 refPosition;
+    Vector3 refNormal;
+    lmSurfacePoint closestPointOnMesh;
+    lmReal refPotential; // used when clipping to isosurface
+    lmReal currGradientMag;
+    int numFailedUpdates;
+  } m_isoState;
+
 private:
   // Reset camera on the model. 
   // This finds the forwad-facing supporting vertex along the camera directino and relocates the reference point and camera translation.
@@ -118,13 +120,13 @@ private:
   lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
   void IsoPotential_row4(Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials);
   Vector3 IsoNormal(Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* potential = NULL, lmReal* gradientMag = NULL);
-  void IsoUpdateCameraTransform(const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime);
-  void IsoPreventCameraInMesh(Mesh* mesh, IsoCameraState* state);
-  void InitIsoCamera(Mesh* mesh, IsoCameraState* state);
-  void IsoCamera(Mesh* mesh, IsoCameraState* state, const Vector3& movement, lmReal deltaTime);
-  void IsoCameraConstrainWhenSpinning(Mesh* mesh, IsoCameraState* state);
-  void IsoResetIfInsideManifoldMesh(Mesh* mesh, IsoCameraState* isoState);
-  void IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state);
+  void IsoUpdateCameraTransform(const Vector3& newDirection, lmReal deltaTime);
+  void IsoPreventCameraInMesh(Mesh* mesh);
+  void InitIsoCamera(Mesh* mesh);
+  void IsoCamera(Mesh* mesh, const Vector3& movement, lmReal deltaTime);
+  void IsoCameraConstrainWhenSpinning(Mesh* mesh);
+  void IsoResetIfInsideManifoldMesh(Mesh* mesh);
+  void IsoOnMeshUpdateStopped(Mesh* mesh);
   void UpdateCameraInWorldSpace();
   lmSurfacePoint GetReferencePoint() const;
   lmReal GetMaxDistanceForMesh(const Mesh* mesh) const;
@@ -154,6 +156,9 @@ private:
   inline Vector3 GetCameraDirection() const;
 
 private:
+
+
+
   lmTransform m_transform;
   lmTransform m_transformInWorldSpace;
 
