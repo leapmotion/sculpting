@@ -219,7 +219,7 @@ Vector3 CameraUtil::ToWorldSpace(const Vector3& v) { return m_meshTransform.rota
 
 Vector3 CameraUtil::GetCameraDirection() const { return -1.0f * (m_transform.rotation * Vector3::UnitZ()); };
 
-void CameraUtil::UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut ) {
+void CameraUtil::UpdateMeshTransform(const Mesh* mesh) {
   m_transform.rotation = m_meshTransform.rotation * m_transform.rotation;
   m_transform.translation = ToWorldSpace(m_transform.translation);
   m_orbitRefPoint.position = ToWorldSpace(m_orbitRefPoint.position);
@@ -319,7 +319,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   LM_TRACK_VALUE(isoState);
 
   LM_ASSERT(mesh, "Can't upate the camera without a mesh");
-  UpdateMeshTransform(mesh, paramsInOut);
+  UpdateMeshTransform(mesh);
 
   // Check time
   lmReal dt = 0.0f;

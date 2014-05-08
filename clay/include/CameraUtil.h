@@ -193,7 +193,7 @@ private:
   lmReal GetMaxDistanceForMesh(const Mesh* mesh) const;
   lmReal GetMeshSize(const Mesh* mesh) const;
 
-  void UpdateMeshTransform(const Mesh* mesh, Params* paramsInOut );
+  void UpdateMeshTransform(const Mesh* mesh );
 
   // Returns true if sphere collides mesh.
   bool CollideCameraSphere(Mesh* mesh, const Vector3& position, lmReal radius);
