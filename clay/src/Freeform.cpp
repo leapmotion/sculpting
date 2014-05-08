@@ -133,68 +133,6 @@ void FreeformApp::setup()
   _bloom_light_threshold = 0.5f;
   _brush_color = ci::Color(0.85f, 0.95f, 1.0f);
 
-#if !LM_PRODUCTION_BUILD
-  _params = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( Vec2i( 200, 400 ) ) );
-  _params->minimize();
-
-  _params->addSeparator();
-  _params->addText( "text", "label=`Camera parameters:`" );
-
-  _params->addParam( "Use triangles.", &_camera_params.queryTriangles, "" );
-  _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
-  _params->addParam( "Draw sphere query", &_camera_params.drawSphereQueryResults, "" );
-
-  _params->addParam( "Iso query radius", &_camera_params.isoQueryPaddingRadius, "min=10.0 max=300.0 step=10.0" );
-  _params->addParam( "#clip rot iterations", &_camera_params.numRotationClipIterations, "min=1.0 max=8.0 step=1.0" );
-
-  _params->addParam( "Iso ref dist mlt", &_camera_params.isoRefDistMultiplier, "min=0.1 max=10.0 step=0.1" );
-  _params->addParam( "Grav_k", &_camera_params.grav_k, "min=0.0001 max=1.0 step=0.001" );
-  _params->addParam( "Grav_n", &_camera_params.grav_n, "min=1.0 max=8.0 step=0.5" );
-
-  _params->addParam( "Clip to iso surface", &_camera_params.clipToIsoSurface, "" );
-  _params->addParam( "Clip movement", &_camera_params.clipCameraMovement, "" );
-  _params->addParam( "Movement ref dist", &_camera_params.refDistForMovemement, "min=10.0 max=500.0 step=10.0" );
-  _params->addParam( "Enable cone clip", &_camera_params.enableConeClipping, "" );
-  _params->addParam( "Normal cone angle", &_camera_params.normalConeAngle, "min=0.0 max=1.55 step=0.05" );
-  _params->addParam( "Enable max rot", &_camera_params.enableMaxReorientationRate, "" );
-  _params->addParam( "Reorientation rate", &_camera_params.maxReorientationRate, "min=0.2 max=10.0 step=0.2" );
-  _params->addParam( "Scale Z movement", &_camera_params.scaleZMovement, "min=0.1 max=2.0 step=0.1" );
-
-  _params->addParam( "Enable Cam Reset", &_camera_params.enableCameraReset, "" );
-  _params->addParam( "Enable Cam Orbit", &_camera_params.enableCameraOrbit, "" );
-
-  _params->addParam( "Min Dist", &_camera_params.minDist, "min=1.0 max=100.0 step=1.0" );
-  _params->addParam( "Max Dist", &_camera_params.maxDist, "min=100.0 max=1000.0 step=20.0" );
-  _params->addParam( "Speed @ Min Dist", &_camera_params.speedAtMinDist, "min=0.01 max=1.0 step=0.1" );
-  _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
-  _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
-  _params->addParam( "Input multiplier", &_camera_params.inputMultiplier, "min=0.5 max=5.0 step=0.25" );
-  _params->addParam( "Invert camera input", &_camera_params.invertCameraInput, "" );
-  _params->addParam( "Smoothing", &_camera_params.enableSmoothing, "" );
-  _params->addParam("Smooth factor", &_camera_params.inputSmoothingPerSecond, "min=0.0 max=1.0 step=0.05");
-  _params->addSeparator();
-  _params->addText( "text", "label=`Surface parameters:`" );
-  _params->addParam( "Ambient", &_material.ambientFactor, "min=0.0 max=0.5 step=0.01" );
-  _params->addParam( "Diffuse", &_material.diffuseFactor, "min=0.0 max=1.0 step=0.05" );
-  _params->addParam( "Reflection", &_material.reflectionFactor, "min=0.0 max=1.0 step=0.05" );
-  _params->addParam( "Refraction Index", &_material.refractionIndex, "min=0.0 max=1.0 step=0.01" );
-  _params->addParam( "Reflection Bias", &_material.reflectionBias, "min=0.0 max=3.0 step=0.01" );
-  _params->addParam( "Refraction Bias", &_material.refractionBias, "min=0.0 max=3.0 step=0.01" );
-  _params->addSeparator();
-  _params->addText( "text", "label=`Draw parameters:`" );
-  _params->addParam( "Draw UI", &_draw_ui, "" );
-  _params->addParam( "Draw edges", &_draw_edges, "" );
-  _params->addSeparator();
-  _params->addText( "text", "label=`HDR parameters:`" );
-  _params->addParam( "Exposure", &_exposure, "min=0.05 max=8.0 step=0.01" );
-  _params->addParam( "Show bloom", &_bloom_visible, "" );
-  _params->addParam( "Bloom size", &_bloom_size, "min=0.0 max=4.0 step=0.01" );
-  _params->addParam( "Bloom strength", &_bloom_strength, "min=0.0 max=1.0 step=0.01" );
-  _params->addParam( "Bloom threshold", &_bloom_light_threshold, "min=0.0 max=2.0 step=0.01" );
-  _params->addParam( "Draw Background", &_draw_background, "" );
-  _params->addParam( "Remesh Radius", &remeshRadius_, "min=20, max=200, step=2.5" );
-#endif
-
   _environment = new CubeMapManager();
 
   try {
@@ -1077,10 +1015,6 @@ void FreeformApp::draw() {
 
   GLBuffer::checkError("After logo");
   GLBuffer::checkFrameBufferStatus("After logo");
-
-#if !LM_PRODUCTION_BUILD
-  _params->draw(); // draw the interface
-#endif
 
   glFlush();
 

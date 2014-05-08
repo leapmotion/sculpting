@@ -166,9 +166,6 @@ private:
   Utilities::ExponentialFilter<ci::Vec3f> _up_smoother;
 
   // *** ui stuff ***
-#if !LM_PRODUCTION_BUILD
-  params::InterfaceGlRef _params;
-#endif
   Color _brush_color;
   bool _draw_edges;
   Material _material;
