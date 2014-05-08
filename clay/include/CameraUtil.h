@@ -81,67 +81,9 @@ struct lmSurfacePoint {
 class CameraUtil {
 public:
   struct Params {
-    const lmReal isoRefDistMultiplier;
-    const lmReal grav_k;
-    const lmReal grav_n;
-    const bool queryTriangles;
-    const int numRotationClipIterations;
-    const lmReal isoQueryPaddingRadius;
-    const bool clipToIsoSurface;
-    const bool clipCameraMovement;
-    const lmReal refDistForMovemement;
-    const bool enableConeClipping;
-    const lmReal normalConeAngle;
-    const bool enableMaxReorientationRate;
-    const lmReal maxReorientationRate;
-    const lmReal scaleZMovement;
-    const lmReal minDist;
-    const lmReal maxDist;
-    const lmReal speedAtMinDist;
-    const lmReal speedAtMaxDist;
-    const bool pinUpVector;
-    const lmReal inputSmoothingPerSecond;
-    const bool drawDebugLines;
-    const bool drawSphereQueryResults;
-    const lmReal inputMultiplier;
-    const bool invertCameraInput;
-    const bool enableSmoothing;
-    const bool enableCameraReset;
-    const bool enableCameraOrbit;
-
     bool forceCameraOrbit;
-    Params() :
-      forceCameraOrbit(false),
-      
-      isoRefDistMultiplier(2.0f),
-      grav_k(0.0001f),
-      grav_n(2.0f),
-      queryTriangles(true),
-      numRotationClipIterations(1),
-      isoQueryPaddingRadius(50.0f),
-      clipToIsoSurface(false),
-      clipCameraMovement(false),
-      refDistForMovemement(50.0f),
-      enableConeClipping(false),
-      normalConeAngle(45 * LM_DEG),
-      enableMaxReorientationRate(false),
-      maxReorientationRate(LM_PI / 2.0f), // 180deg in 2 seconds
-      scaleZMovement(0.75f),
-      minDist(30.0f),
-      maxDist(600.0f),
-      speedAtMinDist(0.5f),
-      speedAtMaxDist(2.5f),
-      pinUpVector(true),
-      inputSmoothingPerSecond(0.1f),
-      drawDebugLines(false),
-      drawSphereQueryResults(false),
-      inputMultiplier(2.0f),
-      invertCameraInput(false),
-      enableSmoothing(false),
-      
-      enableCameraReset(true),
-      enableCameraOrbit(true)
-    {}
+
+    Params() : forceCameraOrbit(false) {}
   };
 
   // Init camera at the origin.
@@ -231,8 +173,6 @@ private:
 
   // User input from the last call to CameraUpdate().
   Vector3 m_userInput;
-  // Accumulated user input, waiting to be used over subsequent frames
-  Vector3 m_accumulatedUserInput;
   
   lmReal m_lastCameraUpdateTime;
   lmReal m_timeSinceOrbitingStarted;

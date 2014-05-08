@@ -687,14 +687,6 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.1 ? 0.15f : 1.0f);
   }
 
-  if (m_camera.util.m_params.drawDebugLines) {
-    _wireframe_shader.bind();
-    _wireframe_shader.uniform( "transform", transform );
-    _wireframe_shader.uniform( "transformit", transformit );
-    DebugDrawUtil::getInstance().FlushDebugPrimitives(&_wireframe_shader);
-    _wireframe_shader.unbind();
-  }
-
   // draw brushes
   _brush_shader.bind();
   _brush_shader.uniform( "campos", _Camera.getEyePoint() );

@@ -21,11 +21,23 @@
 #define LM_DRAW_DEBUG_OBJECTS 1
 #endif
 
+const static lmReal s_isoRefDistMultiplier = 2.0f;
+const static lmReal s_isoQueryPaddingRadius = 50.0f;
+const static lmReal s_gravK2 = 0.00000001f; //GravK squared where GravK = 0.0001f
+const static lmReal s_refDistForMovement = 50.0f;
+const static lmReal s_scaleZMovement = 0.75f;
+const static lmReal s_minDist = 30.0f;
+const static lmReal s_maxDist = 600.0f;
+const static lmReal s_speedAtMinDist = 0.5f;
+const static lmReal s_speedAtMaxDist = 2.5f;
+const static lmReal s_inputSmoothingPerSecond = 0.1f;
+const static lmReal s_inputMultiplier = 2.0f;
+
+
 CameraUtil::CameraUtil() {
   m_transform.setIdentity();
   m_meshTransform.setIdentity();
   m_userInput.setZero();
-  m_accumulatedUserInput.setZero();
   m_lastCameraUpdateTime = -1.0f;
   m_framesFromLastCollisions = 1000;
   m_timeSinceOrbitingStarted = FLT_MAX;
@@ -79,11 +91,11 @@ void CameraUtil::ResetCamera( const Mesh* mesh, const Vector3& cameraDirection, 
   isoState.closestPointOnMesh = lmSurfacePoint(closestVertex, closestVertex.normal_);
 
   // Hack back the camera prositino after reseting
-  isoState.refDist = keepCloseToMesh ? m_params.minDist : (GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.0f);
+  isoState.refDist = keepCloseToMesh ? s_minDist : (GetMaxDistanceForMesh(mesh)/(1+s_isoRefDistMultiplier)*1.0f);
   isoState.refPosition = closestVertex + isoState.refDist * closestVertex.normal_;
 
   m_transform.rotation = correction * m_transform.rotation;
-  m_transform.translation = isoState.refPosition + isoState.refDist * m_params.isoRefDistMultiplier * (m_transform.rotation * Vector3::UnitZ());
+  m_transform.translation = isoState.refPosition + isoState.refDist * s_isoRefDistMultiplier * (m_transform.rotation * Vector3::UnitZ());
 
   UpdateCameraInWorldSpace();
 }
@@ -128,7 +140,7 @@ lmSurfacePoint CameraUtil::GetClosestSurfacePoint(Mesh* mesh, const Vector3& pos
 void CameraUtil::RecordUserInput(const float _DTheta,const float _DPhi,const float _DFov) {
   std::unique_lock<std::mutex> lock(m_userInputMutex);
   Vector3 movement(50.0f * _DTheta, -50.0f * _DPhi, -_DFov / 100.0f);
-  m_userInput += (m_params.invertCameraInput?-1.0f:1.0f) * m_params.inputMultiplier * movement;
+  m_userInput += s_inputMultiplier * movement;
 }
 
 void CameraUtil::GetBarycentricCoordinates(const Mesh* mesh, int triIdx, const Vector3& point, Vector3* coordsOut) {
@@ -289,8 +301,8 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
     // if raycast hit (move last reference point, remember last point)
     if (raycastHit.isSuccess()) {
       lmReal distFromOrigin = raycastHit.position.norm();
-      if (distFromOrigin + m_params.minDist > refPtDistFromOrigin + m_orbitDistance ) {
-        m_orbitDistance = distFromOrigin + m_params.minDist - refPtDistFromOrigin;
+      if (distFromOrigin + s_minDist > refPtDistFromOrigin + m_orbitDistance ) {
+        m_orbitDistance = distFromOrigin + s_minDist - refPtDistFromOrigin;
       }
     }
   }
@@ -351,7 +363,7 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   LM_TRACK_VALUE(m_timeOfMovementSinceLastMeshMofification);
   LM_TRACK_VALUE(m_timeOfLastScupt);
 
-  if (m_params.forceCameraOrbit && m_params.enableCameraOrbit) {
+  if (m_params.forceCameraOrbit) {
     if (m_timeSinceOrbitingStarted == 0.0f) {
       m_orbitRefPoint = GetReferencePoint();
       m_orbitDistance = GetReferenceDistance();
@@ -370,12 +382,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   m_timeSinceOrbitingStarted = 0.0f;
   m_timeSinceOrbitingEnded += dt;
 
-  if (m_params.drawDebugLines) {
-    LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitX()), lmColor::RED );
-    LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitY()), lmColor::GREEN );
-    LM_DRAW_ARROW(Vector3::Zero(), 50.0f * ToMeshSpace(Vector3::UnitZ()), lmColor::BLUE );
-    LM_DRAW_ARROW(m_transform.translation, isoState.refPosition, lmColor::YELLOW );
-  }
   DebugDrawUtil::getInstance().SwitchBuffers();
 
   lmReal dtOne = 1.0f;
@@ -385,32 +391,23 @@ void CameraUtil::UpdateCamera( Mesh* mesh, Params* paramsInOut) {
   // Multiply motion by distance:
   {
     std::unique_lock<std::mutex> lock(m_userInputMutex);
-    // Accumulate userInput in 2d
-    // If smoothing is enabled, only take a small slice of the accumulated user input
-    // and use it for camera movement per frame.
-    if (m_params.enableSmoothing) {
-        m_accumulatedUserInput += m_userInput;
-        lmReal useInputFraction = pow(m_params.inputSmoothingPerSecond, dt);
-        usedUserInput = (1.0f - useInputFraction) * m_accumulatedUserInput;
-        m_accumulatedUserInput -= usedUserInput;
-    }
+    
     m_userInput.setZero();
 
     if (100000000.0f <= usedUserInput.squaredNorm()) {
       // This actually happened when stopping the Leap Service, and starting a different version.
-      m_accumulatedUserInput.setZero();
       usedUserInput.setZero();
     }
   }
 
   // Process smoothed user input
-  const lmReal distFraction = (GetReferenceDistance()-m_params.minDist)/(m_params.maxDist/*intentionaly static value and not GetMaxDistFromMesh()*/-m_params.minDist);
-  const lmReal movementRatio = m_params.speedAtMinDist + distFraction * (m_params.speedAtMaxDist-m_params.speedAtMinDist);
+  const lmReal distFraction = (GetReferenceDistance()-s_minDist)/(s_maxDist/*intentionaly static value and not GetMaxDistFromMesh()*/-s_minDist);
+  const lmReal movementRatio = s_speedAtMinDist + distFraction * (s_speedAtMaxDist-s_speedAtMinDist);
   Vector3 movementInCamSpace = - usedUserInput * movementRatio;
 
-  isoState.cameraOffsetMultiplier = m_params.isoRefDistMultiplier;
+  isoState.cameraOffsetMultiplier = s_isoRefDistMultiplier;
   IsoCamera(mesh, &isoState, movementInCamSpace, dt);
-  if (m_params.pinUpVector) { CorrectCameraUpVector(dtOne, Vector3::UnitY()); }
+  CorrectCameraUpVector(dtOne, Vector3::UnitY());
   UpdateCameraInWorldSpace();
   m_prevTimeOfLastSculpt = m_timeOfLastScupt;
 
@@ -556,66 +553,29 @@ lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal que
   const int striding = 1;
   const lmReal queryRadiusSqr = queryRadius*queryRadius;
 
-  if (m_params.queryTriangles) {
-    const TriangleVector& triangles = mesh->getTriangles();
+  const TriangleVector& triangles = mesh->getTriangles();
 
-    for (unsigned ti = 0; ti < m_queryTriangles.size(); ti+= striding)
+  for (unsigned ti = 0; ti < m_queryTriangles.size(); ti+= striding)
+  {
+    const Triangle& tri = triangles[m_queryTriangles[ti]];
+
+    Geometry::GetClosestPointInput input(mesh, &tri, position);
+    Geometry::GetClosestPointOutput output;
+    Geometry::getClosestPoint_noNormal(input, &output);
+
+    lmReal distSqr = output.distanceSqr;
+
+    if (distSqr < queryRadiusSqr)
     {
-      const Triangle& tri = triangles[m_queryTriangles[ti]];
+      distSqr += s_gravK2;
 
-      Geometry::GetClosestPointInput input(mesh, &tri, position);
-      Geometry::GetClosestPointOutput output;
-      Geometry::getClosestPoint_noNormal(input, &output);
+      // avoid calling std::pow
+      const lmReal distPowered = distSqr * distSqr * distSqr;
+      const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
-      lmReal distSqr = output.distanceSqr;
-
-      if (distSqr < queryRadiusSqr)
-      {
-        distSqr += m_params.grav_k*m_params.grav_k;
-
-        // avoid calling std::pow
-        const lmReal distPowered = distSqr * distSqr * distSqr;
-        const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
-
-        lmReal weight = 1.0f - (distPowered / weightDenominator);
-        weight = std::max(0.0f, weight);
-        potential += tri.area * weight / distPowered;
-
-        if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
-          LM_DRAW_MESH_TRIANGLE(mesh, tri, lmColor::WHITE);
-        }
-      }
-    }
-
-  } else {
-
-    std::vector<int> selectedVertices;
-    mesh->getVerticesFromTriangles(m_queryTriangles, selectedVertices);
-
-    const VertexVector& vertices = mesh->getVertices();
-
-    for (unsigned vi = 0; vi < selectedVertices.size(); vi+= striding)
-    {
-      const Vertex& vert = vertices[selectedVertices[vi]];
-
-      lmReal distSqr = (position-vert).squaredNorm();
-
-      distSqr += m_params.grav_k*m_params.grav_k;
-
-      if (distSqr < queryRadiusSqr)
-      {
-        const lmReal distPowered = distSqr * distSqr * distSqr;
-        const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
-
-        lmReal weight = 1.0f - (distPowered / weightDenominator);
-        weight = std::max(0.0f, weight);
-
-        potential += weight / distPowered;
-
-        if (m_params.drawSphereQueryResults) {
-          LM_DRAW_CROSS(vert, 3.0f, lmColor::WHITE);
-        }
-      }
+      lmReal weight = 1.0f - (distPowered / weightDenominator);
+      weight = std::max(0.0f, weight);
+      potential += tri.area * weight / distPowered;
     }
   }
 
@@ -634,29 +594,40 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
   static const int striding = 1;
   const lmReal queryRadiusSqr = queryRadius*queryRadius;
 
-  if (m_params.queryTriangles) {
-    const TriangleVector& triangles = mesh->getTriangles();
+  const TriangleVector& triangles = mesh->getTriangles();
 
-    for (unsigned ti = 0; ti < m_queryTriangles.size(); ti+= striding)
+  for (unsigned ti = 0; ti < m_queryTriangles.size(); ti+= striding)
+  {
+    if (ti < m_queryTriangles.size()-striding) {
+      const Triangle& nextTri = triangles[m_queryTriangles[ti+striding]];
+      LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[0]);
+      LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[1]);
+      LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[2]);
+    }
+
+    const Triangle& tri = triangles[m_queryTriangles[ti]];
+
+    Geometry::GetClosestPointInput input(mesh, &tri, positions[0]);
+    Geometry::GetClosestPointOutput output;
+    Geometry::getClosestPoint_noNormal(input, &output);
+
+    lmReal distSqr = output.distanceSqr;
+
+    if (distSqr < queryRadiusSqr)
     {
-      if (ti < m_queryTriangles.size()-striding) {
-        const Triangle& nextTri = triangles[m_queryTriangles[ti+striding]];
-        LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[0]);
-        LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[1]);
-        LM_MEM_PREFETCH(&mesh->getVertices()[0]+nextTri.vIndices_[2]);
-      }
+      distSqr += s_gravK2;
 
-      const Triangle& tri = triangles[m_queryTriangles[ti]];
+      // avoid calling std::pow
+      const lmReal distPowered = distSqr * distSqr * distSqr;
+      const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
 
-      Geometry::GetClosestPointInput input(mesh, &tri, positions[0]);
-      Geometry::GetClosestPointOutput output;
-      Geometry::getClosestPoint_noNormal(input, &output);
+      lmReal weight = 1.0f - (distPowered / weightDenominator);
+      weight = std::max(0.0f, weight);
+      potentials[0] += tri.area * weight / distPowered;
 
-      lmReal distSqr = output.distanceSqr;
-
-      if (distSqr < queryRadiusSqr)
-      {
-        distSqr += m_params.grav_k*m_params.grav_k;
+      for (int i = 1; i < 4; i++) {
+        lmReal distSqr =  (positions[i]-output.position).squaredNorm();
+        distSqr += s_gravK2;
 
         // avoid calling std::pow
         const lmReal distPowered = distSqr * distSqr * distSqr;
@@ -664,64 +635,7 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
 
         lmReal weight = 1.0f - (distPowered / weightDenominator);
         weight = std::max(0.0f, weight);
-        potentials[0] += tri.area * weight / distPowered;
-
-        if (m_params.drawDebugLines && m_params.drawSphereQueryResults) {
-          LM_DRAW_MESH_TRIANGLE(mesh, tri, lmColor::WHITE);
-        }
-
-        for (int i = 1; i < 4; i++) {
-          lmReal distSqr =  (positions[i]-output.position).squaredNorm();
-          distSqr += m_params.grav_k*m_params.grav_k;
-
-          // avoid calling std::pow
-          const lmReal distPowered = distSqr * distSqr * distSqr;
-          const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
-
-          lmReal weight = 1.0f - (distPowered / weightDenominator);
-          weight = std::max(0.0f, weight);
-          potentials[i] += tri.area * weight / distPowered;
-        }
-      }
-    }
-  } else {
-
-    std::vector<int> selectedVertices;
-    mesh->getVerticesFromTriangles(m_queryTriangles, selectedVertices);
-
-    const VertexVector& vertices = mesh->getVertices();
-
-    for (unsigned vi = 0; vi < selectedVertices.size(); vi+= striding)
-    {
-      const Vertex& vert = vertices[selectedVertices[vi]];
-
-      lmReal distSqr = (positions[0]-vert).squaredNorm();
-      distSqr += m_params.grav_k*m_params.grav_k;
-
-      if (distSqr < queryRadiusSqr)
-      {
-        const lmReal distPowered = distSqr * distSqr * distSqr;
-        const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
-
-        lmReal weight = 1.0f - (distPowered / weightDenominator);
-        weight = std::max(0.0f, weight);
-        potentials[0] += weight / distPowered;
-
-        if (m_params.drawSphereQueryResults) {
-          LM_DRAW_CROSS(vert, 3.0f, lmColor::WHITE);
-        }
-
-        for(int i = 1; i < 4; i++) {
-          lmReal distSqr = (positions[i]-vert).squaredNorm();
-          distSqr += m_params.grav_k*m_params.grav_k;
-
-          const lmReal distPowered = distSqr * distSqr * distSqr;
-          const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
-
-          lmReal weight = 1.0f - (distPowered / weightDenominator);
-          weight = std::max(0.0f, weight);
-          potentials[i] += weight / distPowered;
-        }
+        potentials[i] += tri.area * weight / distPowered;
       }
     }
   }
@@ -766,7 +680,7 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
 lmReal CameraUtil::IsoQueryRadius( const Mesh* mesh, IsoCameraState* state ) const
 {
   const lmReal multiplier = 0.5f * GetMeshSize(mesh) / Mesh::globalScale_;
-  return std::max(state->refDist + m_params.isoQueryPaddingRadius * multiplier, m_params.isoQueryPaddingRadius * multiplier);
+  return std::max(state->refDist + s_isoRefDistMultiplier * multiplier, s_isoRefDistMultiplier * multiplier);
 }
 
 void CameraUtil::IsoUpdateCameraTransform( const Vector3& newDirection, IsoCameraState* state, lmReal deltaTime )
@@ -814,7 +728,7 @@ void CameraUtil::IsoPreventCameraInMesh( Mesh* mesh, IsoCameraState* state )
     LM_ASSERT(raycast.dist <= ray.GetLength(), "Raycast result corrupted.");
 
     // if clip this
-    lmReal refPositionFraction = std::max(raycast.fraction, m_params.minDist / state->refDist);
+    lmReal refPositionFraction = std::max(raycast.fraction, s_minDist / state->refDist);
     refPositionFraction = lmClip(refPositionFraction, 0.0f, 1.0f);
     state->refPosition -= state->refNormal * state->refDist * (1.0f-refPositionFraction);
     state->refDist *= refPositionFraction;
@@ -915,9 +829,9 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 #endif
       //state->refPosition = raycastOutput.position + (-1.0f / std::min(raycastOutput.normal.dot(-GetCameraDirection()), 0.2f)) * GetCameraDirection();
       if (GetCameraDirection().dot(raycastOutput.normal) < 0) {
-        state->refPosition = raycastOutput.position + m_params.minDist * raycastOutput.normal;
+        state->refPosition = raycastOutput.position + s_minDist * raycastOutput.normal;
       } else {
-        state->refPosition = raycastOutput.position - m_params.minDist * GetCameraDirection();
+        state->refPosition = raycastOutput.position - s_minDist * GetCameraDirection();
       }
 #if LM_LOG_CAMERA_LOGIC_3
       std::cout << "Fixed ref point in the mesh" << std::endl;
@@ -938,18 +852,18 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 //  lmReal oldRefDist = state->refDist;
 
   // Dummy & temp: clip z movement
-  Vector3 scaledMovement = movement * std::sqrt(std::sqrt(state->refDist / m_params.refDistForMovemement));
-  scaledMovement.z() *= m_params.scaleZMovement;
+  Vector3 scaledMovement = movement * std::sqrt(std::sqrt(state->refDist / s_refDistForMovement));
+  scaledMovement.z() *= s_scaleZMovement;
 
   Vector3 clippedMovement = m_transform.rotation * scaledMovement;
   //BREAKS: LM_ASSERT_IDENTICAL(clippedMovement);
 
   // Saftey clip movement so that the camera doesn't go past the safety distance.
-  if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.5f) {
+  if (lmIsNormalized(state->closestPointOnMesh.normal) && ((state->refPosition - state->closestPointOnMesh.position) + clippedMovement).norm() > GetMaxDistanceForMesh(mesh) / (1 + s_isoRefDistMultiplier)*1.5f) {
     // Clip to the closest point
     Vector3 newRelPos = (state->refPosition - state->closestPointOnMesh.position) + clippedMovement;
     newRelPos.normalize();
-    newRelPos *= GetMaxDistanceForMesh(mesh)/(1+m_params.isoRefDistMultiplier)*1.5f;
+    newRelPos *= GetMaxDistanceForMesh(mesh) / (1 + s_isoRefDistMultiplier)*1.5f;
     Vector3 newPos = state->closestPointOnMesh.position + newRelPos;
     clippedMovement = newPos - state->refPosition;
   }
@@ -1003,7 +917,7 @@ void CameraUtil::IsoCamera( Mesh* mesh, IsoCameraState* state, const Vector3& mo
 
   // Verify movement
   {
-    lmReal radiusForCameraSphereCollision = m_params.minDist;
+    lmReal radiusForCameraSphereCollision = s_minDist;
     //lmReal radiusForCameraSphereCollision = 0.0f;
     bool validMovement = VerifyCameraMovement(mesh, state->refPosition, state->refPosition + clippedMovement, radiusForCameraSphereCollision);
     if (!validMovement && clippedMovement.norm() > LM_EPSILON_SQR) {
@@ -1156,7 +1070,7 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
 
     // Raycast towards reference point, if collision, move ref point. remember Distance, and try to preserve it.
     lmRay ray(m_transform.translation, state->refPosition);
-    ray.end += ray.GetDirection() * (m_params.minDist * 2.0f + 0.1f);
+    ray.end += ray.GetDirection() * (s_minDist * 2.0f + 0.1f);
     lmRayCastOutput raycastOutput;
     CastOneRay(mesh, ray, &raycastOutput);
 
@@ -1164,11 +1078,11 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
 #if LM_LOG_CAMERA_LOGIC_4
       std::cout << "Moving reference point" << std::endl;
 #endif
-      const lmReal refToCamDist = (1+m_params.isoRefDistMultiplier); // convert between refDist and distance to camera
+      const lmReal refToCamDist = (1 + s_isoRefDistMultiplier); // convert between refDist and distance to camera
       // Adjust refPoint & ref dist
       //lmReal prevDistToMesh = state->refDist * refToCamDist;
       lmReal currRefDist = raycastOutput.dist / refToCamDist;
-      currRefDist = std::max(currRefDist, m_params.minDist * 2.0f + 0.1f);
+      currRefDist = std::max(currRefDist, s_minDist * 2.0f + 0.1f);
 
       state->refDist = currRefDist;
       state->refPosition = raycastOutput.position - ray.GetDirection() * state->refDist;
@@ -1178,14 +1092,14 @@ void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh, IsoCameraState* state) {
     }
 
     // Readjust normal blending
-    lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition, (m_params.minDist + 0.1f) * 1.5f);
+    lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, state->refPosition, (s_minDist + 0.1f) * 1.5f);
     lmReal dist = (closestPoint.position - state->refPosition).norm();
     int attempts = 0;
-    while((dist < m_params.minDist + 0.1f) && attempts < 10) {
-      lmReal diff = m_params.minDist + 0.1f - dist;
+    while((dist < s_minDist + 0.1f) && attempts < 10) {
+      lmReal diff = s_minDist + 0.1f - dist;
       state->refPosition += closestPoint.normal * diff * 1.2f;
 
-      closestPoint = GetClosestSurfacePoint(mesh, state->refPosition, (m_params.minDist + 0.1f) * 1.5f);
+      closestPoint = GetClosestSurfacePoint(mesh, state->refPosition, (s_minDist + 0.1f) * 1.5f);
       dist = (closestPoint.position - state->refPosition).norm();
       attempts++;
     }
@@ -1204,13 +1118,13 @@ lmSurfacePoint CameraUtil::GetReferencePoint() const
 
 lmReal CameraUtil::GetReferenceDistance() const
 {
-  return isoState.refDist * (1 + m_params.isoRefDistMultiplier);
+  return isoState.refDist * (1 + s_isoRefDistMultiplier);
 }
 
 lmReal CameraUtil::GetMaxDistanceForMesh(const Mesh* mesh) const
 {
   const lmReal maxDistScale = 0.5f * GetMeshSize(mesh) / Mesh::globalScale_;
-  return m_params.maxDist * maxDistScale;
+  return s_maxDist * maxDistScale;
 }
 
 lmReal CameraUtil::GetMeshSize(const Mesh* mesh) const {
