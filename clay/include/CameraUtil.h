@@ -160,8 +160,6 @@ private:
   // Mesh's transform
   lmTransform m_meshTransform;
 
-  int m_framesFromLastCollisions;
-
   // Distance from the surface of the model.
   lmSurfacePoint m_orbitRefPoint;
   lmReal m_orbitDistance;

@@ -39,7 +39,6 @@ CameraUtil::CameraUtil() {
   m_meshTransform.setIdentity();
   m_userInput.setZero();
   m_lastCameraUpdateTime = -1.0f;
-  m_framesFromLastCollisions = 1000;
   m_timeSinceOrbitingStarted = FLT_MAX;
   m_timeSinceOrbitingEnded = FLT_MAX;
   m_timeSinceCameraUpdateStarted = FLT_MAX;
@@ -355,8 +354,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh) {
   }
   prevMesh = mesh;
 
-  m_framesFromLastCollisions++;
-  LM_TRACK_VALUE(m_framesFromLastCollisions);
   LM_TRACK_VALUE(m_timeSinceOrbitingStarted);
   LM_TRACK_VALUE(m_timeSinceOrbitingEnded);
   LM_TRACK_VALUE(m_timeOfMovementSinceLastMeshMofification);
