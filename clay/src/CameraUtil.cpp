@@ -41,7 +41,6 @@ CameraUtil::CameraUtil() {
   m_lastCameraUpdateTime = -1.0f;
   m_timeSinceOrbitingStarted = FLT_MAX;
   m_timeSinceOrbitingEnded = FLT_MAX;
-  m_timeSinceCameraUpdateStarted = FLT_MAX;
   m_timeOfMovementSinceLastMeshMofification = FLT_MAX;
   m_timeOfLastScupt = 0.0f;
   m_prevTimeOfLastSculpt = 0.0f;
@@ -350,7 +349,6 @@ void CameraUtil::UpdateCamera( Mesh* mesh) {
     // Init Iso Camera
     ResetCamera(mesh, -(Vector3::UnitZ() + -0.3f * Vector3::UnitX() + 0.2f * Vector3::UnitY()).normalized());
     InitIsoCamera(mesh);
-    m_timeSinceCameraUpdateStarted = FLT_MAX;
   }
   prevMesh = mesh;
 

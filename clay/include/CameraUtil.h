@@ -170,7 +170,6 @@ private:
   lmReal m_lastCameraUpdateTime;
   lmReal m_timeSinceOrbitingStarted;
   lmReal m_timeSinceOrbitingEnded;
-  lmReal m_timeSinceCameraUpdateStarted;
   lmReal m_timeOfMovementSinceLastMeshMofification;
   
   lmReal m_prevTimeOfLastSculpt;
