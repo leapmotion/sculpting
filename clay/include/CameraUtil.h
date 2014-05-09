@@ -179,6 +179,7 @@ private:
   std::mutex m_transformInWorldSpaceMutex;
   std::mutex m_userInputMutex;
   
+  //This is a caching optimization only - it does not old persistant data.
   std::vector<int> m_queryTriangles;
 
 public:
