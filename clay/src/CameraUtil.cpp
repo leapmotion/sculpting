@@ -534,47 +534,6 @@ bool CameraUtil::VerifyCameraMovement( Mesh* mesh, const Vector3& from, const Ve
   return validMovement;
 }
 
-lmReal CameraUtil::IsoPotential( Mesh* mesh, const Vector3& position, lmReal queryRadius )
-{
-  std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
-  m_queryTriangles.clear();
-  mesh->getOctree()->intersectSphere(position,queryRadius*queryRadius,leavesHit, m_queryTriangles);
-
-  //lmReal radius = Get
-  lmReal potential = 0.0;
-  // process every n-th point
-  const int striding = 1;
-  const lmReal queryRadiusSqr = queryRadius*queryRadius;
-
-  const TriangleVector& triangles = mesh->getTriangles();
-
-  for (unsigned ti = 0; ti < m_queryTriangles.size(); ti+= striding)
-  {
-    const Triangle& tri = triangles[m_queryTriangles[ti]];
-
-    Geometry::GetClosestPointInput input(mesh, &tri, position);
-    Geometry::GetClosestPointOutput output;
-    Geometry::getClosestPoint_noNormal(input, &output);
-
-    lmReal distSqr = output.distanceSqr;
-
-    if (distSqr < queryRadiusSqr)
-    {
-      distSqr += s_gravK2;
-
-      // avoid calling std::pow
-      const lmReal distPowered = distSqr * distSqr * distSqr;
-      const lmReal weightDenominator = queryRadiusSqr * queryRadiusSqr * queryRadiusSqr;
-
-      lmReal weight = 1.0f - (distPowered / weightDenominator);
-      weight = std::max(0.0f, weight);
-      potential += tri.area * weight / distPowered;
-    }
-  }
-
-  return potential;
-}
-
 void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials )
 {
   std::vector<Octree*> &leavesHit = mesh->getLeavesUpdate();
