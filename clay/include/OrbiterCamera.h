@@ -15,8 +15,6 @@ public:
   void onMouseMove(float dX, float dY);
   void onMouseWheel(float zoom) { mWheelZoom = -300.0f * zoom; }
 
-  void setFovModifier(float mod, double currentTime);
-
   void update(const Vec4f &deltaVector, float curTime, float lastSculptTime );
 
   void onResize(float newAspectRatio);

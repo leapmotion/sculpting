@@ -14,11 +14,6 @@ const float MAX_FOV = 90.0f;
 OrbiterCamera::OrbiterCamera() :
 mWheelZoom(0.0f)
 {
-  mFovModifier.Update(0.0f, 0.0, 0.5f);
-}
-
-void OrbiterCamera::setFovModifier(float mod, double currentTime) {
-  mFovModifier.Update(mod, currentTime, 0.95f);
 }
 
 void OrbiterCamera::onMouseMove(float dX, float dY) {
@@ -27,12 +22,13 @@ void OrbiterCamera::onMouseMove(float dX, float dY) {
 }
 
 void OrbiterCamera::onResize(float newAspectRatio) {
-  setPerspective(80.0f + mFovModifier.value, newAspectRatio, 1.0f, 100000.f);
+  setPerspective(80.0f, newAspectRatio, 1.0f, 100000.f);
 }
 
 void OrbiterCamera::update(const Vec4f &deltaVector, float curTime, float lastSculptTime) {
   const float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime)) / 0.5f);
   const Vec4f sculptVec = (deltaVector + Vec4f(0,0,mWheelZoom,0) )*sculptMult;
+
   util.RecordUserInput(sculptVec.x, sculptVec.y, sculptVec.z);
 
   mWheelZoom = 0.0f;

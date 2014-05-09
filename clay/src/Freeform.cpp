@@ -459,7 +459,6 @@ void FreeformApp::update()
   const Vec4f deltaVector = _leap_interaction->getDeltaVector();
   
   m_camera.update(deltaVector*deltaTime, curTime, sculpt_.getLastSculptTime());
-  m_camera.setFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
 
   lmTransform tCamera = m_camera.util.GetCameraInWorldSpace();
 
