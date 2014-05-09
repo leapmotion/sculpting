@@ -640,7 +640,7 @@ void CameraUtil::IsoPotential_row4( Mesh* mesh, const Vector3* positions, lmReal
   }
 }
 
-Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* gradientMagOut /*= NULL*/ )
+Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal queryRadius)
 {
   lmReal epsilon = 0.1f;
   const Vector3& pos = position;
@@ -656,16 +656,11 @@ Vector3 CameraUtil::IsoNormal( Mesh* mesh, const Vector3& position, lmReal query
   lmReal dPotentialY = potentials[2] - potential;
   lmReal dPotentialZ = potentials[3] - potential;
 
-
   Vector3 negNormal(dPotentialX, dPotentialY, dPotentialZ);
-  lmReal gradientMag = negNormal.norm();
+  const lmReal gradientMag = negNormal.norm();
   negNormal /= gradientMag;
-  gradientMag /= epsilon;
-
 
   Vector3 normal((float)-negNormal.x(), (float)-negNormal.y(), (float)-negNormal.z());
-
-  if (gradientMagOut) { *gradientMagOut = gradientMag; }
 
   return normal;
 }
@@ -734,7 +729,7 @@ void CameraUtil::InitIsoCamera(Mesh* mesh)
   m_isoState.closestPointOnMesh = GetClosestSurfacePoint(mesh, m_isoState.refPosition, queryRadius);
   m_isoState.refDist = (m_isoState.closestPointOnMesh.position - m_isoState.refPosition).norm();
 
-  m_isoState.refNormal = IsoNormal(mesh, m_isoState.refPosition, IsoQueryRadius(mesh), &m_isoState.currGradientMag);
+  IsoNormal(mesh, m_isoState.refPosition, IsoQueryRadius(mesh));
 
   m_isoState.numFailedUpdates = 0;
   // Remember closest point distance

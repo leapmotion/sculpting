@@ -107,7 +107,7 @@ private:
   void OrbitCamera(const Mesh* mesh, lmReal deltaTime);
   lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
   void IsoPotential_row4(Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials);
-  Vector3 IsoNormal(Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* gradientMag = NULL);
+  Vector3 IsoNormal(Mesh* mesh, const Vector3& position, lmReal queryRadius);
   void IsoUpdateCameraTransform(const Vector3& newDirection, lmReal deltaTime);
   void IsoPreventCameraInMesh(Mesh* mesh);
   void InitIsoCamera(Mesh* mesh);
@@ -151,7 +151,6 @@ private:
     Vector3 refPosition;
     Vector3 refNormal;
     lmSurfacePoint closestPointOnMesh;
-    lmReal currGradientMag;
     int numFailedUpdates;
   } m_isoState;
 
