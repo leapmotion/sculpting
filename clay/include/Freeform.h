@@ -48,17 +48,18 @@ public:
 
   FreeformApp();
   ~FreeformApp();
-  void prepareSettings(Settings *settings);
+  void prepareSettings(Settings *settings) override;
+  void setup() override;
+  void shutdown() override;
+  void resize() override;
+  void mouseDown(MouseEvent event) override;
+  void mouseUp(MouseEvent event) override;
+  void mouseDrag(MouseEvent event) override;
+  void mouseWheel(MouseEvent event) override;
+  void mouseMove(MouseEvent event) override;
+  void keyDown(KeyEvent event) override;
+
   void toggleFullscreen(const std::string& str);
-  void setup();
-  void shutdown();
-  void resize();
-  void mouseDown( MouseEvent event );
-  void mouseUp( MouseEvent event );
-  void mouseDrag( MouseEvent event );
-  void mouseWheel( MouseEvent event );
-  void mouseMove( MouseEvent event);
-  void keyDown( KeyEvent event );
   void update();
   void updateLeapAndMesh();
   void renderSceneToFbo(Camera& camera);
