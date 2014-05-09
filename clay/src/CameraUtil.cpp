@@ -44,7 +44,6 @@ CameraUtil::CameraUtil() {
   m_timeOfMovementSinceLastMeshMofification = FLT_MAX;
   m_timeOfLastScupt = 0.0f;
   m_prevTimeOfLastSculpt = 0.0f;
-  m_justSculpted = false;
   m_forceVerifyPositionAfterSculpting = false;
   m_numFramesInsideManifoldMesh = 0;
   m_orbitRefPoint.setZero();
@@ -732,12 +731,12 @@ void CameraUtil::InitIsoCamera(Mesh* mesh)
 
 void CameraUtil::IsoCamera( Mesh* mesh, const Vector3& movement, lmReal deltaTime )
 {
-  m_justSculpted = (m_prevTimeOfLastSculpt != m_timeOfLastScupt);
-  if (m_justSculpted) {
+  const bool justSculpted = (m_prevTimeOfLastSculpt != m_timeOfLastScupt);
+  if (justSculpted) {
     m_timeOfMovementSinceLastMeshMofification = 0.0f;
     m_forceVerifyPositionAfterSculpting = true;
   }
-  LM_TRACK_VALUE(m_justSculpted);
+  LM_TRACK_CONST_VALUE(justSculpted);
   LM_TRACK_VALUE(m_timeOfMovementSinceLastMeshMofification);
   LM_TRACK_VALUE(m_forceVerifyPositionAfterSculpting);
   LM_ASSERT_IDENTICAL(movement);

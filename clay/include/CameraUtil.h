@@ -173,7 +173,6 @@ private:
   lmReal m_timeOfMovementSinceLastMeshMofification;
   
   lmReal m_prevTimeOfLastSculpt;
-  bool m_justSculpted;
   bool m_forceVerifyPositionAfterSculpting;
   int m_numFramesInsideManifoldMesh;
 
