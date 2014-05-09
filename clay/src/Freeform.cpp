@@ -24,7 +24,6 @@ FreeformApp::FreeformApp() :
 _environment(0), 
 _aa_mode(MSAA),
 _draw_ui(true), 
-_mouse_down(false),
 _exposure(1.0f),
 _mesh(0), 
 _last_update_time(0.0),
@@ -42,7 +41,9 @@ _have_audio(true),
 m_activeLoop(nullptr, nullptr), 
 _audio_paused(false),
 _immersive_mode(false),
-_immersive_entered_time(0.0)
+_immersive_entered_time(0.0),
+_brush_color(0.85f, 0.95f, 1.0f)
+
 {
   Menu::updateSculptMult(0.0, 0.0f);
 }
@@ -125,12 +126,12 @@ void FreeformApp::setup()
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  _draw_edges = false;
+  _draw_wireframe = false;
   _bloom_visible = true;
   _bloom_size = 1.f;
   _bloom_strength = 1.f;
   _bloom_light_threshold = 0.5f;
-  _brush_color = ci::Color(0.85f, 0.95f, 1.0f);
+  
 
   _environment = new CubeMapManager();
 
@@ -219,12 +220,6 @@ void FreeformApp::setup()
   _auto_save.start();
 }
 
-void FreeformApp::doQuit()
-{
-  shutdown();
-  quit();
-}
-
 void FreeformApp::shutdown() {
   _shutdown = true;
   if (_mesh_thread.joinable())
@@ -306,14 +301,7 @@ void FreeformApp::resize()
 
 void FreeformApp::mouseDown( MouseEvent event )
 {
-  _mouse_down = true;
-
-  _current_mouse_pos = _previous_mouse_pos = _initial_mouse_pos = event.getPos();
-}
-
-void FreeformApp::mouseUp( MouseEvent event )
-{
-  _mouse_down = false;
+  _current_mouse_pos = _previous_mouse_pos = event.getPos();
 }
 
 void FreeformApp::mouseDrag( MouseEvent event )
@@ -364,7 +352,7 @@ void FreeformApp::keyDown( KeyEvent event )
 #endif
   case KeyEvent::KEY_ESCAPE:
     if (_first_environment_load) {
-      doQuit();
+      quit();
     }
     if (_ui->haveExitConfirm()) {
       _ui->clearConfirm();
@@ -376,7 +364,7 @@ void FreeformApp::keyDown( KeyEvent event )
   }
 #if _WIN32
   if (event.isAltDown() && event.getCode() == KeyEvent::KEY_F4) {
-    doQuit();
+    quit();
   }
   if (event.isAltDown() && event.getCode() == KeyEvent::KEY_RETURN) {
     setFullScreen(!isFullScreen());
@@ -384,7 +372,7 @@ void FreeformApp::keyDown( KeyEvent event )
 #endif
   if (event.getCode() == KeyEvent::KEY_RETURN || event.getChar() == 'y') {
     if (_ui->haveExitConfirm()) {
-      doQuit();
+      quit();
     }
   }
 }
@@ -461,15 +449,23 @@ void FreeformApp::updateLeapAndMesh() {
     const double curTime = ci::app::getElapsedSeconds();
     LM_TRACK_CONST_VALUE(curTime);
 
-    bool suppress = _environment->getLoadingState() != CubeMapManager::LOADING_STATE_NONE;
-    suppress = suppress || (curTime - _last_load_time) < BRUSH_DISABLE_TIME_AFTER_LOAD;
+    
 
 #if LM_DISABLE_THREADING_AND_ENVIRONMENT
     bool suppress = false;
 #endif 
     bool haveFrame;
     try {
-      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), m_camera.getModelViewMatrix(), m_camera.getProjectionMatrix(), getWindowSize(), m_camera.util.GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+      const bool suppress = _environment->getLoadingState() != CubeMapManager::LOADING_STATE_NONE ||
+                      (curTime - _last_load_time) < BRUSH_DISABLE_TIME_AFTER_LOAD;
+
+      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(),
+        m_camera.getModelViewMatrix(),
+        m_camera.getProjectionMatrix(),
+        getWindowSize(),
+        m_camera.util.GetReferenceDistance(), 
+        Utilities::DEGREES_TO_RADIANS*60.0f, 
+        suppress);
     } catch (...) {
       haveFrame = false;
     }
@@ -481,7 +477,6 @@ void FreeformApp::updateLeapAndMesh() {
       std::unique_lock<std::mutex> lock(_mesh_mutex);
       if (_mesh) {
         {
-          std::unique_lock<std::mutex> lock(_mesh_update_rotation_mutex);
           _mesh->updateRotation(curTime);
         }
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
@@ -616,7 +611,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     glDisable(GL_POLYGON_OFFSET_FILL);
     _material_shader.unbind();
 
-    if (_draw_edges) {
+    if (_draw_wireframe) {
       _wireframe_shader.bind();
       vertex = _wireframe_shader.getAttribLocation("vertex");
       _wireframe_shader.uniform( "transform", transform );
@@ -1163,11 +1158,11 @@ void FreeformApp::setMaterial(const Material& mat) {
 }
 
 void FreeformApp::setWireframe(bool wireframe) {
-  _draw_edges = wireframe;
+  _draw_wireframe = wireframe;
 }
 
 void FreeformApp::toggleWireframe() {
-  _draw_edges = !_draw_edges;
+  _draw_wireframe = !_draw_wireframe;
 }
 
 void FreeformApp::toggleSymmetry() {

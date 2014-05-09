@@ -52,15 +52,15 @@ public:
   void setup() override;
   void shutdown() override;
   void resize() override;
-  void mouseDown(MouseEvent event) override;
-  void mouseUp(MouseEvent event) override;
+  void update() override;
+  void mouseDown(MouseEvent event) override; //probably don't need this
   void mouseDrag(MouseEvent event) override;
   void mouseWheel(MouseEvent event) override;
   void mouseMove(MouseEvent event) override;
   void keyDown(KeyEvent event) override;
+  
 
   void toggleFullscreen();
-  void update();
   void updateLeapAndMesh();
   void renderSceneToFbo(Camera& camera);
   void createBloom();
@@ -78,7 +78,6 @@ public:
   int loadShape(Shape shape);
   void print3D();
 
-  void doQuit();
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -129,8 +128,7 @@ private:
   OrbiterCamera m_camera;
 
   // **** mouse stuff ***
-  Vec2i _initial_mouse_pos, _current_mouse_pos, _previous_mouse_pos;
-  bool _mouse_down;
+  Vec2i _current_mouse_pos, _previous_mouse_pos;
 
   // *** scene stuff ***
   AAMode _aa_mode;
@@ -138,21 +136,19 @@ private:
   GlslProg _sky_shader;
   GlslProg _material_shader;
   GlslProg _brush_shader;
-  GlslProg _blur_shader;
   GlslProg _wireframe_shader;
   std::thread _loading_thread;
   std::thread _mesh_thread;
   bool _shutdown;
   Utilities::FPSCounter _mesh_update_counter;
-  double _last_update_time;
-  double _last_load_time;
+  double _last_update_time; //For computing the delta time, since cinder doesn't do it for us
+  double _last_load_time; //Suppresses brush interaction for a brief period after a new model is loaded
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
   std::mutex _mesh_mutex;
-  std::mutex _mesh_update_rotation_mutex;
   MachineSpeed _machine_speed;
   bool _lock_camera;
   AutoSave _auto_save;
-  bool _first_environment_load;
+  bool _first_environment_load; //lets us quit if we have not yet finished initializing
   bool _have_shaders;
   std::string _screenshot_path;
 
@@ -163,8 +159,8 @@ private:
   
 
   // *** ui stuff ***
-  Color _brush_color;
-  bool _draw_edges;
+  const Color _brush_color;
+  bool _draw_wireframe;
   Material _material;
   ci::gl::Texture _logo_on_black;
   ci::gl::Texture _logo_on_image;

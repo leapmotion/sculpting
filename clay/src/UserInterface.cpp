@@ -889,7 +889,7 @@ void UserInterface::handleSelections(Sculpt* sculpt, LeapInteraction* leap, Free
   if (_draw_confirm_menu && _confirm_menu.hasSelectedEntry()) {
     if (_confirm_menu.getSelectedEntry().m_entryType == Menu::CONFIRM_YES) {
       switch (_pending_entry) {
-        case Menu::GENERAL_EXIT: app->doQuit(); break;
+        case Menu::GENERAL_EXIT: app->quit(); break;
         case Menu::OBJECT_LOAD: app->loadFile(); break;
         case Menu::OBJECT_BALL: app->loadShape(FreeformApp::BALL); break;
         case Menu::OBJECT_CAN: app->loadShape(FreeformApp::CAN); break;
