@@ -126,7 +126,6 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClCompile Include="..\..\src\Aabb.cpp" />
     <ClCompile Include="..\..\src\AutoSave.cpp" />
     <ClCompile Include="..\..\src\Brush.cpp" />
-    <ClCompile Include="..\..\src\Camera.cpp" />
     <ClCompile Include="..\..\src\CameraUtil.cpp" />
     <ClCompile Include="..\..\src\CBBoxInt32.cpp" />
     <ClCompile Include="..\..\src\CCubeMapProcessor.cpp" />
@@ -143,6 +142,7 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClCompile Include="..\..\src\LeapListener.cpp" />
     <ClCompile Include="..\..\src\Mesh.cpp" />
     <ClCompile Include="..\..\src\Octree.cpp" />
+    <ClCompile Include="..\..\src\OrbiterCamera.cpp" />
     <ClCompile Include="..\..\src\Picking.cpp" />
     <ClCompile Include="..\..\src\Print3D.cpp" />
     <ClCompile Include="..\..\src\ReplayUtil.cpp" />
@@ -164,7 +164,6 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClInclude Include="..\..\include\Aabb.h" />
     <ClInclude Include="..\..\include\AutoSave.h" />
     <ClInclude Include="..\..\include\Brush.h" />
-    <ClInclude Include="..\..\include\Camera.h" />
     <ClInclude Include="..\..\include\CameraUtil.h" />
     <ClInclude Include="..\..\include\CBBoxInt32.h" />
     <ClInclude Include="..\..\include\CCubeMapProcessor.h" />
@@ -183,6 +182,7 @@ copy /Y "$(LIBRARIES_PATH)\irrklang-1.4.0\bin\win32-visualStudio\irrKlang.dll" "
     <ClInclude Include="..\..\include\LeapListener.h" />
     <ClInclude Include="..\..\include\Mesh.h" />
     <ClInclude Include="..\..\include\Octree.h" />
+    <ClInclude Include="..\..\include\OrbiterCamera.h" />
     <ClInclude Include="..\..\include\Picking.h" />
     <ClInclude Include="..\..\include\Print3D.h" />
     <ClInclude Include="..\..\include\ReplayUtil.h" />

@@ -12,7 +12,7 @@ float Sculpt::d2Thickness_ = 0.0f;
 float Sculpt::d2Move_ = 0.0f;
 
 /** Constructor */
-Sculpt::Sculpt() : mesh_(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), lastSculptTime_(0.0),
+Sculpt::Sculpt() : _mesh(0), sculptMode_(INVALID), topoMode_(ADAPTIVE), lastSculptTime_(0.0),
   prevSculpt_(false), material_(0), materialColor_(Vector3::Ones()), autoSmoothStrength_(0.15f),
   remeshRadius_(-1.0f), lastUpdateTime_(0.0), symmetry_(false)
 {}
@@ -32,7 +32,7 @@ void Sculpt::setAdaptiveParameters(float radiusSquared)
 
 void Sculpt::remesh(float remeshRadius) {
   const float radius_sq = 200.0f * 200.0f;
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = _mesh->getVertices();
   const int numVertices = vertices.size();
   std::vector<int> vertIndices;
   vertIndices.reserve(numVertices);
@@ -40,11 +40,11 @@ void Sculpt::remesh(float remeshRadius) {
     vertIndices.push_back(i);
   }
   std::vector<int> iTris;
-  mesh_->getTrianglesFromVertices(vertIndices, iTris);
+  _mesh->getTrianglesFromVertices(vertIndices, iTris);
 
-  mesh_->pushState(iTris,vertIndices);
+  _mesh->pushState(iTris,vertIndices);
 
-  topo_.init(mesh_, radius_sq, Vector3::Zero());
+  topo_.init(_mesh, radius_sq, Vector3::Zero());
   setAdaptiveParameters(remeshRadius*remeshRadius);
 
   switch(topoMode_) {
@@ -68,8 +68,8 @@ void Sculpt::remesh(float remeshRadius) {
     topo_.adaptTopology(iTris, d2Thickness_);
   }
 
-  mesh_->getVerticesFromTriangles(iTris, vertIndices);
-  mesh_->updateMesh(iTris, vertIndices);
+  _mesh->getVerticesFromTriangles(iTris, vertIndices);
+  _mesh->updateMesh(iTris, vertIndices);
 }
 
 /**
@@ -85,14 +85,14 @@ void Sculpt::remesh(float remeshRadius) {
 */
 void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
 {
-  VertexVector &vertices = mesh_->getVertices();
+  VertexVector &vertices = _mesh->getVertices();
 
-  mesh_->getTrianglesFromVertices(iVertsSelected, iTris_);
+  _mesh->getTrianglesFromVertices(iVertsSelected, iTris_);
 
   //undo-redo
-  mesh_->pushState(iTris_,iVertsSelected);
+  _mesh->pushState(iTris_,iVertsSelected);
 
-  topo_.init(mesh_, brush._radius_squared, brush._position);
+  topo_.init(_mesh, brush._radius_squared, brush._position);
   setAdaptiveParameters(brush._radius_squared);
 
   switch(topoMode_) {
@@ -112,9 +112,9 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
   default: break;
   }
 
-  mesh_->computeTriangleNormals(iTris_);
+  _mesh->computeTriangleNormals(iTris_);
 
-  mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
+  _mesh->getVerticesFromTriangles(iTris_, iVertsSelected);
 
   MaskMatch pred(vertices);
   std::vector<int>::iterator it = std::remove_if(iVertsSelected.begin(), iVertsSelected.end(), pred);
@@ -122,21 +122,21 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
 
   if (!iVertsSelected.empty()) {
     switch(sculptMode_) {
-    case INFLATE: draw(mesh_, iVertsSelected, brush, false); break;
-    case DEFLATE: draw(mesh_, iVertsSelected, brush, true); break;
-    case SMOOTH: smooth(mesh_, iVertsSelected, brush); break;
-    case FLATTEN: flatten(mesh_, iVertsSelected, brush); break;
-    case SWEEP: sweep(mesh_, iVertsSelected, brush); break;
-    case PUSH: push(mesh_, iVertsSelected, brush); break;
-    case PAINT: paint(mesh_, iVertsSelected, brush, materialColor_); break;
-    case CREASE: crease(mesh_, iVertsSelected, brush); break;
+    case INFLATE: draw(_mesh, iVertsSelected, brush, false); break;
+    case DEFLATE: draw(_mesh, iVertsSelected, brush, true); break;
+    case SMOOTH: smooth(_mesh, iVertsSelected, brush); break;
+    case FLATTEN: flatten(_mesh, iVertsSelected, brush); break;
+    case SWEEP: sweep(_mesh, iVertsSelected, brush); break;
+    case PUSH: push(_mesh, iVertsSelected, brush); break;
+    case PAINT: paint(_mesh, iVertsSelected, brush, materialColor_); break;
+    case CREASE: crease(_mesh, iVertsSelected, brush); break;
     default: break;
     }
 
     if (sculptMode_ == DEFLATE || sculptMode_ == SWEEP || sculptMode_ == PUSH || sculptMode_ == INFLATE) {
       Brush autoSmoothBrush(brush);
       autoSmoothBrush._strength *= autoSmoothStrength_;
-      smooth(mesh_, iVertsSelected, autoSmoothBrush);
+      smooth(_mesh, iVertsSelected, autoSmoothBrush);
     }
   }
 
@@ -144,11 +144,11 @@ void Sculpt::sculptMesh(std::vector<int> &iVertsSelected, const Brush& brush)
     topo_.adaptTopology(iTris_, d2Thickness_);
   }
 
-  mesh_->getVerticesFromTriangles(iTris_, iVertsSelected);
+  _mesh->getVerticesFromTriangles(iTris_, iVertsSelected);
 
-  mesh_->checkVertices(iVertsSelected, d2Min_);
+  _mesh->checkVertices(iVertsSelected, d2Min_);
 
-  mesh_->updateMesh(iTris_,iVertsSelected);
+  _mesh->updateMesh(iTris_,iVertsSelected);
 }
 
 /** Smooth a group of vertices. New position is given by simple averaging */
@@ -441,10 +441,10 @@ void Sculpt::applyBrushes(double curTime, AutoSave* autoSave)
     remeshRadius_ = -1.0f;
   }
 
-  const Vector3& origin = mesh_->getRotationOrigin();
-  const Vector3& axis = mesh_->getRotationAxis();
+  const Vector3& origin = _mesh->getRotationOrigin();
+  const Vector3& axis = _mesh->getRotationAxis();
 
-  const float rotVelocity = mesh_->getRotationVelocity();
+  const float rotVelocity = _mesh->getRotationVelocity();
   const float deltaTime = static_cast<float>(curTime - lastUpdateTime_);
   const float angle = deltaTime * rotVelocity;
   const int numRotSamples = rotVelocity > 0.001f ? static_cast<int>(std::ceil(angle / DESIRED_ANGLE_PER_SAMPLE)) : 1;
@@ -458,16 +458,16 @@ void Sculpt::applyBrushes(double curTime, AutoSave* autoSave)
     double sampleTime = lastUpdateTime_;
     for (int i=0; i<numSamples; i++) {
       sampleTime += timePerSample;
-      const Matrix4x4 transformInv = mesh_->getTransformation(sampleTime).inverse();
+      const Matrix4x4 transformInv = _mesh->getTransformation(sampleTime).inverse();
 
       Brush brush = _brushes[b].transformed(transformInv).withSpinVelocity(origin, axis, rotVelocity);
       brush._strength *= rotStrengthMult;
 
       brushVertices_.clear();
-      mesh_->getVerticesInsideBrush(brush, brushVertices_);
+      _mesh->getVerticesInsideBrush(brush, brushVertices_);
       if (!brushVertices_.empty()) {
         if (!haveSculpt && !prevSculpt_) {
-          mesh_->startPushState();
+          _mesh->startPushState();
         }
         haveSculpt = true;
         sculptMesh(brushVertices_, brush);
@@ -476,11 +476,11 @@ void Sculpt::applyBrushes(double curTime, AutoSave* autoSave)
   }
 
   if (!haveSculpt && prevSculpt_) {
-    autoSave->triggerAutoSave(mesh_);
-    mesh_->checkLeavesUpdate();
+    autoSave->triggerAutoSave(_mesh);
+    _mesh->checkLeavesUpdate();
     material_++;
   }
-  mesh_->handleUndoRedo();
+  _mesh->handleUndoRedo();
 
   prevSculpt_ = haveSculpt;
 

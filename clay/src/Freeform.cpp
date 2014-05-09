@@ -20,15 +20,30 @@ const float MAX_FOV = 90.0f;
 
 
 //*********************************************************
-FreeformApp::FreeformApp() : _environment(0), _aa_mode(MSAA), _theta(100.f), _phi(0.f), _draw_ui(true), _mouse_down(false),
-  _fov(60.0f), _cam_dist(MIN_CAMERA_DIST), _exposure(1.0f), mesh_(0), _last_update_time(0.0),
-  drawOctree_(false), _shutdown(false), _draw_background(true), _focus_point(Vector3::Zero()),remeshRadius_(100.0f),
-  _lock_camera(false), _last_load_time(0.0), _first_environment_load(true), _have_shaders(true), _have_entered_immersive(false),
-  _immersive_changed_time(0.0), _have_audio(true), m_activeLoop(nullptr, nullptr), _audio_paused(false), _wheel_zoom(0.0f),
-  _immersive_mode(false), _immersive_entered_time(0.0)
+FreeformApp::FreeformApp() : 
+_environment(0), 
+_aa_mode(MSAA),
+_draw_ui(true), 
+_mouse_down(false),
+_exposure(1.0f),
+_mesh(0), 
+_last_update_time(0.0),
+drawOctree_(false),
+_shutdown(false),
+_draw_background(true), 
+remeshRadius_(100.0f),
+_lock_camera(false),
+_last_load_time(0.0), 
+_first_environment_load(true), 
+_have_shaders(true), 
+_have_entered_immersive(false),
+_immersive_changed_time(0.0), 
+_have_audio(true), 
+m_activeLoop(nullptr, nullptr), 
+_audio_paused(false),
+_immersive_mode(false),
+_immersive_entered_time(0.0)
 {
-  _fov_modifier.Update(0.0f, 0.0, 0.5f);
-  _camera_util = new CameraUtil();
   Menu::updateSculptMult(0.0, 0.0f);
 }
 
@@ -36,11 +51,10 @@ FreeformApp::~FreeformApp()
 {
   delete _environment;
   std::unique_lock<std::mutex> lock(_mesh_mutex);
-  if (mesh_) {
-    delete mesh_;
+  if (_mesh) {
+    delete _mesh;
   }
 
-  delete _camera_util;
 }
 
 void FreeformApp::prepareSettings( Settings *settings )
@@ -118,68 +132,6 @@ void FreeformApp::setup()
   _bloom_light_threshold = 0.5f;
   _brush_color = ci::Color(0.85f, 0.95f, 1.0f);
 
-#if !LM_PRODUCTION_BUILD
-  _params = params::InterfaceGl::create( getWindow(), "App parameters", toPixels( Vec2i( 200, 400 ) ) );
-  _params->minimize();
-
-  _params->addSeparator();
-  _params->addText( "text", "label=`Camera parameters:`" );
-
-  _params->addParam( "Use triangles.", &_camera_params.queryTriangles, "" );
-  _params->addParam( "Draw debug lines", &_camera_params.drawDebugLines, "" );
-  _params->addParam( "Draw sphere query", &_camera_params.drawSphereQueryResults, "" );
-
-  _params->addParam( "Iso query radius", &_camera_params.isoQueryPaddingRadius, "min=10.0 max=300.0 step=10.0" );
-  _params->addParam( "#clip rot iterations", &_camera_params.numRotationClipIterations, "min=1.0 max=8.0 step=1.0" );
-
-  _params->addParam( "Iso ref dist mlt", &_camera_params.isoRefDistMultiplier, "min=0.1 max=10.0 step=0.1" );
-  _params->addParam( "Grav_k", &_camera_params.grav_k, "min=0.0001 max=1.0 step=0.001" );
-  _params->addParam( "Grav_n", &_camera_params.grav_n, "min=1.0 max=8.0 step=0.5" );
-
-  _params->addParam( "Clip to iso surface", &_camera_params.clipToIsoSurface, "" );
-  _params->addParam( "Clip movement", &_camera_params.clipCameraMovement, "" );
-  _params->addParam( "Movement ref dist", &_camera_params.refDistForMovemement, "min=10.0 max=500.0 step=10.0" );
-  _params->addParam( "Enable cone clip", &_camera_params.enableConeClipping, "" );
-  _params->addParam( "Normal cone angle", &_camera_params.normalConeAngle, "min=0.0 max=1.55 step=0.05" );
-  _params->addParam( "Enable max rot", &_camera_params.enableMaxReorientationRate, "" );
-  _params->addParam( "Reorientation rate", &_camera_params.maxReorientationRate, "min=0.2 max=10.0 step=0.2" );
-  _params->addParam( "Scale Z movement", &_camera_params.scaleZMovement, "min=0.1 max=2.0 step=0.1" );
-
-  _params->addParam( "Enable Cam Reset", &_camera_params.enableCameraReset, "" );
-  _params->addParam( "Enable Cam Orbit", &_camera_params.enableCameraOrbit, "" );
-
-  _params->addParam( "Min Dist", &_camera_params.minDist, "min=1.0 max=100.0 step=1.0" );
-  _params->addParam( "Max Dist", &_camera_params.maxDist, "min=100.0 max=1000.0 step=20.0" );
-  _params->addParam( "Speed @ Min Dist", &_camera_params.speedAtMinDist, "min=0.01 max=1.0 step=0.1" );
-  _params->addParam( "Speed @ Max Dist", &_camera_params.speedAtMaxDist, "min=1.0 max=20.0 step=1.0" );
-  _params->addParam( "Pin up vector", &_camera_params.pinUpVector, "" );
-  _params->addParam( "Input multiplier", &_camera_params.inputMultiplier, "min=0.5 max=5.0 step=0.25" );
-  _params->addParam( "Invert camera input", &_camera_params.invertCameraInput, "" );
-  _params->addParam( "Smoothing", &_camera_params.enableSmoothing, "" );
-  _params->addParam( "Smooth factor", &_camera_params.smoothingFactor, "min=0.0 max=1.0 step=0.05" );
-  _params->addSeparator();
-  _params->addText( "text", "label=`Surface parameters:`" );
-  _params->addParam( "Ambient", &_material.ambientFactor, "min=0.0 max=0.5 step=0.01" );
-  _params->addParam( "Diffuse", &_material.diffuseFactor, "min=0.0 max=1.0 step=0.05" );
-  _params->addParam( "Reflection", &_material.reflectionFactor, "min=0.0 max=1.0 step=0.05" );
-  _params->addParam( "Refraction Index", &_material.refractionIndex, "min=0.0 max=1.0 step=0.01" );
-  _params->addParam( "Reflection Bias", &_material.reflectionBias, "min=0.0 max=3.0 step=0.01" );
-  _params->addParam( "Refraction Bias", &_material.refractionBias, "min=0.0 max=3.0 step=0.01" );
-  _params->addSeparator();
-  _params->addText( "text", "label=`Draw parameters:`" );
-  _params->addParam( "Draw UI", &_draw_ui, "" );
-  _params->addParam( "Draw edges", &_draw_edges, "" );
-  _params->addSeparator();
-  _params->addText( "text", "label=`HDR parameters:`" );
-  _params->addParam( "Exposure", &_exposure, "min=0.05 max=8.0 step=0.01" );
-  _params->addParam( "Show bloom", &_bloom_visible, "" );
-  _params->addParam( "Bloom size", &_bloom_size, "min=0.0 max=4.0 step=0.01" );
-  _params->addParam( "Bloom strength", &_bloom_strength, "min=0.0 max=1.0 step=0.01" );
-  _params->addParam( "Bloom threshold", &_bloom_light_threshold, "min=0.0 max=2.0 step=0.01" );
-  _params->addParam( "Draw Background", &_draw_background, "" );
-  _params->addParam( "Remesh Radius", &remeshRadius_, "min=20, max=200, step=2.5" );
-#endif
-
   _environment = new CubeMapManager();
 
   try {
@@ -195,7 +147,7 @@ void FreeformApp::setup()
     _have_shaders = false;
   }
 
-  sculpt_.clearBrushes();
+  _sculpt.clearBrushes();
 
   _machine_speed = parseRenderString(std::string((char*)glGetString(GL_RENDERER)));
   _bloom_visible = _machine_speed > FreeformApp::LOW;
@@ -230,9 +182,9 @@ void FreeformApp::setup()
 
   _controller.addListener(_listener);
 
-  _leap_interaction = new LeapInteraction(&sculpt_, _ui);
+  _leap_interaction = new LeapInteraction(&_sculpt, _ui);
 
-  sculpt_.setSculptMode(Sculpt::SWEEP);
+  _sculpt.setSculptMode(Sculpt::SWEEP);
   _leap_interaction->setBrushRadius(10.0f);
   _leap_interaction->setBrushStrength(0.5f);
 
@@ -262,11 +214,11 @@ void FreeformApp::setup()
     } catch (...) {
       mesh = 0;
     }
-    mesh_ = mesh;
-    if (mesh_) {
-      mesh_->startPushState();
+    _mesh = mesh;
+    if (_mesh) {
+      _mesh->startPushState();
       _last_load_time = ci::app::getElapsedSeconds();
-      sculpt_.setMesh(mesh_);
+      _sculpt.setMesh(_mesh);
     } else {
       try {
         _auto_save.deleteAutoSave();
@@ -362,7 +314,7 @@ void FreeformApp::resize()
   _screen_fbo = Fbo(width, height, screenFormat);
   GLBuffer::checkError("Screen FBO");
 
-  _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
+  m_camera.onResize( getWindowAspectRatio() );
   _ui->setWindowSize( Vec2i(width, height) );
 
   glEnable(GL_FRAMEBUFFER_SRGB);
@@ -386,15 +338,15 @@ void FreeformApp::mouseDrag( MouseEvent event )
   _previous_mouse_pos = _current_mouse_pos;
   _current_mouse_pos = event.getPos();
 
-  updateCamera(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
-
-  // New camera update.
-  _camera_util->RecordUserInput(float(_current_mouse_pos.x-_previous_mouse_pos.x)*CAMERA_SPEED,float(_current_mouse_pos.y-_previous_mouse_pos.y)*CAMERA_SPEED, 0.f);
+  Vec2f dMouse = _current_mouse_pos - _previous_mouse_pos;
+  dMouse *= CAMERA_SPEED;
+  
+  m_camera.onMouseMove(dMouse.x, dMouse.y);
 }
 
 void FreeformApp::mouseWheel( MouseEvent event)
 {
-  _wheel_zoom = -300.0f * event.getWheelIncrement();
+  m_camera.onMouseWheel(event.getWheelIncrement());
 }
 
 void FreeformApp::mouseMove( MouseEvent event)
@@ -407,7 +359,7 @@ void FreeformApp::keyDown( KeyEvent event )
 {
   static const double MIN_TIME_SINCE_SCULPTING_FOR_UNDO = 0.25;
   const double curTime = ci::app::getElapsedSeconds();
-  const double lastSculptTime = sculpt_.getLastSculptTime();
+  const double lastSculptTime = _sculpt.getLastSculptTime();
   const bool allowUndo = (curTime - lastSculptTime) > MIN_TIME_SINCE_SCULPTING_FOR_UNDO;
 
   switch( event.getChar() )
@@ -416,15 +368,15 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
   case 's': toggleSymmetry(); break;
-  case 'r': sculpt_.setRemeshRadius(remeshRadius_); break;
+  case 'r': _sculpt.setRemeshRadius(remeshRadius_); break;
 #endif
 #if __APPLE__
-  case 'y': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
-  case 'z': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
+  case 'y': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
+  case 'z': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->undo(); } } break;
   case 'f': if (event.isMetaDown()) toggleFullscreen(""); break;
 #else
-  case 'y': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
-  case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
+  case 'y': if (event.isControlDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
+  case 'z': if (event.isControlDown()) { if (_mesh && allowUndo) { _mesh->undo(); } } break;
   case 'n': if (_ui->haveExitConfirm()) { _ui->clearConfirm(); } break;
 #endif
   case KeyEvent::KEY_ESCAPE:
@@ -454,20 +406,9 @@ void FreeformApp::keyDown( KeyEvent event )
   }
 }
 
-void FreeformApp::updateCamera(const float dTheta, const float dPhi, const float dFov)
-{
-  _theta -= dTheta;
-  _phi += dPhi;
-  _fov += dFov;
-
-  if( _theta<0.f ) _theta += float(M_PI)*2.f;
-  if( _theta>=M_PI*2.f ) _theta -= float(M_PI)*2.f;
-  _phi = math<float>::clamp(_phi, float(-M_PI)*0.45f, float(M_PI)*0.45f);
-  _fov = math<float>::clamp(_fov, 40.f, 110.f);
-}
-
 void FreeformApp::update()
 {
+#ifdef ALLOW_REPLAY
   static int updateCount = 0;
   LM_ASSERT_IDENTICAL(1243);
   LM_ASSERT_IDENTICAL("\r\n\r\nUpdate frame #");
@@ -476,7 +417,7 @@ void FreeformApp::update()
 #if LM_LOG_CAMERA_LOGIC_4
   std::cout << std::endl << "Frm#" << updateCount << " ";
 #endif
-
+#endif
   const double curTime = ci::app::getElapsedSeconds();
   LM_TRACK_CONST_VALUE(curTime);
   const float deltaTime = _last_update_time == 0.0 ? 0.0f : static_cast<float>(curTime - _last_update_time);
@@ -485,12 +426,9 @@ void FreeformApp::update()
   static const float TIME_UNTIL_AUTOMATIC_FOV = 50.0f;
   const float timeSinceActivity = static_cast<float>(curTime - _leap_interaction->getLastActivityTime());
   LM_TRACK_CONST_VALUE(timeSinceActivity);
-  _camera_params.forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
+  
+  //UI Update
   const float inactivityRatio = Utilities::SmootherStep(ci::math<float>::clamp(timeSinceActivity - TIME_UNTIL_AUTOMATIC_FOV, 0.0f, TIME_UNTIL_AUTOMATIC_FOV)/TIME_UNTIL_AUTOMATIC_FOV);
-
-  const float dTheta = deltaTime*_leap_interaction->getDThetaVel();
-  const float dPhi = deltaTime*_leap_interaction->getDPhiVel();
-  const float dZoom = deltaTime*_leap_interaction->getDZoomVel() + _wheel_zoom;
   const float scaleFactor = _leap_interaction->getScaleFactor();
 
   if (curTime - _immersive_changed_time > 0.5) {
@@ -506,75 +444,21 @@ void FreeformApp::update()
       _immersive_changed_time = curTime;
     }
   }
-
-  _wheel_zoom = 0.0f;
-
-  updateCamera(dTheta, dPhi, dZoom);
-
-  const double lastSculptTime = sculpt_.getLastSculptTime();
-  float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime))/0.5f);
-
-  //_camera_util->RecordUserInput(Vector3(_leap_interaction->getPinchDeltaFromLastCall().ptr()), _leap_interaction->isPinched());
-  _camera_util->RecordUserInput(sculptMult*dTheta, sculptMult*dPhi, sculptMult*dZoom);
-
   static const float LOWER_BOUND = 1.0f;
   static const float UPPER_BOUND = 1.32f;
   static const float IMMERSIVE_MODE_SMOOTH_STRENGTH = 0.9f;
 
   _ui_zoom.Update(_immersive_mode ? UPPER_BOUND : LOWER_BOUND, curTime, IMMERSIVE_MODE_SMOOTH_STRENGTH);
-
   _ui->setZoomFactor(_ui_zoom.value);
+  _ui->update(_leap_interaction, &_sculpt);
+  _ui->handleSelections(&_sculpt, _leap_interaction, this, _mesh);
 
-  _fov_modifier.Update((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime, 0.95f);
-  _ui->update(_leap_interaction, &sculpt_);
-  _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
+  //Camera Update
+  m_camera.util.m_forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
+  m_camera.update(_leap_interaction->getDeltaVector()*deltaTime, curTime, _mesh);
 
-  float blend = (_fov-MIN_FOV)/(MAX_FOV-MIN_FOV);
-  _cam_dist = blend*(MAX_CAMERA_DIST-MIN_CAMERA_DIST) + MIN_CAMERA_DIST;
-
-  // Calculate initial camera position
-  Vec3f campos;
-  campos.x = cosf(_phi)*sinf(_theta)*_cam_dist;
-  campos.y = sinf(_phi)*_cam_dist;
-  campos.z = cosf(_phi)*cosf(_theta)*_cam_dist;
-
-  lmTransform tCamera;
-  {
-    // Hack -- lock access to mesh rotation for a moment
-    std::unique_lock<std::mutex> lock(_mesh_update_rotation_mutex);
-    tCamera = _camera_util->GetCameraInWorldSpace();
-  }
-
-  campos = ToVec3f(tCamera.translation);
-  Vector3 up = tCamera.rotation * Vector3::UnitY();
-  Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
-
-  //_focus_point = to;
-  Matrix4x4 trans = mesh_->getTransformation();
-  Vector4 temp;
-  {
-    std::unique_lock<std::mutex> lock(_camera_util->m_referencePointMutex);
-    temp << _camera_util->isoState.refPosition, 1.0;
-  }
-  _focus_point = (trans * temp).head<3>();
-  // if mesh
-  if (mesh_) {
-    _focus_radius = _camera_util->IsoQueryRadius(mesh_, &_camera_util->isoState);
-  } else {
-    _focus_radius = 0.0f;
-  }
-
-  _campos_smoother.Update(campos, curTime, 0.95f);
-  _lookat_smoother.Update(ToVec3f(to), curTime, 0.95f);
-  _up_smoother.Update(ToVec3f(up), curTime, 0.95f);
-
-  // Update camera
-  _camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
-  _camera.setPerspective( 80.0f + _fov_modifier.value, getWindowAspectRatio(), 1.0f, 100000.f );
-  _camera.getProjectionMatrix();
-
-  if (mesh_) {
-    mesh_->updateGPUBuffers();
+  if (_mesh) {
+    _mesh->updateGPUBuffers();
   }
 
   _last_update_time = curTime;
@@ -593,42 +477,43 @@ void FreeformApp::updateLeapAndMesh() {
   {
     const double curTime = ci::app::getElapsedSeconds();
     LM_TRACK_CONST_VALUE(curTime);
-#if ! LM_DISABLE_THREADING_AND_ENVIRONMENT
+
     bool suppress = _environment->getLoadingState() != CubeMapManager::LOADING_STATE_NONE;
     suppress = suppress || (curTime - _last_load_time) < BRUSH_DISABLE_TIME_AFTER_LOAD;
-#else 
+
+#if LM_DISABLE_THREADING_AND_ENVIRONMENT
     bool suppress = false;
 #endif 
     bool haveFrame;
     try {
-      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), _camera.getModelViewMatrix(), _camera.getProjectionMatrix(), getWindowSize(), _camera_util->GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
+      haveFrame = _leap_interaction->processInteraction(_listener, getWindowAspectRatio(), m_camera.getModelViewMatrix(), m_camera.getProjectionMatrix(), getWindowSize(), m_camera.util.GetReferenceDistance(), Utilities::DEGREES_TO_RADIANS*60.0f, suppress);
     } catch (...) {
       haveFrame = false;
     }
 
     if (haveFrame) {
-      const double lastSculptTime = sculpt_.getLastSculptTime();
+      const double lastSculptTime = _sculpt.getLastSculptTime();
       LM_TRACK_CONST_VALUE(lastSculptTime);
 
       std::unique_lock<std::mutex> lock(_mesh_mutex);
-      if (mesh_) {
+      if (_mesh) {
         {
           std::unique_lock<std::mutex> lock(_mesh_update_rotation_mutex);
-          mesh_->updateRotation(curTime);
+          _mesh->updateRotation(curTime);
         }
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
-          _camera_util->UpdateCamera(mesh_, &_camera_params);
+          m_camera.util.UpdateCamera(_mesh);
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
-          sculpt_.applyBrushes(curTime, &_auto_save);
-          _camera_util->m_timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
+          _sculpt.applyBrushes(curTime, &_auto_save);
+          m_camera.util.m_timeOfLastScupt = static_cast<lmReal>(_sculpt.getLastSculptTime());
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
-    } else if (mesh_) {
+    } else if (_mesh) {
       // Allow camera movement when leap is disconnected
       std::unique_lock<std::mutex> lock(_mesh_mutex);
-      _camera_util->UpdateCamera(mesh_, &_camera_params);
+      m_camera.util.UpdateCamera(_mesh);
     }
   }
 }
@@ -642,12 +527,6 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   // set FOV and depth parameters based on current state
   float depthMinZoomed = 0.35f;
   float depthMinOut = 0.0f;
-  float depth_min;
-
-  static const float FOV_TOLERANCE = 5.0f;
-  float blend = (_fov-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
-  blend = Utilities::SmootherStep(std::sqrt(math<float>::clamp(blend)));
-  depth_min = depthMinZoomed*(1.0f-blend) + depthMinOut*blend;
 
   // disable depth and culling for rendering skybox
   gl::disableDepthRead();
@@ -657,7 +536,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   _screen_fbo.bindFramebuffer();
   setViewport( _screen_fbo.getBounds() );
   clear();
-  setMatrices( _camera );
+  setMatrices( m_camera );
   if (_draw_background) {
     // draw color pass of skybox
     _environment->bindCubeMap(CubeMapManager::CUBEMAP_SKY, 0);
@@ -679,7 +558,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   _environment->bindCubeMap(CubeMapManager::CUBEMAP_IRRADIANCE, 0);
   _environment->bindCubeMap(CubeMapManager::CUBEMAP_RADIANCE, 1);
 
-  BrushVector brushes = sculpt_.getBrushes();
+  BrushVector brushes = _sculpt.getBrushes();
   int numBrushes = brushes.size();
   std::vector<ci::Vec3f> brushPositions;
   std::vector<float> brushWeights;
@@ -696,23 +575,23 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   focusOpacity = Utilities::SmootherStep(1.0f - focusOpacity);
   _focus_opacity_smoother.Update(focusOpacity, curTime, 0.925f);
   focusOpacity = _focus_opacity_smoother.value;
-  ci::Vec3f focus(_focus_point.x(), _focus_point.y(), _focus_point.z());
+  ci::Vec3f focus(m_camera.getFocusPoint().x(), m_camera.getFocusPoint().y(), m_camera.getFocusPoint().z());
   brushPositions.push_back(focus);
   brushWeights.push_back(focusOpacity);
-  brushRadii.push_back(_focus_radius);
+  brushRadii.push_back(m_camera.getFocusRadius());
   numBrushes++;
 
   ci::Matrix44f transform = ci::Matrix44f::identity();
-  if (mesh_) {
-    transform = ci::Matrix44f(mesh_->getTransformation(curTime).data());
+  if (_mesh) {
+    transform = ci::Matrix44f(_mesh->getTransformation(curTime).data());
   }
   ci::Matrix44f transformit = transform.inverted().transposed();
 
-  const double lastSculptTime = sculpt_.getLastSculptTime();
+  const double lastSculptTime = _sculpt.getLastSculptTime();
 
   GLBuffer::checkFrameBufferStatus("3");
 
-  if (mesh_) {
+  if (_mesh) {
     _material_shader.bind();
     GLint vertex = _material_shader.getAttribLocation("vertex");
     GLint normal = _material_shader.getAttribLocation("normal");
@@ -750,7 +629,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     glPolygonOffset(1.0f, 1.0f);
     glPolygonMode(GL_FRONT, GL_FILL);
     glEnable(GL_POLYGON_OFFSET_FILL);
-    mesh_->draw(vertex, normal, color);
+    _mesh->draw(vertex, normal, color);
     glDisable(GL_POLYGON_OFFSET_FILL);
     _material_shader.unbind();
 
@@ -762,20 +641,12 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
       _wireframe_shader.uniform( "surfaceColor", Color::black() );
       glPolygonMode(GL_FRONT, GL_LINE);
       glLineWidth(1.0f);
-      mesh_->drawVerticesOnly(vertex);
+      _mesh->drawVerticesOnly(vertex);
       glPolygonMode(GL_FRONT, GL_FILL);
       _wireframe_shader.unbind();
     }
     glPopMatrix();
     Menu::updateSculptMult(curTime, (curTime - lastSculptTime) < 0.1 ? 0.15f : 1.0f);
-  }
-
-  if (_camera_util->m_params.drawDebugLines) {
-    _wireframe_shader.bind();
-    _wireframe_shader.uniform( "transform", transform );
-    _wireframe_shader.uniform( "transformit", transformit );
-    DebugDrawUtil::getInstance().FlushDebugPrimitives(&_wireframe_shader);
-    _wireframe_shader.unbind();
   }
 
   // draw brushes
@@ -799,7 +670,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "reflectionFactor", 0.0f );
     glDisable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
-    if (sculpt_.symmetry()) {
+    if (_sculpt.symmetry()) {
       // draw "ghost" symmetry brush
       _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
       brushes[i].reflected(0).draw(uiMult);
@@ -813,7 +684,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "reflectionFactor", 0.15f );
     glEnable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
-    if (sculpt_.symmetry()) {
+    if (_sculpt.symmetry()) {
       // draw regular symmetry brush
       _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
       brushes[i].reflected(0).draw(uiMult);
@@ -825,7 +696,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   _environment->unbindCubeMap(0);
 
   if (drawOctree_) {
-    mesh_->drawOctree();
+    _mesh->drawOctree();
   }
 
   _screen_fbo.unbindFramebuffer();
@@ -952,7 +823,7 @@ void FreeformApp::draw() {
   const ci::Area viewport = getViewport();
 
   if (exposureMult > 0.0f && _have_shaders) {
-    renderSceneToFbo(_camera);
+    renderSceneToFbo(m_camera);
 
     GLBuffer::checkError("After FBO");
     GLBuffer::checkFrameBufferStatus("After FBO");
@@ -1005,9 +876,9 @@ void FreeformApp::draw() {
     if (_draw_ui) {
       int tris = 0;
       int verts = 0;
-      if (mesh_) {
-        tris = mesh_->getNbTriangles();
-        verts = mesh_->getNbVertices();
+      if (_mesh) {
+        tris = _mesh->getNbTriangles();
+        verts = _mesh->getNbVertices();
       }
       std::stringstream ss;
       ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
@@ -1093,15 +964,11 @@ void FreeformApp::draw() {
   }
 
   if (_environment->getLoadingState() == CubeMapManager::LOADING_STATE_FAILED) {
-    _ui->drawError("CubeMapManager loading failed. Please make sure Freeform is installed correctly.", errorNum++);
+    _ui->drawError("Environment loading failed. Please make sure Freeform is installed correctly.", errorNum++);
   }
 
   GLBuffer::checkError("After logo");
   GLBuffer::checkFrameBufferStatus("After logo");
-
-#if !LM_PRODUCTION_BUILD
-  _params->draw(); // draw the interface
-#endif
 
   glFlush();
 
@@ -1321,7 +1188,7 @@ void FreeformApp::toggleWireframe() {
 }
 
 void FreeformApp::toggleSymmetry() {
-  sculpt_.setSymmetry(!sculpt_.symmetry());
+  _sculpt.setSymmetry(!_sculpt.symmetry());
 }
 
 void FreeformApp::setEnvironment(const std::string& str) {
@@ -1395,17 +1262,17 @@ int FreeformApp::loadFile()
       }
       std::unique_lock<std::mutex> lock(_mesh_mutex);
       float rotationVel = 0.0f;
-      if (mesh_) {
-        rotationVel = mesh_->getRotationVelocity();
-        delete mesh_;
+      if (_mesh) {
+        rotationVel = _mesh->getRotationVelocity();
+        delete _mesh;
       }
-      mesh_ = mesh;
-      mesh_->setRotationVelocity(rotationVel);
-      if (mesh_) {
+      _mesh = mesh;
+      _mesh->setRotationVelocity(rotationVel);
+      if (_mesh) {
         _last_load_time = ci::app::getElapsedSeconds();
-        mesh_->startPushState();
+        _mesh->startPushState();
       }
-      sculpt_.setMesh(mesh_);
+      _sculpt.setMesh(_mesh);
       err = 1;
     }
   }
@@ -1427,17 +1294,17 @@ int FreeformApp::loadShape(Shape shape) {
   }
   std::unique_lock<std::mutex> lock(_mesh_mutex);
   float rotationVel = 0.0f;
-  if (mesh_) {
-    rotationVel = mesh_->getRotationVelocity();
-    delete mesh_;
+  if (_mesh) {
+    rotationVel = _mesh->getRotationVelocity();
+    delete _mesh;
   }
-  mesh_ = newMesh;
-  mesh_->setRotationVelocity(rotationVel);
-  if (mesh_) {
-    mesh_->startPushState();
+  _mesh = newMesh;
+  _mesh->setRotationVelocity(rotationVel);
+  if (_mesh) {
+    _mesh->startPushState();
     _last_load_time = ci::app::getElapsedSeconds();
   }
-  sculpt_.setMesh(mesh_);
+  _sculpt.setMesh(_mesh);
 
   return -1;
 }
@@ -1651,7 +1518,7 @@ fs::path FreeformApp::getSaveFilePathCustom(const fs::path &initialPath,
 
 int FreeformApp::saveFile()
 {
-  if (!mesh_) {
+  if (!_mesh) {
     return -1;
   }
 
@@ -1681,13 +1548,13 @@ int FreeformApp::saveFile()
       try {
         if (ext == ".OBJ" || ext == ".obj") {
           std::ofstream file(path.c_str());
-          files.saveOBJ(mesh_, file);
+          files.saveOBJ(_mesh, file);
           file.close();
         } else if (ext == ".STL" || ext == ".stl") {
-          files.saveSTL(mesh_, path.string());
+          files.saveSTL(_mesh, path.string());
         } else if (ext == ".PLY" || ext == ".ply") {
           std::ofstream file(path.c_str());
-          files.savePLY(mesh_, file);
+          files.savePLY(_mesh, file);
           file.close();
         }
       } catch (...) { }
@@ -1735,7 +1602,7 @@ void FreeformApp::print3D() {
   if (!file) {
     return;
   }
-  files.savePLY(mesh_, file);
+  files.savePLY(_mesh, file);
   file.close();
 
   // upload to our server using HTTP PUT

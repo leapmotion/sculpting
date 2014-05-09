@@ -3,7 +3,6 @@
 
 #include "cinder/app/AppNative.h"
 #include "cinder/params/Params.h"
-#include "cinder/Camera.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Fbo.h"
@@ -23,8 +22,8 @@
 #include "cinder/Thread.h"
 #include "Mesh.h"
 #include "Sculpt.h"
-#include "CameraUtil.h"
 #include "AutoSave.h"
+#include "OrbiterCamera.h"
 
 #define IRRKLANG_STATIC
 #include <irrklang.h>
@@ -33,7 +32,6 @@ using namespace ci;
 using namespace ci::gl;
 using namespace ci::app;
 
-class CameraUtil;
 
 #if LM_PRODUCTION_BUILD
 #define LM_DISABLE_THREADING_AND_ENVIRONMENT 0
@@ -61,7 +59,6 @@ public:
   void mouseWheel( MouseEvent event );
   void mouseMove( MouseEvent event);
   void keyDown( KeyEvent event );
-  void updateCamera(const float dTheta, const float dPhi, const float dFov);
   void update();
   void updateLeapAndMesh();
   void renderSceneToFbo(Camera& camera);
@@ -128,16 +125,7 @@ private:
   MachineSpeed parseRenderString(const std::string& render_string);
 
   // *** camera stuff ***
-  CameraPersp _camera;
-  float _theta;
-  float _phi;
-  float _fov;
-  float _cam_dist;
-  Utilities::ExponentialFilter<float> _fov_modifier;
-  float _wheel_zoom;
-
-  // Free-floating camera utility.
-  CameraUtil* _camera_util;
+  OrbiterCamera m_camera;
 
   // **** mouse stuff ***
   Vec2i _initial_mouse_pos, _current_mouse_pos, _previous_mouse_pos;
@@ -155,8 +143,6 @@ private:
   std::thread _mesh_thread;
   bool _shutdown;
   Utilities::FPSCounter _mesh_update_counter;
-  Vector3 _focus_point;
-  float _focus_radius;
   double _last_update_time;
   double _last_load_time;
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
@@ -173,14 +159,9 @@ private:
   LeapListener _listener;
   Leap::Controller _controller;
   LeapInteraction* _leap_interaction;
-  Utilities::ExponentialFilter<ci::Vec3f> _campos_smoother;
-  Utilities::ExponentialFilter<ci::Vec3f> _lookat_smoother;
-  Utilities::ExponentialFilter<ci::Vec3f> _up_smoother;
+  
 
   // *** ui stuff ***
-#if !LM_PRODUCTION_BUILD
-  params::InterfaceGlRef _params;
-#endif
   Color _brush_color;
   bool _draw_edges;
   Material _material;
@@ -217,14 +198,12 @@ private:
   std::map<std::string, LoopPair> m_audioLoops;
 
   // new mesh
-  Mesh* mesh_;
-  Sculpt sculpt_;
+  Mesh* _mesh;
+  Sculpt _sculpt;
   bool drawOctree_;
   std::string shapes_[NUM_SHAPES];
   float remeshRadius_;
 
-  // camera control settings
-  CameraUtil::Params _camera_params;
 };
 
 #endif

@@ -3,7 +3,7 @@
 #include <algorithm>
 
 /** Constructor */
-Picking::Picking() : mesh_(0), pickedTriangle_(-1), pickedVertices_(), intersectionPoint_(Vector3::Zero()),
+Picking::Picking() : _mesh(0), pickedTriangle_(-1), pickedVertices_(), intersectionPoint_(Vector3::Zero()),
   radiusScreen_(50), radiusWorldSquared_(0)
 {}
 
@@ -12,8 +12,8 @@ Picking::~Picking()
 {}
 
 /** Getters/Setters */
-Mesh* Picking::getMesh() { return mesh_; }
-void Picking::setMesh(Mesh *mesh) { mesh_=mesh; }
+Mesh* Picking::getMesh() { return _mesh; }
+void Picking::setMesh(Mesh *mesh) { _mesh=mesh; }
 void Picking::setIntersectionPoint(const Vector3& intersectionPoint) { intersectionPoint_ = intersectionPoint; }
 const Vector3& Picking::getIntersectionPoint() const { return intersectionPoint_; }
 int Picking::getSelectedTriangle() const { return pickedTriangle_; }
@@ -27,7 +27,7 @@ float Picking::getRadiusScreen() const { return radiusScreen_; }
 void Picking::intersectionRayMesh(Mesh *mesh, const Vector3& vertexNear, const Vector3& vertexFar,
                                   const Vector2& mouseXY, const Vector2& viewport)
 {
-  mesh_ = 0;
+  _mesh = 0;
   pickedTriangle_ = -1;
   VertexVector &vertices = mesh->getVertices();
   TriangleVector &triangles = mesh->getTriangles();
@@ -60,13 +60,13 @@ void Picking::intersectionRayMesh(Mesh *mesh, const Vector3& vertexNear, const V
   }
   if(pickedTriangle_!=-1)
   {
-    mesh_ = mesh;
+    _mesh = mesh;
     double z = 0.0;
     Vector4 intersection(Vector4::Zero());
     intersection << intersectionPoint_, 0.0;
-    Geometry::point3Dto2D((mesh_->getTransformation()*intersection).head<3>(),viewport,z);
+    Geometry::point3Dto2D((_mesh->getTransformation()*intersection).head<3>(),viewport,z);
     Vector3 vCircle = Geometry::point2Dto3D(mouseXY+Vector2(radiusScreen_,0.0f),viewport,static_cast<float>(z));
-    radiusWorldSquared_ = ((mesh_->getTransformation()*intersection).head<3>()-vCircle).squaredNorm();
+    radiusWorldSquared_ = ((_mesh->getTransformation()*intersection).head<3>()-vCircle).squaredNorm();
   }
   else
     radiusWorldSquared_ = 0;
@@ -76,12 +76,12 @@ void Picking::intersectionRayMesh(Mesh *mesh, const Vector3& vertexNear, const V
 void Picking::setPickedVerticesInsideSphere(float radiusWorldSquared)
 {
   pickedVertices_.clear();
-  VertexVector &vertices = mesh_->getVertices();
-  std::vector<Octree*> &leavesHit = mesh_->getLeavesUpdate();
+  VertexVector &vertices = _mesh->getVertices();
+  std::vector<Octree*> &leavesHit = _mesh->getLeavesUpdate();
   std::vector<int> iTrisInCells;
-  mesh_->getOctree()->intersectSphere(intersectionPoint_,radiusWorldSquared,leavesHit,iTrisInCells);
+  _mesh->getOctree()->intersectSphere(intersectionPoint_,radiusWorldSquared,leavesHit,iTrisInCells);
   std::vector<int> iVerts;
-  mesh_->getVerticesFromTriangles(iTrisInCells, iVerts);
+  _mesh->getVerticesFromTriangles(iTrisInCells, iVerts);
   int nbVerts = iVerts.size();
   ++Vertex::sculptMask_;
   for (int i=0;i<nbVerts;++i)
@@ -96,7 +96,7 @@ void Picking::setPickedVerticesInsideSphere(float radiusWorldSquared)
   }
   if(pickedVertices_.empty() && pickedTriangle_!=-1) //no vertices inside the brush radius (big triangle or small radius)
   {
-    Triangle &t = mesh_->getTriangle(pickedTriangle_);
+    Triangle &t = _mesh->getTriangle(pickedTriangle_);
     pickedVertices_.push_back(t.vIndices_[0]);
     pickedVertices_.push_back(t.vIndices_[1]);
     pickedVertices_.push_back(t.vIndices_[2]);
@@ -106,12 +106,12 @@ void Picking::setPickedVerticesInsideSphere(float radiusWorldSquared)
 /** Force the picking even if the the mouse doesn't intersect the mesh */
 void Picking::forceCenter(Mesh *mesh, const Vector3& center, const Vector2& mouseXY, const Vector2& viewport)
 {
-  mesh_ = mesh;
+  _mesh = mesh;
   intersectionPoint_ = center;
   double z = 0.0f;
   Vector4 intersection(Vector4::Zero());
   intersection << center, 0.0;
-  Geometry::point3Dto2D((mesh_->getTransformation()*intersection).head<3>(),viewport,z);
+  Geometry::point3Dto2D((_mesh->getTransformation()*intersection).head<3>(),viewport,z);
   Vector3 vCircle = Geometry::point2Dto3D(mouseXY+Vector2(radiusScreen_,0.0f),viewport,static_cast<float>(z));
-  radiusWorldSquared_ = ((mesh_->getTransformation()*intersection).head<3>()-vCircle).squaredNorm();
+  radiusWorldSquared_ = ((_mesh->getTransformation()*intersection).head<3>()-vCircle).squaredNorm();
 }

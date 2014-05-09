@@ -34,7 +34,7 @@ public:
   void forceCenter(Mesh *mesh, const Vector3 &center, const Vector2 &mouseXY, const Vector2 &viewport);
 
 private:
-  Mesh *mesh_; //selected mesh
+  Mesh *_mesh; //selected mesh
   int pickedTriangle_; //triangle picked
   std::vector<int> pickedVertices_; //vertices selected
   Vector3 intersectionPoint_; //intersection point
