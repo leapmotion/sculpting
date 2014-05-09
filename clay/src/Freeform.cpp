@@ -74,9 +74,9 @@ void FreeformApp::prepareSettings( Settings *settings )
   enableVerticalSync(true);
 }
 
-void FreeformApp::toggleFullscreen(const std::string& str)
+void FreeformApp::toggleFullscreen()
 {
-  bool full = isFullScreen();
+  const bool full = isFullScreen();
   setFullScreen(!full);
 }
 
@@ -161,19 +161,9 @@ void FreeformApp::setup()
   float detail = LOW_DETAIL_LEVEL;
   if (_machine_speed == FreeformApp::MID) {
     detail = MEDIUM_DETAIL_LEVEL;
-#if !LM_PRODUCTION_BUILD
-    std::cout << "Medium Detail" << std::endl;
-#endif
   } else if (_machine_speed == FreeformApp::HIGH) {
     detail = HIGH_DETAIL_LEVEL;
-#if !LM_PRODUCTION_BUILD
-    std::cout << "High Detail" << std::endl;
-#endif
-  } else {
-#if !LM_PRODUCTION_BUILD
-    std::cout << "Low Detail" << std::endl;
-#endif
-  }
+  } 
   Sculpt::setDetail(detail);
 
   _ui = new UserInterface();
@@ -187,13 +177,6 @@ void FreeformApp::setup()
   _sculpt.setSculptMode(Sculpt::SWEEP);
   _leap_interaction->setBrushRadius(10.0f);
   _leap_interaction->setBrushStrength(0.5f);
-
-//#if __APPLE__
-//  if (_mesh_thread.joinable())
-//  {
-//    _mesh_thread.detach();
-//  }
-//#endif
 
   if (AutoSave::isFirstRun()) {
     _ui->forceDrawTutorialMenu();
@@ -373,7 +356,7 @@ void FreeformApp::keyDown( KeyEvent event )
 #if __APPLE__
   case 'y': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
   case 'z': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->undo(); } } break;
-  case 'f': if (event.isMetaDown()) toggleFullscreen(""); break;
+  case 'f': if (event.isMetaDown()) toggleFullscreen(); break;
 #else
   case 'y': if (event.isControlDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
   case 'z': if (event.isControlDown()) { if (_mesh && allowUndo) { _mesh->undo(); } } break;

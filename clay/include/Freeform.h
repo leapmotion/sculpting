@@ -59,7 +59,7 @@ public:
   void mouseMove(MouseEvent event) override;
   void keyDown(KeyEvent event) override;
 
-  void toggleFullscreen(const std::string& str);
+  void toggleFullscreen();
   void update();
   void updateLeapAndMesh();
   void renderSceneToFbo(Camera& camera);
