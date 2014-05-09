@@ -347,7 +347,7 @@ void FreeformApp::mouseDrag( MouseEvent event )
 
 void FreeformApp::mouseWheel( MouseEvent event)
 {
-  m_camera.setZoom(event.getWheelIncrement());
+  m_camera.onMouseWheel(event.getWheelIncrement());
 }
 
 void FreeformApp::mouseMove( MouseEvent event)
@@ -556,12 +556,6 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   // set FOV and depth parameters based on current state
   float depthMinZoomed = 0.35f;
   float depthMinOut = 0.0f;
-  float depth_min;
-
-  static const float FOV_TOLERANCE = 5.0f;
-  float blend = (m_camera.getZoom()-(MIN_FOV+FOV_TOLERANCE))/(MAX_FOV-MIN_FOV-(2*FOV_TOLERANCE));
-  blend = Utilities::SmootherStep(std::sqrt(math<float>::clamp(blend)));
-  depth_min = depthMinZoomed*(1.0f-blend) + depthMinOut*blend;
 
   // disable depth and culling for rendering skybox
   gl::disableDepthRead();

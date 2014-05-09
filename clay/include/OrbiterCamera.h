@@ -13,21 +13,16 @@ public:
   OrbiterCamera();
 
   void onMouseMove(float dX, float dY);
+  void onMouseWheel(float zoom) { mWheelZoom = -300.0f * zoom; }
 
-  void setZoom(float zoom) { mWheelZoom = -300.0f * zoom; }
   void setFovModifier(float mod, double currentTime);
 
   void update(const Vec4f &deltaVector, float curTime, float lastSculptTime );
 
   void onResize(float newAspectRatio);
 
-  float getZoom() const { return mZoom; };
-
   CameraUtil util;
 private:
-  float mTheta;
-  float mPhi;
-  float mZoom;
   Utilities::ExponentialFilter<float> mFovModifier;
   float mWheelZoom;
 };
