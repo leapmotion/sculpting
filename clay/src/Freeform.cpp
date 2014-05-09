@@ -468,12 +468,9 @@ void FreeformApp::update()
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
 
   Matrix4x4 trans = mesh_->getTransformation();
-  Vector4 temp;
-  {
-    std::unique_lock<std::mutex> lock(m_camera.util.m_referencePointMutex);
-    temp << m_camera.util.m_isoState.refPosition, 1.0;
-  }
+  Vector4 temp = m_camera.util.GetIsoStateReferencePosition();
   _focus_point = (trans * temp).head<3>();
+
   // if mesh
   if (mesh_) {
     _focus_radius = m_camera.util.IsoQueryRadius(mesh_);

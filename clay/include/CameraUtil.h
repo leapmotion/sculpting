@@ -84,8 +84,7 @@ public:
   // Init camera at the origin.
   CameraUtil();
   
-
-
+  Vector4 GetIsoStateReferencePosition();
   lmReal IsoQueryRadius(const Mesh* mesh) const;
   
   //Accumulates user input so it can be smoothed and handled in UpdateCamera
@@ -100,17 +99,6 @@ public:
   std::mutex m_referencePointMutex;
   lmReal m_timeOfLastScupt;
   bool m_forceCameraOrbit;
-
-  struct IsoCameraState {
-    lmReal refDist;
-    lmReal cameraOffsetMultiplier;
-    Vector3 refPosition;
-    Vector3 refNormal;
-    lmSurfacePoint closestPointOnMesh;
-    lmReal refPotential; // used when clipping to isosurface
-    lmReal currGradientMag;
-    int numFailedUpdates;
-  } m_isoState;
 
 private:
   // Reset camera on the model. 
@@ -157,7 +145,16 @@ private:
 
 private:
 
-
+  struct IsoCameraState {
+    lmReal refDist;
+    lmReal cameraOffsetMultiplier;
+    Vector3 refPosition;
+    Vector3 refNormal;
+    lmSurfacePoint closestPointOnMesh;
+    lmReal refPotential; // used when clipping to isosurface
+    lmReal currGradientMag;
+    int numFailedUpdates;
+  } m_isoState;
 
   lmTransform m_transform;
   lmTransform m_transformInWorldSpace;

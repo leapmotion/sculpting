@@ -1111,3 +1111,8 @@ lmReal CameraUtil::GetMeshSize(const Mesh* mesh) const {
   meshSize = std::min(meshSize, 3.0f * (2.0f * Mesh::globalScale_));
   return meshSize;
 }
+
+Vector4 CameraUtil::GetIsoStateReferencePosition() {
+  std::unique_lock<std::mutex> lock(m_referencePointMutex);
+  return Vector4(m_isoState.refPosition.x(), m_isoState.refPosition.y(), m_isoState.refPosition.z(), 1.0);
+}
