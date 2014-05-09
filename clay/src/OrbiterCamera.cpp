@@ -5,12 +5,6 @@
 
 using namespace cinder;
 
-const float MIN_CAMERA_DIST = 250.0f;
-const float MAX_CAMERA_DIST = 350.0f;
-
-const float MIN_FOV = 50.0f;
-const float MAX_FOV = 90.0f;
-
 OrbiterCamera::OrbiterCamera() :
 mWheelZoom(0.0f)
 {

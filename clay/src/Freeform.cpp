@@ -480,7 +480,6 @@ void FreeformApp::update()
   _up_smoother.Update(ToVec3f(up), curTime, 0.95f);
 
   m_camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
-  m_camera.onResize(getWindowAspectRatio());
   m_camera.getProjectionMatrix();
 
   if (_mesh) {
