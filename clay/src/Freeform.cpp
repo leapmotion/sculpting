@@ -147,7 +147,7 @@ void FreeformApp::setup()
     _have_shaders = false;
   }
 
-  sculpt_.clearBrushes();
+  _sculpt.clearBrushes();
 
   _machine_speed = parseRenderString(std::string((char*)glGetString(GL_RENDERER)));
   _bloom_visible = _machine_speed > FreeformApp::LOW;
@@ -182,9 +182,9 @@ void FreeformApp::setup()
 
   _controller.addListener(_listener);
 
-  _leap_interaction = new LeapInteraction(&sculpt_, _ui);
+  _leap_interaction = new LeapInteraction(&_sculpt, _ui);
 
-  sculpt_.setSculptMode(Sculpt::SWEEP);
+  _sculpt.setSculptMode(Sculpt::SWEEP);
   _leap_interaction->setBrushRadius(10.0f);
   _leap_interaction->setBrushStrength(0.5f);
 
@@ -218,7 +218,7 @@ void FreeformApp::setup()
     if (_mesh) {
       _mesh->startPushState();
       _last_load_time = ci::app::getElapsedSeconds();
-      sculpt_.setMesh(_mesh);
+      _sculpt.setMesh(_mesh);
     } else {
       try {
         _auto_save.deleteAutoSave();
@@ -359,7 +359,7 @@ void FreeformApp::keyDown( KeyEvent event )
 {
   static const double MIN_TIME_SINCE_SCULPTING_FOR_UNDO = 0.25;
   const double curTime = ci::app::getElapsedSeconds();
-  const double lastSculptTime = sculpt_.getLastSculptTime();
+  const double lastSculptTime = _sculpt.getLastSculptTime();
   const bool allowUndo = (curTime - lastSculptTime) > MIN_TIME_SINCE_SCULPTING_FOR_UNDO;
 
   switch( event.getChar() )
@@ -368,7 +368,7 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'u': _draw_ui = !_draw_ui; break;
   case 'o': drawOctree_ = !drawOctree_; break;
   case 's': toggleSymmetry(); break;
-  case 'r': sculpt_.setRemeshRadius(remeshRadius_); break;
+  case 'r': _sculpt.setRemeshRadius(remeshRadius_); break;
 #endif
 #if __APPLE__
   case 'y': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
@@ -450,8 +450,8 @@ void FreeformApp::update()
 
   _ui_zoom.Update(_immersive_mode ? UPPER_BOUND : LOWER_BOUND, curTime, IMMERSIVE_MODE_SMOOTH_STRENGTH);
   _ui->setZoomFactor(_ui_zoom.value);
-  _ui->update(_leap_interaction, &sculpt_);
-  _ui->handleSelections(&sculpt_, _leap_interaction, this, _mesh);
+  _ui->update(_leap_interaction, &_sculpt);
+  _ui->handleSelections(&_sculpt, _leap_interaction, this, _mesh);
 
   //Camera Update
   m_camera.util.m_forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
@@ -492,7 +492,7 @@ void FreeformApp::updateLeapAndMesh() {
     }
 
     if (haveFrame) {
-      const double lastSculptTime = sculpt_.getLastSculptTime();
+      const double lastSculptTime = _sculpt.getLastSculptTime();
       LM_TRACK_CONST_VALUE(lastSculptTime);
 
       std::unique_lock<std::mutex> lock(_mesh_mutex);
@@ -505,8 +505,8 @@ void FreeformApp::updateLeapAndMesh() {
           m_camera.util.UpdateCamera(_mesh);
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
-          sculpt_.applyBrushes(curTime, &_auto_save);
-          m_camera.util.m_timeOfLastScupt = static_cast<lmReal>(sculpt_.getLastSculptTime());
+          _sculpt.applyBrushes(curTime, &_auto_save);
+          m_camera.util.m_timeOfLastScupt = static_cast<lmReal>(_sculpt.getLastSculptTime());
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
@@ -558,7 +558,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   _environment->bindCubeMap(CubeMapManager::CUBEMAP_IRRADIANCE, 0);
   _environment->bindCubeMap(CubeMapManager::CUBEMAP_RADIANCE, 1);
 
-  BrushVector brushes = sculpt_.getBrushes();
+  BrushVector brushes = _sculpt.getBrushes();
   int numBrushes = brushes.size();
   std::vector<ci::Vec3f> brushPositions;
   std::vector<float> brushWeights;
@@ -587,7 +587,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   }
   ci::Matrix44f transformit = transform.inverted().transposed();
 
-  const double lastSculptTime = sculpt_.getLastSculptTime();
+  const double lastSculptTime = _sculpt.getLastSculptTime();
 
   GLBuffer::checkFrameBufferStatus("3");
 
@@ -670,7 +670,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "reflectionFactor", 0.0f );
     glDisable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
-    if (sculpt_.symmetry()) {
+    if (_sculpt.symmetry()) {
       // draw "ghost" symmetry brush
       _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
       brushes[i].reflected(0).draw(uiMult);
@@ -684,7 +684,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     _brush_shader.uniform( "reflectionFactor", 0.15f );
     glEnable(GL_DEPTH_TEST);
     brushes[i].draw(uiMult);
-    if (sculpt_.symmetry()) {
+    if (_sculpt.symmetry()) {
       // draw regular symmetry brush
       _brush_shader.uniform( "alphaMult", 0.5f*alphaMult );
       brushes[i].reflected(0).draw(uiMult);
@@ -1188,7 +1188,7 @@ void FreeformApp::toggleWireframe() {
 }
 
 void FreeformApp::toggleSymmetry() {
-  sculpt_.setSymmetry(!sculpt_.symmetry());
+  _sculpt.setSymmetry(!_sculpt.symmetry());
 }
 
 void FreeformApp::setEnvironment(const std::string& str) {
@@ -1272,7 +1272,7 @@ int FreeformApp::loadFile()
         _last_load_time = ci::app::getElapsedSeconds();
         _mesh->startPushState();
       }
-      sculpt_.setMesh(_mesh);
+      _sculpt.setMesh(_mesh);
       err = 1;
     }
   }
@@ -1304,7 +1304,7 @@ int FreeformApp::loadShape(Shape shape) {
     _mesh->startPushState();
     _last_load_time = ci::app::getElapsedSeconds();
   }
-  sculpt_.setMesh(_mesh);
+  _sculpt.setMesh(_mesh);
 
   return -1;
 }

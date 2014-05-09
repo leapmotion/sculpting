@@ -199,7 +199,7 @@ private:
 
   // new mesh
   Mesh* _mesh;
-  Sculpt sculpt_;
+  Sculpt _sculpt;
   bool drawOctree_;
   std::string shapes_[NUM_SHAPES];
   float remeshRadius_;
