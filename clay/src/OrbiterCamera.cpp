@@ -46,7 +46,6 @@ void OrbiterCamera::update(const Vec4f &deltaVector, float curTime, float lastSc
   mZoom += deltaVector.z;
 
   mZoom += mWheelZoom;
-  mWheelZoom = 0.0f;
 
   if (mTheta<0.f) mTheta += float(M_PI)*2.f;
   if (mTheta >= M_PI*2.f) mTheta -= float(M_PI)*2.f;
@@ -54,6 +53,8 @@ void OrbiterCamera::update(const Vec4f &deltaVector, float curTime, float lastSc
   mZoom = math<float>::clamp(mZoom, 40.f, 110.f);
 
   const float sculptMult = std::min(1.0f, static_cast<float>(fabs(curTime - lastSculptTime)) / 0.5f);
-  const Vec4f sculptVec = deltaVector*sculptMult;
+  const Vec4f sculptVec = (deltaVector + Vec4f(0,0,mWheelZoom,0) )*sculptMult;
   util.RecordUserInput(sculptVec.x, sculptVec.y, sculptVec.z);
+
+  mWheelZoom = 0.0f;
 }
