@@ -107,7 +107,7 @@ private:
   void OrbitCamera(const Mesh* mesh, lmReal deltaTime);
   lmReal IsoPotential(Mesh* mesh, const Vector3& position, lmReal queryRadius);
   void IsoPotential_row4(Mesh* mesh, const Vector3* positions, lmReal queryRadius, lmReal* potentials);
-  Vector3 IsoNormal(Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* potential = NULL, lmReal* gradientMag = NULL);
+  Vector3 IsoNormal(Mesh* mesh, const Vector3& position, lmReal queryRadius, lmReal* gradientMag = NULL);
   void IsoUpdateCameraTransform(const Vector3& newDirection, lmReal deltaTime);
   void IsoPreventCameraInMesh(Mesh* mesh);
   void InitIsoCamera(Mesh* mesh);
@@ -147,11 +147,10 @@ private:
 
   struct IsoCameraState {
     lmReal refDist;
-    lmReal cameraOffsetMultiplier;
+    lmReal cameraOffsetMultiplier; //Might be able to replace with s_isoRefDistMultiplier
     Vector3 refPosition;
     Vector3 refNormal;
     lmSurfacePoint closestPointOnMesh;
-    lmReal refPotential; // used when clipping to isosurface
     lmReal currGradientMag;
     int numFailedUpdates;
   } m_isoState;
