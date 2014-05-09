@@ -456,9 +456,7 @@ void FreeformApp::update()
 
   //Camera Update
   m_camera.util.m_forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
-  const Vec4f deltaVector = _leap_interaction->getDeltaVector();
-  
-  m_camera.update(deltaVector*deltaTime, curTime, sculpt_.getLastSculptTime());
+  m_camera.update(_leap_interaction->getDeltaVector()*deltaTime);
 
   lmTransform tCamera = m_camera.util.GetCameraInWorldSpace();
 
