@@ -269,8 +269,6 @@ void CameraUtil::OrbitCamera( const Mesh* mesh, lmReal deltaTime ) {
     referencePointNew.mul(q);
   }
 
-  // Orbit camera with raycast
-
   // Camera position in horizontal plane
   Vector3 camXZ = lmProjectAlongVec(m_transform.translation, Vector3::UnitY());
   // Rotation around Y
@@ -466,7 +464,6 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, lmRayCastOutput
 
 void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmRayCastOutput>* results, bool collectall /*= false*/ )
 {
-
   m_queryTriangles.clear();
   mesh->getOctree()->intersectRay(ray.start, ray.GetDirection(), m_queryTriangles);
   lmReal minDist = FLT_MAX;
@@ -475,7 +472,6 @@ void CameraUtil::CastOneRay( const Mesh* mesh, const lmRay& ray, std::vector<lmR
 
   const Vector3 rayDirection = ray.GetDirection();
   const lmReal rayLength = ray.GetLength();
-
 
   // Cast ray for each triangle's aabb
   for (size_t ti = 0; ti < m_queryTriangles.size(); ti++) {
@@ -973,52 +969,43 @@ void CameraUtil::IsoResetIfInsideManifoldMesh(Mesh* mesh) {
 
 void CameraUtil::IsoOnMeshUpdateStopped(Mesh* mesh) {
 
-  //// this is not called when sculpting
-  //bool justSculpted = (timeOfLastScupt != m_isoState.lastSculptTime); // find
-  //m_isoState.lastSculptTime = timeOfLastScupt;
+  if (!m_forceVerifyPositionAfterSculpting)
+    return;
 
-  if (m_forceVerifyPositionAfterSculpting) {
-    // Just stopped sculpting
-    //std::cout << "Stopped sculpting" << std::endl;
+  // Raycast towards reference point, if collision, move ref point. remember Distance, and try to preserve it.
+  lmRay ray(m_transform.translation, m_isoState.refPosition);
+  ray.end += ray.GetDirection() * (s_minDist * 2.0f + 0.1f);
+  lmRayCastOutput raycastOutput;
+  CastOneRay(mesh, ray, &raycastOutput);
 
-    // Raycast towards reference point, if collision, move ref point. remember Distance, and try to preserve it.
-    lmRay ray(m_transform.translation, m_isoState.refPosition);
-    ray.end += ray.GetDirection() * (s_minDist * 2.0f + 0.1f);
-    lmRayCastOutput raycastOutput;
-    CastOneRay(mesh, ray, &raycastOutput);
+  if (raycastOutput.isSuccess()) {
+    const lmReal refToCamDist = (1 + s_isoRefDistMultiplier); // convert between refDist and distance to camera
+    // Adjust refPoint & ref dist
+    //lmReal prevDistToMesh = m_isoState.refDist * refToCamDist;
+    lmReal currRefDist = raycastOutput.dist / refToCamDist;
+    currRefDist = std::max(currRefDist, s_minDist * 2.0f + 0.1f);
 
-    if (raycastOutput.isSuccess()) {
-#if LM_LOG_CAMERA_LOGIC_4
-      std::cout << "Moving reference point" << std::endl;
-#endif
-      const lmReal refToCamDist = (1 + s_isoRefDistMultiplier); // convert between refDist and distance to camera
-      // Adjust refPoint & ref dist
-      //lmReal prevDistToMesh = m_isoState.refDist * refToCamDist;
-      lmReal currRefDist = raycastOutput.dist / refToCamDist;
-      currRefDist = std::max(currRefDist, s_minDist * 2.0f + 0.1f);
+    m_isoState.refDist = currRefDist;
+    m_isoState.refPosition = raycastOutput.position - ray.GetDirection() * m_isoState.refDist;
+    // Don't update normal now.
 
-      m_isoState.refDist = currRefDist;
-      m_isoState.refPosition = raycastOutput.position - ray.GetDirection() * m_isoState.refDist;
-      // Don't update normal now.
-
-      // We'll need to ease in normal adaption.
-    }
-
-    // Readjust normal blending
-    lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, m_isoState.refPosition, (s_minDist + 0.1f) * 1.5f);
-    lmReal dist = (closestPoint.position - m_isoState.refPosition).norm();
-    int attempts = 0;
-    while((dist < s_minDist + 0.1f) && attempts < 10) {
-      lmReal diff = s_minDist + 0.1f - dist;
-      m_isoState.refPosition += closestPoint.normal * diff * 1.2f;
-
-      closestPoint = GetClosestSurfacePoint(mesh, m_isoState.refPosition, (s_minDist + 0.1f) * 1.5f);
-      dist = (closestPoint.position - m_isoState.refPosition).norm();
-      attempts++;
-    }
-
-    m_forceVerifyPositionAfterSculpting = false;
+    // We'll need to ease in normal adaption.
   }
+
+  // Readjust normal blending
+  lmSurfacePoint closestPoint = GetClosestSurfacePoint(mesh, m_isoState.refPosition, (s_minDist + 0.1f) * 1.5f);
+  lmReal dist = (closestPoint.position - m_isoState.refPosition).norm();
+  int attempts = 0;
+  while((dist < s_minDist + 0.1f) && attempts < 10) {
+    lmReal diff = s_minDist + 0.1f - dist;
+    m_isoState.refPosition += closestPoint.normal * diff * 1.2f;
+
+    closestPoint = GetClosestSurfacePoint(mesh, m_isoState.refPosition, (s_minDist + 0.1f) * 1.5f);
+    dist = (closestPoint.position - m_isoState.refPosition).norm();
+    attempts++;
+  }
+
+  m_forceVerifyPositionAfterSculpting = false;
 }
 
 lmSurfacePoint CameraUtil::GetReferencePoint() const

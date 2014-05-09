@@ -35,11 +35,11 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
 
   initSplit(iTris, iTrisSubd_, split_, detailMaxSquared);
   if(iTrisSubd_.size()>20)
-    mesh_->expandTriangles(iTrisSubd_,3);
+    _mesh->expandTriangles(iTrisSubd_,3);
 
   //undo-redo
-  mesh_->getVerticesFromTriangles(iTrisSubd_, iVertsSubd_);
-  mesh_->pushState(iTrisSubd_, iVertsSubd_);
+  _mesh->getVerticesFromTriangles(iTrisSubd_, iVertsSubd_);
+  _mesh->pushState(iTrisSubd_, iVertsSubd_);
 
   split_.resize(iTrisSubd_.size(),0);
   subdivideTriangles(iTrisSubd_, split_, detailMaxSquared);
@@ -49,12 +49,12 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
   for(int i = nbTrisInit; i<nbTriangles; ++i)
     newTriangle.push_back(i);
 
-  mesh_->expandTriangles(newTriangle,1);
+  _mesh->expandTriangles(newTriangle,1);
 
   //undo-redo
   iTrisSubd_ = std::vector<int>(newTriangle.begin() + (nbTriangles - nbTrisInit), newTriangle.end());
-  mesh_->getVerticesFromTriangles(iTrisSubd_, iVertsSubd_);
-  mesh_->pushState(iTrisSubd_, iVertsSubd_);
+  _mesh->getVerticesFromTriangles(iTrisSubd_, iVertsSubd_);
+  _mesh->pushState(iTrisSubd_, iVertsSubd_);
 
   iTris.insert(iTris.end(),newTriangle.begin(),newTriangle.end());
 
@@ -86,8 +86,8 @@ void Topology::subdivide(std::vector<int> &iTris, float detailMaxSquared)
     vNew.push_back(i);
 
   int nbVNew = vNew.size();
-  mesh_->expandVertices(vNew,1);
-  Sculpt::smoothFlat(mesh_, std::vector<int>(vNew.begin() + nbVNew, vNew.end()));
+  _mesh->expandVertices(vNew,1);
+  Sculpt::smoothFlat(_mesh, std::vector<int>(vNew.begin() + nbVNew, vNew.end()));
 
   nbVNew = vNew.size();
 #pragma omp parallel for

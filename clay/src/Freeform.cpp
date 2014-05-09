@@ -26,7 +26,7 @@ _aa_mode(MSAA),
 _draw_ui(true), 
 _mouse_down(false),
 _exposure(1.0f),
-mesh_(0), 
+_mesh(0), 
 _last_update_time(0.0),
 drawOctree_(false),
 _shutdown(false),
@@ -52,8 +52,8 @@ FreeformApp::~FreeformApp()
 {
   delete _environment;
   std::unique_lock<std::mutex> lock(_mesh_mutex);
-  if (mesh_) {
-    delete mesh_;
+  if (_mesh) {
+    delete _mesh;
   }
 
 }
@@ -215,11 +215,11 @@ void FreeformApp::setup()
     } catch (...) {
       mesh = 0;
     }
-    mesh_ = mesh;
-    if (mesh_) {
-      mesh_->startPushState();
+    _mesh = mesh;
+    if (_mesh) {
+      _mesh->startPushState();
       _last_load_time = ci::app::getElapsedSeconds();
-      sculpt_.setMesh(mesh_);
+      sculpt_.setMesh(_mesh);
     } else {
       try {
         _auto_save.deleteAutoSave();
@@ -372,12 +372,12 @@ void FreeformApp::keyDown( KeyEvent event )
   case 'r': sculpt_.setRemeshRadius(remeshRadius_); break;
 #endif
 #if __APPLE__
-  case 'y': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
-  case 'z': if (event.isMetaDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
+  case 'y': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
+  case 'z': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->undo(); } } break;
   case 'f': if (event.isMetaDown()) toggleFullscreen(""); break;
 #else
-  case 'y': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->redo(); } } break;
-  case 'z': if (event.isControlDown()) { if (mesh_ && allowUndo) { mesh_->undo(); } } break;
+  case 'y': if (event.isControlDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
+  case 'z': if (event.isControlDown()) { if (_mesh && allowUndo) { _mesh->undo(); } } break;
   case 'n': if (_ui->haveExitConfirm()) { _ui->clearConfirm(); } break;
 #endif
   case KeyEvent::KEY_ESCAPE:
@@ -452,7 +452,7 @@ void FreeformApp::update()
   _ui_zoom.Update(_immersive_mode ? UPPER_BOUND : LOWER_BOUND, curTime, IMMERSIVE_MODE_SMOOTH_STRENGTH);
   _ui->setZoomFactor(_ui_zoom.value);
   _ui->update(_leap_interaction, &sculpt_);
-  _ui->handleSelections(&sculpt_, _leap_interaction, this, mesh_);
+  _ui->handleSelections(&sculpt_, _leap_interaction, this, _mesh);
 
   //Camera Update
   m_camera.util.m_forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
@@ -467,13 +467,13 @@ void FreeformApp::update()
   Vector3 up = tCamera.rotation * Vector3::UnitY();
   Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
 
-  Matrix4x4 trans = mesh_->getTransformation();
+  Matrix4x4 trans = _mesh->getTransformation();
   Vector4 temp = m_camera.util.GetIsoStateReferencePosition();
   _focus_point = (trans * temp).head<3>();
 
   // if mesh
-  if (mesh_) {
-    _focus_radius = m_camera.util.IsoQueryRadius(mesh_);
+  if (_mesh) {
+    _focus_radius = m_camera.util.IsoQueryRadius(_mesh);
   } else {
     _focus_radius = 0.0f;
   }
@@ -486,8 +486,8 @@ void FreeformApp::update()
   m_camera.onResize(getWindowAspectRatio());
   m_camera.getProjectionMatrix();
 
-  if (mesh_) {
-    mesh_->updateGPUBuffers();
+  if (_mesh) {
+    _mesh->updateGPUBuffers();
   }
 
   _last_update_time = curTime;
@@ -525,13 +525,13 @@ void FreeformApp::updateLeapAndMesh() {
       LM_TRACK_CONST_VALUE(lastSculptTime);
 
       std::unique_lock<std::mutex> lock(_mesh_mutex);
-      if (mesh_) {
+      if (_mesh) {
         {
           std::unique_lock<std::mutex> lock(_mesh_update_rotation_mutex);
-          mesh_->updateRotation(curTime);
+          _mesh->updateRotation(curTime);
         }
         if (!_lock_camera && fabs(curTime - lastSculptTime) > 0.25) {
-          m_camera.util.UpdateCamera(mesh_);
+          m_camera.util.UpdateCamera(_mesh);
         }
         if (!_ui->tutorialActive() || _ui->toolsSlideActive()) {
           sculpt_.applyBrushes(curTime, &_auto_save);
@@ -539,10 +539,10 @@ void FreeformApp::updateLeapAndMesh() {
         }
       }
       _mesh_update_counter.Update(ci::app::getElapsedSeconds());
-    } else if (mesh_) {
+    } else if (_mesh) {
       // Allow camera movement when leap is disconnected
       std::unique_lock<std::mutex> lock(_mesh_mutex);
-      m_camera.util.UpdateCamera(mesh_);
+      m_camera.util.UpdateCamera(_mesh);
     }
   }
 }
@@ -617,8 +617,8 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   numBrushes++;
 
   ci::Matrix44f transform = ci::Matrix44f::identity();
-  if (mesh_) {
-    transform = ci::Matrix44f(mesh_->getTransformation(curTime).data());
+  if (_mesh) {
+    transform = ci::Matrix44f(_mesh->getTransformation(curTime).data());
   }
   ci::Matrix44f transformit = transform.inverted().transposed();
 
@@ -626,7 +626,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
 
   GLBuffer::checkFrameBufferStatus("3");
 
-  if (mesh_) {
+  if (_mesh) {
     _material_shader.bind();
     GLint vertex = _material_shader.getAttribLocation("vertex");
     GLint normal = _material_shader.getAttribLocation("normal");
@@ -664,7 +664,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
     glPolygonOffset(1.0f, 1.0f);
     glPolygonMode(GL_FRONT, GL_FILL);
     glEnable(GL_POLYGON_OFFSET_FILL);
-    mesh_->draw(vertex, normal, color);
+    _mesh->draw(vertex, normal, color);
     glDisable(GL_POLYGON_OFFSET_FILL);
     _material_shader.unbind();
 
@@ -676,7 +676,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
       _wireframe_shader.uniform( "surfaceColor", Color::black() );
       glPolygonMode(GL_FRONT, GL_LINE);
       glLineWidth(1.0f);
-      mesh_->drawVerticesOnly(vertex);
+      _mesh->drawVerticesOnly(vertex);
       glPolygonMode(GL_FRONT, GL_FILL);
       _wireframe_shader.unbind();
     }
@@ -731,7 +731,7 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   _environment->unbindCubeMap(0);
 
   if (drawOctree_) {
-    mesh_->drawOctree();
+    _mesh->drawOctree();
   }
 
   _screen_fbo.unbindFramebuffer();
@@ -911,9 +911,9 @@ void FreeformApp::draw() {
     if (_draw_ui) {
       int tris = 0;
       int verts = 0;
-      if (mesh_) {
-        tris = mesh_->getNbTriangles();
-        verts = mesh_->getNbVertices();
+      if (_mesh) {
+        tris = _mesh->getNbTriangles();
+        verts = _mesh->getNbVertices();
       }
       std::stringstream ss;
       ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
@@ -1297,17 +1297,17 @@ int FreeformApp::loadFile()
       }
       std::unique_lock<std::mutex> lock(_mesh_mutex);
       float rotationVel = 0.0f;
-      if (mesh_) {
-        rotationVel = mesh_->getRotationVelocity();
-        delete mesh_;
+      if (_mesh) {
+        rotationVel = _mesh->getRotationVelocity();
+        delete _mesh;
       }
-      mesh_ = mesh;
-      mesh_->setRotationVelocity(rotationVel);
-      if (mesh_) {
+      _mesh = mesh;
+      _mesh->setRotationVelocity(rotationVel);
+      if (_mesh) {
         _last_load_time = ci::app::getElapsedSeconds();
-        mesh_->startPushState();
+        _mesh->startPushState();
       }
-      sculpt_.setMesh(mesh_);
+      sculpt_.setMesh(_mesh);
       err = 1;
     }
   }
@@ -1329,17 +1329,17 @@ int FreeformApp::loadShape(Shape shape) {
   }
   std::unique_lock<std::mutex> lock(_mesh_mutex);
   float rotationVel = 0.0f;
-  if (mesh_) {
-    rotationVel = mesh_->getRotationVelocity();
-    delete mesh_;
+  if (_mesh) {
+    rotationVel = _mesh->getRotationVelocity();
+    delete _mesh;
   }
-  mesh_ = newMesh;
-  mesh_->setRotationVelocity(rotationVel);
-  if (mesh_) {
-    mesh_->startPushState();
+  _mesh = newMesh;
+  _mesh->setRotationVelocity(rotationVel);
+  if (_mesh) {
+    _mesh->startPushState();
     _last_load_time = ci::app::getElapsedSeconds();
   }
-  sculpt_.setMesh(mesh_);
+  sculpt_.setMesh(_mesh);
 
   return -1;
 }
@@ -1553,7 +1553,7 @@ fs::path FreeformApp::getSaveFilePathCustom(const fs::path &initialPath,
 
 int FreeformApp::saveFile()
 {
-  if (!mesh_) {
+  if (!_mesh) {
     return -1;
   }
 
@@ -1583,13 +1583,13 @@ int FreeformApp::saveFile()
       try {
         if (ext == ".OBJ" || ext == ".obj") {
           std::ofstream file(path.c_str());
-          files.saveOBJ(mesh_, file);
+          files.saveOBJ(_mesh, file);
           file.close();
         } else if (ext == ".STL" || ext == ".stl") {
-          files.saveSTL(mesh_, path.string());
+          files.saveSTL(_mesh, path.string());
         } else if (ext == ".PLY" || ext == ".ply") {
           std::ofstream file(path.c_str());
-          files.savePLY(mesh_, file);
+          files.savePLY(_mesh, file);
           file.close();
         }
       } catch (...) { }
@@ -1637,7 +1637,7 @@ void FreeformApp::print3D() {
   if (!file) {
     return;
   }
-  files.savePLY(mesh_, file);
+  files.savePLY(_mesh, file);
   file.close();
 
   // upload to our server using HTTP PUT

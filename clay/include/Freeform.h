@@ -202,7 +202,7 @@ private:
   std::map<std::string, LoopPair> m_audioLoops;
 
   // new mesh
-  Mesh* mesh_;
+  Mesh* _mesh;
   Sculpt sculpt_;
   bool drawOctree_;
   std::string shapes_[NUM_SHAPES];

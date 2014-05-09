@@ -6,7 +6,7 @@
 void Topology::adaptTopology(std::vector<int> &iTris, float d2Thickness)
 {
   std::vector<int> iVerts;
-  mesh_->getVerticesFromTriangles(iTris, iVerts);
+  _mesh->getVerticesFromTriangles(iTris, iVerts);
   int nbVerts = iVerts.size();
   std::vector<int> vec;
   int nbVertices = vertices().size();
@@ -21,7 +21,7 @@ void Topology::adaptTopology(std::vector<int> &iTris, float d2Thickness)
   }
   checkCollisions(vec, d2Thickness);
   std::vector<int> newTris;
-  mesh_->getTrianglesFromVertices(iVertsDecimated_, newTris);
+  _mesh->getTrianglesFromVertices(iVertsDecimated_, newTris);
   iTris.insert(iTris.end(), newTris.begin(), newTris.end());
 
   std::vector<int> iTrisTemp;
@@ -62,7 +62,7 @@ void Topology::checkCollisions(std::vector<int> &iVerts, float d2Thickness)
   }
 
   grid_.init(aabb, sqrtf(r2Thickness));
-  grid_.build(mesh_, iVerts);
+  grid_.build(_mesh, iVerts);
 
   std::vector<int> iNearVerts;
 
@@ -113,10 +113,10 @@ void Topology::checkCollisions(std::vector<int> &iVerts, float d2Thickness)
     if(vertices()[iv].sculptFlag_==Vertex::sculptMask_)
       vSmooth.push_back(iv);
   }
-  mesh_->expandVertices(vSmooth,1);
+  _mesh->expandVertices(vSmooth,1);
   Brush brush;
   brush._strength = 1.0f;
-  Sculpt::smooth(mesh_, vSmooth, brush, false);
+  Sculpt::smooth(_mesh, vSmooth, brush, false);
 }
 
 /** Vertex joint */
@@ -133,10 +133,10 @@ void Topology::vertexJoin(int iv1, int iv2)
   int nbRing2 = ring2.size();
 
   //undo-redo
-  mesh_->pushState(iTris1, ring1);
-  mesh_->pushState(iTris2, ring2);
-  if(v1.stateFlag_!=Mesh::stateMask_) { v1.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v1); }
-  if(v2.stateFlag_!=Mesh::stateMask_) { v2.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v2); }
+  _mesh->pushState(iTris1, ring1);
+  _mesh->pushState(iTris2, ring2);
+  if(v1.stateFlag_!=Mesh::stateMask_) { v1.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(v1); }
+  if(v2.stateFlag_!=Mesh::stateMask_) { v2.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(v2); }
 
   std::vector<Edge> edges1,edges2;
 
@@ -169,8 +169,8 @@ void Topology::vertexJoin(int iv1, int iv2)
     connect1RingCommonVertices(edges1, edges2, common);
   }
 
-  for(int i = 0; i<nbRing1; ++i) mesh_->computeRingVertices(ring1[i]);
-  for(int i = 0; i<nbRing2; ++i) mesh_->computeRingVertices(ring2[i]);
+  for(int i = 0; i<nbRing1; ++i) _mesh->computeRingVertices(ring1[i]);
+  for(int i = 0; i<nbRing2; ++i) _mesh->computeRingVertices(ring2[i]);
 
   iVertsDecimated_.push_back(iv1);
   iVertsDecimated_.push_back(iv2);
@@ -524,8 +524,8 @@ void Topology::cleanUpSingularVertex(int iv)
     return;
 
   //undo-redo
-  mesh_->pushState(v.tIndices_,v.ringVertices_);
-  if(v.stateFlag_!=Mesh::stateMask_) { v.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v); }
+  _mesh->pushState(v.tIndices_,v.ringVertices_);
+  if(v.stateFlag_!=Mesh::stateMask_) { v.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(v); }
 
   if(deleteVertexIfDegenerate(iv))
     return;
@@ -566,18 +566,18 @@ void Topology::cleanUpSingularVertex(int iv)
   }
 
   vertices().push_back(vNew);
-  mesh_->computeRingVertices(iv);
-  mesh_->computeRingVertices(ivNew);
+  _mesh->computeRingVertices(iv);
+  _mesh->computeRingVertices(ivNew);
 
   std::vector<int> &ring1 = vertices()[ivNew].ringVertices_;
   int nbRing1 = ring1.size();
   for(int i = 0; i<nbRing1; ++i)
-    mesh_->computeRingVertices(ring1[i]);
+    _mesh->computeRingVertices(ring1[i]);
 
   std::vector<int> &ring2 = vertices()[iv].ringVertices_;
   int nbRing2 = ring2.size();
   for(int i = 0; i<nbRing2; ++i)
-    mesh_->computeRingVertices(ring2[i]);
+    _mesh->computeRingVertices(ring2[i]);
 
   iVertsDecimated_.push_back(iv);
   iVertsDecimated_.push_back(ivNew);
@@ -588,7 +588,7 @@ void Topology::cleanUpSingularVertex(int iv)
 
   Brush brush;
   brush._strength = 1.0f;
-  Sculpt::smooth(mesh_, vSmooth, brush, false);
+  Sculpt::smooth(_mesh, vSmooth, brush, false);
 
   cleanUpSingularVertex(iv);
   cleanUpSingularVertex(ivNew);
@@ -625,7 +625,7 @@ bool Topology::deleteVertexIfDegenerate(int iv)
       if(iVert!=iv)
       {
         vertices()[iVert].removeTriangle(iTri);
-        mesh_->computeRingVertices(iVert);
+        _mesh->computeRingVertices(iVert);
       }
     }
     v.tagFlag_ = -1;
@@ -660,7 +660,7 @@ bool Topology::deleteVertexIfDegenerate(int iv)
       if(iVert!=iv)
       {
         vertices()[iVert].removeTriangle(iTri1);
-        mesh_->computeRingVertices(iVert);
+        _mesh->computeRingVertices(iVert);
       }
     }
 
@@ -678,7 +678,7 @@ bool Topology::deleteVertexIfDegenerate(int iv)
       if(iVert!=iv)
       {
         vertices()[iVert].removeTriangle(iTri2);
-        mesh_->computeRingVertices(iVert);
+        _mesh->computeRingVertices(iVert);
       }
     }
 

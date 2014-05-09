@@ -20,7 +20,7 @@ public:
   enum TopoMode{DECIMATION, SUBDIVISION, UNIFORMISATION, ADAPTIVE, STATIC};
   Sculpt();
   ~Sculpt();
-  void setMesh(Mesh *mesh) { mesh_ = mesh; }
+  void setMesh(Mesh *mesh) { _mesh = mesh; }
   void toggleCulling();
   void setSculptMode(SculptMode mode) { sculptMode_ = mode; }
   void setTopoMode(TopoMode mode) { topoMode_ = mode; }
@@ -76,7 +76,7 @@ private:
   static float d2Thickness_; //distance between 2 vertices before split/merge
   static float d2Move_; //max displacement of vertices per step
 
-  Mesh* mesh_; //selected meshs
+  Mesh* _mesh; //selected meshs
   SculptMode sculptMode_; //sculpting mode
   TopoMode topoMode_; //topological mode
   bool prevSculpt_;

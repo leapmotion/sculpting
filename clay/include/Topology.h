@@ -31,10 +31,10 @@ private:
   };
 
 public :
-  Topology() : mesh_(0), triangles_(0), vertices_(0), centerPoint_(Vector3::Zero()), radiusSquared_(0.0f) {}
+  Topology() : _mesh(0), triangles_(0), vertices_(0), centerPoint_(Vector3::Zero()), radiusSquared_(0.0f) {}
   ~Topology() {}
   void init(Mesh *mesh, float radiusSquared, const Vector3& centerPoint) {
-    mesh_ = mesh;
+    _mesh = mesh;
     triangles_ = &mesh->getTriangles();
     vertices_ = &mesh->getVertices();
     centerPoint_ = centerPoint;
@@ -89,7 +89,7 @@ private:
   inline TriangleVector& triangles() { return *triangles_; }
   inline VertexVector& vertices() { return *vertices_; }
 
-  Mesh *mesh_; //mesh
+  Mesh *_mesh; //mesh
   TriangleVector* triangles_; //reference to mesh triangles
   VertexVector* vertices_; //reference to mesh vertices
   Vector3 centerPoint_; //center of brush

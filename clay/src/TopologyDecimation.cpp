@@ -58,7 +58,7 @@ void Topology::decimation(std::vector<int> &iTris, float detailMinSquared)
   getValidModifiedVertices(iVertsDecimated);
 
   std::vector<int> newTris;
-  mesh_->getTrianglesFromVertices(iVertsDecimated, newTris);
+  _mesh->getTrianglesFromVertices(iVertsDecimated, newTris);
   iTris.insert(iTris.end(),newTris.begin(),newTris.end());
 
   std::vector<int> iTrisTemp;
@@ -206,8 +206,8 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
   std::vector<int> &ring2 = v2.ringVertices_;
 
   //undo-redo
-  mesh_->pushState(tris1,ring1);
-  mesh_->pushState(tris2,ring2);
+  _mesh->pushState(tris1,ring1);
+  _mesh->pushState(tris2,ring2);
 
   std::sort(ring1.begin(),ring1.end());
   std::sort(ring2.begin(),ring2.end());
@@ -223,10 +223,10 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
     vOpp2.addTriangle(iTri1);
     t1.replaceVertex(iv2,ivOpp2);
     t2.replaceVertex(iv1,ivOpp1);
-    mesh_->computeRingVertices(iv1);
-    mesh_->computeRingVertices(iv2);
-    mesh_->computeRingVertices(ivOpp1);
-    mesh_->computeRingVertices(ivOpp2);
+    _mesh->computeRingVertices(iv1);
+    _mesh->computeRingVertices(iv2);
+    _mesh->computeRingVertices(ivOpp1);
+    _mesh->computeRingVertices(ivOpp2);
     cleanUpSingularVertex(iv1);
     cleanUpSingularVertex(iv2);
     cleanUpSingularVertex(ivOpp1);
@@ -251,13 +251,13 @@ void Topology::edgeCollapse(int iTri1, int iTri2,int iv1, int iv2,int ivOpp1, in
     triangles()[tris2[i]].replaceVertex(iv2,iv1);
   }
 
-  mesh_->computeRingVertices(iv1);
+  _mesh->computeRingVertices(iv1);
 
   Vector3 laplacianPos(Vector3::Zero());
   int nbRing1 = ring1.size();
   for(int i = 0; i<nbRing1; ++i)
   {
-    mesh_->computeRingVertices(ring1[i]);
+    _mesh->computeRingVertices(ring1[i]);
     laplacianPos+=vertices()[ring1[i]];
   }
   LM_ASSERT(nbRing1 > 0, "Not enough points");
@@ -298,7 +298,7 @@ void Topology::deleteTriangle(int iTri)
   Triangle &last = triangles()[lastPos];
 
   //undo-redo
-  if(last.stateFlag_!=Mesh::stateMask_) { last.stateFlag_ = Mesh::stateMask_; mesh_->getTrianglesState().push_back(last); }
+  if(last.stateFlag_!=Mesh::stateMask_) { last.stateFlag_ = Mesh::stateMask_; _mesh->getTrianglesState().push_back(last); }
 
   last.id_ = iTri;
   std::vector<int> &iTrisLeafLast = last.leaf_->getTriangles();
@@ -311,9 +311,9 @@ void Topology::deleteTriangle(int iTri)
   Vertex &v3 = vertices()[iv3];
 
   //undo-redo
-  if(v1.stateFlag_!=Mesh::stateMask_) { v1.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v1); }
-  if(v2.stateFlag_!=Mesh::stateMask_) { v2.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v2); }
-  if(v3.stateFlag_!=Mesh::stateMask_) { v3.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v3); }
+  if(v1.stateFlag_!=Mesh::stateMask_) { v1.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(v1); }
+  if(v2.stateFlag_!=Mesh::stateMask_) { v2.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(v2); }
+  if(v3.stateFlag_!=Mesh::stateMask_) { v3.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(v3); }
 
   v1.replaceTriangle(lastPos,iTri);
   v2.replaceTriangle(lastPos,iTri);
@@ -338,7 +338,7 @@ void Topology::deleteVertex(int iVert)
   Vertex &last = vertices()[lastPos];
 
   //undo-redo
-  if(last.stateFlag_!=Mesh::stateMask_) { last.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(last); }
+  if(last.stateFlag_!=Mesh::stateMask_) { last.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(last); }
 
   last.id_ = iVert;
   std::vector<int> &iTris = last.tIndices_;
@@ -350,7 +350,7 @@ void Topology::deleteVertex(int iVert)
     Triangle &t = triangles()[iTris[i]];
 
     //undo-redo
-    if(t.stateFlag_!=Mesh::stateMask_) { t.stateFlag_ = Mesh::stateMask_; mesh_->getTrianglesState().push_back(t); }
+    if(t.stateFlag_!=Mesh::stateMask_) { t.stateFlag_ = Mesh::stateMask_; _mesh->getTrianglesState().push_back(t); }
 
     t.replaceVertex(lastPos,iVert);
   }
@@ -359,7 +359,7 @@ void Topology::deleteVertex(int iVert)
     Vertex &v = vertices()[ring[i]];
 
     //undo-redo
-    if(v.stateFlag_!=Mesh::stateMask_) { v.stateFlag_ = Mesh::stateMask_; mesh_->getVerticesState().push_back(v); }
+    if(v.stateFlag_!=Mesh::stateMask_) { v.stateFlag_ = Mesh::stateMask_; _mesh->getVerticesState().push_back(v); }
 
     v.replaceRingVertex(lastPos,iVert);
   }
