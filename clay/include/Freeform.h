@@ -143,8 +143,6 @@ private:
   std::thread _mesh_thread;
   bool _shutdown;
   Utilities::FPSCounter _mesh_update_counter;
-  Vector3 _focus_point;
-  float _focus_radius;
   double _last_update_time;
   double _last_load_time;
   Utilities::ExponentialFilter<float> _focus_opacity_smoother;
@@ -161,9 +159,7 @@ private:
   LeapListener _listener;
   Leap::Controller _controller;
   LeapInteraction* _leap_interaction;
-  Utilities::ExponentialFilter<ci::Vec3f> _campos_smoother;
-  Utilities::ExponentialFilter<ci::Vec3f> _lookat_smoother;
-  Utilities::ExponentialFilter<ci::Vec3f> _up_smoother;
+  
 
   // *** ui stuff ***
   Color _brush_color;

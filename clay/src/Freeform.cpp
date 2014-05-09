@@ -31,7 +31,6 @@ _last_update_time(0.0),
 drawOctree_(false),
 _shutdown(false),
 _draw_background(true), 
-_focus_point(Vector3::Zero()), 
 remeshRadius_(100.0f),
 _lock_camera(false),
 _last_load_time(0.0), 
@@ -456,31 +455,7 @@ void FreeformApp::update()
 
   //Camera Update
   m_camera.util.m_forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
-  m_camera.update(_leap_interaction->getDeltaVector()*deltaTime);
-
-  lmTransform tCamera = m_camera.util.GetCameraInWorldSpace();
-
-  Vec3f campos = ToVec3f(tCamera.translation);
-  Vector3 up = tCamera.rotation * Vector3::UnitY();
-  Vector3 to = tCamera.translation + tCamera.rotation * Vector3::UnitZ() * -200.0f;
-
-  Matrix4x4 trans = _mesh->getTransformation();
-  Vector4 temp = m_camera.util.GetIsoStateReferencePosition();
-  _focus_point = (trans * temp).head<3>();
-
-  // if mesh
-  if (_mesh) {
-    _focus_radius = m_camera.util.IsoQueryRadius(_mesh);
-  } else {
-    _focus_radius = 0.0f;
-  }
-
-  _campos_smoother.Update(campos, curTime, 0.95f);
-  _lookat_smoother.Update(ToVec3f(to), curTime, 0.95f);
-  _up_smoother.Update(ToVec3f(up), curTime, 0.95f);
-
-  m_camera.lookAt(_campos_smoother.value, _lookat_smoother.value, _up_smoother.value.normalized());
-  m_camera.getProjectionMatrix();
+  m_camera.update(_leap_interaction->getDeltaVector()*deltaTime, curTime, _mesh);
 
   if (_mesh) {
     _mesh->updateGPUBuffers();
@@ -600,10 +575,10 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   focusOpacity = Utilities::SmootherStep(1.0f - focusOpacity);
   _focus_opacity_smoother.Update(focusOpacity, curTime, 0.925f);
   focusOpacity = _focus_opacity_smoother.value;
-  ci::Vec3f focus(_focus_point.x(), _focus_point.y(), _focus_point.z());
+  ci::Vec3f focus(m_camera.getFocusPoint().x(), m_camera.getFocusPoint().y(), m_camera.getFocusPoint().z());
   brushPositions.push_back(focus);
   brushWeights.push_back(focusOpacity);
-  brushRadii.push_back(_focus_radius);
+  brushRadii.push_back(m_camera.getFocusRadius());
   numBrushes++;
 
   ci::Matrix44f transform = ci::Matrix44f::identity();
