@@ -428,6 +428,7 @@ void FreeformApp::update()
   m_camera.util.m_forceCameraOrbit = timeSinceActivity > TIME_UNTIL_AUTOMATIC_ORBIT;
   m_camera.update(_leap_interaction->getDeltaVector()*deltaTime, curTime, _mesh);
 
+  m_camera.setFovModifier((-_ui_zoom.value * 20.0f) + (-inactivityRatio * 5.0f), curTime);
   if (_mesh) {
     _mesh->updateGPUBuffers();
   }

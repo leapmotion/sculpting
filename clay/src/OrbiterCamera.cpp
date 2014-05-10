@@ -9,6 +9,11 @@ OrbiterCamera::OrbiterCamera() :
 mWheelZoom(0.0f),
 mFocusPoint(Vector3::Zero())
 {
+  mFovModifier.Update(0.0f, 0.0, 0.5f);
+}
+
+void OrbiterCamera::setFovModifier(float mod, double currentTime) {
+  mFovModifier.Update(mod, currentTime, 0.95f);
 }
 
 void OrbiterCamera::onMouseMove(float dX, float dY) {
@@ -17,7 +22,7 @@ void OrbiterCamera::onMouseMove(float dX, float dY) {
 }
 
 void OrbiterCamera::onResize(float newAspectRatio) {
-  setPerspective(80.0f, newAspectRatio, 1.0f, 100000.f);
+  setPerspective(80.0f + mFovModifier.value, newAspectRatio, 1.0f, 100000.f);
 }
 
 void OrbiterCamera::update(const Vec4f &deltaVector, double curTime, Mesh* mesh) {
