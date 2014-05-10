@@ -171,7 +171,6 @@ private:
   Utilities::ExponentialFilter<float> _ui_zoom;
 
   UserInterface* _ui;
-  bool _draw_ui;
 
   Fbo _screen_fbo;
   Fbo _horizontal_blur_fbo;
@@ -180,15 +179,14 @@ private:
   GlslProg _bloom_shader;
   float _exposure; // hdr exposure
   bool _bloom_visible;
-  float _bloom_size;
+  const float _bloom_size;
   float _bloom_strength;
   float _bloom_light_threshold;
-  bool _draw_background;
 
   // audio stuff
   bool _have_audio;
   bool _audio_paused;
-  std::vector<ci::DataSourceRef> m_audioSourceRefs;
+  std::vector<ci::DataSourceRef> m_audioSourceRefs; //set of smart pointers to resources - DO NOT REMOVE
   typedef std::pair<irrklang::ISound*, irrklang::ISound*> LoopPair;
   irrklang::ISoundEngine* m_soundEngine;
   LoopPair m_activeLoop;
@@ -197,9 +195,7 @@ private:
   // new mesh
   Mesh* _mesh;
   Sculpt _sculpt;
-  bool drawOctree_;
   std::string shapes_[NUM_SHAPES];
-  float remeshRadius_;
 
 };
 

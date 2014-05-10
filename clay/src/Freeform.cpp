@@ -23,14 +23,10 @@ const float MAX_FOV = 90.0f;
 FreeformApp::FreeformApp() : 
 _environment(0), 
 _aa_mode(MSAA),
-_draw_ui(true), 
 _exposure(1.0f),
 _mesh(0), 
 _last_update_time(0.0),
-drawOctree_(false),
 _shutdown(false),
-_draw_background(true), 
-remeshRadius_(100.0f),
 _lock_camera(false),
 _last_load_time(0.0), 
 _first_environment_load(true), 
@@ -42,7 +38,8 @@ m_activeLoop(nullptr, nullptr),
 _audio_paused(false),
 _immersive_mode(false),
 _immersive_entered_time(0.0),
-_brush_color(0.85f, 0.95f, 1.0f)
+_brush_color(0.85f, 0.95f, 1.0f),
+_bloom_size(1.0f)
 
 {
   Menu::updateSculptMult(0.0, 0.0f);
@@ -128,7 +125,7 @@ void FreeformApp::setup()
 
   _draw_wireframe = false;
   _bloom_visible = true;
-  _bloom_size = 1.f;
+  
   _bloom_strength = 1.f;
   _bloom_light_threshold = 0.5f;
   
@@ -335,12 +332,6 @@ void FreeformApp::keyDown( KeyEvent event )
 
   switch( event.getChar() )
   {
-#if !LM_PRODUCTION_BUILD
-  case 'u': _draw_ui = !_draw_ui; break;
-  case 'o': drawOctree_ = !drawOctree_; break;
-  case 's': toggleSymmetry(); break;
-  case 'r': _sculpt.setRemeshRadius(remeshRadius_); break;
-#endif
 #if __APPLE__
   case 'y': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->redo(); } } break;
   case 'z': if (event.isMetaDown()) { if (_mesh && allowUndo) { _mesh->undo(); } } break;
@@ -516,15 +507,14 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   setViewport( _screen_fbo.getBounds() );
   clear();
   setMatrices( m_camera );
-  if (_draw_background) {
-    // draw color pass of skybox
-    _environment->bindCubeMap(CubeMapManager::CUBEMAP_SKY, 0);
-    _sky_shader.bind();
-    _sky_shader.uniform("cubemap", 0);
-    gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
-    _sky_shader.unbind();
-    _environment->unbindCubeMap(0);
-  }
+
+  // draw color pass of skybox
+  _environment->bindCubeMap(CubeMapManager::CUBEMAP_SKY, 0);
+  _sky_shader.bind();
+  _sky_shader.uniform("cubemap", 0);
+  gl::drawSphere(Vec3f::zero(), SPHERE_RADIUS, 40);
+  _sky_shader.unbind();
+  _environment->unbindCubeMap(0);
 
   // enable depth and culling for rendering mesh
   glEnable(GL_CULL_FACE);
@@ -673,10 +663,6 @@ void FreeformApp::renderSceneToFbo(Camera& _Camera)
   
   _environment->unbindCubeMap(1);
   _environment->unbindCubeMap(0);
-
-  if (drawOctree_) {
-    _mesh->drawOctree();
-  }
 
   _screen_fbo.unbindFramebuffer();
 
@@ -851,29 +837,12 @@ void FreeformApp::draw() {
     GLBuffer::checkError("After post process");
     GLBuffer::checkFrameBufferStatus("After post process");
 
-#if !LM_PRODUCTION_BUILD
-    if (_draw_ui) {
-      int tris = 0;
-      int verts = 0;
-      if (_mesh) {
-        tris = _mesh->getNbTriangles();
-        verts = _mesh->getNbVertices();
-      }
-      std::stringstream ss;
-      ss << getAverageFps() << " render fps, " << _mesh_update_counter.FPS() << " simulate fps, " << tris << " triangles, " << verts << " vertices";
-      glPushMatrix();
-      gl::scale(1, -1);
-      ci::gl::drawString(ss.str(), Vec2f(5.0f, -(height-5.0f)), ColorA::white(), Font("Arial", 18));
-      glPopMatrix();
-    }
-#endif
-
     gl::color(ci::ColorA::white());
 
     setMatricesWindow( size );
     setViewport( viewport );
 
-    if (_screenshot_path.empty() && _draw_ui) {
+    if (_screenshot_path.empty()) {
       _ui->draw(exposureMult);
     }
 
