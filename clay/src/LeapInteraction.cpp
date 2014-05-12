@@ -13,6 +13,92 @@ using namespace ci;
 const float LeapInteraction::MIN_POINTABLE_LENGTH = 10.0f;
 const float LeapInteraction::MIN_POINTABLE_AGE = 0.05f;
 
+
+
+//Temporally consistent, outlier robust hand tracking.  If this is still required by V2,
+//We've failed.
+class HandInfo {
+public:
+
+  HandInfo() : m_lastUpdateTime(0.0), m_lastHandOpenChangeTime(0.0), m_handOpen(false), m_firstUpdate(true), m_lastPalmPos(Vector3::Zero()) {
+    m_translation.value = Vector3::Zero();
+    m_transRatio.value = 0.5f;
+    m_normalY.value = 0.5f;
+  }
+
+  int getNumFingers() const { return m_numFingers.FilteredCategory(); }
+  Vector3 getTranslation() const { return m_translation.value; }
+  float getTranslationRatio() const { return m_transRatio.value; }
+  float getNormalY() const { return m_normalY.value; }
+  double getLastUpdateTime() const { return m_lastUpdateTime; }
+  double getLastHandOpenChangeTime() const { return m_lastHandOpenChangeTime; }
+  bool handOpen() const { return m_handOpen; }
+
+  Vector3 getModifiedTranslation() const {
+    const float ratio = getTranslationRatio();
+    const Vector3 origTrans = getTranslation();
+    return Vector3(ratio*origTrans.x(), ratio*origTrans.y(), (1.0f - ratio)*origTrans.z());
+  }
+
+  void update(const Leap::Hand& hand, const Leap::Frame& sinceFrame, double curTime) {
+    static const float NUM_FINGERS_SMOOTH_STRENGTH = 0.9f;
+    static const float TRANSLATION_SMOOTH_STRENGTH = 0.5f;
+    static const float TRANSLATION_RATIO_SMOOTH_STRENGTH = 0.985f;
+    static const float NORMAL_Y_SMOOTH_STRENGTH = 0.9f;
+    m_lastUpdateTime = curTime;
+
+    // update number of fingers
+    const Leap::PointableList pointables = hand.pointables();
+    int numFingers = 0;
+    for (int i = 0; i<pointables.count(); i++) {
+      if (pointables[i].length() >= LeapInteraction::MIN_POINTABLE_LENGTH && pointables[i].timeVisible() >= LeapInteraction::MIN_POINTABLE_AGE) {
+        numFingers++;
+      }
+    }
+    m_numFingers.Update(numFingers, curTime, NUM_FINGERS_SMOOTH_STRENGTH);
+    const int curNumFingers = m_numFingers.FilteredCategory();
+    if (curNumFingers > 2 && !m_handOpen) {
+      m_handOpen = true;
+      m_lastHandOpenChangeTime = curTime;
+    }
+    else if (m_handOpen && curNumFingers <= 2) {
+      m_handOpen = false;
+      m_lastHandOpenChangeTime = curTime;
+    }
+
+    // update translation
+    const Leap::Vector temp(hand.palmPosition());
+    const Vector3 curPos(temp.x, temp.y, temp.z);
+    Vector3 translation = curPos - m_lastPalmPos;
+    if (m_firstUpdate) {
+      translation = Vector3::Zero();
+    }
+    m_lastPalmPos = curPos;
+    m_firstUpdate = false;
+    m_translation.Update(translation, curTime, TRANSLATION_SMOOTH_STRENGTH);
+
+    // update translation ratio
+    if (translation.squaredNorm() > 0.001f) {
+      const Vector3 unitTranslation = translation.normalized();
+      const float curRatio = unitTranslation.x()*unitTranslation.x() + unitTranslation.y()*unitTranslation.y();
+      m_transRatio.Update(curRatio, curTime, TRANSLATION_RATIO_SMOOTH_STRENGTH);
+    }
+
+    // update palm normal Y value
+    m_normalY.Update(fabs(hand.palmNormal().y), curTime, NORMAL_Y_SMOOTH_STRENGTH);
+  }
+private:
+  bool m_firstUpdate;
+  Vector3 m_lastPalmPos;
+  Utilities::CategoricalFilter<10> m_numFingers;
+  Utilities::ExponentialFilter<Vector3> m_translation;
+  Utilities::ExponentialFilter<float> m_transRatio;
+  Utilities::ExponentialFilter<float> m_normalY;
+  double m_lastUpdateTime;
+  bool m_handOpen;
+  double m_lastHandOpenChangeTime;
+};
+
 LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sculpt), _ui(ui),
   _desired_brush_radius(0.4f), _is_pinched(false), _last_camera_update_time(0.0), _autoBrush(true),
   _last_activity_time(0.0)
@@ -73,6 +159,7 @@ void LeapInteraction::interact(double curTime)
 {
   LM_ASSERT_IDENTICAL(124324);
   LM_TRACK_VALUE(curTime);
+ 
   float cur_dtheta = 0;
   float cur_dphi = 0;
   float cur_dzoom = 0;
@@ -329,3 +416,4 @@ void LeapInteraction::cleanUpHandInfos(double curTime) {
   }
   LM_ASSERT_IDENTICAL(_hand_infos.size());
 }
+
