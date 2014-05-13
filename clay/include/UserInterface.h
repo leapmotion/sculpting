@@ -126,6 +126,7 @@ struct MenuEntry {
   float m_angleWidth;
   float m_wedgeStart;
   float m_wedgeEnd;
+
   ci::Color m_color;
   Utilities::ExponentialFilter<float> m_hoverStrength;
   Utilities::ExponentialFilter<float> m_activationStrength;
@@ -133,38 +134,22 @@ struct MenuEntry {
 
 class Menu {
 public:
-
-  static const float FONT_SIZE;
-  
-  static ci::Font g_font;
-  static ci::Font g_boldFont;
-  static ci::gl::TextureFontRef g_textureFont;
-  static ci::gl::TextureFontRef g_boldTextureFont;
-  static std::vector<ci::gl::Texture> g_icons;
-  static std::vector<ci::gl::Texture> g_previews;
-  static ci::Vec2f g_shadowOffset;
-  static float g_zoomFactor;
-  static float g_maxMenuActivation;
-  static Utilities::ExponentialFilter<float> g_maxMenuActivationSmoother;
-  static Vector2 g_forceCenter;
-  static float g_timeSinceSculpting;
-  static float g_menuOpacityCap;
-  static ci::gl::GlslProg g_previewShader;
-
   Menu();
-  void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
-  void setNumEntries(int num);
-  void draw() const;
-  int checkCollision(const Vector2& pos) const;
-  void toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const;
 
-  float getActivation() const { return m_activation.value; }
+  void update(const std::vector<Vec4f>& tips, Sculpt* sculpt);
+  void draw() const;
+  
+private:
+  //Some of these are helpers, others are only ever used by UserInterface
+  void setNumEntries(int num);
+  int checkCollision(const Vector2& pos) const;
   bool hasSelectedEntry() const { return m_haveSelection; }
+  float getActivation() const { return m_activation.value; }
   void clearSelection() { m_haveSelection = false; }
-  float getSweepStart() const { return static_cast<float>(-m_sweepAngle/2.0f + m_angleOffset); }
+  void toRadialCoordinates(const Vector2& pos, float& radius, float& angle) const;
+  float getSweepStart() const { return static_cast<float>(-m_sweepAngle / 2.0f + m_angleOffset); }
   float getSweepEnd() const { return getSweepStart() + m_sweepAngle; }
   MenuEntry& getEntry(int idx) { return m_entries[idx]; }
-  const MenuEntry& getEntry(int idx) const { return m_entries[idx]; }
   const MenuEntry& getSelectedEntry() const { return m_entries[m_curSelectedEntry]; }
   float relativeToAbsolute(float radius) const { return radius * g_windowSize.y(); }
   float absoluteToRelative(float radius) const { return radius / g_windowSize.y(); }
@@ -181,47 +166,16 @@ public:
   void setActualName(const std::string& name) { m_actualName = name; }
   void setActiveName(const std::string& name) { m_activeName = name; }
   void setActiveColor(const ci::Color& color) { m_activeColor = color; }
-  ci::Color getActiveColor() const { return m_activeColor; }
   void setAlwaysActivated(bool activated) { m_alwaysActivated = activated; }
-
-  static void setWindowSize(const ci::Vec2i& size);
-  static const Vector2& getWindowSize() { return g_windowSize; }
-  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985f); }
-
-private:
-
-  static float getOpacity(float activation) {
-    static const float NORMAL_OPACITY = 0.6f;
-    static const float ACTIVATED_OPACITY = 1.0f;
-    return g_sculptMult.value * (NORMAL_OPACITY + (ACTIVATED_OPACITY-NORMAL_OPACITY)*activation);
-  }
-
+  
   ci::Vec2f relativeToAbsolute(const Vector2& pos, bool useZoom = true) const {
     Vector2 scaled = pos;
     if (useZoom) {
       scaled = g_zoomFactor*(scaled - Vector2::Constant(0.5f)) + Vector2::Constant(0.5f);
     }
-    //scaled.x() = (scaled.x() - 0.5f)/m_windowAspect + 0.5f;
-    //scaled.y() = (scaled.y() - 0.5f)*m_windowAspect + 0.5f;
     scaled = scaled.cwiseProduct(g_windowSize);
     return ci::Vec2f(scaled.data());
   }
-
-  static Vector2 forceAt(const Vector2& pos) {
-    static const float FORCE_STRENGTH = 0.05f;
-    const Vector2 diff = pos - g_forceCenter;
-    const float normSq = diff.squaredNorm();
-    if (normSq > 0.001f) {
-      return g_maxMenuActivationSmoother.value*FORCE_STRENGTH*(diff/normSq);
-    }
-    return Vector2::Zero();
-  }
-
-  static const float RING_THICKNESS_RATIO;
-  static const float BASE_OUTER_RADIUS;
-  static const float BASE_INNER_RADIUS;
-  static const float OUTER_RADIUS_PER_ENTRY;
-  static const float SWEEP_ANGLE;
 
   typedef std::vector<MenuEntry, Eigen::aligned_allocator<MenuEntry> > MenuEntryVector;
 
@@ -249,13 +203,59 @@ private:
   int m_defaultEntry;
   bool m_actionsOnly;
 
+  friend struct MenuEntry;
+  friend class UserInterface;
+
+public:
+  static void setWindowSize(const ci::Vec2i& size);
+  static const Vector2& getWindowSize() { return g_windowSize; }
+  static void updateSculptMult(double curTime, float mult) { g_sculptMult.Update(mult, curTime, 0.985f); }
+
+  static const float FONT_SIZE;
+  static std::vector<ci::gl::Texture> g_icons;
+  static std::vector<ci::gl::Texture> g_previews;
+  static ci::gl::GlslProg g_previewShader;
+
+private:
+
+  static float getOpacity(float activation) {
+    static const float NORMAL_OPACITY = 0.6f;
+    static const float ACTIVATED_OPACITY = 1.0f;
+    return g_sculptMult.value * (NORMAL_OPACITY + (ACTIVATED_OPACITY - NORMAL_OPACITY)*activation);
+  }
+
+  static Vector2 forceAt(const Vector2& pos) {
+    static const float FORCE_STRENGTH = 0.05f;
+    const Vector2 diff = pos - g_forceCenter;
+    const float normSq = diff.squaredNorm();
+    if (normSq > 0.001f) {
+      return g_maxMenuActivationSmoother.value*FORCE_STRENGTH*(diff / normSq);
+    }
+    return Vector2::Zero();
+  }
+
+  static ci::gl::TextureFontRef g_textureFont;
+  static ci::gl::TextureFontRef g_boldTextureFont;
+
+  static ci::Vec2f g_shadowOffset;
+  static float g_zoomFactor;
+  static float g_maxMenuActivation;
+  static Utilities::ExponentialFilter<float> g_maxMenuActivationSmoother;
+  static Vector2 g_forceCenter;
+  static float g_timeSinceSculpting;
+  static float g_menuOpacityCap;
+
   static Vector2 g_windowSize;
   static float g_windowDiagonal;
   static float g_windowAspect;
   static Vector2 g_windowCenter;
   static Utilities::ExponentialFilter<float> g_sculptMult;
 
-  friend struct MenuEntry;
+  static const float RING_THICKNESS_RATIO;
+  static const float BASE_OUTER_RADIUS;
+  static const float BASE_INNER_RADIUS;
+  static const float OUTER_RADIUS_PER_ENTRY;
+  static const float SWEEP_ANGLE;
 };
 
 class UserInterface {
@@ -265,39 +265,42 @@ public:
   UserInterface();
   void update(LeapInteraction* leap, Sculpt* sculpt);
   void draw(float overallOpacity) const;
+
   void drawTutorialSlides(float opacityMult) const;
   void drawAbout(float opacityMult) const;
   void drawError(const std::string& message, int errorNum) const;
   void drawImmersive(float opacityMult) const;
-  void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
+  
   float maxActivation() const;
   float maxActivation(Vector2& pos) const;
   void handleSelections(Sculpt* sculpt, LeapInteraction* leap, FreeformApp* app, Mesh* mesh);
   void showConfirm(MenuEntry::MenuEntryType entryType);
   bool haveExitConfirm() const;
   void clearConfirm();
+
   void setRegularFont(const ci::Font& font) {
-    Menu::g_font = font;
     Menu::g_textureFont = ci::gl::TextureFont::create(font);
   }
   void setBoldFont(const ci::Font& font) {
-    Menu::g_boldFont = font;
     Menu::g_boldTextureFont = ci::gl::TextureFont::create(font);
   }
+
   void drawCursor(const ci::Vec2f& position, float opacity) const;
-  void setZoomFactor(float zoom) { Menu::g_zoomFactor = zoom; }
-  float getZoomFactor() const { return Menu::g_zoomFactor; }
+  void setWindowSize(const Vec2i& size) { Menu::setWindowSize(size); }
   void setTutorialTextures(ci::gl::Texture tutorial1, ci::gl::Texture tutorial2, ci::gl::Texture tutorial3, ci::gl::Texture tutorial4) {
     _tutorial1 = tutorial1;
     _tutorial2 = tutorial2;
     _tutorial3 = tutorial3;
     _tutorial4 = tutorial4;
   }
+
   bool tutorialActive() const { return _draw_tutorial_menu; }
   bool toolsSlideActive() const { return _tutorial_slide == 2; }
   void forceDrawTutorialMenu() { _draw_tutorial_menu = true; _last_switch_time = ci::app::getElapsedSeconds(); }
   void setAboutTexture(ci::gl::Texture about) { _about = about; }
   bool aboutActive() const { return _draw_about_menu; }
+
+  void setZoomFactor(float zoom) { Menu::g_zoomFactor = zoom; }
 
 private:
 

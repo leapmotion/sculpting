@@ -17,8 +17,6 @@ const float Menu::OUTER_RADIUS_PER_ENTRY = 0.0175f;
 const float Menu::BASE_INNER_RADIUS = 0.075f;
 const float Menu::SWEEP_ANGLE = 3.5f;
 
-ci::Font Menu::g_font;
-ci::Font Menu::g_boldFont;
 ci::gl::TextureFontRef Menu::g_textureFont;
 ci::gl::TextureFontRef Menu::g_boldTextureFont;
 Vector2 Menu::g_windowSize = Vector2::Constant(2.0f);
