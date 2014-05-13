@@ -10,10 +10,14 @@ using namespace ci;
 
 #define USE_SKELETON_API 0
 
-const float LeapInteraction::MIN_POINTABLE_LENGTH = 10.0f;
-const float LeapInteraction::MIN_POINTABLE_AGE = 0.05f;
+const float MIN_POINTABLE_LENGTH = 10.0f;
+const float MIN_POINTABLE_AGE = 0.05f;
 
-
+static const float ORBIT_SPEED = 0.01f;
+static const float ZOOM_SPEED = 75.0f;
+static const float AGE_WARMUP_TIME = 0.75f;
+static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
+static const float SCALE_FACTOR_SMOOTH_STRENGTH = 0.5f;
 
 //Temporally consistent, outlier robust hand tracking.  If this is still required by V2,
 //We've failed.
@@ -51,7 +55,7 @@ public:
     const Leap::PointableList pointables = hand.pointables();
     int numFingers = 0;
     for (int i = 0; i<pointables.count(); i++) {
-      if (pointables[i].length() >= LeapInteraction::MIN_POINTABLE_LENGTH && pointables[i].timeVisible() >= LeapInteraction::MIN_POINTABLE_AGE) {
+      if (pointables[i].length() >= MIN_POINTABLE_LENGTH && pointables[i].timeVisible() >= MIN_POINTABLE_AGE) {
         numFingers++;
       }
     }
@@ -100,7 +104,7 @@ private:
 };
 
 LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sculpt), _ui(ui),
-  _desired_brush_radius(0.4f), _is_pinched(false), _last_camera_update_time(0.0),
+  _desired_brush_radius(0.4f), _last_camera_update_time(0.0),
   _last_activity_time(0.0)
 {
   m_cameraY.Update(0.0f, 0.0, 0.95f);
@@ -118,9 +122,7 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
 
   static const double MIN_TIME_BETWEEN_FRAMES = 0.000001;
   _model_view_inv = modelView.inverted();
-  _model_view = modelView;
   _projection = projection;
-  _window_size = viewport;
   _reference_distance = referenceDistance;
   _fov = fov;
   if (suppress || !LM_RETURN_TRACKED(listener.isConnected()) || !listener.isReceivingFrames())
@@ -161,21 +163,18 @@ void LeapInteraction::interact(double curTime)
   LM_TRACK_VALUE(curTime);
  
   Vector3 cameraMovement;
-  static const float ORBIT_SPEED = 0.01f;
-  static const float ZOOM_SPEED = 75.0f;
-  static const float AGE_WARMUP_TIME = 0.75f;
-  static const float TARGET_DELTA_TIME = 1.0f / 60.0f;
-  static const float SCALE_FACTOR_SMOOTH_STRENGTH = 0.5f;
+ 
 
   // create brushes
   static const Vec3f LEAP_OFFSET(0, 250, 100);
   static const Vec3f LEAP_SIZE(275, 275, 275);
+  static const Vec3f LEAP_INV_SIZE = Vec3f(1, 1, 1) / LEAP_SIZE;
+
   const float ui_mult = 1.0f - _ui->maxActivation();
   const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
   LM_TRACK_CONST_VALUE(deltaTime);
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
-  const Vector3 eigenScaledSize = calcSize(_fov, _reference_distance);
-  const Vec3f scaledSize = Vec3f(eigenScaledSize.x(), eigenScaledSize.y(), eigenScaledSize.z());
+  const Vec3f scaledSize = calcSize(_fov, _reference_distance);
   const float frameScale = _cur_frame.scaleFactor(_last_frame);
   LM_TRACK_CONST_VALUE(frameScale);
 
@@ -230,41 +229,36 @@ void LeapInteraction::interact(double curTime)
             const float strengthMult = Utilities::SmootherStep(math<float>::clamp(LM_RETURN_TRACKED(std::min(timeSinceHandOpenChange,pointable.timeVisible()))/AGE_WARMUP_TIME));
 
             const Leap::Vector tip_pos = LM_RETURN_TRACKED(pointable.tipPosition());
-            const Leap::Vector tip_dir = LM_RETURN_TRACKED(pointable.direction());
-            const Leap::Vector tip_vel = LM_RETURN_TRACKED(pointable.tipVelocity());
-
             const Vec3f basePos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
-            const Vec3f parameterizedPos = basePos / LEAP_SIZE;
-            const Vec3f cameraScaledPos = parameterizedPos * scaledSize;
-
-            const float fromCameraMult = ci::math<float>::clamp((LEAP_OFFSET.z/2.0f - tip_pos.z)/50.0f);
+            const Vec3f leapToCameraScaleFactor = LEAP_INV_SIZE * scaledSize;
+            const Vec3f cameraScaledPos = basePos * leapToCameraScaleFactor;
 
             float strength = strengthMult*ui_mult*_desired_brush_strength;
             strength = std::min(1.0f, strength * dtMult);
             LM_TRACK_VALUE(strength);
 
-            Vec3f transPos = _projection.transformPoint(cameraScaledPos);
-            Vec3f radPos = _projection.transformPoint(cameraScaledPos + Vec3f(_desired_brush_radius, 0, 0));
-            LM_TRACK_VALUE(transPos);
-            LM_TRACK_VALUE(radPos);
+            const Vec3f rawScreenSpacePos = _projection.transformPoint(cameraScaledPos);
+            const Vec3f screenSpaceRadiusPos = _projection.transformPoint(cameraScaledPos + Vec3f(_desired_brush_radius, 0, 0));
+            LM_TRACK_CONST_VALUE(rawScreenSpacePos);
+            LM_TRACK_CONST_VALUE(screenSpaceRadiusPos);
 
             // compute screen-space coordinate of this finger
-            transPos.x = (transPos.x + 1)/2;
-            transPos.y = (transPos.y + 1)/2;
-            transPos.z = 1.0f;
+            Vec3f parameterizedSSPos = (rawScreenSpacePos + Vec3f::one()) / 2;
+            parameterizedSSPos.z = 1.0f;
 
-            const float autoBrushScaleFactor = (scaledSize.x / LEAP_SIZE.x);
+            const float autoBrushScaleFactor = leapToCameraScaleFactor.x;
             const float adjRadius = _desired_brush_radius * autoBrushScaleFactor;
               
             static const float BORDER_THICKNESS = 0.035f;
-            if (transPos.x >= -BORDER_THICKNESS && transPos.x <= (1.0f + BORDER_THICKNESS) && transPos.y >= -BORDER_THICKNESS && transPos.y <= (1.0f + BORDER_THICKNESS)) {
-              // compute a point on the surface of the sphere to use as the screen-space radius
-              radPos.x = (radPos.x + 1)/2;
-              radPos.y = (radPos.y + 1)/2;
-              radPos.z = 1.0f;
+            const float fromCameraMult = ci::math<float>::clamp((LEAP_OFFSET.z / 2.0f - tip_pos.z) / 50.0f);
+
+            if (parameterizedSSPos.x >= -BORDER_THICKNESS && parameterizedSSPos.x <= (1.0f + BORDER_THICKNESS) && parameterizedSSPos.y >= -BORDER_THICKNESS && parameterizedSSPos.y <= (1.0f + BORDER_THICKNESS)) {
+              // compute a point on the edge of the sphere to use as the screen-space radius
+              Vec3f parameterizedSSRadiusPos = (screenSpaceRadiusPos + Vec3f::one()) / 2;
+              parameterizedSSRadiusPos.z = 1.0f;
               
-              transPos.z = transPos.distance(radPos) * autoBrushScaleFactor;;
-              Vec4f tip(transPos.x, transPos.y, transPos.z, fromCameraMult*strengthMult);
+              parameterizedSSPos.z = parameterizedSSPos.distance(parameterizedSSRadiusPos) * autoBrushScaleFactor;;
+              Vec4f tip(parameterizedSSPos.x, parameterizedSSPos.y, parameterizedSSPos.z, fromCameraMult*strengthMult);
               LM_ASSERT_IDENTICAL(tip);
               _tips.push_back(tip);
             } else {
@@ -273,8 +267,11 @@ void LeapInteraction::interact(double curTime)
             if (strengthMult > 0.25f && ui_mult > 0.25f) {
               Vector3 brushPos(_model_view_inv.transformPoint(cameraScaledPos).ptr());
 
+              const Leap::Vector tip_dir = LM_RETURN_TRACKED(pointable.direction());
+              const Leap::Vector tip_vel = LM_RETURN_TRACKED(pointable.tipVelocity());
               const Vec3f baseDir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
               const Vec3f baseVel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
+
               Vector3 brushDir((-_model_view_inv.transformVec(baseDir)).ptr());
               Vector3 brushVel(_model_view_inv.transformVec(baseVel).ptr());
               _sculpt->addBrush(Vector3(cameraScaledPos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, fromCameraMult*strengthMult);
@@ -292,76 +289,6 @@ void LeapInteraction::interact(double curTime)
   m_cameraY.Update(cameraMovement.y(), curTime, SMOOTH_STRENGTH);
   m_cameraZ.Update(cameraMovement.z(), curTime, SMOOTH_STRENGTH);
 
-#if USE_SKELETON_API
-  //// Handle pinching
-  //const int numHands = _cur_frame.hands().count();
-  //for (int ih = 0; ih < numHands; ih++) {
-  //  Leap::Hand& hand = _cur_frame.hands()[ih];
-  //  LM_LOG << "Manipulation strength " << float(hand.manipulationStrength()) << std::endl;
-  //}
-
-  static const float PINCH_START_THRESHOLD = 0.8f;
-  static const float PINCH_END_THRESHOLD = 0.7f;
-  // Handle pinching
-  if (_is_pinched) {
-    Leap::Hand& hand = _cur_frame.hand(_pinching_hand_id);
-    // Handle pinch end
-    if (!hand.isValid() || hand.manipulationStrength() < PINCH_END_THRESHOLD) {
-      _is_pinched = false;
-    } else {
-      // Handle pinch drag
-      _pinch_last_recorded = ToVec3f(hand.manipulationPoint().toVector3<Vector3>());
-
-      // Check for pinning a movement direction
-      if (!_pin_z && !_pin_xy) {
-        Vec3f diff = _pinch_last_recorded - _pinch_origin;
-        if (20.0f < diff.length()) {
-          // Check angle and decide on direction
-          if (std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]) < std::fabs(diff[2]) ) {
-            // use z
-            _pin_xy = true;
-          } else {
-            // use xy
-            _pin_z = true;
-          }
-        }
-      }
-    }
-  } else {
-    // Handle pinch start
-    const int numHands = _cur_frame.hands().count();
-    for (int ih = 0; ih < numHands; ih++) {
-      Leap::Hand& hand = _cur_frame.hands()[ih];
-      if (PINCH_START_THRESHOLD < hand.manipulationStrength()) {
-        _is_pinched = true;
-        _pin_z = false;
-        _pin_xy = false;
-        _pinching_hand_id = hand.id();
-        _pinch_origin = ToVec3f(hand.manipulationPoint().toVector3<Vector3>());
-        _pinch_last_read = _pinch_origin;
-        _pinch_last_recorded = _pinch_origin;
-      }
-      //LM_LOG << "Manipulation strength " << float(hand.manipulationStrength()) << std::endl;
-    }
-  }
-#endif
-}
-
-Vec3f LeapInteraction::getPinchDeltaFromLastCall() {
-  if (!_is_pinched) {
-    return Vec3f(0.0f, 0.0f, 0.0f);
-  } else {
-    Vec3f result = _pinch_last_recorded - _pinch_last_read;
-    _pinch_last_read = _pinch_last_recorded;
-    if (_pin_xy) {
-      result[0] = 0.0f;
-      result[1] = 0.0f;
-    } 
-    if (_pin_z) {
-      result[2] = 0.0f;
-    }
-    return result;
-  }
 }
 
 void LeapInteraction::updateHandInfos(double curTime) {

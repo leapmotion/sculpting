@@ -10,13 +10,12 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-const float CAMERA_SPEED = 0.005f;
-
-const float MIN_CAMERA_DIST = 250.0f;
-const float MAX_CAMERA_DIST = 350.0f;
-const float SPHERE_RADIUS = 50000.0f;
-const float MIN_FOV = 50.0f;
-const float MAX_FOV = 90.0f;
+static const float CAMERA_SPEED = 0.005f;
+static const float MIN_CAMERA_DIST = 250.0f;
+static const float MAX_CAMERA_DIST = 350.0f;
+static const float SPHERE_RADIUS = 50000.0f;
+static const float MIN_FOV = 50.0f;
+static const float MAX_FOV = 90.0f;
 
 
 //*********************************************************
