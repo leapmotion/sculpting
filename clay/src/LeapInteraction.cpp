@@ -103,10 +103,10 @@ LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sc
   _desired_brush_radius(0.4f), _is_pinched(false), _last_camera_update_time(0.0), _autoBrush(true),
   _last_activity_time(0.0)
 {
-  _dphi.Update(0.0f, 0.0, 0.95f);
-  _dtheta.Update(0.0f, 0.0, 0.95f);
-  _dzoom.Update(0.0f, 0.0, 0.95f);
-  _scaleFactor.Update(1.0f, 0.0, 0.95f);
+  m_cameraY.Update(0.0f, 0.0, 0.95f);
+  m_cameraX.Update(0.0f, 0.0, 0.95f);
+  m_cameraZ.Update(0.0f, 0.0, 0.95f);
+  m_cameraW.Update(1.0f, 0.0, 0.95f);
 }
 
 bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress)
@@ -131,10 +131,10 @@ bool LeapInteraction::processInteraction(LeapListener& listener, float aspect, c
     std::unique_lock<std::mutex> tipsLock(_tips_mutex);
     _sculpt->clearBrushes();
     _tips.clear();
-    _dphi.value = 0.0f;
-    _dtheta.value = 0.0f;
-    _dzoom.value = 0.0f;
-    _scaleFactor.value = 1.0f;
+    m_cameraX.value = 0.0f;
+    m_cameraY.value = 0.0f;
+    m_cameraZ.value = 0.0f;
+    m_cameraW.value = 1.0f;
   }
   else if (LM_RETURN_TRACKED(listener.waitForFrame(_cur_frame, 33)))
   {
@@ -160,9 +160,7 @@ void LeapInteraction::interact(double curTime)
   LM_ASSERT_IDENTICAL(124324);
   LM_TRACK_VALUE(curTime);
  
-  float cur_dtheta = 0;
-  float cur_dphi = 0;
-  float cur_dzoom = 0;
+  Vector3 cameraMovement;
   static const float ORBIT_SPEED = 0.01f;
   static const float ZOOM_SPEED = 75.0f;
   static const float AGE_WARMUP_TIME = 0.75f;
@@ -200,9 +198,9 @@ void LeapInteraction::interact(double curTime)
   LM_TRACK_VALUE(numOpenHands);
 
   if (numOpenHands >= 2) {
-    _scaleFactor.Update(frameScale, curTime, SCALE_FACTOR_SMOOTH_STRENGTH);
+    m_cameraW.Update(frameScale, curTime, SCALE_FACTOR_SMOOTH_STRENGTH);
   } else {
-    _scaleFactor.Update(1.0f, curTime, SCALE_FACTOR_SMOOTH_STRENGTH);
+    m_cameraW.Update(1.0f, curTime, SCALE_FACTOR_SMOOTH_STRENGTH);
     for (HandInfoMap::iterator it = _hand_infos.begin(); it != _hand_infos.end(); ++it) {
       LM_ASSERT_IDENTICAL(0x12345678);
       const int id = it->first;
@@ -214,10 +212,10 @@ void LeapInteraction::interact(double curTime)
       const float timeSinceHandOpenChange = static_cast<float>(curTime - cur.getLastHandOpenChangeTime());
       if (cur.handOpen() || normalY < 0.1f) {
         // camera interaction
-        const Vector3 movement = LM_RETURN_TRACKED(cur.getModifiedTranslation());
-        cur_dtheta += ORBIT_SPEED * movement.x();
-        cur_dphi += ORBIT_SPEED * -movement.y();
-        cur_dzoom += ZOOM_SPEED * -movement.z();
+        cameraMovement = LM_RETURN_TRACKED(cur.getModifiedTranslation());
+        cameraMovement *= ORBIT_SPEED;
+        cameraMovement.y() = -cameraMovement.y();
+        cameraMovement.z() = -cameraMovement.z();
         _last_camera_update_time = ci::app::getElapsedSeconds();
       } else {
         // sculpting interaction
@@ -297,14 +295,12 @@ void LeapInteraction::interact(double curTime)
     }
   }
 
-  cur_dtheta /= deltaTime;
-  cur_dphi /= deltaTime;
-  cur_dzoom /= deltaTime;
+  cameraMovement /= deltaTime;
 
   static const float SMOOTH_STRENGTH = 0.4f;
-  _dtheta.Update(cur_dtheta, curTime, SMOOTH_STRENGTH);
-  _dphi.Update(cur_dphi, curTime, SMOOTH_STRENGTH);
-  _dzoom.Update(cur_dzoom, curTime, SMOOTH_STRENGTH);
+  m_cameraX.Update(cameraMovement.x(), curTime, SMOOTH_STRENGTH);
+  m_cameraY.Update(cameraMovement.y(), curTime, SMOOTH_STRENGTH);
+  m_cameraZ.Update(cameraMovement.z(), curTime, SMOOTH_STRENGTH);
 
 #if USE_SKELETON_API
   //// Handle pinching

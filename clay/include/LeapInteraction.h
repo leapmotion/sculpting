@@ -19,12 +19,14 @@ public:
   LeapInteraction(Sculpt* sculpt, UserInterface* ui);
   bool processInteraction(LeapListener& listener, float aspect, const Matrix44f& modelView, const Matrix44f& projection, const Vec2i& viewport, float referenceDistance, float fov, bool suppress);
 
-  float getDThetaVel() const { return _dtheta.value; }
-  float getDPhiVel() const { return _dphi.value; }
-  float getDZoomVel() const { return _dzoom.value; }
-  float getScaleFactor() const { return _scaleFactor.value; }
+  float getDThetaVel() const { return m_cameraX.value; }
+  float getDPhiVel() const { return m_cameraY.value; }
+  float getDZoomVel() const { return m_cameraZ.value; }
+  float getScaleFactor() const { return m_cameraW.value; }
 
-  Vec4f getDeltaVector() const { return Vec4f(_dtheta.value, _dphi.value, _dzoom.value, _scaleFactor.value); }
+  Vec4f getDeltaVector() const { 
+    return Vec4f(m_cameraX.value, m_cameraY.value, m_cameraZ.value, m_cameraW.value);
+  }
 
   Vec3f getPinchDeltaFromLastCall();
   bool isPinched() const { return _is_pinched; }
@@ -72,6 +74,8 @@ private:
 
   Sculpt* _sculpt;
   UserInterface* _ui;
+
+  std::mutex _tips_mutex;
   std::vector<Vec4f> _tips;
   Matrix44f _model_view_inv;
   Matrix44f _model_view;
@@ -79,11 +83,13 @@ private:
   Vec2i _window_size;
   float _desired_brush_radius;
   float _desired_brush_strength;
-  Utilities::ExponentialFilter<float> _dphi;
-  Utilities::ExponentialFilter<float> _dtheta;
-  Utilities::ExponentialFilter<float> _dzoom;
-  Utilities::ExponentialFilter<float> _scaleFactor;
-  std::mutex _tips_mutex;
+
+
+  Utilities::ExponentialFilter<float> m_cameraX; //theta
+  Utilities::ExponentialFilter<float> m_cameraY; //phi
+  Utilities::ExponentialFilter<float> m_cameraZ; //zoom
+  Utilities::ExponentialFilter<float> m_cameraW; //scale
+
   double _last_camera_update_time;
   float _reference_distance;
   float _fov;
