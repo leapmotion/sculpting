@@ -102,9 +102,7 @@ void FreeformApp::setup()
       }
     }
   }
-
 #endif
-
 
 #if _WIN32
   HMODULE instance = ::GetModuleHandle(0);
@@ -347,7 +345,7 @@ void FreeformApp::keyDown( KeyEvent event )
     if (_ui->haveExitConfirm()) {
       _ui->clearConfirm();
     } else {
-      _ui->showConfirm(Menu::GENERAL_EXIT);
+      _ui->showConfirm(MenuEntry::GENERAL_EXIT);
     }
     break;
   case 'c': _lock_camera = !_lock_camera; break;
@@ -929,25 +927,25 @@ void FreeformApp::draw() {
 
 void FreeformApp::loadIcons() {
   std::vector<ci::gl::Texture>& icons = Menu::g_icons;
-  icons.resize(Menu::NUM_ICONS);
+  icons.resize(MenuEntry::NUM_ICONS);
 
-  icons[Menu::TOOL_PAINT] = ci::gl::Texture(loadImage(loadResource(RES_PAINT_SELECTED_PNG)));
-  icons[Menu::TOOL_PUSH] = ci::gl::Texture(loadImage(loadResource(RES_PUSH_SELECTED_PNG)));
-  icons[Menu::TOOL_SWEEP] = ci::gl::Texture(loadImage(loadResource(RES_SWEEP_SELECTED_PNG)));
-  icons[Menu::TOOL_FLATTEN] = ci::gl::Texture(loadImage(loadResource(RES_FLATTEN_SELECTED_PNG)));
-  icons[Menu::TOOL_SMOOTH] = ci::gl::Texture(loadImage(loadResource(RES_SMOOTH_SELECTED_PNG)));
-  icons[Menu::TOOL_SHRINK] = ci::gl::Texture(loadImage(loadResource(RES_SHRINK_SELECTED_PNG)));
-  icons[Menu::TOOL_GROW] = ci::gl::Texture(loadImage(loadResource(RES_GROW_SELECTED_PNG)));
+  icons[MenuEntry::TOOL_PAINT] = ci::gl::Texture(loadImage(loadResource(RES_PAINT_SELECTED_PNG)));
+  icons[MenuEntry::TOOL_PUSH] = ci::gl::Texture(loadImage(loadResource(RES_PUSH_SELECTED_PNG)));
+  icons[MenuEntry::TOOL_SWEEP] = ci::gl::Texture(loadImage(loadResource(RES_SWEEP_SELECTED_PNG)));
+  icons[MenuEntry::TOOL_FLATTEN] = ci::gl::Texture(loadImage(loadResource(RES_FLATTEN_SELECTED_PNG)));
+  icons[MenuEntry::TOOL_SMOOTH] = ci::gl::Texture(loadImage(loadResource(RES_SMOOTH_SELECTED_PNG)));
+  icons[MenuEntry::TOOL_SHRINK] = ci::gl::Texture(loadImage(loadResource(RES_SHRINK_SELECTED_PNG)));
+  icons[MenuEntry::TOOL_GROW] = ci::gl::Texture(loadImage(loadResource(RES_GROW_SELECTED_PNG)));
 
-  icons[Menu::STRENGTH_LOW] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_LOW_SELECTED_PNG)));
-  icons[Menu::STRENGTH_MEDIUM] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_MEDIUM_SELECTED_PNG)));
-  icons[Menu::STRENGTH_HIGH] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_HIGH_SELECTED_PNG)));
+  icons[MenuEntry::STRENGTH_LOW] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_LOW_SELECTED_PNG)));
+  icons[MenuEntry::STRENGTH_MEDIUM] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_MEDIUM_SELECTED_PNG)));
+  icons[MenuEntry::STRENGTH_HIGH] = ci::gl::Texture(loadImage(loadResource(RES_STRENGTH_HIGH_SELECTED_PNG)));
 
-  icons[Menu::MATERIAL_PLASTIC] = ci::gl::Texture(loadImage(loadResource(RES_PLASTIC_PNG)));
-  icons[Menu::MATERIAL_PORCELAIN] = ci::gl::Texture(loadImage(loadResource(RES_PORCELAIN_PNG)));
-  icons[Menu::MATERIAL_GLASS] = ci::gl::Texture(loadImage(loadResource(RES_GLASS_PNG)));
-  icons[Menu::MATERIAL_METAL] = ci::gl::Texture(loadImage(loadResource(RES_STEEL_PNG)));
-  icons[Menu::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
+  icons[MenuEntry::MATERIAL_PLASTIC] = ci::gl::Texture(loadImage(loadResource(RES_PLASTIC_PNG)));
+  icons[MenuEntry::MATERIAL_PORCELAIN] = ci::gl::Texture(loadImage(loadResource(RES_PORCELAIN_PNG)));
+  icons[MenuEntry::MATERIAL_GLASS] = ci::gl::Texture(loadImage(loadResource(RES_GLASS_PNG)));
+  icons[MenuEntry::MATERIAL_METAL] = ci::gl::Texture(loadImage(loadResource(RES_STEEL_PNG)));
+  icons[MenuEntry::MATERIAL_CLAY] = ci::gl::Texture(loadImage(loadResource(RES_CLAY_PNG)));
 }
 
 void FreeformApp::loadShapes() {
@@ -976,15 +974,15 @@ void FreeformApp::loadImages() {
   _logo_on_image = ci::gl::Texture(loadImage(loadResource(RES_LOGO_ON_IMAGE)));
 
   std::vector<ci::gl::Texture>& previews = Menu::g_previews;
-  previews.resize(Menu::NUM_ICONS);
+  previews.resize(MenuEntry::NUM_ICONS);
 
-  previews[Menu::ENVIRONMENT_JUNGLE_CLIFF] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_JUNGLE_CLIFF)));
-  previews[Menu::ENVIRONMENT_JUNGLE] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_JUNGLE)));
-  previews[Menu::ENVIRONMENT_ISLANDS] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_ISLANDS)));
-  previews[Menu::ENVIRONMENT_REDWOOD] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_REDWOOD)));
-  previews[Menu::ENVIRONMENT_DESERT] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_DESERT)));
-  previews[Menu::ENVIRONMENT_ARCTIC] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_ARCTIC)));
-  previews[Menu::ENVIRONMENT_RIVER] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_RIVER)));
+  previews[MenuEntry::ENVIRONMENT_JUNGLE_CLIFF] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_JUNGLE_CLIFF)));
+  previews[MenuEntry::ENVIRONMENT_JUNGLE] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_JUNGLE)));
+  previews[MenuEntry::ENVIRONMENT_ISLANDS] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_ISLANDS)));
+  previews[MenuEntry::ENVIRONMENT_REDWOOD] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_REDWOOD)));
+  previews[MenuEntry::ENVIRONMENT_DESERT] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_DESERT)));
+  previews[MenuEntry::ENVIRONMENT_ARCTIC] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_ARCTIC)));
+  previews[MenuEntry::ENVIRONMENT_RIVER] = ci::gl::Texture(loadImage(loadResource(RES_PREVIEW_RIVER)));
 
   _ui->setTutorialTextures(ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_1))),
                            ci::gl::Texture(loadImage(loadResource(RES_TUTORIAL_2))),

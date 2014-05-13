@@ -14,9 +14,9 @@
 
 class LeapInteraction;
 class FreeformApp;
+class Menu;
 
-class Menu {
-public:
+struct MenuEntry {
 
   // the values for a particular group should be consecutive
   enum MenuEntryType {
@@ -104,103 +104,38 @@ public:
     NUM_ICONS
   };
 
-  struct MenuEntry {
-    enum DrawMethod { ICON, COLOR, STRING, CIRCLE, TEXTURE };
-    MenuEntry() : m_position(Vector2::Zero()), m_radius(0.02f), m_value(0.0f) {
-      m_hoverStrength.value = 0.0f;
-      m_activationStrength.value = 0.0f;
-    }
-    void draw(const Menu* parent, bool selected) const;
+  enum DrawMethod { METHOD_ICON, METHOD_COLOR, METHOD_STRING, METHOD_CIRCLE, METHOD_TEXTURE };
 
-    Sculpt::SculptMode toSculptMode() const {
-      switch (m_entryType) {
-      case Menu::TOOL_GROW: return Sculpt::INFLATE; break;
-      case Menu::TOOL_SHRINK: return Sculpt::DEFLATE; break;
-      case Menu::TOOL_SMOOTH: return Sculpt::SMOOTH; break;
-      case Menu::TOOL_FLATTEN: return Sculpt::FLATTEN; break;
-      case Menu::TOOL_SWEEP: return Sculpt::SWEEP; break;
-      case Menu::TOOL_PUSH: return Sculpt::PUSH; break;
-      case Menu::TOOL_PAINT: return Sculpt::PAINT; break;
-      default: return Sculpt::INVALID; break;
-      }
-      return Sculpt::INVALID;
-    }
+  MenuEntry() : m_position(Vector2::Zero()), m_radius(0.02f), m_value(0.0f) {
+    m_hoverStrength.value = 0.0f;
+    m_activationStrength.value = 0.0f;
+  }
+  void draw(const Menu* parent, bool selected) const;
+  Sculpt::SculptMode toSculptMode() const;
+  std::string toString() const;
+  Material toMaterial() const;
+  float toSpinVelocity() const;
+  std::string toEnvironmentName() const;
 
-    std::string toString() const;
-    Material toMaterial() const {
-      Material mat;
-      switch (m_entryType) {
-      case Menu::MATERIAL_PLASTIC:
-        mat.reflectionFactor = 0.1f;
-        mat.surfaceColor << 0.4f, 0.7f, 1.0f;
-        mat.reflectionBias = 1.0f;
-        break;
-      case Menu::MATERIAL_PORCELAIN:
-        mat.reflectionFactor = 0.1f;
-        mat.surfaceColor << 1.0f, 0.95f, 0.9f;
-        mat.reflectionBias = 0.5f;
-        break;
-      case Menu::MATERIAL_GLASS:
-        mat.diffuseFactor = 0.15f;
-        mat.reflectionFactor = 0.7f;
-        mat.surfaceColor << 0.4f, 0.45f, 0.5f;
-        mat.refractionIndex = 0.45f;
-        break;
-      case Menu::MATERIAL_METAL:
-        mat.reflectionFactor = 0.5f;
-        mat.surfaceColor << 0.2f, 0.25f, 0.275f;
-        mat.reflectionBias = 2.0f;
-        break;
-      case Menu::MATERIAL_CLAY:
-        mat.reflectionFactor = 0.02f;
-        mat.reflectionBias = 3.0f;
-        mat.surfaceColor << 0.7f, 0.675f, 0.6f;
-        break;
-      default:
-        break;
-      }
-      return mat;
-    }
-    float toSpinVelocity() const {
-      switch (m_entryType) {
-      case Menu::SPIN_OFF: return 0.0f; break;
-      case Menu::SPIN_SLOW: return 0.37f; break;
-      case Menu::SPIN_MEDIUM: return 1.43f; break;
-      case Menu::SPIN_FAST: return 2.57f; break;
-      default: return 0.0f; break;
-      }
-      return 0.0f;
-    }
-    std::string toEnvironmentName() const {
-      switch (m_entryType) {
-      case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
-      case Menu::ENVIRONMENT_RIVER: return "River"; break;
-      case Menu::ENVIRONMENT_DESERT: return "Desert"; break;
-      case Menu::ENVIRONMENT_REDWOOD: return "Redwood"; break;
-      case Menu::ENVIRONMENT_JUNGLE_CLIFF: return "Jungle-Cliff"; break;
-      case Menu::ENVIRONMENT_JUNGLE: return "Jungle"; break;
-      case Menu::ENVIRONMENT_ARCTIC: return "Arctic"; break;
-      default: return ""; break;
-      }
-      return "";
-    }
+  MenuEntryType m_entryType;
+  DrawMethod m_drawMethod;
+  float m_radius;
+  float m_value;
+  Vector2 m_position;
+  float m_angleStart;
+  float m_angleWidth;
+  float m_wedgeStart;
+  float m_wedgeEnd;
+  ci::Color m_color;
+  Utilities::ExponentialFilter<float> m_hoverStrength;
+  Utilities::ExponentialFilter<float> m_activationStrength;
+};
 
-    MenuEntryType m_entryType;
-    DrawMethod m_drawMethod;
-    float m_radius;
-    float m_value;
-    Vector2 m_position;
-    float m_angleStart;
-    float m_angleWidth;
-    float m_wedgeStart;
-    float m_wedgeEnd;
-    ci::Color m_color;
-    Utilities::ExponentialFilter<float> m_hoverStrength;
-    Utilities::ExponentialFilter<float> m_activationStrength;
-  };
+class Menu {
+public:
 
   static const float FONT_SIZE;
-  static const float STRENGTH_UI_MULT;
+  
   static ci::Font g_font;
   static ci::Font g_boldFont;
   static ci::gl::TextureFontRef g_textureFont;
@@ -320,6 +255,7 @@ private:
   static Vector2 g_windowCenter;
   static Utilities::ExponentialFilter<float> g_sculptMult;
 
+  friend struct MenuEntry;
 };
 
 class UserInterface {
@@ -337,7 +273,7 @@ public:
   float maxActivation() const;
   float maxActivation(Vector2& pos) const;
   void handleSelections(Sculpt* sculpt, LeapInteraction* leap, FreeformApp* app, Mesh* mesh);
-  void showConfirm(Menu::MenuEntryType entryType);
+  void showConfirm(MenuEntry::MenuEntryType entryType);
   bool haveExitConfirm() const;
   void clearConfirm();
   void setRegularFont(const ci::Font& font) {
@@ -406,8 +342,9 @@ private:
   ci::gl::Texture _about;
   bool _draw_about_menu;
 
-  Menu::MenuEntryType _pending_entry;
+  MenuEntry::MenuEntryType _pending_entry;
 
+  
 };
 
 #endif
