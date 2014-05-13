@@ -32,7 +32,6 @@ public:
   bool isPinched() const { return _is_pinched; }
   void setBrushRadius(float _Radius) { _desired_brush_radius = _Radius; }
   void setBrushStrength(float _Strength) { _desired_brush_strength = _Strength; }
-  void setBrushAuto(bool autoBrush) { _autoBrush = autoBrush; }
   double mostRecentTime() const { return Utilities::TIME_STAMP_TICKS_TO_SECS*static_cast<double>(_cur_frame.timestamp()); }
   std::vector<Vec4f> getTips() { std::unique_lock<std::mutex> tipsLock(_tips_mutex); return _tips; }
   double getLastCameraUpdateTime() const { return _last_camera_update_time; }
@@ -93,7 +92,6 @@ private:
   double _last_camera_update_time;
   float _reference_distance;
   float _fov;
-  bool _autoBrush;
   double _last_activity_time;
 
   // Handling pinch gesture

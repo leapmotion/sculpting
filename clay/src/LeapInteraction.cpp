@@ -100,7 +100,7 @@ private:
 };
 
 LeapInteraction::LeapInteraction(Sculpt* sculpt, UserInterface* ui) : _sculpt(sculpt), _ui(ui),
-  _desired_brush_radius(0.4f), _is_pinched(false), _last_camera_update_time(0.0), _autoBrush(true),
+  _desired_brush_radius(0.4f), _is_pinched(false), _last_camera_update_time(0.0),
   _last_activity_time(0.0)
 {
   m_cameraY.Update(0.0f, 0.0, 0.95f);
@@ -265,21 +265,16 @@ void LeapInteraction::interact(double curTime)
             transPos.z = 1.0f;
 
             const float autoBrushScaleFactor = (scaledSize.x() / LEAP_SIZE.x);
-            float adjRadius = _desired_brush_radius;
-            if (_autoBrush) {
-              adjRadius *= autoBrushScaleFactor;
-            }
+            const float adjRadius = _desired_brush_radius * autoBrushScaleFactor;
+              
             static const float BORDER_THICKNESS = 0.035f;
             if (transPos.x >= -BORDER_THICKNESS && transPos.x <= (1.0f + BORDER_THICKNESS) && transPos.y >= -BORDER_THICKNESS && transPos.y <= (1.0f + BORDER_THICKNESS)) {
               // compute a point on the surface of the sphere to use as the screen-space radius
               radPos.x = (radPos.x + 1)/2;
               radPos.y = (radPos.y + 1)/2;
               radPos.z = 1.0f;
-              float rad = transPos.distance(radPos);
-              if (_autoBrush) {
-                rad *= autoBrushScaleFactor;
-              }
-              transPos.z = rad;
+              
+              transPos.z = transPos.distance(radPos) * autoBrushScaleFactor;;
               Vec4f tip(transPos.x, transPos.y, transPos.z, fromCameraMult*strengthMult);
               LM_ASSERT_IDENTICAL(tip);
               _tips.push_back(tip);
