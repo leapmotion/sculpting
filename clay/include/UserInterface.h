@@ -110,118 +110,8 @@ public:
       m_hoverStrength.value = 0.0f;
       m_activationStrength.value = 0.0f;
     }
-    void draw(const Menu* parent, bool selected) const {
-      static const float ICON_ACTIVATION_BONUS_SCALE = 0.1f;
-      static const float SHAPE_ACTIVATION_BONUS_SCALE = 0.5f;
-      const float opacity = std::max(m_activationStrength.value, parent->m_activation.value);
-      const float brightness = selected ? 1.0f : 0.5f + 0.5f*std::max(m_activationStrength.value, m_hoverStrength.value);
-      const ci::Vec2f pos(m_position.x(), m_position.y());
-      const ci::ColorA color(brightness, brightness, brightness, opacity);
-      const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, opacity);
-      gl::color(color);
-      if (drawMethod == ICON) {
-        ci::gl::Texture& tex = Menu::g_icons[m_entryType];
-        const ci::Vec2i size = tex.getSize();
-        glPushMatrix();
-        glTranslatef(pos.x, pos.y, 0.0f);
-        const float scale = (ICON_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.09f) / size.x;
-        glScalef(scale, scale, scale);
-        glTranslatef(-size.x/2.0f, -size.y/2.0f, 0.0f);
-        if (opacity > 0.01f) {
-          glColor4f(brightness, brightness, brightness, opacity);
-          gl::draw(tex);
-        }
-        glPopMatrix();
-      } else if (drawMethod == CIRCLE) {
-        const float scale = 1.0f + (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value);
-        gl::color(shadowColor);
-        gl::drawSolidCircle(pos + g_shadowOffset, parent->relativeToAbsolute(scale * m_radius), 40);
-        gl::color(color);
-        gl::drawSolidCircle(pos, parent->relativeToAbsolute(scale * m_radius), 40);
-      } else if (drawMethod == STRING) {
-        glPushMatrix();
-        gl::translate(pos);
-        const float scale = (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.025f) / FONT_SIZE;
-        glScalef(scale, scale, scale);
-        const std::string str = toString();
-        const ci::Vec2f stringSize = g_textureFont->measureString(str);
-        const ci::Rectf stringRect(-stringSize.x/2.0f, -Menu::FONT_SIZE/2.0f, stringSize.x/2.0f + g_shadowOffset.x, 100.0f);
-        gl::color(shadowColor);
-        g_textureFont->drawString(str, stringRect, g_shadowOffset);
-        gl::color(color);
-        g_textureFont->drawString(str, stringRect);
-        glPopMatrix();
-      } else if (drawMethod == TEXTURE) {
-        // nothing to do, the wedge is drawn with the desired texture elsewhere
-      }
-    }
-    std::string toString() const {
-      if (drawMethod == ICON || drawMethod == STRING || drawMethod == TEXTURE) {
-        switch(m_entryType) {
-        case Menu::STRENGTH: return "Strength"; break;
-        case Menu::SIZE: return "Size"; break;
-        case Menu::TYPE: return "Tool"; break;
-        case Menu::COLOR: return "Color"; break;
-        case Menu::TOOL_PUSH: return "Press"; break;
-        case Menu::TOOL_SWEEP: return "Smear"; break;
-        case Menu::TOOL_FLATTEN: return "Flatten"; break;
-        case Menu::TOOL_SMOOTH: return "Smooth"; break;
-        case Menu::TOOL_SHRINK: return "Repel"; break;
-        case Menu::TOOL_GROW: return "Grow"; break;
-        case Menu::TOOL_PAINT: return "Paint"; break;
-        case Menu::SIZE_AUTO: return "Auto"; break;
-        case Menu::STRENGTH_LOW: return "Low"; break;
-        case Menu::STRENGTH_MEDIUM: return "Medium"; break;
-        case Menu::STRENGTH_HIGH: return "High"; break;
-        case Menu::MATERIAL_PLASTIC: return "Plastic"; break;
-        case Menu::MATERIAL_PORCELAIN: return "Porcelain"; break;
-        case Menu::MATERIAL_GLASS: return "Glass"; break;
-        case Menu::MATERIAL_METAL: return "Metal"; break;
-        case Menu::MATERIAL_CLAY: return "Clay"; break;
-        case Menu::SPIN_OFF: return "Off"; break;
-        case Menu::SPIN_SLOW: return "Slow"; break;
-        case Menu::SPIN_MEDIUM: return "Medium"; break;
-        case Menu::SPIN_FAST: return "Fast"; break;
-        case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
-        case Menu::ENVIRONMENT_RIVER: return "River"; break;
-        case Menu::ENVIRONMENT_DESERT: return "Desert"; break;
-        case Menu::ENVIRONMENT_REDWOOD: return "Redwood"; break;
-        case Menu::ENVIRONMENT_JUNGLE_CLIFF: return "Jungle-Cliff"; break;
-        case Menu::ENVIRONMENT_JUNGLE: return "Jungle"; break;
-        case Menu::ENVIRONMENT_ARCTIC: return "Arctic"; break;
-        case Menu::GENERAL_ABOUT: return "About"; break;
-        case Menu::GENERAL_TUTORIAL: return "Tutorial"; break;
-        case Menu::GENERAL_TOGGLE_SOUND: return "Toggle Sound"; break;
-        case Menu::GENERAL_SCREENSHOT: return "Screenshot"; break;
-        case Menu::GENERAL_EXIT: return "Exit"; break;
-        case Menu::OBJECT_LOAD: return "Load"; break;
-        case Menu::OBJECT_EXPORT: return "Save"; break;
-        case Menu::OBJECT_UPLOAD: return "3D Print"; break;
-        case Menu::OBJECT_BALL: return "Sphere"; break;
-        case Menu::OBJECT_CAN: return "Cylinder"; break;
-        case Menu::OBJECT_DONUT: return "Torus"; break;
-        case Menu::OBJECT_SHEET: return "Sheet"; break;
-        case Menu::OBJECT_SNOWMAN: return "Snowman"; break;
-        case Menu::OBJECT_CUBE: return "Cube"; break;
-        case Menu::EDITING_TOGGLE_SYMMETRY: return "Symmetry"; break;
-        case Menu::EDITING_TOGGLE_WIREFRAME: return "Wireframe"; break;
-        case Menu::EDITING_REDO: return "Redo"; break;
-        case Menu::EDITING_UNDO: return "Undo"; break;
-        case Menu::CONFIRM_YES: return "Yes"; break;
-        case Menu::CONFIRM_NO: return "No"; break;
-        case Menu::TUTORIAL_PREVIOUS: return "Previous"; break;
-        case Menu::TUTORIAL_CLOSE: return "Close"; break;
-        case Menu::TUTORIAL_NEXT: return "Next"; break;
-        case Menu::ABOUT_CLOSE: return "Close"; break;
-        default: return ""; break;
-        }
-        return "";
-      } else {
-        std::stringstream ss;
-        ss << m_value;
-        return ss.str();
-      }
-    }
+    void draw(const Menu* parent, bool selected) const;
+
     Sculpt::SculptMode toSculptMode() const {
       switch (m_entryType) {
       case Menu::TOOL_GROW: return Sculpt::INFLATE; break;
@@ -236,6 +126,7 @@ public:
       return Sculpt::INVALID;
     }
 
+    std::string toString() const;
     Material toMaterial() const {
       Material mat;
       switch (m_entryType) {
@@ -295,7 +186,7 @@ public:
     }
 
     MenuEntryType m_entryType;
-    DrawMethod drawMethod;
+    DrawMethod m_drawMethod;
     float m_radius;
     float m_value;
     Vector2 m_position;

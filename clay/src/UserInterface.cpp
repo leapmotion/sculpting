@@ -175,6 +175,55 @@ void Menu::update(const std::vector<Vec4f>& tips, Sculpt* sculpt) {
   }
 }
 
+void Menu::MenuEntry::draw(const Menu* parent, bool selected) const {
+  static const float ICON_ACTIVATION_BONUS_SCALE = 0.1f;
+  static const float SHAPE_ACTIVATION_BONUS_SCALE = 0.5f;
+  const float opacity = std::max(m_activationStrength.value, parent->m_activation.value);
+  const float brightness = selected ? 1.0f : 0.5f + 0.5f*std::max(m_activationStrength.value, m_hoverStrength.value);
+  const ci::Vec2f pos(m_position.x(), m_position.y());
+  const ci::ColorA color(brightness, brightness, brightness, opacity);
+  const ci::ColorA shadowColor(0.1f, 0.1f, 0.1f, opacity);
+  gl::color(color);
+  if (m_drawMethod == ICON) {
+    ci::gl::Texture& tex = Menu::g_icons[m_entryType];
+    const ci::Vec2i size = tex.getSize();
+    glPushMatrix();
+    glTranslatef(pos.x, pos.y, 0.0f);
+    const float scale = (ICON_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.09f) / size.x;
+    glScalef(scale, scale, scale);
+    glTranslatef(-size.x / 2.0f, -size.y / 2.0f, 0.0f);
+    if (opacity > 0.01f) {
+      glColor4f(brightness, brightness, brightness, opacity);
+      gl::draw(tex);
+    }
+    glPopMatrix();
+  }
+  else if (m_drawMethod == CIRCLE) {
+    const float scale = 1.0f + (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value);
+    gl::color(shadowColor);
+    gl::drawSolidCircle(pos + g_shadowOffset, parent->relativeToAbsolute(scale * m_radius), 40);
+    gl::color(color);
+    gl::drawSolidCircle(pos, parent->relativeToAbsolute(scale * m_radius), 40);
+  }
+  else if (m_drawMethod == STRING) {
+    glPushMatrix();
+    gl::translate(pos);
+    const float scale = (SHAPE_ACTIVATION_BONUS_SCALE*m_activationStrength.value) + parent->relativeToAbsolute(0.025f) / FONT_SIZE;
+    glScalef(scale, scale, scale);
+    const std::string str = toString();
+    const ci::Vec2f stringSize = g_textureFont->measureString(str);
+    const ci::Rectf stringRect(-stringSize.x / 2.0f, -Menu::FONT_SIZE / 2.0f, stringSize.x / 2.0f + g_shadowOffset.x, 100.0f);
+    gl::color(shadowColor);
+    g_textureFont->drawString(str, stringRect, g_shadowOffset);
+    gl::color(color);
+    g_textureFont->drawString(str, stringRect);
+    glPopMatrix();
+  }
+  else if (m_drawMethod == TEXTURE) {
+    // nothing to do, the wedge is drawn with the desired texture elsewhere
+  }
+}
+
 void Menu::setNumEntries(int num) {
   m_entries.resize(num);
   m_outerRadius = BASE_OUTER_RADIUS + num*OUTER_RADIUS_PER_ENTRY;
@@ -206,7 +255,7 @@ void Menu::draw() const {
       const bool isSelected = (!m_actionsOnly) && (i == m_prevSelectedEntry);
 
       // draw wedge behind
-      if (m_entries[i].drawMethod == MenuEntry::COLOR) {
+      if (m_entries[i].m_drawMethod == MenuEntry::COLOR) {
         const ci::Color& origColor = m_entries[i].m_color;
         ci::Vec3f color(origColor.r, origColor.g, origColor.b);
         color *= (1.0f + 0.2f*m_entries[i].m_hoverStrength.value);
@@ -222,7 +271,7 @@ void Menu::draw() const {
       }
 
       ci::gl::Texture* tex = 0;
-      if (m_entries[i].drawMethod == MenuEntry::TEXTURE) {
+      if (m_entries[i].m_drawMethod == MenuEntry::TEXTURE) {
         Menu::g_previewShader.bind();
         tex = &g_previews[m_entries[i].m_entryType];
         tex->bind(0);
@@ -237,7 +286,7 @@ void Menu::draw() const {
 
       Utilities::drawPartialDisk(pos, wedgeStart, wedgeEnd, angleStart, angleWidth);
 
-      if (m_entries[i].drawMethod == MenuEntry::TEXTURE) {
+      if (m_entries[i].m_drawMethod == MenuEntry::TEXTURE) {
         Menu::g_previewShader.unbind();
         tex->unbind();
       }
@@ -283,6 +332,74 @@ void Menu::draw() const {
     }
   }
   glPopMatrix();
+}
+std::string Menu::MenuEntry::toString() const {
+  if (m_drawMethod == ICON || m_drawMethod == STRING || m_drawMethod == TEXTURE) {
+    switch (m_entryType) {
+    case Menu::STRENGTH: return "Strength"; break;
+    case Menu::SIZE: return "Size"; break;
+    case Menu::TYPE: return "Tool"; break;
+    case Menu::COLOR: return "Color"; break;
+    case Menu::TOOL_PUSH: return "Press"; break;
+    case Menu::TOOL_SWEEP: return "Smear"; break;
+    case Menu::TOOL_FLATTEN: return "Flatten"; break;
+    case Menu::TOOL_SMOOTH: return "Smooth"; break;
+    case Menu::TOOL_SHRINK: return "Repel"; break;
+    case Menu::TOOL_GROW: return "Grow"; break;
+    case Menu::TOOL_PAINT: return "Paint"; break;
+    case Menu::SIZE_AUTO: return "Auto"; break;
+    case Menu::STRENGTH_LOW: return "Low"; break;
+    case Menu::STRENGTH_MEDIUM: return "Medium"; break;
+    case Menu::STRENGTH_HIGH: return "High"; break;
+    case Menu::MATERIAL_PLASTIC: return "Plastic"; break;
+    case Menu::MATERIAL_PORCELAIN: return "Porcelain"; break;
+    case Menu::MATERIAL_GLASS: return "Glass"; break;
+    case Menu::MATERIAL_METAL: return "Metal"; break;
+    case Menu::MATERIAL_CLAY: return "Clay"; break;
+    case Menu::SPIN_OFF: return "Off"; break;
+    case Menu::SPIN_SLOW: return "Slow"; break;
+    case Menu::SPIN_MEDIUM: return "Medium"; break;
+    case Menu::SPIN_FAST: return "Fast"; break;
+    case Menu::ENVIRONMENT_ISLANDS: return "Islands"; break;
+    case Menu::ENVIRONMENT_RIVER: return "River"; break;
+    case Menu::ENVIRONMENT_DESERT: return "Desert"; break;
+    case Menu::ENVIRONMENT_REDWOOD: return "Redwood"; break;
+    case Menu::ENVIRONMENT_JUNGLE_CLIFF: return "Jungle-Cliff"; break;
+    case Menu::ENVIRONMENT_JUNGLE: return "Jungle"; break;
+    case Menu::ENVIRONMENT_ARCTIC: return "Arctic"; break;
+    case Menu::GENERAL_ABOUT: return "About"; break;
+    case Menu::GENERAL_TUTORIAL: return "Tutorial"; break;
+    case Menu::GENERAL_TOGGLE_SOUND: return "Toggle Sound"; break;
+    case Menu::GENERAL_SCREENSHOT: return "Screenshot"; break;
+    case Menu::GENERAL_EXIT: return "Exit"; break;
+    case Menu::OBJECT_LOAD: return "Load"; break;
+    case Menu::OBJECT_EXPORT: return "Save"; break;
+    case Menu::OBJECT_UPLOAD: return "3D Print"; break;
+    case Menu::OBJECT_BALL: return "Sphere"; break;
+    case Menu::OBJECT_CAN: return "Cylinder"; break;
+    case Menu::OBJECT_DONUT: return "Torus"; break;
+    case Menu::OBJECT_SHEET: return "Sheet"; break;
+    case Menu::OBJECT_SNOWMAN: return "Snowman"; break;
+    case Menu::OBJECT_CUBE: return "Cube"; break;
+    case Menu::EDITING_TOGGLE_SYMMETRY: return "Symmetry"; break;
+    case Menu::EDITING_TOGGLE_WIREFRAME: return "Wireframe"; break;
+    case Menu::EDITING_REDO: return "Redo"; break;
+    case Menu::EDITING_UNDO: return "Undo"; break;
+    case Menu::CONFIRM_YES: return "Yes"; break;
+    case Menu::CONFIRM_NO: return "No"; break;
+    case Menu::TUTORIAL_PREVIOUS: return "Previous"; break;
+    case Menu::TUTORIAL_CLOSE: return "Close"; break;
+    case Menu::TUTORIAL_NEXT: return "Next"; break;
+    case Menu::ABOUT_CLOSE: return "Close"; break;
+    default: return ""; break;
+    }
+    return "";
+  }
+  else {
+    std::stringstream ss;
+    ss << m_value;
+    return ss.str();
+  }
 }
 
 int Menu::checkCollision(const Vector2& pos) const {
@@ -343,7 +460,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_STRENGTH_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_STRENGTH_ENTRIES);
     Menu::MenuEntry& entry = _strength_menu.getEntry(i);
-    entry.drawMethod = Menu::MenuEntry::ICON;
+    entry.m_drawMethod = Menu::MenuEntry::ICON;
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
     entry.m_value = Menu::STRENGTH_UI_MULT*ratio;
   }
@@ -358,7 +475,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_TOOL_ENTRIES; i++) {
     Menu::MenuEntry& entry = _type_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::ICON;
+    entry.m_drawMethod = Menu::MenuEntry::ICON;
   }
     
   const int NUM_SIZE_ENTRIES = 6;
@@ -370,7 +487,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_SIZE_ENTRIES; i++) {
     const float ratio = static_cast<float>(i+1)/static_cast<float>(NUM_SIZE_ENTRIES);
     Menu::MenuEntry& entry = _size_menu.getEntry(i);
-    entry.drawMethod = Menu::MenuEntry::CIRCLE;
+    entry.m_drawMethod = Menu::MenuEntry::CIRCLE;
     entry.m_radius = 0.005f + ratio*0.02f;
     entry.m_value = 30.0f*ratio + 10.0f;
   }
@@ -384,7 +501,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_COLOR_ENTRIES; i++) {
     const float ratio = static_cast<float>(i-2)/static_cast<float>(NUM_COLOR_ENTRIES-2);
     Menu::MenuEntry& entry = _color_menu.getEntry(i);
-    entry.drawMethod = Menu::MenuEntry::COLOR;
+    entry.m_drawMethod = Menu::MenuEntry::COLOR;
     if (i == 0) {
       entry.m_color = ci::Color::white();
     } else if (i == 1) {
@@ -404,7 +521,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_MATERIAL_ENTRIES; i++) {
     Menu::MenuEntry& entry = _material_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::ICON;
+    entry.m_drawMethod = Menu::MenuEntry::ICON;
   }
 
   const int NUM_SPIN_ENTRIES = 4;
@@ -417,7 +534,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_SPIN_ENTRIES; i++) {
     Menu::MenuEntry& entry = _spin_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.m_drawMethod = Menu::MenuEntry::STRING;
   }
 
   const std::vector<CubeMapManager::CubeMapInfo>& infos = CubeMapManager::getEnvironmentInfos();
@@ -431,7 +548,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_ENVIRONMENT_ENTRIES; i++) {
     Menu::MenuEntry& entry = _environment_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::TEXTURE;
+    entry.m_drawMethod = Menu::MenuEntry::TEXTURE;
   }
 
   const int NUM_GENERAL_ENTRIES = 5;
@@ -445,7 +562,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_GENERAL_ENTRIES; i++) {
     Menu::MenuEntry& entry = _general_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.m_drawMethod = Menu::MenuEntry::STRING;
   }
 
   const int NUM_OBJECT_ENTRIES = 8;
@@ -459,7 +576,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_OBJECT_ENTRIES; i++) {
     Menu::MenuEntry& entry = _object_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.m_drawMethod = Menu::MenuEntry::STRING;
   }
 
 #if _WIN32
@@ -481,7 +598,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_EDITING_ENTRIES; i++) {
     Menu::MenuEntry& entry = _editing_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.m_drawMethod = Menu::MenuEntry::STRING;
   }
 
   const int NUM_CONFIRM_ENTRIES = 2;
@@ -496,7 +613,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_CONFIRM_ENTRIES; i++) {
     Menu::MenuEntry& entry = _confirm_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.m_drawMethod = Menu::MenuEntry::STRING;
   }
 
   const int NUM_TUTORIAL_ENTRIES = 3;
@@ -511,7 +628,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_TUTORIAL_ENTRIES; i++) {
     Menu::MenuEntry& entry = _tutorial_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.m_drawMethod = Menu::MenuEntry::STRING;
   }
 
   const int NUM_ABOUT_ENTRIES = 1;
@@ -526,7 +643,7 @@ UserInterface::UserInterface() : _draw_color_menu(false), _first_selection_check
   for (int i=0; i<NUM_ABOUT_ENTRIES; i++) {
     Menu::MenuEntry& entry = _about_menu.getEntry(i);
     entry.m_entryType = static_cast<Menu::MenuEntryType>(entryType++);
-    entry.drawMethod = Menu::MenuEntry::STRING;
+    entry.m_drawMethod = Menu::MenuEntry::STRING;
   }
 }
 
