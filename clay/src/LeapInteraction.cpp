@@ -174,7 +174,8 @@ void LeapInteraction::interact(double curTime)
   const float deltaTime = static_cast<float>(Utilities::TIME_STAMP_TICKS_TO_SECS*(_cur_frame.timestamp() - _last_frame.timestamp()));
   LM_TRACK_CONST_VALUE(deltaTime);
   const float dtMult = deltaTime / TARGET_DELTA_TIME;
-  const Vector3 scaledSize = calcSize(_fov, _reference_distance);
+  const Vector3 eigenScaledSize = calcSize(_fov, _reference_distance);
+  const Vec3f scaledSize = Vec3f(eigenScaledSize.x(), eigenScaledSize.y(), eigenScaledSize.z());
   const float frameScale = _cur_frame.scaleFactor(_last_frame);
   LM_TRACK_CONST_VALUE(frameScale);
 
@@ -228,25 +229,13 @@ void LeapInteraction::interact(double curTime)
             // add brush
             const float strengthMult = Utilities::SmootherStep(math<float>::clamp(LM_RETURN_TRACKED(std::min(timeSinceHandOpenChange,pointable.timeVisible()))/AGE_WARMUP_TIME));
 
-            Leap::Vector tip_pos = LM_RETURN_TRACKED(pointable.tipPosition());
-            Leap::Vector tip_dir = LM_RETURN_TRACKED(pointable.direction());
-            Leap::Vector tip_vel = LM_RETURN_TRACKED(pointable.tipVelocity());
+            const Leap::Vector tip_pos = LM_RETURN_TRACKED(pointable.tipPosition());
+            const Leap::Vector tip_dir = LM_RETURN_TRACKED(pointable.direction());
+            const Leap::Vector tip_vel = LM_RETURN_TRACKED(pointable.tipVelocity());
 
-            Vec3f pos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
-            Vec3f dir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
-            Vec3f vel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
-
-            float ratioX = pos.x / LEAP_SIZE.x;
-            float ratioY = pos.y / LEAP_SIZE.y;
-            float ratioZ = pos.z / LEAP_SIZE.z;
-
-            pos.x = ratioX * scaledSize.x();
-            pos.y = ratioY * scaledSize.y();
-            pos.z = ratioZ * scaledSize.z();
-
-            Vector3 brushPos(_model_view_inv.transformPoint(pos).ptr());
-            Vector3 brushDir((-_model_view_inv.transformVec(dir)).ptr());
-            Vector3 brushVel(_model_view_inv.transformVec(vel).ptr());
+            const Vec3f basePos = Vec3f(tip_pos.x, tip_pos.y, tip_pos.z) - LEAP_OFFSET;
+            const Vec3f parameterizedPos = basePos / LEAP_SIZE;
+            const Vec3f cameraScaledPos = parameterizedPos * scaledSize;
 
             const float fromCameraMult = ci::math<float>::clamp((LEAP_OFFSET.z/2.0f - tip_pos.z)/50.0f);
 
@@ -254,8 +243,8 @@ void LeapInteraction::interact(double curTime)
             strength = std::min(1.0f, strength * dtMult);
             LM_TRACK_VALUE(strength);
 
-            Vec3f transPos = _projection.transformPoint(pos);
-            Vec3f radPos = _projection.transformPoint(pos+Vec3f(_desired_brush_radius, 0, 0));
+            Vec3f transPos = _projection.transformPoint(cameraScaledPos);
+            Vec3f radPos = _projection.transformPoint(cameraScaledPos + Vec3f(_desired_brush_radius, 0, 0));
             LM_TRACK_VALUE(transPos);
             LM_TRACK_VALUE(radPos);
 
@@ -264,7 +253,7 @@ void LeapInteraction::interact(double curTime)
             transPos.y = (transPos.y + 1)/2;
             transPos.z = 1.0f;
 
-            const float autoBrushScaleFactor = (scaledSize.x() / LEAP_SIZE.x);
+            const float autoBrushScaleFactor = (scaledSize.x / LEAP_SIZE.x);
             const float adjRadius = _desired_brush_radius * autoBrushScaleFactor;
               
             static const float BORDER_THICKNESS = 0.035f;
@@ -282,7 +271,13 @@ void LeapInteraction::interact(double curTime)
               strength = 0.0f;
             }
             if (strengthMult > 0.25f && ui_mult > 0.25f) {
-              _sculpt->addBrush(Vector3(pos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, fromCameraMult*strengthMult);
+              Vector3 brushPos(_model_view_inv.transformPoint(cameraScaledPos).ptr());
+
+              const Vec3f baseDir = Vec3f(tip_dir.x, tip_dir.y, tip_dir.z);
+              const Vec3f baseVel = Vec3f(tip_vel.x, tip_vel.y, tip_vel.z);
+              Vector3 brushDir((-_model_view_inv.transformVec(baseDir)).ptr());
+              Vector3 brushVel(_model_view_inv.transformVec(baseVel).ptr());
+              _sculpt->addBrush(Vector3(cameraScaledPos.ptr()), brushPos, brushDir, brushVel, adjRadius, strength, fromCameraMult*strengthMult);
             }
           }
         }
