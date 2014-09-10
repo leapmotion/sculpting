@@ -52,6 +52,8 @@
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
 		8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 8A24C4B8182D9905005151DA /* brush-vert.glsl */; };
+		8A5E1E5019C0E95100E95156 /* sculpting-on-black.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A5E1E4E19C0E95100E95156 /* sculpting-on-black.png */; };
+		8A5E1E5119C0E95100E95156 /* sculpting-on-image.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A5E1E4F19C0E95100E95156 /* sculpting-on-image.png */; };
 		8A7FDEFD183A8E7400E94B5F /* Freeform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */; };
 		8A7FDF05183A8ECB00E94B5F /* ball.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF00183A8ECB00E94B5F /* ball.obj */; };
 		8A7FDF06183A8ECB00E94B5F /* can.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF01183A8ECB00E94B5F /* can.obj */; };
@@ -59,8 +61,6 @@
 		8A7FDF08183A8ECB00E94B5F /* donut.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF03183A8ECB00E94B5F /* donut.obj */; };
 		8A7FDF09183A8ECB00E94B5F /* sheet.obj in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF04183A8ECB00E94B5F /* sheet.obj */; };
 		8A7FDF0C183AEB3500E94B5F /* AutoSave.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */; };
-		8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */; };
-		8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */; };
 		8A7FDF13183D44AF00E94B5F /* tutorial-immersive.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */; };
 		8A7FDF1A183E941800E94B5F /* ReplayUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */; };
 		8A9B82161832D38000AA2EA3 /* clay.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81E01832D38000AA2EA3 /* clay.png */; };
@@ -225,6 +225,8 @@
 		5323E6B50EAFCA7E003A9687 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
 		89C36BE2F0154685A7D47F00 /* Sculpting_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sculpting_Prefix.pch; sourceTree = "<group>"; };
 		8A24C4B8182D9905005151DA /* brush-vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "brush-vert.glsl"; path = "../../resources/brush-vert.glsl"; sourceTree = "<group>"; };
+		8A5E1E4E19C0E95100E95156 /* sculpting-on-black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sculpting-on-black.png"; sourceTree = "<group>"; };
+		8A5E1E4F19C0E95100E95156 /* sculpting-on-image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sculpting-on-image.png"; sourceTree = "<group>"; };
 		8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = Freeform.cpp; path = ../../src/Freeform.cpp; sourceTree = "<group>"; };
 		8A7FDEFE183A8E8400E94B5F /* Freeform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Freeform.h; path = ../../include/Freeform.h; sourceTree = "<group>"; };
 		8A7FDF00183A8ECB00E94B5F /* ball.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ball.obj; sourceTree = "<group>"; };
@@ -234,8 +236,6 @@
 		8A7FDF04183A8ECB00E94B5F /* sheet.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sheet.obj; sourceTree = "<group>"; };
 		8A7FDF0A183AEB2900E94B5F /* AutoSave.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AutoSave.h; path = ../../include/AutoSave.h; sourceTree = "<group>"; };
 		8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AutoSave.cpp; path = ../../src/AutoSave.cpp; sourceTree = "<group>"; };
-		8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-black.png"; sourceTree = "<group>"; };
-		8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-image.png"; sourceTree = "<group>"; };
 		8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tutorial-immersive.png"; sourceTree = "<group>"; };
 		8A7FDF18183E940D00E94B5F /* ReplayUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReplayUtil.h; path = ../../include/ReplayUtil.h; sourceTree = "<group>"; };
 		8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ReplayUtil.cpp; path = ../../src/ReplayUtil.cpp; sourceTree = "<group>"; };
@@ -505,8 +505,8 @@
 		8A7FDF0D183D449F00E94B5F /* logos */ = {
 			isa = PBXGroup;
 			children = (
-				8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */,
-				8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */,
+				8A5E1E4E19C0E95100E95156 /* sculpting-on-black.png */,
+				8A5E1E4F19C0E95100E95156 /* sculpting-on-image.png */,
 			);
 			name = logos;
 			path = ../../resources/logos;
@@ -652,7 +652,6 @@
 				8ADF8D2C19BE87000057D9CD /* credits.png in Resources */,
 				8A7FDF08183A8ECB00E94B5F /* donut.obj in Resources */,
 				8AEA39CE186137C30012F8B6 /* islands2.ogg in Resources */,
-				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
 				8ADF8D2E19BE87000057D9CD /* freeform.ico in Resources */,
 				8AEA39D2186137C30012F8B6 /* jungle2.ogg in Resources */,
 				4E243EF718469AB5003C22E8 /* SavePanelFormatView.xib in Resources */,
@@ -676,6 +675,7 @@
 				8A7FDF05183A8ECB00E94B5F /* ball.obj in Resources */,
 				8A9B823A1832D38000AA2EA3 /* strength-high.png in Resources */,
 				8A9B823B1832D38000AA2EA3 /* strength-low-selected.png in Resources */,
+				8A5E1E5019C0E95100E95156 /* sculpting-on-black.png in Resources */,
 				8AE236A8184671B4008BEA30 /* jungle.png in Resources */,
 				8A9B823E1832D38000AA2EA3 /* strength-medium.png in Resources */,
 				8AE236A9184671B4008BEA30 /* redwood.png in Resources */,
@@ -709,9 +709,9 @@
 				8AEA39CD186137C30012F8B6 /* islands1.ogg in Resources */,
 				8A9B82491832D38A00AA2EA3 /* tutorial-menu.png in Resources */,
 				8AE236A4184671B4008BEA30 /* arctic.png in Resources */,
+				8A5E1E5119C0E95100E95156 /* sculpting-on-image.png in Resources */,
 				8ADF8D2D19BE87000057D9CD /* freeform.icns in Resources */,
 				8AE236A5184671B4008BEA30 /* desert.png in Resources */,
-				8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */,
 				8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */,
 				8A9B821A1832D38000AA2EA3 /* flatten-selected.png in Resources */,
 				8A9B823C1832D38000AA2EA3 /* strength-low.png in Resources */,
