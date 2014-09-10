@@ -45,12 +45,12 @@ FreeformApp::~FreeformApp()
 
 void FreeformApp::prepareSettings( Settings *settings )
 {
-  settings->setTitle("Freeform");
+  settings->setTitle("Sculpting");
   settings->setWindowSize(1024, 768);
   //settings->disableFrameRate();
 
   ci::app::Window::Format fmt;
-  fmt.setTitle("Freeform");
+  fmt.setTitle("Sculpting");
   fmt.setSize(1024, 768);
 #if LM_PRODUCTION_BUILD
   fmt.setFullScreen(true);
@@ -1093,7 +1093,7 @@ void FreeformApp::draw() {
   }
 
   if (_environment->getLoadingState() == Environment::LOADING_STATE_FAILED) {
-    _ui->drawError("Environment loading failed. Please make sure Freeform is installed correctly.", errorNum++);
+    _ui->drawError("Environment loading failed. Please make sure Sculpting is installed correctly.", errorNum++);
   }
 
   GLBuffer::checkError("After logo");
@@ -1756,9 +1756,9 @@ int main( int argc, char * const argv[] ) {
   //cinder::app::RendererRef ren(new RendererGl());
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
 #if _WIN32
-  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm");
+  cinder::app::AppBasic::executeLaunch( app, ren, "Sculpting");
 #else
-  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm", argc, argv);
+  cinder::app::AppBasic::executeLaunch( app, ren, "Sculpting", argc, argv);
 #endif
   cinder::app::AppBasic::cleanupLaunch();
   return 0;
@@ -1771,7 +1771,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,i
   cinder::app::AppBasic::prepareLaunch();
   cinder::app::AppBasic *app = new FreeformApp;
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
-  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm");
+  cinder::app::AppBasic::executeLaunch( app, ren, "Sculpting");
   cinder::app::AppBasic::cleanupLaunch();
   return 0;
 }
@@ -1781,7 +1781,7 @@ int main( int argc, char * const argv[] ) {
   cinder::app::AppBasic::prepareLaunch();
   cinder::app::AppBasic *app = new FreeformApp;
   cinder::app::RendererRef ren(new RendererGl(RendererGl::AA_NONE));
-  cinder::app::AppBasic::executeLaunch( app, ren, "FreeForm", argc, argv);
+  cinder::app::AppBasic::executeLaunch( app, ren, "Sculpting", argc, argv);
   cinder::app::AppBasic::cleanupLaunch();
 }
 #endif

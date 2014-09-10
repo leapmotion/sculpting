@@ -32,9 +32,9 @@ const char AutoSave::PATH_SEPARATOR = PATH_SEPARATOR_UNIX;
 #endif
 
 #if _WIN32 || __APPLE__
-const std::string AutoSave::APPLICATION_DIRECTORY = "Freeform";
+const std::string AutoSave::APPLICATION_DIRECTORY = "Sculpting";
 #else
-const std::string AutoSave::APPLICATION_DIRECTORY[] = ".Freeform";
+const std::string AutoSave::APPLICATION_DIRECTORY[] = ".Sculpting";
 #endif
 
 AutoSave::AutoSave() : m_shutdown(false), m_savePending(false), m_scale(1.0f), m_lastSaveTime(-MIN_TIME_BETWEEN_AUTOSAVES) {
