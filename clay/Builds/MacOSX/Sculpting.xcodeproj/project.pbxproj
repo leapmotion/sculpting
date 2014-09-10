@@ -14,13 +14,11 @@
 		00B784B60FF439BC000DE1D7 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00B784B20FF439BC000DE1D7 /* CoreAudio.framework */; };
 		01C5D75D181A480600194132 /* Aabb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D740181A480600194132 /* Aabb.cpp */; };
 		01C5D75E181A480600194132 /* Brush.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D741181A480600194132 /* Brush.cpp */; };
-		01C5D75F181A480600194132 /* Camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D742181A480600194132 /* Camera.cpp */; };
 		01C5D760181A480600194132 /* CameraUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D743181A480600194132 /* CameraUtil.cpp */; };
 		01C5D761181A480600194132 /* CBBoxInt32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D744181A480600194132 /* CBBoxInt32.cpp */; };
 		01C5D762181A480600194132 /* CCubeMapProcessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D745181A480600194132 /* CCubeMapProcessor.cpp */; };
 		01C5D763181A480600194132 /* CImageSurface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D746181A480600194132 /* CImageSurface.cpp */; };
 		01C5D764181A480600194132 /* DebugDrawUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D747181A480600194132 /* DebugDrawUtil.cpp */; };
-		01C5D765181A480600194132 /* Environment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D748181A480600194132 /* Environment.cpp */; };
 		01C5D766181A480600194132 /* Files.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D749181A480600194132 /* Files.cpp */; };
 		01C5D767181A480600194132 /* Geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D74A181A480600194132 /* Geometry.cpp */; };
 		01C5D768181A480600194132 /* GLBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 01C5D74B181A480600194132 /* GLBuffer.cpp */; };
@@ -48,10 +46,8 @@
 		01C5D791181A482D00194132 /* sky-frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D784181A482D00194132 /* sky-frag.glsl */; };
 		01C5D792181A482D00194132 /* sky-vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D785181A482D00194132 /* sky-vert.glsl */; };
 		01C5D793181A482D00194132 /* wireframe-frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 01C5D786181A482D00194132 /* wireframe-frag.glsl */; };
-		18392F4B179E9050006709CF /* libfreeimage.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 18392F4A179E9050006709CF /* libfreeimage.dylib */; };
 		18392F4D179E91EC006709CF /* libLeap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 18392F4C179E91EC006709CF /* libLeap.dylib */; };
 		18392F4E179E92EE006709CF /* libLeap.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 18392F4C179E91EC006709CF /* libLeap.dylib */; };
-		18392F4F179E92EE006709CF /* libfreeimage.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 18392F4A179E9050006709CF /* libfreeimage.dylib */; };
 		4E243EF718469AB5003C22E8 /* SavePanelFormatView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4E243EF618469AB5003C22E8 /* SavePanelFormatView.xib */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
 		5323E6B60EAFCA7E003A9687 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B50EAFCA7E003A9687 /* QTKit.framework */; };
@@ -66,8 +62,6 @@
 		8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */; };
 		8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */; };
 		8A7FDF13183D44AF00E94B5F /* tutorial-immersive.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */; };
-		8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF14183DAFA400E94B5F /* freeform.icns */; };
-		8A7FDF17183DAFA400E94B5F /* freeform.ico in Resources */ = {isa = PBXBuildFile; fileRef = 8A7FDF15183DAFA400E94B5F /* freeform.ico */; };
 		8A7FDF1A183E941800E94B5F /* ReplayUtil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */; };
 		8A9B82161832D38000AA2EA3 /* clay.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81E01832D38000AA2EA3 /* clay.png */; };
 		8A9B821A1832D38000AA2EA3 /* flatten-selected.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B81E41832D38000AA2EA3 /* flatten-selected.png */; };
@@ -92,8 +86,14 @@
 		8A9B824A1832D38A00AA2EA3 /* tutorial-tools.png in Resources */ = {isa = PBXBuildFile; fileRef = 8A9B82471832D38A00AA2EA3 /* tutorial-tools.png */; };
 		8AB1906318400DFB00347357 /* CrashReport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8AB1906218400DFB00347357 /* CrashReport.cpp */; };
 		8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
-		8AB190681840111700347357 /* credits.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AB190671840111700347357 /* credits.png */; };
 		8AB1906A18401CE000347357 /* Breakpad.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8AB1906518400EF400347357 /* Breakpad.framework */; };
+		8ADF8D2719BE86B20057D9CD /* freigsanprobold-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8ADF8D2519BE86B20057D9CD /* freigsanprobold-webfont.ttf */; };
+		8ADF8D2819BE86B20057D9CD /* freigsanpromed-webfont.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8ADF8D2619BE86B20057D9CD /* freigsanpromed-webfont.ttf */; };
+		8ADF8D2C19BE87000057D9CD /* credits.png in Resources */ = {isa = PBXBuildFile; fileRef = 8ADF8D2919BE87000057D9CD /* credits.png */; };
+		8ADF8D2D19BE87000057D9CD /* freeform.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8ADF8D2A19BE87000057D9CD /* freeform.icns */; };
+		8ADF8D2E19BE87000057D9CD /* freeform.ico in Resources */ = {isa = PBXBuildFile; fileRef = 8ADF8D2B19BE87000057D9CD /* freeform.ico */; };
+		8ADF8D3119BE8EFD0057D9CD /* Camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8ADF8D2F19BE8EFD0057D9CD /* Camera.cpp */; };
+		8ADF8D3219BE8EFD0057D9CD /* Environment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8ADF8D3019BE8EFD0057D9CD /* Environment.cpp */; };
 		8AE236A4184671B4008BEA30 /* arctic.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE2369D184671B4008BEA30 /* arctic.png */; };
 		8AE236A5184671B4008BEA30 /* desert.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE2369E184671B4008BEA30 /* desert.png */; };
 		8AE236A6184671B4008BEA30 /* islands.png in Resources */ = {isa = PBXBuildFile; fileRef = 8AE2369F184671B4008BEA30 /* islands.png */; };
@@ -132,7 +132,6 @@
 			files = (
 				8AEA39DC18613F890012F8B6 /* libirrklang.dylib in CopyFiles */,
 				18392F4E179E92EE006709CF /* libLeap.dylib in CopyFiles */,
-				18392F4F179E92EE006709CF /* libfreeimage.dylib in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -156,13 +155,11 @@
 		00B784B20FF439BC000DE1D7 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		01C5D740181A480600194132 /* Aabb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Aabb.cpp; path = ../../src/Aabb.cpp; sourceTree = "<group>"; };
 		01C5D741181A480600194132 /* Brush.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Brush.cpp; path = ../../src/Brush.cpp; sourceTree = "<group>"; };
-		01C5D742181A480600194132 /* Camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Camera.cpp; path = ../../src/Camera.cpp; sourceTree = "<group>"; };
 		01C5D743181A480600194132 /* CameraUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CameraUtil.cpp; path = ../../src/CameraUtil.cpp; sourceTree = "<group>"; };
 		01C5D744181A480600194132 /* CBBoxInt32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CBBoxInt32.cpp; path = ../../src/CBBoxInt32.cpp; sourceTree = "<group>"; };
 		01C5D745181A480600194132 /* CCubeMapProcessor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CCubeMapProcessor.cpp; path = ../../src/CCubeMapProcessor.cpp; sourceTree = "<group>"; };
 		01C5D746181A480600194132 /* CImageSurface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CImageSurface.cpp; path = ../../src/CImageSurface.cpp; sourceTree = "<group>"; };
 		01C5D747181A480600194132 /* DebugDrawUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DebugDrawUtil.cpp; path = ../../src/DebugDrawUtil.cpp; sourceTree = "<group>"; };
-		01C5D748181A480600194132 /* Environment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Environment.cpp; path = ../../src/Environment.cpp; sourceTree = "<group>"; };
 		01C5D749181A480600194132 /* Files.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Files.cpp; path = ../../src/Files.cpp; sourceTree = "<group>"; };
 		01C5D74A181A480600194132 /* Geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Geometry.cpp; path = ../../src/Geometry.cpp; sourceTree = "<group>"; };
 		01C5D74B181A480600194132 /* GLBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLBuffer.cpp; path = ../../src/GLBuffer.cpp; sourceTree = "<group>"; };
@@ -209,7 +206,6 @@
 		01C5D7A6181A4C3A00194132 /* Vertex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Vertex.h; path = ../../include/Vertex.h; sourceTree = "<group>"; };
 		01C5D7A7181A4C8800194132 /* Aabb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Aabb.h; path = ../../include/Aabb.h; sourceTree = "<group>"; };
 		01C5D7A8181A4C8800194132 /* Brush.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Brush.h; path = ../../include/Brush.h; sourceTree = "<group>"; };
-		01C5D7A9181A4C8800194132 /* Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Camera.h; path = ../../include/Camera.h; sourceTree = "<group>"; };
 		01C5D7AA181A4C8800194132 /* CameraUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CameraUtil.h; path = ../../include/CameraUtil.h; sourceTree = "<group>"; };
 		01C5D7AB181A4C8800194132 /* CBBoxInt32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CBBoxInt32.h; path = ../../include/CBBoxInt32.h; sourceTree = "<group>"; };
 		01C5D7AC181A4C8800194132 /* CCubeMapProcessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CCubeMapProcessor.h; path = ../../include/CCubeMapProcessor.h; sourceTree = "<group>"; };
@@ -217,19 +213,17 @@
 		01C5D7AE181A4C8800194132 /* Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Common.h; path = ../../include/Common.h; sourceTree = "<group>"; };
 		01C5D7AF181A4C8800194132 /* DataTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataTypes.h; path = ../../include/DataTypes.h; sourceTree = "<group>"; };
 		01C5D7B0181A4C8800194132 /* DebugDrawUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DebugDrawUtil.h; path = ../../include/DebugDrawUtil.h; sourceTree = "<group>"; };
-		01C5D7B1181A4C8800194132 /* Environment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Environment.h; path = ../../include/Environment.h; sourceTree = "<group>"; };
 		01C5D7B2181A4C8800194132 /* Files.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Files.h; path = ../../include/Files.h; sourceTree = "<group>"; };
 		01C5D7B3181A4C8800194132 /* Geometry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Geometry.h; path = ../../include/Geometry.h; sourceTree = "<group>"; };
 		01C5D7B4181A4C8800194132 /* GLBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLBuffer.h; path = ../../include/GLBuffer.h; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
-		18392F4A179E9050006709CF /* libfreeimage.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libfreeimage.dylib; sourceTree = "<group>"; };
 		18392F4C179E91EC006709CF /* libLeap.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libLeap.dylib; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		4E243EF618469AB5003C22E8 /* SavePanelFormatView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SavePanelFormatView.xib; sourceTree = "<group>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
 		5323E6B50EAFCA7E003A9687 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
-		89C36BE2F0154685A7D47F00 /* Freeform_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Freeform_Prefix.pch; sourceTree = "<group>"; };
+		89C36BE2F0154685A7D47F00 /* Sculpting_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Sculpting_Prefix.pch; sourceTree = "<group>"; };
 		8A24C4B8182D9905005151DA /* brush-vert.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "brush-vert.glsl"; path = "../../resources/brush-vert.glsl"; sourceTree = "<group>"; };
 		8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = Freeform.cpp; path = ../../src/Freeform.cpp; sourceTree = "<group>"; };
 		8A7FDEFE183A8E8400E94B5F /* Freeform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Freeform.h; path = ../../include/Freeform.h; sourceTree = "<group>"; };
@@ -243,8 +237,6 @@
 		8A7FDF0E183D449F00E94B5F /* freeform-on-black.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-black.png"; sourceTree = "<group>"; };
 		8A7FDF0F183D449F00E94B5F /* freeform-on-image.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "freeform-on-image.png"; sourceTree = "<group>"; };
 		8A7FDF12183D44AF00E94B5F /* tutorial-immersive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "tutorial-immersive.png"; sourceTree = "<group>"; };
-		8A7FDF14183DAFA400E94B5F /* freeform.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = freeform.icns; path = ../../resources/freeform.icns; sourceTree = "<group>"; };
-		8A7FDF15183DAFA400E94B5F /* freeform.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; name = freeform.ico; path = ../../resources/freeform.ico; sourceTree = "<group>"; };
 		8A7FDF18183E940D00E94B5F /* ReplayUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ReplayUtil.h; path = ../../include/ReplayUtil.h; sourceTree = "<group>"; };
 		8A7FDF19183E941800E94B5F /* ReplayUtil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ReplayUtil.cpp; path = ../../src/ReplayUtil.cpp; sourceTree = "<group>"; };
 		8A9B81E01832D38000AA2EA3 /* clay.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = clay.png; sourceTree = "<group>"; };
@@ -271,7 +263,15 @@
 		8AB1906218400DFB00347357 /* CrashReport.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CrashReport.cpp; path = ../../src/CrashReport.cpp; sourceTree = "<group>"; };
 		8AB1906418400E0D00347357 /* CrashReport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CrashReport.h; path = ../../include/CrashReport.h; sourceTree = "<group>"; };
 		8AB1906518400EF400347357 /* Breakpad.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Breakpad.framework; path = "../../../../../../../../opt/local/Libraries/breakpad-0.1/lib/Breakpad.framework"; sourceTree = "<group>"; };
-		8AB190671840111700347357 /* credits.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = credits.png; path = ../../resources/credits.png; sourceTree = "<group>"; };
+		8ADF8D2519BE86B20057D9CD /* freigsanprobold-webfont.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "freigsanprobold-webfont.ttf"; path = "../../resources/freigsanprobold-webfont.ttf"; sourceTree = "<group>"; };
+		8ADF8D2619BE86B20057D9CD /* freigsanpromed-webfont.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "freigsanpromed-webfont.ttf"; path = "../../resources/freigsanpromed-webfont.ttf"; sourceTree = "<group>"; };
+		8ADF8D2919BE87000057D9CD /* credits.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = credits.png; path = ../../resources/credits.png; sourceTree = "<group>"; };
+		8ADF8D2A19BE87000057D9CD /* freeform.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = freeform.icns; path = ../../resources/freeform.icns; sourceTree = "<group>"; };
+		8ADF8D2B19BE87000057D9CD /* freeform.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; name = freeform.ico; path = ../../resources/freeform.ico; sourceTree = "<group>"; };
+		8ADF8D2F19BE8EFD0057D9CD /* Camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Camera.cpp; path = ../../src/Camera.cpp; sourceTree = "<group>"; };
+		8ADF8D3019BE8EFD0057D9CD /* Environment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Environment.cpp; path = ../../src/Environment.cpp; sourceTree = "<group>"; };
+		8ADF8D3319BE8F100057D9CD /* Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Camera.h; path = ../../include/Camera.h; sourceTree = "<group>"; };
+		8ADF8D3419BE8F100057D9CD /* Environment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Environment.h; path = ../../include/Environment.h; sourceTree = "<group>"; };
 		8AE2369D184671B4008BEA30 /* arctic.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = arctic.png; path = ../../resources/previews/arctic.png; sourceTree = "<group>"; };
 		8AE2369E184671B4008BEA30 /* desert.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = desert.png; path = ../../resources/previews/desert.png; sourceTree = "<group>"; };
 		8AE2369F184671B4008BEA30 /* islands.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = islands.png; path = ../../resources/previews/islands.png; sourceTree = "<group>"; };
@@ -298,7 +298,7 @@
 		8AEA39C8186137C30012F8B6 /* river2.ogg */ = {isa = PBXFileReference; lastKnownFileType = file; path = river2.ogg; sourceTree = "<group>"; };
 		8AEA39DA18613F7D0012F8B6 /* libirrklang.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libirrklang.dylib; sourceTree = "<group>"; };
 		8AEA39DD1861433E0012F8B6 /* snowman.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = snowman.obj; sourceTree = "<group>"; };
-		8D1107320486CEB800E47090 /* Freeform.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freeform.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D1107320486CEB800E47090 /* Sculpting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sculpting.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEAF09CCD9054AE5A257591B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -308,7 +308,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				8AEA39DB18613F7D0012F8B6 /* libirrklang.dylib in Frameworks */,
-				18392F4B179E9050006709CF /* libfreeimage.dylib in Frameworks */,
 				18392F4D179E91EC006709CF /* libLeap.dylib in Frameworks */,
 				8AB1906618400EF400347357 /* Breakpad.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
@@ -335,17 +334,17 @@
 		080E96DDFE201D6D7F000001 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8ADF8D2F19BE8EFD0057D9CD /* Camera.cpp */,
+				8ADF8D3019BE8EFD0057D9CD /* Environment.cpp */,
 				01C5D740181A480600194132 /* Aabb.cpp */,
 				8A7FDF0B183AEB3400E94B5F /* AutoSave.cpp */,
 				01C5D741181A480600194132 /* Brush.cpp */,
-				01C5D742181A480600194132 /* Camera.cpp */,
 				01C5D743181A480600194132 /* CameraUtil.cpp */,
 				01C5D744181A480600194132 /* CBBoxInt32.cpp */,
 				01C5D745181A480600194132 /* CCubeMapProcessor.cpp */,
 				01C5D746181A480600194132 /* CImageSurface.cpp */,
 				8AB1906218400DFB00347357 /* CrashReport.cpp */,
 				01C5D747181A480600194132 /* DebugDrawUtil.cpp */,
-				01C5D748181A480600194132 /* Environment.cpp */,
 				01C5D749181A480600194132 /* Files.cpp */,
 				8A7FDEFC183A8E7400E94B5F /* Freeform.cpp */,
 				01C5D74A181A480600194132 /* Geometry.cpp */,
@@ -375,7 +374,7 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D1107320486CEB800E47090 /* Freeform.app */,
+				8D1107320486CEB800E47090 /* Sculpting.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -398,10 +397,11 @@
 		29B97315FDCFA39411CA2CEA /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				8ADF8D3319BE8F100057D9CD /* Camera.h */,
+				8ADF8D3419BE8F100057D9CD /* Environment.h */,
 				01C5D7A7181A4C8800194132 /* Aabb.h */,
 				8A7FDF0A183AEB2900E94B5F /* AutoSave.h */,
 				01C5D7A8181A4C8800194132 /* Brush.h */,
-				01C5D7A9181A4C8800194132 /* Camera.h */,
 				01C5D7AA181A4C8800194132 /* CameraUtil.h */,
 				01C5D7AB181A4C8800194132 /* CBBoxInt32.h */,
 				01C5D7AC181A4C8800194132 /* CCubeMapProcessor.h */,
@@ -410,10 +410,9 @@
 				8AB1906418400E0D00347357 /* CrashReport.h */,
 				01C5D7AF181A4C8800194132 /* DataTypes.h */,
 				01C5D7B0181A4C8800194132 /* DebugDrawUtil.h */,
-				01C5D7B1181A4C8800194132 /* Environment.h */,
 				01C5D7B2181A4C8800194132 /* Files.h */,
 				8A7FDEFE183A8E8400E94B5F /* Freeform.h */,
-				89C36BE2F0154685A7D47F00 /* Freeform_Prefix.pch */,
+				89C36BE2F0154685A7D47F00 /* Sculpting_Prefix.pch */,
 				01C5D7B3181A4C8800194132 /* Geometry.h */,
 				01C5D7B4181A4C8800194132 /* GLBuffer.h */,
 				01C5D795181A4C3A00194132 /* Grid.h */,
@@ -446,6 +445,11 @@
 				8AEA39BA186137C30012F8B6 /* audio */,
 				01C5D77A181A482D00194132 /* bloom-frag.glsl */,
 				8A24C4B8182D9905005151DA /* brush-vert.glsl */,
+				8ADF8D2919BE87000057D9CD /* credits.png */,
+				8ADF8D2A19BE87000057D9CD /* freeform.icns */,
+				8ADF8D2B19BE87000057D9CD /* freeform.ico */,
+				8ADF8D2519BE86B20057D9CD /* freigsanprobold-webfont.ttf */,
+				8ADF8D2619BE86B20057D9CD /* freigsanpromed-webfont.ttf */,
 				BEAF09CCD9054AE5A257591B /* Info.plist */,
 				8A7FDF0D183D449F00E94B5F /* logos */,
 				01C5D77F181A482D00194132 /* material-frag.glsl */,
@@ -469,7 +473,6 @@
 			children = (
 				8AEA39DA18613F7D0012F8B6 /* libirrklang.dylib */,
 				18392F4C179E91EC006709CF /* libLeap.dylib */,
-				18392F4A179E9050006709CF /* libfreeimage.dylib */,
 				8AB1906518400EF400347357 /* Breakpad.framework */,
 				00B784AF0FF439BC000DE1D7 /* Accelerate.framework */,
 				00B784B00FF439BC000DE1D7 /* AudioToolbox.framework */,
@@ -559,10 +562,7 @@
 			isa = PBXGroup;
 			children = (
 				8AE2369D184671B4008BEA30 /* arctic.png */,
-				8AB190671840111700347357 /* credits.png */,
 				8AE2369E184671B4008BEA30 /* desert.png */,
-				8A7FDF14183DAFA400E94B5F /* freeform.icns */,
-				8A7FDF15183DAFA400E94B5F /* freeform.ico */,
 				8AE2369F184671B4008BEA30 /* islands.png */,
 				8AE236A0184671B4008BEA30 /* jungle-cliff.png */,
 				8AE236A1184671B4008BEA30 /* jungle.png */,
@@ -597,9 +597,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8D1107260486CEB800E47090 /* Freeform */ = {
+		8D1107260486CEB800E47090 /* Sculpting */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Freeform" */;
+			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Sculpting" */;
 			buildPhases = (
 				8D11072C0486CEB800E47090 /* Sources */,
 				8D11072E0486CEB800E47090 /* Frameworks */,
@@ -611,10 +611,10 @@
 			);
 			dependencies = (
 			);
-			name = Freeform;
+			name = Sculpting;
 			productInstallPath = "$(HOME)/Applications";
 			productName = claydemo;
-			productReference = 8D1107320486CEB800E47090 /* Freeform.app */;
+			productReference = 8D1107320486CEB800E47090 /* Sculpting.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -625,7 +625,7 @@
 			attributes = {
 				LastUpgradeCheck = 0500;
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Freeform" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Sculpting" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -639,7 +639,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8D1107260486CEB800E47090 /* Freeform */,
+				8D1107260486CEB800E47090 /* Sculpting */,
 			);
 		};
 /* End PBXProject section */
@@ -649,10 +649,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8ADF8D2C19BE87000057D9CD /* credits.png in Resources */,
 				8A7FDF08183A8ECB00E94B5F /* donut.obj in Resources */,
 				8AEA39CE186137C30012F8B6 /* islands2.ogg in Resources */,
 				8A7FDF11183D449F00E94B5F /* freeform-on-image.png in Resources */,
-				8A7FDF16183DAFA400E94B5F /* freeform.icns in Resources */,
+				8ADF8D2E19BE87000057D9CD /* freeform.ico in Resources */,
 				8AEA39D2186137C30012F8B6 /* jungle2.ogg in Resources */,
 				4E243EF718469AB5003C22E8 /* SavePanelFormatView.xib in Resources */,
 				01C5D793181A482D00194132 /* wireframe-frag.glsl in Resources */,
@@ -693,6 +694,7 @@
 				8A7FDF06183A8ECB00E94B5F /* can.obj in Resources */,
 				8AEA39D3186137C30012F8B6 /* redwood1.ogg in Resources */,
 				8A9B82351832D38000AA2EA3 /* smooth-selected.png in Resources */,
+				8ADF8D2719BE86B20057D9CD /* freigsanprobold-webfont.ttf in Resources */,
 				8A9B822C1832D38000AA2EA3 /* press-selected.png in Resources */,
 				8A7FDF07183A8ECB00E94B5F /* cube.obj in Resources */,
 				8A9B82161832D38000AA2EA3 /* clay.png in Resources */,
@@ -702,15 +704,15 @@
 				8A7FDF13183D44AF00E94B5F /* tutorial-immersive.png in Resources */,
 				8A9B823D1832D38000AA2EA3 /* strength-medium-selected.png in Resources */,
 				8AE236AA184671B4008BEA30 /* river.png in Resources */,
-				8AB190681840111700347357 /* credits.png in Resources */,
+				8ADF8D2819BE86B20057D9CD /* freigsanpromed-webfont.ttf in Resources */,
 				8A9B822A1832D38000AA2EA3 /* plastic.png in Resources */,
 				8AEA39CD186137C30012F8B6 /* islands1.ogg in Resources */,
 				8A9B82491832D38A00AA2EA3 /* tutorial-menu.png in Resources */,
 				8AE236A4184671B4008BEA30 /* arctic.png in Resources */,
+				8ADF8D2D19BE87000057D9CD /* freeform.icns in Resources */,
 				8AE236A5184671B4008BEA30 /* desert.png in Resources */,
 				8A7FDF10183D449F00E94B5F /* freeform-on-black.png in Resources */,
 				8A24C4B9182D9905005151DA /* brush-vert.glsl in Resources */,
-				8A7FDF17183DAFA400E94B5F /* freeform.ico in Resources */,
 				8A9B821A1832D38000AA2EA3 /* flatten-selected.png in Resources */,
 				8A9B823C1832D38000AA2EA3 /* strength-low.png in Resources */,
 				8A9B82271832D38000AA2EA3 /* paint-selected.png in Resources */,
@@ -728,9 +730,9 @@
 				01C5D779181A480600194132 /* Vertex.cpp in Sources */,
 				01C5D764181A480600194132 /* DebugDrawUtil.cpp in Sources */,
 				01C5D778181A480600194132 /* UserInterface.cpp in Sources */,
+				8ADF8D3119BE8EFD0057D9CD /* Camera.cpp in Sources */,
 				01C5D776181A480600194132 /* TopologySubdivision.cpp in Sources */,
 				8A7FDEFD183A8E7400E94B5F /* Freeform.cpp in Sources */,
-				01C5D75F181A480600194132 /* Camera.cpp in Sources */,
 				01C5D771181A480600194132 /* StdAfx.cpp in Sources */,
 				01C5D76D181A480600194132 /* Octree.cpp in Sources */,
 				01C5D774181A480600194132 /* TopologyAdaptive.cpp in Sources */,
@@ -748,6 +750,7 @@
 				01C5D763181A480600194132 /* CImageSurface.cpp in Sources */,
 				8AEA3981185FE5C30012F8B6 /* Print3D.cpp in Sources */,
 				01C5D768181A480600194132 /* GLBuffer.cpp in Sources */,
+				8ADF8D3219BE8EFD0057D9CD /* Environment.cpp in Sources */,
 				01C5D769181A480600194132 /* Grid.cpp in Sources */,
 				01C5D75E181A480600194132 /* Brush.cpp in Sources */,
 				01C5D762181A480600194132 /* CCubeMapProcessor.cpp in Sources */,
@@ -755,7 +758,6 @@
 				8A7FDF0C183AEB3500E94B5F /* AutoSave.cpp in Sources */,
 				01C5D761181A480600194132 /* CBBoxInt32.cpp in Sources */,
 				01C5D777181A480600194132 /* Triangle.cpp in Sources */,
-				01C5D765181A480600194132 /* Environment.cpp in Sources */,
 				01C5D773181A480600194132 /* Tools.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -781,7 +783,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = Freeform_Prefix.pch;
+				GCC_PREFIX_HEADER = Sculpting_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -790,7 +792,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(CINDER_PATH)/boost",
 					"$(LIBRARIES_PATH)/LeapSDK/include",
-					"$(LIBRARIES_PATH)/FreeImage/Dist",
+					"$(LIBRARIES_PATH)/FreeImage/include",
 					"$(LIBRARIES_PATH)/eigen-3.1.2",
 					"$(CINDER_PATH)/include",
 					"$(LIBRARIES_PATH)/breakpad-0.1/include",
@@ -809,10 +811,11 @@
 					"$(CINDER_PATH)/lib",
 					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
 					"$(LIBRARIES_PATH)/irrKlang-1.4.0/bin/macosx-gcc",
-					"$(LIBRARIES_PATH)/curl-7.32.0/lib",
+					"$(LIBRARIES_PATH)/curl-7.36.0/lib",
 					"$(LIBRARIES_PATH)/openssl/lib",
 					"/opt/local/Libraries/irrKlang-1.4.0/bin/macosx-gcc",
 					/Users/tnitz/Projects/applications/applications/clay/Builds/MacOSX,
+					"$(LIBRARIES_PATH)/FreeImage/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
@@ -820,6 +823,7 @@
 					"-lcurl",
 					"-lssl",
 					"-lcrypto",
+					"-lfreeimage",
 					"-sectcreate",
 					__DATA,
 					__09ffe29c32cd8a,
@@ -829,7 +833,7 @@
 					__274e7ba8743fd6,
 					"../../resources/freigsanpromed-webfont.ttf",
 				);
-				PRODUCT_NAME = Freeform;
+				PRODUCT_NAME = Sculpting;
 				SDKROOT = macosx;
 				SYMROOT = ./build;
 				USER_HEADER_SEARCH_PATHS = "\"$(CINDER_PATH)/include\" ~/Devel/LeapSDK/include ../include";
@@ -856,13 +860,13 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = Freeform_Prefix.pch;
+				GCC_PREFIX_HEADER = Sculpting_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(CINDER_PATH)/boost",
 					"$(LIBRARIES_PATH)/LeapSDK/include",
-					"$(LIBRARIES_PATH)/FreeImage/Dist",
+					"$(LIBRARIES_PATH)/FreeImage/include",
 					"$(LIBRARIES_PATH)/eigen-3.1.2",
 					"$(CINDER_PATH)/include",
 					"$(LIBRARIES_PATH)/breakpad-0.1/include",
@@ -881,10 +885,11 @@
 					"$(CINDER_PATH)/lib",
 					"$(LIBRARIES_PATH)/breakpad-0.1/lib",
 					"$(LIBRARIES_PATH)/irrKlang-1.4.0/bin/macosx-gcc",
-					"$(LIBRARIES_PATH)/curl-7.32.0/lib",
+					"$(LIBRARIES_PATH)/curl-7.36.0/lib",
 					"$(LIBRARIES_PATH)/openssl/lib",
 					"/opt/local/Libraries/irrKlang-1.4.0/bin/macosx-gcc",
 					/Users/tnitz/Projects/applications/applications/clay/Builds/MacOSX,
+					"$(LIBRARIES_PATH)/FreeImage/lib",
 				);
 				OTHER_LDFLAGS = (
 					"-lcinder",
@@ -892,6 +897,7 @@
 					"-lcurl",
 					"-lssl",
 					"-lcrypto",
+					"-lfreeimage",
 					"-sectcreate",
 					__DATA,
 					__09ffe29c32cd8a,
@@ -901,7 +907,7 @@
 					__274e7ba8743fd6,
 					"../../resources/freigsanpromed-webfont.ttf",
 				);
-				PRODUCT_NAME = Freeform;
+				PRODUCT_NAME = Sculpting;
 				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = YES;
 				SYMROOT = ./build;
@@ -948,7 +954,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Freeform" */ = {
+		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "Sculpting" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4B08A954540054247B /* Debug */,
@@ -957,7 +963,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Freeform" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "Sculpting" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,
